@@ -107,6 +107,16 @@
   }
 }
 
+/*
+ * Typed duo color variables, so a theme change can cross-fade them (see the
+ * theme motion below). Initial values are the light-theme defaults; the
+ * site's own rules and the grid set the real ones. --fos-modifier and
+ * --glyph-color stay unregistered: their "unset" fallbacks matter (each
+ * modifier's library color; the cell's own ink).
+ */
+@property --fos-primary { syntax: '<color>'; inherits: true; initial-value: #245b9e; }
+@property --fos-secondary { syntax: '<color>'; inherits: true; initial-value: #5b87b7; }
+
 @layer components {
   /* Icon glyphs inherit the cell's color; duo roles come from the CSS vars. */
   .glyph > svg {
@@ -149,6 +159,22 @@
     .icon-cell .glyph {
       animation: fade-in 220ms ease-out both;
     }
+    /*
+     * Picking a color theme: the chosen swatch springs into place (squeeze,
+     * overshoot, one small wobble, settle) with its ring, and the grid's
+     * colors cross-fade to the new theme instead of snapping.
+     */
+    :root[data-motion] .theme-swatch[aria-checked='true'] {
+      animation: swatch-spring 560ms linear both;
+    }
+  }
+  @keyframes swatch-spring {
+    0% { transform: scale(0.82); }
+    35% { transform: scale(1.12); }
+    55% { transform: scale(0.95); }
+    72% { transform: scale(1.03); }
+    86% { transform: scale(0.99); }
+    100% { transform: scale(1); }
   }
   @keyframes rise {
     from { opacity: 0; transform: translateY(10px); }
@@ -423,4 +449,20 @@ html:has(.docs-page) {
 ::highlight(docs-search) {
   background-color: rgb(250 204 21 / 0.45);
   color: inherit;
+}
+
+/*
+ * Theme change cross-fade for the grid. Unlayered, so it wins over the glyph's
+ * own transition utility (utilities sit in a later layer than components).
+ */
+@media (prefers-reduced-motion: no-preference) {
+  :root[data-motion] .grid-colors {
+    transition: --fos-primary 280ms ease-out, --fos-secondary 280ms ease-out;
+  }
+  /* Regular and Solid take their color from `color`, which transitions as is. */
+  :root[data-motion] .grid-colors .glyph {
+    transition-property: color, transform;
+    transition-duration: 280ms, 200ms;
+    transition-timing-function: ease-out;
+  }
 }

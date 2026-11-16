@@ -448,7 +448,7 @@ export function IconsPage() {
             <Button className="mt-4" onClick={() => setAttempt((a) => a + 1)}>{t('icons.tryAgain')}</Button>
           </div>
         ) : results.length ? (
-          <div style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>
+          <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>
             <IconGrid
               label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(`style.${drawStyle}`) })}
               items={results}
