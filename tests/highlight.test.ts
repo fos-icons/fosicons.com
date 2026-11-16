@@ -17,6 +17,14 @@ describe('highlight', () => {
     expect(html).toContain('<span class="hljs-title function_">npm</span>');
   });
 
+  it('highlights Svelte without changing the copyable component text', () => {
+    const code = '<script lang="ts">\nimport { CameraRegular } from \'@fos-icons/svelte\';\n</script>\n\n<CameraRegular size={32} />';
+    const html = highlight(code, 'svelte')!;
+    expect(html).toContain('hljs-tag');
+    expect(html).not.toContain('<script');
+    expect(text(html)).toBe(code);
+  });
+
   it('escapes markup and returns null for unknown languages', () => {
     expect(highlight('<svg onload="x">', 'html')).not.toContain('<svg');
     expect(highlight('x', 'cobol')).toBeNull();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { componentName, reactSnippet, vueSnippet } from '../src/lib/react-snippet';
+import { componentName, reactSnippet, svelteSnippet, vueSnippet } from '../src/lib/react-snippet';
 
 describe('React snippet', () => {
   it('follows the package naming rule', () => {
@@ -23,5 +23,27 @@ describe('React snippet', () => {
     );
     const duo = vueSnippet('user-add', 'duocolor', { size: 32, color: null, primary: '#111111', secondary: '#222222', modifier: '#333333' });
     expect(duo).toContain('<UserAddDuocolor :size="32" primary-color="#111111" secondary-color="#222222" modifier-color="#333333" />');
+  });
+
+  it('writes a complete Svelte component with camelCase props and numeric expressions', () => {
+    expect(svelteSnippet('camera', 'regular', { size: 24, color: null })).toBe(
+      '<script lang="ts">\nimport { CameraRegular } from \'@fos-icons/svelte\';\n</script>\n\n<CameraRegular />',
+    );
+    expect(svelteSnippet('user-add', 'duocolor', {
+      size: 32, color: null, primary: '#111111', secondary: '#222222', modifier: '#333333',
+    })).toContain('<UserAddDuocolor size={32} primaryColor="#111111" secondaryColor="#222222" modifierColor="#333333" />');
+    expect(svelteSnippet('camera', 'regular', { size: 16, color: '#123456' }))
+      .toContain('<CameraRegular size={16} color="#123456" />');
+    expect(svelteSnippet('camera', 'duotone', { size: 24, color: null, primary: '#111111', secondary: '#222222' }))
+      .not.toContain('secondaryColor');
+  });
+
+  it.each(['regular', 'filled', 'duocolor', 'duotone'] as const)('uses the %s component in Svelte', (style) => {
+    const component = componentName('triangle-right', style);
+    const code = svelteSnippet('triangle-right', style, { size: 24, color: null });
+    expect(code).toContain(`import { ${component} } from '@fos-icons/svelte';`);
+    expect(code).toContain(`<${component} />`);
+    expect(code).not.toContain('<template>');
+    expect(code).not.toContain('setup');
   });
 });

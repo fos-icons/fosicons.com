@@ -20,6 +20,7 @@ const SECTIONS = [
   ['svg', 'SVG'],
   ['react', 'React'],
   ['vue', 'Vue'],
+  ['svelte', 'Svelte'],
   ['figma', 'Figma'],
   ['colors', 'Colors'],
   ['sizes', 'Sizes'],
@@ -270,7 +271,7 @@ export default function DocsPage() {
         <header>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
           <p className="mt-3 text-base text-muted">
-            Use Fos Icons as plain SVG, in React or Vue, or in Figma. {nf.format(ICONS_ROUNDED)}+ icons,
+            Use Fos Icons as plain SVG, in React, Vue, or Svelte, or in Figma. {nf.format(ICONS_ROUNDED)}+ icons,
             each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
           </p>
         </header>
@@ -320,7 +321,7 @@ export default function DocsPage() {
             <li>Icons are decorative by default (<code>aria-hidden</code>). Pass <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>
             <li>Root imports are tree-shakeable; <code>@fos-icons/react/filled</code> and <code>@fos-icons/react/regular/camera</code> entry points also exist.</li>
           </ul>
-          <p>The inspector&apos;s React and Vue examples use these exact props.</p>
+          <p>The inspector&apos;s React, Vue, and Svelte examples use these exact props.</p>
         </Section>
 
         <Section id="vue" title="Vue">
@@ -339,6 +340,30 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
             <li>Props match React: <code>size</code>, <code>color</code>, <code>primaryColor</code>, <code>secondaryColor</code>, and <code>title</code>.</li>
             <li>Components are plain render functions, so <code>h(CameraRegular, {'{'} size: 32 {'}'})</code> and JSX work without an SFC compiler.</li>
             <li>Icons are decorative by default. Pass <code>title</code> or <code>aria-label</code> for meaningful icons.</li>
+          </ul>
+        </Section>
+
+        <Section id="svelte" title="Svelte">
+          <p><code>@fos-icons/svelte</code> supports Svelte 5.20 and later, including SvelteKit, with TypeScript props, tree-shakeable imports, and server rendering. Source: <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/svelte-fos">fos-icons/svelte-fos</a>.</p>
+          <p><strong>Not yet published to npm.</strong> Build the package from source and create a local tarball:</p>
+          <Code lang="sh">{`git clone https://github.com/fos-icons/svelte-fos.git
+cd svelte-fos
+npm ci
+npm pack`}</Code>
+          <p>Then, from your Svelte app, install the generated tarball using its local path:</p>
+          <Code lang="sh">{`npm install /path/to/svelte-fos/fos-icons-svelte-0.1.0.tgz`}</Code>
+          <Code lang="svelte">{`<script lang="ts">
+import { CameraRegular, CameraDuocolor } from '@fos-icons/svelte';
+</script>
+
+<CameraRegular size={24} />
+<CameraDuocolor size={32} primaryColor="#245B9E" secondaryColor="#60A5FA" />`}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Names match React and Vue: <code>CameraRegular</code>, <code>CameraFilled</code>, <code>CameraDuocolor</code>, and <code>CameraDuotone</code>. Use camelCase props and braces for numeric values, such as <code>size={'{'}32{'}'}</code>.</li>
+            <li><code>size</code>, <code>color</code>, <code>primaryColor</code>, <code>secondaryColor</code>, <code>modifierColor</code>, and <code>title</code> work as in the other packages. Svelte also accepts <code>strokeWidth</code> for existing stroked elements, plus native SVG attributes and event handlers.</li>
+            <li>Icons are decorative by default. Give meaningful icons a <code>title</code> or <code>aria-label</code>, and label icon-only buttons on the button itself.</li>
+            <li>The package uses JavaScript icon modules and one shared Svelte renderer, not thousands of <code>.svelte</code> files. Title, mask, and clip-path IDs stay unique and stable during hydration.</li>
+            <li>Style imports such as <code>@fos-icons/svelte/filled</code> and individual imports such as <code>@fos-icons/svelte/regular/camera</code> are available. Prefer one import style consistently in your app.</li>
           </ul>
         </Section>
 

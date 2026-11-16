@@ -27,6 +27,8 @@ describe('page metadata', () => {
 
   it('writes canonical, Open Graph, Twitter, and JSON-LD tags', () => {
     const tags = headTags(PAGES.docs);
+    expect(PAGES.docs.title).toContain('Svelte');
+    expect(PAGES.docs.description).toContain('Svelte');
     expect(tags).toContain('<link rel="canonical" href="https://www.fosicons.com/docs" />');
     expect(tags).toContain('<meta property="og:image" content="https://www.fosicons.com/og-image.png" />');
     expect(tags).toContain('<meta name="twitter:card" content="summary_large_image" />');

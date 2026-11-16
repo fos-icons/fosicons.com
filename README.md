@@ -8,6 +8,8 @@ Production domain: **fosicons.com**.
 | `fos-icons/fosicons.com` (this repo) | Website code, synchronized data snapshot |
 | [`fos-icons/fos-icons`](https://github.com/fos-icons/fos-icons) | Canonical SVG artwork, manifest, metadata |
 | [`fos-icons/react-fos`](https://github.com/fos-icons/react-fos) | `@fos-icons/react` package |
+| [`fos-icons/vue-fos`](https://github.com/fos-icons/vue-fos) | `@fos-icons/vue` package |
+| [`fos-icons/svelte-fos`](https://github.com/fos-icons/svelte-fos) | `@fos-icons/svelte` package |
 
 This repo never edits artwork. It consumes a verified, revision-pinned snapshot
 of the library (see [docs/ASSETS.md](docs/ASSETS.md)).
@@ -53,7 +55,7 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   remembered per browser). With no icon selected it is **Customize**: size,
   stroke width, and color (duo palettes for Duocolor/Duotone) applied to the
   whole grid and carried into exports. Selecting an icon shows its inspector:
-  previews, style, modifiers, the same controls, exports, and React usage. On
+  previews, style, modifiers, the same controls, exports, and React, Vue, and Svelte usage. On
   mobile both open as a modal bottom sheet (native `<dialog>`).
 - **Size and stroke**: icons default to 48px (Auto stroke 1px). Size is a
   slider over what the grid previews (16–64px, 4px steps) plus a px field for
@@ -105,8 +107,12 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   new tab; `FIGMA_URL` in `src/lib/links.ts`). Phones get a menu.
 - **Code samples**: dark in both themes, with syntax colors (highlight.js
   core with TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
-  shown as a terminal.
-- **Docs** (in the header; the footer links Privacy and License, then GitHub | npm): SVG, React, Figma, colors, sizes, modifiers, accessibility,
+  shown as a terminal. Icon pages and the inspector offer React, Vue, and
+  Svelte tabs with copyable examples. Svelte uses a `<script lang="ts">` import
+  and camelCase props; the docs explain its source/tarball setup until npm publication.
+  Icon pages keep Copy SVG beside Download PNG rather than displaying a raw
+  SVG code block; copying uses the selected style and any applied modifier.
+- **Docs** (in the header; the footer links Privacy and License, then GitHub | npm): SVG, React, Vue, Svelte, Figma, colors, sizes, modifiers, accessibility,
   licensing, privacy (no cookies or tracking; the three local-storage
   preferences, named), and source revision. The side nav marks the section being read,
   and in-page links scroll smoothly (instantly with reduced motion).

@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Inspector, SidePane, type InspectorProps } from '../components/Inspector';
 import {
-  Breadcrumbs, CodeTabs, CopyCode, Glyph, IconLinkGrid, KeywordTags, LandingSection, useStyleVars,
+  Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection, useStyleVars,
 } from '../components/LandingParts';
 import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
@@ -19,7 +19,7 @@ import { DEFAULT_LOOK, exportColors, type Look } from '../lib/look';
 import { buildSvg } from '../lib/svg';
 import { useMediaQuery } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
-import { componentName } from '../lib/react-snippet';
+import { componentName, svelteSnippet } from '../lib/react-snippet';
 import { useSlashToFocus } from './IconsPage';
 import NotFoundPage from './NotFoundPage';
 import { useModifiers } from '../components/ModifierPicker';
@@ -174,13 +174,11 @@ const ACTUAL_SIZES = [
 const PNG_PIXELS = 256;
 
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, svg, onStyleChange, onCopy }: {
+function PreviewStage({ name, style, svg, onStyleChange }: {
   name: string;
   style: StyleId;
   svg: string | undefined;
   onStyleChange: (style: StyleId) => void;
-  /** Copy the artwork on show; it sits with the preview, like a code block's Copy. */
-  onCopy: () => void;
 }) {
   const { t } = useI18n();
   const vars = useStyleVars(style);
@@ -198,9 +196,6 @@ function PreviewStage({ name, style, svg, onStyleChange, onCopy }: {
             onChange={onStyleChange}
           />
         </div>
-        <Button variant="quiet" icon="copy" onClick={onCopy} disabled={!svg} title={t('iconPage.copySvg')} className="shrink-0 px-2.5">
-          <span className="max-sm:sr-only">{t('iconPage.copySvg')}</span>
-        </Button>
       </div>
       <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
         <Glyph svg={svg} idPrefix="stage-" className="size-28 sm:size-36" label={t('iconPage.preview', { name: title, style: t(`style.${style}`) })} />
@@ -311,6 +306,7 @@ export default function IconPage() {
 
   const react = `import { ${component} } from '@fos-icons/react';\n\nexport function Example() {\n  return <${component} size={24} />;\n}`;
   const vue = `<script setup>\nimport { ${component} } from '@fos-icons/vue';\n</script>\n\n<template>\n  <${component} :size="24" />\n</template>`;
+  const svelte = svelteSnippet(icon.name, style, { size: 24, color: null });
 
   // Removing the icon from the header search returns to the list it came from
   // (keeping that search and style, without the selection), or to all icons.
@@ -367,7 +363,7 @@ export default function IconPage() {
         </div>
 
         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <PreviewStage name={icon.name} style={style} svg={shown} onStyleChange={setStyle} onCopy={copySvg} />
+          <PreviewStage name={icon.name} style={style} svg={shown} onStyleChange={setStyle} />
         </div>
 
         <div className="lg:col-start-1 lg:row-start-2">
@@ -382,7 +378,10 @@ export default function IconPage() {
                 {t('iconPage.download', { style: styleLabel })}
               </ButtonAnchor>
             )}
-            <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
+              <Button size="lg" icon="copy" onClick={copySvg} disabled={!shown}>{t('iconPage.copySvg')}</Button>
+            </div>
           </div>
           <LocalLink
             to={editorLink}
@@ -408,18 +407,13 @@ export default function IconPage() {
             tabs={[
               { id: 'react', label: t('iconPage.react'), code: react, lang: 'tsx' },
               { id: 'vue', label: t('iconPage.vue'), code: vue, lang: 'vue' },
+              { id: 'svelte', label: t('iconPage.svelte'), code: svelte, lang: 'svelte' },
             ]}
           />
           <p className="mt-3 text-sm text-muted">
             {t('iconPage.componentNames')}{' '}
             {components.map((c, i) => <span key={c}>{i > 0 && ', '}<code className="rounded bg-sunken px-1 py-0.5 text-ink">{c}</code></span>)}
           </p>
-          {svg && (
-            <div className="mt-6">
-              <h3 className="mb-2 text-sm font-medium text-muted">SVG</h3>
-              <CopyCode code={svg} lang="svg" what="SVG" wrap />
-            </div>
-          )}
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span className="text-muted">{t('iconPage.figmaBody', { name: icon.name })}</span>
             {FIGMA_URL && (

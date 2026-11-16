@@ -54,6 +54,10 @@ const fetchMock = vi.fn(async (url: string) => {
   if (url.includes('brands/')) {
     return new Response(readFileSync(join(__dirname, '../public', url.slice(url.indexOf('brands/'))), 'utf8'), { status: 200 });
   }
+  const chunk = /icons\/(\w+\/\d+\.json)$/.exec(url);
+  if (chunk) {
+    return new Response(readFileSync(join(__dirname, '../public/icons', chunk[1]), 'utf8'), { status: 200 });
+  }
   const style = /icons\/(\w+)\.json/.exec(url)![1] as 'regular';
   return new Response(JSON.stringify(styleSvgs(style)), { status: 200 });
 });
@@ -404,7 +408,7 @@ describe('Side pane (desktop)', () => {
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     expect(preview.innerHTML).toContain('stroke-width="2"');
     await user.click(within(pane).getByRole('button', { name: 'Code' }));
-    expect(within(pane).getByText(/packages always draw the standard 1.25px stroke/)).toBeTruthy();
+    expect(within(pane).getByText(/examples use the standard 1.25px stroke/)).toBeTruthy();
   });
 });
 
@@ -506,7 +510,7 @@ describe('Search tips', () => {
 describe('Inspector sections (desktop)', () => {
   beforeEach(useDesktop);
 
-  it('keeps React and Vue usage collapsed until expanded, one tab each', async () => {
+  it('keeps React, Vue, and Svelte usage collapsed until expanded, with copyable tabs', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=search');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
@@ -521,6 +525,13 @@ describe('Inspector sections (desktop)', () => {
     expect(code()).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
     await user.click(within(section).getByRole('tab', { name: 'Vue' }));
     expect(code()).toMatch(/import \{ SearchRegular \} from '@fos-icons\/vue';/);
+    await user.click(within(section).getByRole('tab', { name: 'Svelte' }));
+    expect(code()).toMatch(/^<script lang="ts">/);
+    expect(code()).toMatch(/import \{ SearchRegular \} from '@fos-icons\/svelte';/);
+    expect(code()).toContain('size={48}');
+    await user.click(within(section).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code());
+    expect(localStorage.getItem('fos:code-tab')).toBe('svelte');
     await user.click(within(section).getByRole('tab', { name: 'React' }));
     // Syntax colors arrive once the highlighter loads.
     await vi.waitFor(() => expect(pane.querySelector('.code-block .hljs-keyword')?.textContent).toBe('import'));
@@ -576,6 +587,42 @@ describe('Icon page header search (desktop)', () => {
       </ToastProvider>
     </ThemeProvider>,
   );
+
+  it('puts Copy SVG beside Download PNG without showing raw SVG code', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/triangle-right');
+    const copy = screen.getByRole('button', { name: 'Copy SVG' });
+    const png = screen.getByRole('button', { name: 'Download PNG' });
+    expect(png.nextElementSibling).toBe(copy);
+    expect(png.parentElement!.firstElementChild).toBe(png);
+    await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(false));
+    expect(screen.getAllByRole('button', { name: 'Copy SVG' })).toHaveLength(1);
+    expect(document.querySelector('.code-block[data-lang="svg"]')).toBeNull();
+    await user.click(copy);
+    expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Icon style' })).getByRole('radio', { name: 'Solid' }));
+    await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(false));
+    await user.click(copy);
+    expect(await navigator.clipboard.readText()).toBe(styleSvgs('filled')['triangle-right']);
+  });
+
+  it('offers copyable Svelte code on icon pages and updates it with the style', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/triangle-right');
+    const section = document.getElementById('use')!.closest('section')!;
+    const tab = within(section).getByRole('tab', { name: 'Svelte' });
+    await user.click(tab);
+    const code = () => section.querySelector('.code-block[data-lang="svelte"] code')!.textContent;
+    expect(code()).toContain("import { TriangleRightRegular } from '@fos-icons/svelte';");
+    expect(code()).toContain('<TriangleRightRegular />');
+    await user.click(within(section).getAllByRole('button', { name: 'Copy' })[0]);
+    expect(await navigator.clipboard.readText()).toBe(code());
+    const preview = screen.getByRole('radiogroup', { name: 'Icon style' });
+    await user.click(within(preview).getByRole('radio', { name: 'Solid' }));
+    expect(code()).toContain('TriangleRightFilled');
+    expect(code()).not.toContain('TriangleRightRegular');
+    expect(tab.getAttribute('aria-selected')).toBe('true');
+  });
 
   it('shows the icon as a removable tag; removing it goes back to the icons', async () => {
     const user = userEvent.setup();
