@@ -3,6 +3,7 @@ import { iconPath } from '../lib/icon-pages';
 import { errorText, LocalizedError } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import {
   compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
@@ -13,6 +14,7 @@ import { BASE_STROKE, buildSvg, hasFilledDetails, hasModifierRole, hasSecondaryR
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeBlock } from './CodeBlock';
+import { KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { composeSvg, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
@@ -20,7 +22,6 @@ import { ColorField, CustomizeControls, Section, SizeControl } from './Customize
 import { ThemeToggle } from './ThemeToggle';
 import { IconButton, Segmented, UiIcon, useToast } from './ui';
 
-const FEEDBACK_URL = 'https://github.com/fos-icons/fosicons.com/issues/new';
 
 
 export interface InspectorProps {
@@ -181,6 +182,7 @@ export function Inspector({
             {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
             {icon.composition && <> · {t('inspector.base')} <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>{icon.composition.base}</button></>}
           </p>
+          {kind === 'core' && <KeywordTags icon={icon} size="sm" className="mt-2.5" />}
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 -mt-1" />
       </div>
@@ -364,7 +366,7 @@ export function Inspector({
  * pane slot (full height, beside the page). Mobile: a modal bottom sheet.
  */
 export function SidePane({
-  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, children,
+  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, children,
 }: {
   desktop: boolean;
   host: HTMLElement | null;
@@ -377,10 +379,13 @@ export function SidePane({
   headingId: string;
   /** Focus the pane heading whenever this changes to a non-null value. */
   focusKey: string | null;
+  /** Desktop only: a page that shows the pane's subject in full (the selected icon's page). */
+  expandTo?: string;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { t } = useI18n();
+  const { pathname, search } = useLocation();
   const [width, setWidth] = usePaneWidth();
   const [resizing, setResizing] = useState(false);
 
@@ -465,17 +470,18 @@ export function SidePane({
             onClick={() => onCollapsedChange(!collapsed)}
           />
           {!collapsed && <ThemeToggle />}
-          {!collapsed && (
-            <a
-              href={FEEDBACK_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-ink transition hover:bg-sunken"
+          {!collapsed && expandTo && (
+            <LocalLink
+              to={expandTo}
+              // The page's back link returns here, with the search and selection intact.
+              state={{ from: `${pathname}${search}` }}
+              aria-label={t('pane.openPage')}
+              title={t('pane.openPage')}
+              className="ml-auto inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken"
             >
-              <UiIcon name="message-smile-square" className="size-5" />
-              {t('pane.feedback')}
-              <span className="sr-only">{t('pane.feedbackNewTab')}</span>
-            </a>
+              {/* Mirrored so the arrows point to the top-right and bottom-left corners. */}
+              <UiIcon name="expand" className="size-5 -scale-x-100" />
+            </LocalLink>
           )}
         </div>
         {collapsed && (

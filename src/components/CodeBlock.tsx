@@ -9,9 +9,13 @@ import { useEffect, useState, type ReactNode } from 'react';
 const CODE_LANGS = ['tsx', 'ts', 'sh', 'html', 'svg', 'vue', 'css'] as const;
 type CodeLang = (typeof CODE_LANGS)[number];
 
-export function CodeBlock({ code, lang, action, className = '' }: {
+export function CodeBlock({ code, lang, action, label, wrap = false, className = '' }: {
   code: string;
   lang: string;
+  /** Replaces the language name in the title bar, e.g. with tabs. */
+  label?: ReactNode;
+  /** Wrap long lines instead of scrolling sideways (for one-line markup such as SVG). */
+  wrap?: boolean;
   /** Optional control in the title bar, e.g. a Copy button. */
   action?: ReactNode;
   className?: string;
@@ -38,10 +42,10 @@ export function CodeBlock({ code, lang, action, className = '' }: {
             <span className="size-2.5 rounded-full bg-[#28c840]" />
           </span>
         )}
-        <span>{CODE_LANGS.includes(lang as CodeLang) ? t(`code.${lang as CodeLang}`) : lang}</span>
+        {label ?? <span>{CODE_LANGS.includes(lang as CodeLang) ? t(`code.${lang as CodeLang}`) : lang}</span>}
         {action && <span className="ml-auto">{action}</span>}
       </div>
-      <pre className="overflow-x-auto px-4 pb-4 pt-1 font-mono text-[13px] leading-relaxed">
+      <pre className={`${wrap ? 'whitespace-pre-wrap break-all' : 'overflow-x-auto'} px-4 pb-4 pt-1 font-mono text-[13px] leading-relaxed`}>
         {colored !== null
           ? <code dangerouslySetInnerHTML={{ __html: colored }} />
           : <code>{code}</code>}

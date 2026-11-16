@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { HeroActions } from '../src/components/HeaderActions';
 import { Layout } from '../src/components/Layout';
 import { ToastProvider } from '../src/components/ui';
 import { catalog, lock, resetStyleCache } from '../src/lib/catalog';
@@ -24,7 +25,7 @@ function renderAt(url: string) {
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<p>Home</p>} />
+              <Route path="/" element={<HeroActions />} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
             </Route>
           </Routes>
@@ -38,10 +39,13 @@ beforeEach(() => { resetStyleCache(); fetchMock.mockClear(); vi.stubGlobal('fetc
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('Header actions', () => {
-  it('links Get started and Figma in new tabs', () => {
+  it('links Figma from the header and Get started from the home page', () => {
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: 'Main' });
-    const start = within(nav).getByRole('link', { name: /Get started/ });
+    // Get started and Download are buttons under the home intro, not header links.
+    expect(within(nav).queryByRole('link', { name: /Get started/ })).toBeNull();
+    expect(within(nav).queryByRole('button', { name: /Download/ })).toBeNull();
+    const start = within(screen.getByRole('main')).getByRole('link', { name: /Get started/ });
     expect(start.getAttribute('href')).toBe('https://github.com/fos-icons/fos-icons');
     expect(start.getAttribute('target')).toBe('_blank');
     const figma = within(nav).getByRole('link', { name: /^Figma/ });
@@ -67,7 +71,7 @@ describe('Header actions', () => {
     }));
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { filename = this.download; });
     renderAt('/');
-    await user.click(within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', { name: 'Download' }));
+    await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Download' }));
     await screen.findByText(/^Downloaded fos-icons-/);
     expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}.zip`);
 

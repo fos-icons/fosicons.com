@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import markRegular from '../brand/mark-regular.svg?raw';
 import { catalog } from '../lib/catalog';
@@ -19,7 +19,17 @@ export function Layout() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useDocumentMeta();
   const { t, label } = useI18n();
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
+  const navigationType = useNavigationType();
+  // A link to another page starts at its top (the router keeps the old scroll
+  // otherwise). Back/forward, links to a #section, and query-only updates
+  // (a style switch) keep the current position.
+  const lastPath = useRef(pathname);
+  useEffect(() => {
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    if (navigationType !== 'POP' && !hash) window.scrollTo(0, 0);
+  }, [pathname, navigationType, hash]);
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
