@@ -4,7 +4,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { DownloadSection } from '../src/components/Customize';
 import { HeroActions } from '../src/components/HeaderActions';
+import { DEFAULT_LOOK, type Look } from '../src/lib/look';
 import { Layout } from '../src/components/Layout';
 import { ToastProvider } from '../src/components/ui';
 import { catalog, lock, resetStyleCache } from '../src/lib/catalog';
@@ -18,6 +20,8 @@ const fetchMock = vi.fn(async (url: string) => {
   return new Response(JSON.stringify(styleSvgs(style)), { status: 200 });
 });
 
+let downloadLook: Look = DEFAULT_LOOK;
+
 function renderAt(url: string) {
   return render(
     <ThemeProvider>
@@ -25,7 +29,7 @@ function renderAt(url: string) {
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<HeroActions />} />
+              <Route path="/" element={<><HeroActions /><DownloadSection look={downloadLook} /></>} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
             </Route>
           </Routes>
@@ -54,14 +58,15 @@ describe('Header actions', () => {
     expect(within(nav).queryByRole('link', { name: /Pricing/ })).toBeNull();
   });
 
-  it('opens Docs from the header', async () => {
+  it('opens Documentation from the home page, not the header', async () => {
     const user = userEvent.setup();
     renderAt('/');
-    await user.click(within(screen.getAllByRole('navigation', { name: 'Main' })[0]).getByRole('link', { name: 'Docs' }));
+    expect(within(screen.getAllByRole('navigation', { name: 'Main' })[0]).queryByRole('link', { name: /Doc/ })).toBeNull();
+    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Documentation' }));
     expect(await screen.findByRole('heading', { name: 'Documentation' })).toBeTruthy();
   });
 
-  it('Download builds a ZIP of every core icon in every style, plus the license', async () => {
+  it('Download all builds a ZIP of every core icon in every style with the chosen look, plus the license', async () => {
     const user = userEvent.setup();
     let blob: Blob | null = null;
     let filename = '';
@@ -70,9 +75,11 @@ describe('Header actions', () => {
       revokeObjectURL: () => {},
     }));
     vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { filename = this.download; });
+    downloadLook = { ...DEFAULT_LOOK, size: 56, strokeWidth: 0.75, mono: '#D93025' };
     renderAt('/');
-    await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Download' }));
+    await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Download all icons' }));
     await screen.findByText(/^Downloaded fos-icons-/);
+    downloadLook = DEFAULT_LOOK;
     expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}.zip`);
 
     const { unzipSync, strFromU8 } = await import('fflate');
@@ -87,9 +94,44 @@ describe('Header actions', () => {
     for (const folder of ['regular', 'solid', 'duocolor', 'duotone']) {
       expect(names).toContain(`${folder}/search.svg`);
     }
-    // Files are the library's own artwork, untouched.
-    expect(strFromU8(files['regular/search.svg'])).toBe(styleSvgs('regular').search);
+    // Files carry the chosen size, stroke (0.75 of the drawn 1.25), and color.
+    const regular = strFromU8(files['regular/search.svg']);
+    expect(regular).toContain('width="56"');
+    expect(regular).toContain('stroke-width="0.75"');
+    expect(regular).toContain('#D93025');
+    expect(regular).not.toContain('currentColor');
     expect(strFromU8(files['LICENSE.txt'])).toBe(license);
-    expect(names).toContain('README.txt');
+    expect(strFromU8(files['README.txt'])).toMatch(/Size: 56px\. Stroke: 0\.75px/);
+  });
+
+  it('downloads only the styles left switched on', async () => {
+    const user = userEvent.setup();
+    let filename = '';
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:test', revokeObjectURL: () => {} }));
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { filename = this.download; });
+    renderAt('/');
+    const main = within(screen.getByRole('main'));
+    for (const style of ['Regular', 'Solid', 'Duocolor']) await user.click(main.getByRole('checkbox', { name: style }));
+    await user.click(main.getByRole('button', { name: 'Download Duotone' }));
+    await screen.findByText(/^Downloaded fos-icons-/);
+    expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}-duotone.zip`);
+    await user.click(main.getByRole('checkbox', { name: 'Duotone' }));
+    expect((main.getByRole('button', { name: 'Choose at least one style' }) as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('keeps authored colors in the ZIP while the colors are the defaults', async () => {
+    const { buildFullSet } = await import('../src/lib/download-all');
+    const { unzipSync, strFromU8 } = await import('fflate');
+    const blob = await buildFullSet(DEFAULT_LOOK, 'light');
+    const bytes = await new Promise<ArrayBuffer>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as ArrayBuffer);
+      reader.readAsArrayBuffer(blob);
+    });
+    const files = unzipSync(new Uint8Array(bytes));
+    const regular = strFromU8(files['regular/search.svg']);
+    expect(regular).toContain('currentColor');
+    expect(regular).toContain(`width="${DEFAULT_LOOK.size}"`);
+    expect(strFromU8(files['duocolor/search.svg'])).toContain('var(--fos-primary');
   });
 });

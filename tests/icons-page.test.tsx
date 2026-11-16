@@ -216,25 +216,25 @@ describe('Icons page', () => {
     expect(enabled).toEqual(['Bottom left']);
   });
 
-  it('exports through Figma-style scale and format rows', async () => {
+  it('downloads through Figma-style scale and format rows', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=search');
-    const list = await screen.findByRole('list', { name: 'Export settings' });
-    // The page grid is large; query inside the Export section only.
+    const list = await screen.findByRole('list', { name: 'Download formats' });
+    // The page grid is large; query inside the Download section only.
     const ex = within(list.closest('section')!);
     expect(within(list).getAllByRole('listitem')).toHaveLength(1);
     // SVG is vector, so its scale is fixed.
     expect((ex.getByLabelText('Scale, row 1') as HTMLSelectElement).disabled).toBe(true);
     expect((ex.getByRole('button', { name: 'Remove row 1' }) as HTMLButtonElement).disabled).toBe(true);
-    expect(ex.getByRole('button', { name: /^Export search$/ })).toBeTruthy();
+    expect(ex.getByRole('button', { name: /^Download search$/ })).toBeTruthy();
 
-    await user.click(ex.getByRole('button', { name: 'Add export setting' }));
+    await user.click(ex.getByRole('button', { name: 'Add a format' }));
     expect(within(list).getAllByRole('listitem')).toHaveLength(2);
     await user.selectOptions(ex.getByLabelText('Format, row 2'), 'png');
     const scale2 = ex.getByLabelText('Scale, row 2') as HTMLSelectElement;
     expect(scale2.disabled).toBe(false);
     expect(scale2.selectedOptions[0].textContent).toBe('1.5x');
-    expect(ex.getByRole('button', { name: 'Export search (2)' })).toBeTruthy();
+    expect(ex.getByRole('button', { name: 'Download search (2)' })).toBeTruthy();
 
     await user.click(ex.getByRole('button', { name: 'Options, row 2' }));
     expect((ex.getByLabelText('Suffix') as HTMLInputElement).placeholder).toBe('-72px');
@@ -249,10 +249,10 @@ describe('Icons page', () => {
     expect(copyScale.disabled).toBe(false);
   });
 
-  it('puts Docs in the header and keeps GitHub and Privacy in the footer', () => {
+  it('links Documentation from the intro and keeps GitHub and Privacy in the footer', () => {
     renderAt('/');
     const header = screen.getByRole('banner');
-    expect(within(header).getAllByRole('link', { name: 'Docs' })[0].getAttribute('href')).toBe('/docs');
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Documentation' }).getAttribute('href')).toBe('/docs');
     expect(within(header).queryByRole('link', { name: /GitHub|Pricing/ })).toBeNull();
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).queryByRole('link', { name: 'Docs' })).toBeNull();
@@ -523,7 +523,7 @@ describe('Inspector sections (desktop)', () => {
     const user = userEvent.setup();
     renderAt('/?style=duocolor');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    const variant = within(pane).getByRole('radiogroup', { name: 'Palette variant' });
+    const variant = within(pane).getByRole('radiogroup', { name: 'Light or dark' });
     await user.click(within(variant).getByRole('radio', { name: 'Dark' }));
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(localStorage.getItem('fos-theme')).toBe('dark');
