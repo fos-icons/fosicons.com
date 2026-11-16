@@ -39,11 +39,11 @@ export const SIZE_SLIDER_MAX = GRID_MAX_SIZE;
 
 /**
  * Size-linked stroke, in 24px grid units: 1.25 at 24px (the library's
- * standard) easing to 0.85 at 64px, so larger icons don't read heavy.
- * Linear between the two anchors, held at 0.85 above 64px, and rounded to
- * the slider's 0.05 steps, so the default 48px gets a clean 1px.
+ * standard) easing to 0.85 at 48px (the default size), so larger icons don't
+ * read heavy. Linear between the two anchors, held at 0.85 above 48px, and
+ * rounded to the slider's 0.05 steps.
  */
-const STROKE_ANCHORS = [{ size: 24, stroke: BASE_STROKE }, { size: 64, stroke: 0.85 }] as const;
+export const STROKE_ANCHORS = [{ size: 24, stroke: BASE_STROKE }, { size: 48, stroke: 0.85 }] as const;
 export function autoStroke(size: number): number {
   const [a, b] = STROKE_ANCHORS;
   const t = (Math.min(size, b.size) - a.size) / (b.size - a.size);

@@ -2,12 +2,17 @@ import { useI18n } from '../i18n';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { palettes, type StyleId } from '../lib/catalog';
 import {
-  autoStroke, DEFAULT_LOOK, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
+  autoStroke, DEFAULT_LOOK, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
   strokeAdjustable, strokeOf, type Look,
 } from '../lib/look';
 import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
-import { IconButton, Segmented, UiIcon } from './ui';
+import { IconButton, RangeSlider, Segmented, UiIcon } from './ui';
+
+/** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
+const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
+const SIZE_LABELS = [16, 24, 32, 48, 64] as const;
+const STROKE_MARKS = [0.5, 1, 1.5, 2, 2.5] as const;
 
 export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   const id = useId();
@@ -135,22 +140,19 @@ export function SizeControl({ look, onChange }: { look: Look; onChange: (patch: 
         </label>
       )}
     >
-      <label htmlFor={`${uid}-size`} className="sr-only">{t('customize.size')}</label>
-      <input
+      <RangeSlider
         id={`${uid}-size`}
-        type="range"
+        label={t('customize.size')}
         min={SIZE_SLIDER_MIN}
         max={SIZE_SLIDER_MAX}
         step={SIZE_STEP}
         value={Math.min(SIZE_SLIDER_MAX, Math.max(SIZE_SLIDER_MIN, look.size))}
-        aria-valuetext={t('customize.pxValue', { value: look.size })}
-        onChange={(e) => commitSize(Number(e.target.value))}
-        className="range w-full"
+        valueText={t('customize.pxValue', { value: look.size })}
+        onChange={commitSize}
+        marks={SIZE_MARKS}
+        labels={SIZE_LABELS}
+        format={(v) => t('customize.pxValue', { value: v })}
       />
-      <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint" aria-hidden="true">
-        <span>{t('customize.pxValue', { value: SIZE_SLIDER_MIN })}</span>
-        <span>{t('customize.pxValue', { value: SIZE_SLIDER_MAX })}</span>
-      </div>
       {look.size > GRID_MAX_SIZE && (
         <p className="mt-2 text-xs leading-relaxed text-faint">{t('customize.gridLimit', { max: GRID_MAX_SIZE, size: look.size })}</p>
       )}
@@ -189,25 +191,21 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
     >
       {canStroke ? (
         <>
-          <label htmlFor={`${uid}-stroke`} className="sr-only">{t('customize.stroke')}</label>
-          <input
+          <RangeSlider
             id={`${uid}-stroke`}
-            type="range"
+            label={t('customize.stroke')}
             min={STROKE_MIN}
             max={STROKE_MAX}
             step={STROKE_STEP}
             value={stroke}
-            aria-valuetext={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke) }) : fmtStroke(stroke)}
-            onChange={(e) => onChange({ strokeWidth: Number(e.target.value) })}
-            className="range w-full"
+            valueText={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke) }) : fmtStroke(stroke)}
+            onChange={(v) => onChange({ strokeWidth: v })}
+            marks={STROKE_MARKS}
+            format={fmtStroke}
           />
-          <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint" aria-hidden="true">
-            <span>{fmtStroke(STROKE_MIN)}</span>
-            <span>{fmtStroke(STROKE_MAX)}</span>
-          </div>
           <p className="mt-2 text-xs leading-relaxed text-faint">
             {look.strokeWidth === null
-              ? t('customize.strokeAutoHelp', { base: fmtStroke(BASE_STROKE), large: fmtStroke(autoStroke(64)) })
+              ? t('customize.strokeAutoHelp', { base: fmtStroke(BASE_STROKE), large: fmtStroke(autoStroke(STROKE_ANCHORS[1].size)), largeSize: STROKE_ANCHORS[1].size })
               : t('customize.strokeFixedHelp')}
           </p>
           {footnote}

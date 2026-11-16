@@ -303,9 +303,9 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
     await screen.findAllByRole('button', { name: 'search' });
     const grid = screen.getByRole('list', { name: 'Regular icons' }).parentElement!;
-    // Default: 48px with the automatic 1px stroke (1 / 1.25 = 0.8).
+    // Default: 48px with the automatic 0.85px stroke (0.85 / 1.25 = 0.68).
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.8');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(within(pane).getByText('Auto')).toBeTruthy();
 
     // The slider covers what the grid previews; larger sizes go in the px field.
@@ -323,10 +323,11 @@ describe('Side pane (desktop)', () => {
     fireEvent.change(within(pane).getByRole('slider', { name: 'Size' }), { target: { value: '32' } });
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('2');
     await user.click(within(pane).getByRole('button', { name: 'Use auto' }));
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.92');
+    // Auto at 32px is 1.1px (1.1 / 1.25 = 0.88).
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.88');
 
     await user.click(within(pane).getByRole('button', { name: /Reset to defaults/ }));
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.8');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
   });
 
@@ -529,7 +530,7 @@ describe('Inspector sections (desktop)', () => {
   it('says when filled parts of an icon keep their weight as the stroke changes', async () => {
     renderAt('/?icon=cloud-moon');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    // Default 48px Auto stroke is 1px, not the drawn 1.25px.
+    // Default 48px Auto stroke is 0.85px, not the drawn 1.25px.
     expect(await within(pane).findByText(/drawn as filled shapes/)).toBeTruthy();
   });
 

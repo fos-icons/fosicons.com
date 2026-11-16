@@ -173,7 +173,7 @@ const en = {
   'customize.strokeAuto': 'Auto',
   'customize.strokeUseAuto': 'Use auto',
   'customize.strokeAutoValue': '{value}, automatic for this size',
-  'customize.strokeAutoHelp': 'Auto follows the size: {base} at 24px, {large} at 64px. Measured on the 24px grid.',
+  'customize.strokeAutoHelp': 'Auto follows the size: {base} at 24px, {large} at {largeSize}px and up. Measured on the 24px grid.',
   'customize.strokeFixedHelp': 'Fixed at your value for every size. Measured on the 24px grid.',
   'customize.strokeBrand': 'Brand marks are shown exactly as provided.',
   'customize.strokeSolid': 'Solid icons are filled shapes, so they have no stroke to adjust.',

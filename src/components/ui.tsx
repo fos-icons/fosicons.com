@@ -1,4 +1,4 @@
-import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
 import type { LinkProps } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import uiIcons from '../data/ui-icons.json';
@@ -133,6 +133,68 @@ export function IconButton({ label, icon, className = '', ...props }: ButtonHTML
     >
       <UiIcon name={icon} />
     </button>
+  );
+}
+
+/** Horizontal size of the slider handle; tick positions line up with its center. */
+const THUMB_W = 22;
+
+/**
+ * A slider with tick marks under its track. The track fills in the brand
+ * color up to an oval, brand-colored handle. `marks` places ticks;
+ * `labels` (a subset of marks) also prints their value, shown on hover or
+ * keyboard focus.
+ */
+export function RangeSlider({
+  id, label, min, max, step, value, onChange, valueText, marks, labels = marks, format,
+}: {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
+  /** What screen readers announce for the current value. */
+  valueText?: string;
+  marks: readonly number[];
+  labels?: readonly number[];
+  format: (value: number) => string;
+}) {
+  const at = (v: number) => (Math.min(max, Math.max(min, v)) - min) / (max - min);
+  // Center of the handle at fraction p of the track (the handle stays inside the input's box).
+  const left = (p: number) => `calc(${THUMB_W / 2}px + (100% - ${THUMB_W}px) * ${p})`;
+  const shown = new Set(labels);
+  return (
+    // Values under the ticks appear while the slider is hovered or focused.
+    <div className="group">
+      <label htmlFor={id} className="sr-only">{label}</label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        aria-valuetext={valueText}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="range w-full"
+        style={{ '--fill': left(at(value)) } as CSSProperties}
+      />
+      {/* Pulled up so the ticks sit just under the track (the input box is taller than the track). */}
+      <div className="relative -mt-1 h-[22px]" aria-hidden="true">
+        {marks.map((m) => (
+          <span key={m} className="absolute top-0 flex -translate-x-1/2 flex-col items-center" style={{ left: left(at(m)) }}>
+            <span className={`h-1.5 w-px ${m <= value ? 'bg-brand/60' : 'bg-line-strong'}`} />
+            {shown.has(m) && (
+              <span className="mt-1 text-[11px] tabular-nums leading-none text-faint opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+                {format(m)}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 
