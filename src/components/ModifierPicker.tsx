@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   CORNERS, initialCorner, loadModifiers, MODIFIER_GROUPS, modifierTileSvg,
   type Corner, type ModifierAsset,
@@ -30,13 +30,15 @@ export function useModifiers(enabled: boolean) {
 const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
 
 export function ModifierPicker({
-  modifiers, value, onChange, authored,
+  modifiers, value, onChange, authored, accessory,
 }: {
   modifiers: ModifierAsset[];
   value: ModifierChoice | null;
   onChange: (value: ModifierChoice | null) => void;
   /** Modifier names the library has authored for this icon, by corner. */
   authored: Map<string, Set<Corner>>;
+  /** A compact control beside None (the modifier color). */
+  accessory?: ReactNode;
 }) {
   const cornerLabel = useId();
   const { t, label } = useI18n();
@@ -68,16 +70,19 @@ export function ModifierPicker({
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-3">
-        <button
-          type="button"
-          aria-pressed={!value}
-          onClick={() => onChange(null)}
-          className={`h-8 rounded-lg border px-3 text-sm font-medium transition-colors ${
-            !value ? 'border-ink bg-ink text-canvas' : 'border-line-strong hover:bg-sunken'
-          }`}
-        >
-          {t('modifiers.none')}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            aria-pressed={!value}
+            onClick={() => onChange(null)}
+            className={`h-8 rounded-lg border px-3 text-sm font-medium transition-colors ${
+              !value ? 'border-ink bg-ink text-canvas' : 'border-line-strong hover:bg-sunken'
+            }`}
+          >
+            {t('modifiers.none')}
+          </button>
+          {accessory}
+        </div>
         <div className="flex items-center gap-2">
           <span id={cornerLabel} className="text-xs text-muted">{t('modifiers.corner')}</span>
           <div role="group" aria-labelledby={cornerLabel} className="grid grid-cols-2 gap-1">

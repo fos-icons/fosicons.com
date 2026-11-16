@@ -175,9 +175,11 @@ const MAX_BADGE_AREA = (24 * 24) / 4;
  * SVG with the same CSS color roles as authored compositions, ready for
  * `buildSvg`. `scale` resizes the badge and the gap cut around it together,
  * anchored at the badge's outer corner; at 1 the output matches the library's
- * own compositions exactly.
+ * own compositions exactly. `modifierRole` gives Regular and Solid badges the
+ * `--fos-modifier` color role too (falling back to the icon's color), so the
+ * badge can be recolored on its own; the duo styles always have it.
  */
-export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner, style: StyleId, scale = 1): string {
+export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner, style: StyleId, scale = 1, modifierRole = false): string {
   const placement = modifier.positions[corner];
   if (!placement) throw new LocalizedError('error.badCorner', { modifier: modifier.label, corner: CORNER_LABELS[corner].toLowerCase() });
   const prefix = `fm-${modifier.name}-${corner}`;
@@ -251,7 +253,7 @@ export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner
   cutoutStencil(badge, prefix);
   badge.setAttribute('x', String(placement.x));
   badge.setAttribute('y', String(placement.y));
-  badge.setAttribute('color', duo ? `var(--fos-modifier, ${modifier.color})` : 'currentColor');
+  badge.setAttribute('color', duo ? `var(--fos-modifier, ${modifier.color})` : modifierRole ? 'var(--fos-modifier, currentColor)' : 'currentColor');
 
   let glyph: Element = badge;
   if (scaled) {
