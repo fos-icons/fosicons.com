@@ -1,4 +1,5 @@
-import { useState, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Inspector, SidePane, type InspectorProps } from '../components/Inspector';
 import {
@@ -13,13 +14,18 @@ import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
   categoryPath, displayName, editorPath, iconPath, relatedIcons, svgFilePath,
 } from '../lib/icon-pages';
-import { CONTAINER, usePaneHost } from '../lib/layout';
+import { CONTAINER, useHeaderSlot, usePaneHost } from '../lib/layout';
 import { DEFAULT_LOOK, exportColors, type Look } from '../lib/look';
 import { buildSvg } from '../lib/svg';
 import { useMediaQuery } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { componentName } from '../lib/react-snippet';
+import { useSlashToFocus } from './IconsPage';
 import NotFoundPage from './NotFoundPage';
+import { useModifiers } from '../components/ModifierPicker';
+import { composeSvg, CORNERS, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
+import { resolveModifier } from '../lib/phrase';
+import { svgBlob } from '../lib/export';
 
 /**
  * A link to the editor on the home page that, on a plain click, opens the
@@ -35,6 +41,128 @@ const openInPlace = (open: () => void) => (e: MouseEvent) => {
 /** Sizes icons are usually set at, shown 1:1 so the drawing can be judged where it ships. */
 /** Pulled left so its arrow lines up with the breadcrumbs below. */
 const backLink = '-ml-2 mb-4 px-2';
+
+/**
+ * Icon pages visited this session, for the header search's back and forward
+ * arrows. Opening an icon any other way drops what was ahead, like browser
+ * history; the arrows only move along the trail.
+ */
+const trail: { names: string[]; at: number } = { names: [], at: -1 };
+function visitIcon(name: string, viaTrail: boolean) {
+  if (viaTrail) {
+    const i = trail.names.lastIndexOf(name);
+    if (i >= 0) { trail.at = i; return; }
+  }
+  if (trail.names[trail.at] === name) return;
+  trail.names = [...trail.names.slice(0, trail.at + 1), name];
+  trail.at = trail.names.length - 1;
+}
+
+/**
+ * The header search on an icon page (desktop), styled like the docs search.
+ * The current icon, and any modifier on it, sit in the field as removable
+ * tags. Typing a modifier this icon supports ("add", "plus", "lock") offers to
+ * put it on the icon; Enter does. Anything else searches the grid. Backspace in
+ * the empty field removes the last tag: the modifier, then the icon, which goes
+ * back to the icon list. Arrows step through the icons visited before.
+ */
+function HeaderIconSearch({
+  name, modifiers, modifier, onModifier, onRemove, prev, next,
+}: {
+  name: string;
+  /** Modifiers this icon can take. */
+  modifiers: { name: string; label: string }[];
+  /** The modifier on the icon, by library name. */
+  modifier: string | null;
+  onModifier: (name: string | null) => void;
+  onRemove: () => void;
+  prev: string | null;
+  next: string | null;
+}) {
+  const { t, path, label } = useI18n();
+  const navigate = useNavigate();
+  const ref = useRef<HTMLInputElement>(null);
+  const [query, setQuery] = useState('');
+  useSlashToFocus(ref);
+  const modLabel = (m: string) => label('modifier', m, modifiers.find((x) => x.name === m)?.label ?? m);
+  const match = query.trim() ? resolveModifier(query.trim(), modifiers) : null;
+  const suggestion = match && match !== modifier ? match : null;
+  const submit = (e: FormEvent) => {
+    e.preventDefault();
+    const q = query.trim();
+    if (!q) return;
+    if (suggestion) { onModifier(suggestion); setQuery(''); return; }
+    navigate(path(`/?${new URLSearchParams({ q })}`));
+  };
+  const step = (to: string | null) => to && navigate(path(iconPath(to)), { state: { trail: true } });
+  const tag = 'inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-brand-soft pl-2 pr-0.5 text-xs font-medium text-brand';
+  const tagX = 'inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-brand/10';
+  return (
+    <div className="flex w-full max-w-lg items-center gap-1">
+      {/* < and >: the chevron turned to point back and forward. */}
+      {([['prev', prev, 'rotate-90', t('iconPage.previousIcon')], ['next', next, '-rotate-90', t('iconPage.nextIcon')]] as const).map(([key, to, turn, text]) => (
+        <button
+          key={key}
+          type="button"
+          disabled={!to}
+          onClick={() => step(to)}
+          aria-label={to ? `${text}: ${to}` : text}
+          title={to ? `${text}: ${to}` : text}
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-ink transition hover:bg-sunken disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+        >
+          <UiIcon name="chevron-down" className={`size-4 ${turn}`} />
+        </button>
+      ))}
+      <form role="search" onSubmit={submit} className="relative min-w-0 flex-1">
+        <div className="flex h-9 w-full items-center gap-1.5 rounded-lg border border-line-strong bg-surface pl-3 pr-1.5 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
+          <UiIcon name="search" className="size-4 shrink-0 text-faint" />
+          <span className={`${tag} max-w-[45%]`}>
+            <span className="truncate">{name}</span>
+            <button type="button" onClick={onRemove} aria-label={t('iconPage.removeIcon', { name })} title={t('iconPage.removeIcon', { name })} className={tagX}>
+              <UiIcon name="x" className="size-3" />
+            </button>
+          </span>
+          {modifier && (
+            <span className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-modifier-soft pl-2 pr-0.5 text-xs font-medium text-modifier">
+              <span className="truncate">{modLabel(modifier)}</span>
+              <button type="button" onClick={() => onModifier(null)} aria-label={t('iconPage.removeModifier', { modifier: modLabel(modifier) })} className="inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-modifier/15">
+                <UiIcon name="x" className="size-3" />
+              </button>
+            </span>
+          )}
+          <input
+            ref={ref}
+            type="search"
+            aria-label={t('icons.searchIcons')}
+            placeholder={modifier ? '' : t('iconPage.searchOther')}
+            value={query}
+            autoComplete="off"
+            spellCheck={false}
+            aria-describedby={suggestion ? 'icon-search-suggestion' : undefined}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Backspace' && !query) { e.preventDefault(); if (modifier) onModifier(null); else onRemove(); }
+              if (e.key === 'Escape' && query) { e.preventDefault(); setQuery(''); }
+            }}
+            className="h-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint [&::-webkit-search-cancel-button]:hidden"
+          />
+          {!query && <kbd aria-hidden="true" className="hidden shrink-0 rounded border border-line bg-sunken px-1.5 text-xs text-muted md:inline">/</kbd>}
+        </div>
+        {suggestion && (
+          <button
+            id="icon-search-suggestion"
+            type="submit"
+            className="absolute inset-x-0 top-full z-30 mt-1 flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-left text-sm text-ink shadow-lg hover:bg-sunken"
+          >
+            <UiIcon name="plus" className="size-4 text-modifier" />
+            <span className="min-w-0 flex-1 truncate">{t('iconPage.addModifier', { modifier: modLabel(suggestion), name })}</span>
+            <kbd aria-hidden="true" className="rounded border border-line bg-sunken px-1.5 text-xs text-muted">Enter</kbd>
+          </button>
+        )}
+      </form>
+    </div>
+  );
+}
 
 const ACTUAL_SIZES = [
   { px: 16, className: 'size-4' },
@@ -114,14 +242,47 @@ export default function IconPage() {
   const svg = useArtwork(style, icon ? [icon.name] : [])[name];
   const navigate = useNavigate();
   const desktop = useMediaQuery('(min-width: 1024px)');
+  /** The header search slot shows from md up, like the docs page. */
+  const wide = useMediaQuery('(min-width: 768px)');
+  const headerSlot = useHeaderSlot();
   const paneHost = usePaneHost();
   /** The style open in the editor beside the page; null when it is closed. It stays open across icon pages. */
   const [editing, setEditing] = useState<StyleId | null>(null);
   const [look, setLook] = useState<Look>(DEFAULT_LOOK);
-  const [badge, setBadge] = useState<InspectorProps['badgeRequest']>(null);
+  /** A modifier on the icon (?modifier=, ?corner=), from the header search or the editor; kept in shared links. */
+  const modifierParam = params.get('modifier');
+  const cornerParam = params.get('corner');
+  const badge: InspectorProps['badgeRequest'] = modifierParam
+    ? { name: modifierParam, corner: (CORNERS as readonly string[]).includes(cornerParam ?? '') ? cornerParam as Corner : null }
+    : null;
+  const setBadge = (choice: InspectorProps['badgeRequest']) => setParams((p) => {
+    const q = new URLSearchParams(p);
+    if (choice) q.set('modifier', choice.name); else q.delete('modifier');
+    if (choice?.corner) q.set('corner', choice.corner); else q.delete('corner');
+    return q;
+  }, { replace: true, preventScrollReset: true, state: location.state });
+  const canModify = !!icon && !icon.composition;
+  const modifiers = useModifiers(canModify && (wide || !!badge));
+  const available = useMemo(() => (icon && canModify && modifiers.list ? modifiersFor(icon.name, modifiers.list) : []), [icon, canModify, modifiers.list]);
+  const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
+  /** The artwork the page shows, copies, and downloads: the icon, plus any modifier on it. */
+  const shown = useMemo(() => {
+    if (!svg || !applied) return svg;
+    try {
+      const corner = badge?.corner && applied.positions[badge.corner] ? badge.corner : initialCorner(applied);
+      return composeSvg(svg, applied, corner, style);
+    } catch {
+      return svg;
+    }
+  }, [svg, applied, badge?.corner, style]);
+  const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
+  useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
   const editSvg = useArtwork(editing ?? catalog.styles[0], icon && editing ? [icon.name] : [])[name];
   if (!icon) return <NotFoundPage />;
-  const openEditor = (style: StyleId) => { setBadge(null); setEditing(style); };
+  const openEditor = (style: StyleId) => setEditing(style);
+  const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
+  const prevIcon = trailAt > 0 ? trail.names[trailAt - 1] : null;
+  const nextIcon = trailAt >= 0 && trailAt < trail.names.length - 1 ? trail.names[trailAt + 1] : null;
   const closeEditor = () => setEditing(null);
 
   const title = displayName(icon.name);
@@ -130,17 +291,17 @@ export default function IconPage() {
   const components = catalog.styles.map((s) => componentName(icon.name, s));
   const component = componentName(icon.name, style);
   const styleLabel = t(`style.${style}`);
-  const fileBase = `${icon.name}-${STYLE_META[style].slug}`;
+  const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
   const editorLink = `${editorPath(icon.name)}${style === catalog.styles[0] ? '' : `&style=${STYLE_META[style].slug}`}`;
 
   const copySvg = () => {
-    if (!svg) return;
-    copyText(svg).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
+    if (!shown) return;
+    copyText(shown).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
   };
   const downloadPng = () => {
-    if (!svg) return;
+    if (!shown) return;
     // Light-theme ink: a PNG usually lands on a white slide or doc, whatever theme the site is in.
-    const file = buildSvg(svg, { ...exportColors(svg, style, DEFAULT_LOOK, 'light'), size: PNG_PIXELS });
+    const file = buildSvg(shown, { ...exportColors(shown, style, DEFAULT_LOOK, 'light'), size: PNG_PIXELS });
     svgToPng(file, PNG_PIXELS).then(
       (png) => downloadBlob(png, `${fileBase}.png`),
       (e) => toast('error', errorText(e, i18n, 'error.png')),
@@ -151,8 +312,33 @@ export default function IconPage() {
   const react = `import { ${component} } from '@fos-icons/react';\n\nexport function Example() {\n  return <${component} size={24} />;\n}`;
   const vue = `<script setup>\nimport { ${component} } from '@fos-icons/vue';\n</script>\n\n<template>\n  <${component} :size="24" />\n</template>`;
 
+  // Removing the icon from the header search returns to the list it came from
+  // (keeping that search and style, without the selection), or to all icons.
+  const listWithoutIcon = (() => {
+    if (!backTo) return null;
+    const url = new URL(backTo, 'https://fosicons.com');
+    for (const key of ['icon', 'modifier', 'corner']) url.searchParams.delete(key);
+    return `${url.pathname}${url.search}`;
+  })();
+  const leave = () => (listWithoutIcon ? navigate(listWithoutIcon) : navigate(path('/')));
+  const inHeader = headerSlot && wide;
+
   return (
     <div className={`${CONTAINER} pb-24 pt-6 sm:pt-8`}>
+      {inHeader && createPortal(
+        <HeaderIconSearch
+          name={icon.name}
+          modifiers={available}
+          modifier={applied?.name ?? null}
+          onModifier={(m) => setBadge(m ? { name: m, corner: null } : null)}
+          onRemove={leave}
+          prev={prevIcon}
+          next={nextIcon}
+        />,
+        headerSlot,
+      )}
+      {/* Phones have no header search: a plain link back. */}
+      <div className={inHeader ? 'hidden' : undefined}>
       {backTo ? (
         // A plain Link: backTo is already a full path. Going back in history also restores the list's scroll.
         <Link to={backTo} onClick={openInPlace(() => navigate(-1))} className={`${buttonClass({ variant: 'quiet', size: 'sm' })} ${backLink}`}>
@@ -161,6 +347,7 @@ export default function IconPage() {
       ) : (
         <ButtonLink to="/" variant="quiet" size="sm" icon="arrow-left" className={backLink}>{t('iconPage.back')}</ButtonLink>
       )}
+      </div>
       <Breadcrumbs
         items={[
           { label: t('iconPage.allIcons'), to: '/' },
@@ -180,14 +367,21 @@ export default function IconPage() {
         </div>
 
         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <PreviewStage name={icon.name} style={style} svg={svg} onStyleChange={setStyle} onCopy={copySvg} />
+          <PreviewStage name={icon.name} style={style} svg={shown} onStyleChange={setStyle} onCopy={copySvg} />
         </div>
 
         <div className="lg:col-start-1 lg:row-start-2">
           <div className="flex flex-wrap gap-2">
-            <ButtonAnchor href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} variant="primary" size="lg" icon="download">
-              {t('iconPage.download', { style: styleLabel })}
-            </ButtonAnchor>
+            {applied ? (
+              // With a modifier, the file is composed here rather than the library's published one.
+              <Button variant="primary" size="lg" icon="download" disabled={!shown} onClick={() => shown && downloadBlob(svgBlob(shown), `${fileBase}.svg`)}>
+                {t('iconPage.download', { style: styleLabel })}
+              </Button>
+            ) : (
+              <ButtonAnchor href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} variant="primary" size="lg" icon="download">
+                {t('iconPage.download', { style: styleLabel })}
+              </ButtonAnchor>
+            )}
             <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
           </div>
           <LocalLink
@@ -208,7 +402,7 @@ export default function IconPage() {
       </div>
 
       <div className="mt-14 space-y-12">
-        <LandingSection id="use" narrow title={t('iconPage.use', { name: title.toLowerCase() })}>
+        <LandingSection id="use" narrow className="code-stone" title={t('iconPage.use', { name: title.toLowerCase() })}>
           <CodeTabs
             label={t('iconPage.framework')}
             tabs={[

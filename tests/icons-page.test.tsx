@@ -10,6 +10,7 @@ import { ToastProvider } from '../src/components/ui';
 import { catalog, resetStyleCache } from '../src/lib/catalog';
 import { ThemeProvider } from '../src/lib/theme';
 import { IconsPage } from '../src/pages/IconsPage';
+import IconPage from '../src/pages/IconPage';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { styleSvgs } from './helpers';
@@ -228,18 +229,24 @@ describe('Icons page', () => {
     expect((ex.getByRole('button', { name: 'Remove row 1' }) as HTMLButtonElement).disabled).toBe(true);
     expect(ex.getByRole('button', { name: /^Download search$/ })).toBeTruthy();
 
+    // + adds the formats not listed yet: PNG, then JPG; then PNG one scale up.
     await user.click(ex.getByRole('button', { name: 'Add a format' }));
-    expect(within(list).getAllByRole('listitem')).toHaveLength(2);
-    await user.selectOptions(ex.getByLabelText('Format, row 2'), 'png');
+    expect((ex.getByLabelText('Format, row 2') as HTMLSelectElement).value).toBe('png');
     const scale2 = ex.getByLabelText('Scale, row 2') as HTMLSelectElement;
     expect(scale2.disabled).toBe(false);
-    expect(scale2.selectedOptions[0].textContent).toBe('1.5x');
-    expect(ex.getByRole('button', { name: 'Download search (2)' })).toBeTruthy();
+    expect(scale2.selectedOptions[0].textContent).toBe('1x');
+    await user.click(ex.getByRole('button', { name: 'Add a format' }));
+    expect((ex.getByLabelText('Format, row 3') as HTMLSelectElement).value).toBe('jpg');
+    expect(ex.getByText(/JPGs have white ones/)).toBeTruthy();
+    await user.click(ex.getByRole('button', { name: 'Add a format' }));
+    expect((ex.getByLabelText('Format, row 4') as HTMLSelectElement).value).toBe('png');
+    expect((ex.getByLabelText('Scale, row 4') as HTMLSelectElement).selectedOptions[0].textContent).toBe('1.5x');
+    expect(ex.getByRole('button', { name: 'Download search (4)' })).toBeTruthy();
 
-    await user.click(ex.getByRole('button', { name: 'Options, row 2' }));
+    await user.click(ex.getByRole('button', { name: 'Options, row 4' }));
     expect((ex.getByLabelText('Suffix') as HTMLInputElement).placeholder).toBe('-72px');
 
-    await user.click(ex.getByRole('button', { name: 'Remove row 1' }));
+    for (const n of [4, 3, 1]) await user.click(ex.getByRole('button', { name: `Remove row ${n}` }));
     expect(within(list).getAllByRole('listitem')).toHaveLength(1);
 
     // Copy follows the same shape; scale only applies to images.
@@ -543,5 +550,72 @@ describe('Inspector sections (desktop)', () => {
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     await within(pane).findByRole('img', { name: /search, Regular/ });
     expect(within(pane).queryByText(/drawn as filled shapes/)).toBeNull();
+  });
+});
+
+describe('Icon page header search (desktop)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: /min-width: (768|1024)px/.test(query), media: query, onchange: null,
+      addEventListener: () => {}, removeEventListener: () => {},
+      addListener: () => {}, removeListener: () => {}, dispatchEvent: () => false,
+    }));
+  });
+
+  const renderIconPage = (url: string) => render(
+    <ThemeProvider>
+      <ToastProvider>
+        <MemoryRouter initialEntries={[url]}>
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<><IconsPage /><Spy /></>} />
+              <Route path="icons/:name" element={<><IconPage /><Spy /></>} />
+            </Route>
+          </Routes>
+        </MemoryRouter>
+      </ToastProvider>
+    </ThemeProvider>,
+  );
+
+  it('shows the icon as a removable tag; removing it goes back to the icons', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/bell');
+    const header = within(screen.getByRole('banner'));
+    await user.click(await header.findByRole('button', { name: 'Remove bell and go back to the icons' }));
+    expect(await screen.findByRole('heading', { level: 1, name: /Find the right icon/ })).toBeTruthy();
+    expect(location).toBe('');
+  });
+
+  it('removes the tag with Backspace, and searches the grid on Enter', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/bell');
+    const field = await within(screen.getByRole('banner')).findByRole('searchbox', { name: 'Search icons' });
+    await user.type(field, 'arrow{Enter}');
+    await screen.findByRole('heading', { level: 1, name: /Find the right icon/ });
+    expect(location).toBe('?q=arrow');
+
+    cleanup();
+    renderIconPage('/icons/bell');
+    const again = await within(screen.getByRole('banner')).findByRole('searchbox', { name: 'Search icons' });
+    await user.click(again);
+    await user.keyboard('{Backspace}');
+    await screen.findByRole('heading', { level: 1, name: /Find the right icon/ });
+    expect(location).toBe('');
+  });
+
+  it('puts a modifier on the icon when its name is typed, as a second tag', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/bell');
+    const field = await within(screen.getByRole('banner')).findByRole('searchbox', { name: 'Search icons' });
+    // "plus" is an everyday word for the Add modifier.
+    await user.type(field, 'plus');
+    await screen.findByRole('button', { name: /Put Add on bell/ });
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(location).toBe('?modifier=add'));
+    expect(within(screen.getByRole('banner')).getByRole('button', { name: 'Remove Add' })).toBeTruthy();
+    // Backspace removes the last tag first: the modifier, not the icon.
+    await user.keyboard('{Backspace}');
+    await waitFor(() => expect(location).toBe(''));
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Bell icon');
   });
 });

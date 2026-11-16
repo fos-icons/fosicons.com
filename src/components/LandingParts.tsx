@@ -100,7 +100,7 @@ export function CopyCode({ code, lang, what, label, wrap, className = '' }: {
         <button
           type="button"
           onClick={() => copyText(code).then(() => toast('success', t('iconPage.copied', { what })), (e: Error) => toast('error', e.message))}
-          className="rounded-md px-2 py-1 text-xs font-medium text-[#c9c9cf] transition hover:bg-white/10 hover:text-white"
+          className="rounded-md px-2 py-1 text-xs font-medium text-[var(--code-muted)] transition hover:bg-[var(--code-hover)] hover:text-[var(--code-ink)]"
         >
           {t('code.copy')}
         </button>
@@ -161,7 +161,7 @@ export function CodeTabs({ tabs, label }: {
                 tabIndex={i === index ? 0 : -1}
                 onClick={() => choose(i)}
                 className={`rounded-md px-2 py-1 text-xs font-medium transition ${
-                  i === index ? 'bg-white/10 text-white' : 'text-[#9a9aa3] hover:text-white'
+                  i === index ? 'bg-[var(--code-hover)] text-[var(--code-ink)]' : 'text-[var(--code-muted)] hover:text-[var(--code-ink)]'
                 }`}
               >
                 {tab.label}

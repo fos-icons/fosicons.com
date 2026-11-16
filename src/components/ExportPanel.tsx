@@ -1,13 +1,14 @@
 import { useI18n } from '../i18n';
 import { useId, useState } from 'react';
-import { copyPng, copyText, downloadBlob, svgBlob, svgToPng } from '../lib/export';
+import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng } from '../lib/export';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { Section } from './Customize';
 import { Button, IconButton, UiIcon } from './ui';
 
 export const EXPORT_SCALES = [0.5, 1, 1.5, 2, 3, 4] as const;
 type Scale = (typeof EXPORT_SCALES)[number];
-type Format = 'png' | 'svg';
+type Format = 'png' | 'jpg' | 'svg';
+const MIME: Record<Format, string> = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg' };
 
 export interface ExportRow {
   id: number;
@@ -29,7 +30,7 @@ const scaleLabel = (s: number) => `${s}x`;
 const effectiveScale = (r: Pick<ExportRow, 'format' | 'scale'>) => (r.format === 'svg' ? 1 : r.scale);
 const pxOf = (size: number, scale: number) => Math.round(size * scale);
 export const defaultSuffix = (r: Pick<ExportRow, 'format' | 'scale'>, size: number) =>
-  (r.format === 'png' ? `-${pxOf(size, r.scale)}px` : '');
+  (r.format === 'svg' ? '' : `-${pxOf(size, r.scale)}px`);
 
 const field = 'h-8 rounded-md border border-transparent bg-sunken px-2 text-sm text-ink transition-colors hover:border-line-strong disabled:text-faint disabled:hover:border-transparent';
 
@@ -69,10 +70,13 @@ export function ExportPanel({
   const patch = (id: number, change: Partial<ExportRow>) => setRows(rows.map((r) => (r.id === id ? { ...r, ...change } : r)));
 
   const add = () => {
-    const last = rows[rows.length - 1];
-    // Like Figma: the next row steps up in scale.
-    const scale = last ? (EXPORT_SCALES.find((s) => s > last.scale) ?? last.scale) : 1;
-    setRows([...rows, row(last?.format ?? 'png', scale)]);
+    // A new row adds the next format not in the list yet (PNG, then JPG); after
+    // that, another PNG one scale up from the largest PNG, like Figma.
+    const used = new Set(rows.map((r) => r.format));
+    const format: Format = (['png', 'jpg'] as const).find((f) => !used.has(f)) ?? 'png';
+    const same = rows.filter((r) => r.format === format).map((r) => r.scale);
+    const scale = same.length ? (EXPORT_SCALES.find((s) => s > Math.max(...same)) ?? EXPORT_SCALES[EXPORT_SCALES.length - 1]) : 1;
+    setRows([...rows, row(format, scale)]);
   };
 
   const fileName = (r: ExportRow) => `${baseName}${r.suffix || defaultSuffix(r, size)}.${r.format}`;
@@ -86,11 +90,13 @@ export function ExportPanel({
       names.add(fname);
       const px = pxOf(size, effectiveScale(r));
       const svg = build(px);
-      files.push({ name: fname, data: r.format === 'svg' ? svg : new Uint8Array(await (await svgToPng(svg, px)).arrayBuffer()) });
+      const image = r.format === 'png' ? svgToPng(svg, px) : r.format === 'jpg' ? svgToJpg(svg, px) : null;
+      files.push({ name: fname, data: image ? new Uint8Array(await (await image).arrayBuffer()) : svg });
     }
     if (files.length === 1) {
       const [only] = files;
-      downloadBlob(typeof only.data === 'string' ? svgBlob(only.data) : new Blob([only.data as Uint8Array<ArrayBuffer>], { type: 'image/png' }), only.name);
+      const format = rows[0].format;
+      downloadBlob(typeof only.data === 'string' ? svgBlob(only.data) : new Blob([only.data as Uint8Array<ArrayBuffer>], { type: MIME[format] }), only.name);
     } else {
       downloadBlob(await buildZip(files), `${baseName}.zip`);
     }
@@ -135,6 +141,7 @@ export function ExportPanel({
                   className={`${field} min-w-0 flex-1`}
                 >
                   <option value="png">PNG</option>
+                  <option value="jpg">JPG</option>
                   <option value="svg">SVG</option>
                 </select>
                 <button
@@ -180,7 +187,7 @@ export function ExportPanel({
         {rows.length > 1 ? t('export.buttonMany', { name, count: rows.length }) : t('export.button', { name })}
       </Button>
       <p className="text-xs text-faint">
-        {rows.length > 1 ? t('export.zipNote') : ''}{t('export.pngNote')}
+        {rows.length > 1 ? t('export.zipNote') : ''}{t(rows.some((r) => r.format === 'jpg') ? 'export.jpgNote' : 'export.pngNote')}
       </p>
 
       <div className="border-t border-line pt-3">

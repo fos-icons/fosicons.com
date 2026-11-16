@@ -21,6 +21,15 @@ export const svgBlob = (svg: string) => new Blob([svg], { type: 'image/svg+xml;c
  * edge length; the SVG is drawn at that size rather than scaled from a bitmap.
  */
 export async function svgToPng(svg: string, pixels: number): Promise<Blob> {
+  return svgToImage(svg, pixels, 'image/png');
+}
+
+/** Rasterize to a JPG. JPG has no transparency, so the icon sits on white. */
+export async function svgToJpg(svg: string, pixels: number): Promise<Blob> {
+  return svgToImage(svg, pixels, 'image/jpeg', '#FFFFFF');
+}
+
+async function svgToImage(svg: string, pixels: number, type: 'image/png' | 'image/jpeg', background?: string): Promise<Blob> {
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const image = new Image();
@@ -35,9 +44,13 @@ export async function svgToPng(svg: string, pixels: number): Promise<Blob> {
     const context = canvas.getContext('2d');
     if (!context) throw new LocalizedError('error.canvas');
     context.clearRect(0, 0, pixels, pixels);
+    if (background) {
+      context.fillStyle = background;
+      context.fillRect(0, 0, pixels, pixels);
+    }
     context.drawImage(image, 0, 0, pixels, pixels);
     return await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new LocalizedError('error.png'))), 'image/png'),
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new LocalizedError('error.png'))), type, 0.92),
     );
   } finally {
     URL.revokeObjectURL(url);

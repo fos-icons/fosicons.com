@@ -279,9 +279,9 @@ export function CustomizeControls({
                   aria-label={themeLabel}
                   title={themeLabel}
                   onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
-                  className={`flex size-8 items-center justify-center rounded-full ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
+                  className={`squircle flex size-8 items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
                 >
-                  <span className="flex size-6 overflow-hidden rounded-full border border-line" aria-hidden="true">
+                  <span className="squircle flex size-6 overflow-hidden border border-line" aria-hidden="true">
                     <span className="flex-1" style={{ background: c.main }} />
                     <span className="flex-1" style={{ background: c.primary }} />
                     <span className="flex-1" style={{ background: c.secondary }} />
@@ -408,7 +408,7 @@ export function DownloadSection({ look, onReset }: { look: Look; onReset?: () =>
             // The keyword-tag shape: brand tint with a tick when included, neutral with a plus when not.
             <label
               key={style}
-              className="inline-flex h-7 cursor-pointer select-none items-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
+              className="inline-flex h-7 min-w-0 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
             >
               <input type="checkbox" className="sr-only" checked={styles.includes(style)} onChange={() => toggle(style)} />
               <UiIcon name={styles.includes(style) ? 'check' : 'plus'} className="size-3" />

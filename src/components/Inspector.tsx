@@ -109,21 +109,6 @@ export function Inspector({
     return buildSvg(source, { ...colors, size: px, idPrefix, strokeWidth });
   };
 
-  const stickySentinel = useRef<HTMLDivElement>(null);
-  const [samplesStuck, setSamplesStuck] = useState(false);
-  useEffect(() => {
-    const sentinel = stickySentinel.current;
-    if (!sentinel || typeof IntersectionObserver === 'undefined') return;
-    // Observe against the pane's own scroll area (or the mobile sheet).
-    const root = sentinel.closest('#side-pane-body, dialog');
-    const observer = new IntersectionObserver(
-      ([entry]) => setSamplesStuck(!entry.isIntersecting && entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0) + 1),
-      { root },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, []);
-
   const preview = useMemo(() => {
     if (!source) return null;
     try {
@@ -198,17 +183,8 @@ export function Inspector({
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 -mt-1" />
       </div>
 
-      <div ref={stickySentinel} aria-hidden="true" />
-      {/*
-        The preview stays in view while the controls below scroll, so size, stroke,
-        color, and modifier changes stay visible. It draws the icon at the chosen
-        size (up to SAMPLE_MAX), so the size slider visibly changes it.
-      */}
-      <div
-        className={`sticky top-0 z-10 bg-surface px-5 pb-4 pt-1 transition-shadow [dialog_&]:top-4 ${
-          samplesStuck ? 'shadow-[0_8px_12px_-10px_rgb(0_0_0/0.25)]' : ''
-        }`}
-      >
+      {/* The preview draws the icon at the chosen size (up to SAMPLE_MAX), so the size slider visibly changes it. */}
+      <div className="px-5 pb-4 pt-1">
         <figure className="group checkerboard relative flex h-28 items-center justify-center rounded-2xl border border-line">
           {preview ? (
             <span

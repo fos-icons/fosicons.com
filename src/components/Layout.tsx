@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
+import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
 import { catalog } from '../lib/catalog';
 import { categoryPath, FRAMEWORK_PATHS } from '../lib/icon-pages';
@@ -20,6 +21,7 @@ export function Layout() {
   useDocumentMeta();
   const { t, label } = useI18n();
   const { pathname, hash } = useLocation();
+  const iconPage = splitLocale(pathname).path.startsWith('/icons/');
   const navigationType = useNavigationType();
   // A link to another page starts at its top (the router keeps the old scroll
   // otherwise). Back/forward, links to a #section, and query-only updates
@@ -38,7 +40,8 @@ export function Layout() {
           <a href="#main" className="sr-only z-50 rounded-lg bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
             {t('site.skipToContent')}
           </a>
-          <header className="border-b border-line">
+          {/* Icon pages keep the header (and its search) in view as frosted glass; elsewhere it scrolls away. */}
+          <header className={`border-b border-line ${iconPage ? 'header-glass' : ''}`}>
             <div className={`${CONTAINER} flex h-14 items-center gap-2`}>
               <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink" aria-label={t('site.home')}>
                 <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
