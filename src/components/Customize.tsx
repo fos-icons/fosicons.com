@@ -158,9 +158,72 @@ export function SizeControl({ look, onChange }: { look: Look; onChange: (patch: 
   );
 }
 
+/** Stroke width: Auto follows the size; the slider pins a width. Explains why solid and brand icons have none. */
+export function StrokeControl({ look, onChange, style, kind = 'core', footnote }: {
+  look: Look;
+  onChange: (patch: Partial<Look>) => void;
+  style: StyleId;
+  kind?: 'core' | 'brand';
+  /** Stroke notes that only make sense for one icon (e.g. filled parts). */
+  footnote?: ReactNode;
+}) {
+  const { t } = useI18n();
+  const uid = useId();
+  const canStroke = strokeAdjustable(style, kind);
+  const stroke = strokeOf(look);
+  return (
+    <Section
+      title={t('customize.stroke')}
+      aside={canStroke && (
+        <span className="flex items-center gap-2 text-xs">
+          {look.strokeWidth === null ? (
+            <span className="rounded bg-sunken px-1.5 py-0.5 font-medium text-muted">{t('customize.strokeAuto')}</span>
+          ) : (
+            <button type="button" onClick={() => onChange({ strokeWidth: null })} className="font-medium text-brand hover:underline">
+              {t('customize.strokeUseAuto')}
+            </button>
+          )}
+          <span className="font-mono tabular-nums text-ink">{fmtStroke(stroke)}</span>
+        </span>
+      )}
+    >
+      {canStroke ? (
+        <>
+          <label htmlFor={`${uid}-stroke`} className="sr-only">{t('customize.stroke')}</label>
+          <input
+            id={`${uid}-stroke`}
+            type="range"
+            min={STROKE_MIN}
+            max={STROKE_MAX}
+            step={STROKE_STEP}
+            value={stroke}
+            aria-valuetext={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke) }) : fmtStroke(stroke)}
+            onChange={(e) => onChange({ strokeWidth: Number(e.target.value) })}
+            className="range w-full"
+          />
+          <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint" aria-hidden="true">
+            <span>{fmtStroke(STROKE_MIN)}</span>
+            <span>{fmtStroke(STROKE_MAX)}</span>
+          </div>
+          <p className="mt-2 text-xs leading-relaxed text-faint">
+            {look.strokeWidth === null
+              ? t('customize.strokeAutoHelp', { base: fmtStroke(BASE_STROKE), large: fmtStroke(autoStroke(64)) })
+              : t('customize.strokeFixedHelp')}
+          </p>
+          {footnote}
+        </>
+      ) : (
+        <p className="text-xs leading-relaxed text-faint">
+          {kind === 'brand' ? t('customize.strokeBrand') : t('customize.strokeSolid')}
+        </p>
+      )}
+    </Section>
+  );
+}
+
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true,
+  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -172,65 +235,19 @@ export function CustomizeControls({
   strokeFootnote?: ReactNode;
   /** Off when the caller places SizeControl itself (the inspector puts it above Modifier). */
   showSize?: boolean;
+  /** Off when the caller places StrokeControl itself (the inspector keeps it under Size). */
+  showStroke?: boolean;
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
-  const uid = useId();
   const duo = isDuo(style);
   const r = resolveLook(look, theme);
-  const canStroke = strokeAdjustable(style, kind);
-  const stroke = strokeOf(look);
 
   return (
     <>
       {showSize && <SizeControl look={look} onChange={onChange} />}
 
-      <Section
-        title={t('customize.stroke')}
-        aside={canStroke && (
-          <span className="flex items-center gap-2 text-xs">
-            {look.strokeWidth === null ? (
-              <span className="rounded bg-sunken px-1.5 py-0.5 font-medium text-muted">{t('customize.strokeAuto')}</span>
-            ) : (
-              <button type="button" onClick={() => onChange({ strokeWidth: null })} className="font-medium text-brand hover:underline">
-                {t('customize.strokeUseAuto')}
-              </button>
-            )}
-            <span className="font-mono tabular-nums text-ink">{fmtStroke(stroke)}</span>
-          </span>
-        )}
-      >
-        {canStroke ? (
-          <>
-            <label htmlFor={`${uid}-stroke`} className="sr-only">{t('customize.stroke')}</label>
-            <input
-              id={`${uid}-stroke`}
-              type="range"
-              min={STROKE_MIN}
-              max={STROKE_MAX}
-              step={STROKE_STEP}
-              value={stroke}
-              aria-valuetext={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke) }) : fmtStroke(stroke)}
-              onChange={(e) => onChange({ strokeWidth: Number(e.target.value) })}
-              className="range w-full"
-            />
-            <div className="mt-1 flex justify-between text-[11px] tabular-nums text-faint" aria-hidden="true">
-              <span>{fmtStroke(STROKE_MIN)}</span>
-              <span>{fmtStroke(STROKE_MAX)}</span>
-            </div>
-            <p className="mt-2 text-xs leading-relaxed text-faint">
-              {look.strokeWidth === null
-                ? t('customize.strokeAutoHelp', { base: fmtStroke(BASE_STROKE), large: fmtStroke(autoStroke(64)) })
-                : t('customize.strokeFixedHelp')}
-            </p>
-            {strokeFootnote}
-          </>
-        ) : (
-          <p className="text-xs leading-relaxed text-faint">
-            {kind === 'brand' ? t('customize.strokeBrand') : t('customize.strokeSolid')}
-          </p>
-        )}
-      </Section>
+      {showStroke && <StrokeControl look={look} onChange={onChange} style={style} kind={kind} footnote={strokeFootnote} />}
 
       <Section
         title={t('customize.color')}

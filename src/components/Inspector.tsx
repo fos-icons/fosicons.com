@@ -18,7 +18,7 @@ import { KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { composeSvg, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
-import { ColorField, CustomizeControls, Section, SizeControl } from './Customize';
+import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
 import { ThemeToggle } from './ThemeToggle';
 import { IconButton, Segmented, UiIcon, useToast } from './ui';
 
@@ -123,7 +123,7 @@ export function Inspector({
     if (!source) return null;
     try {
       return {
-        large: buildSvg(source, { ...colors, size: 160, idPrefix: `${uid}-l`, strokeWidth }),
+        large: buildSvg(source, { ...colors, size: 96, idPrefix: `${uid}-l`, strokeWidth }),
         native: buildSvg(source, { ...colors, size: 24, idPrefix: `${uid}-n`, strokeWidth }),
         actual: buildSvg(source, { ...colors, size: Math.min(size, SAMPLE_MAX), idPrefix: `${uid}-a`, strokeWidth }),
       };
@@ -188,11 +188,11 @@ export function Inspector({
       </div>
 
       <div className="px-5 pb-2">
-        <div className="checkerboard flex h-[200px] items-center justify-center rounded-2xl border border-line">
+        <div className="checkerboard flex h-36 items-center justify-center rounded-2xl border border-line">
           {preview ? (
-            <span role="img" aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`) })} data-artwork className="glyph size-40" dangerouslySetInnerHTML={{ __html: preview.large }} />
+            <span role="img" aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`) })} data-artwork className="glyph size-24" dangerouslySetInnerHTML={{ __html: preview.large }} />
           ) : (
-            <span className="size-40 animate-pulse rounded-2xl bg-sunken" />
+            <span className="size-24 animate-pulse rounded-2xl bg-sunken" />
           )}
         </div>
       </div>
@@ -221,6 +221,18 @@ export function Inspector({
       </div>
 
       <SizeControl look={look} onChange={onLookChange} />
+      {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
+      <StrokeControl
+        look={look}
+        onChange={onLookChange}
+        style={style}
+        kind={kind}
+        footnote={filledParts && strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
+          <p className="mt-2 rounded-lg bg-sunken px-2.5 py-2 text-xs leading-relaxed text-muted">
+            {t('inspector.filledParts')}
+          </p>
+        )}
+      />
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
@@ -297,13 +309,9 @@ export function Inspector({
         look={look}
         onChange={onLookChange}
         showSize={false}
+        showStroke={false}
         style={style}
         kind={kind}
-        strokeFootnote={filledParts && strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-          <p className="mt-2 rounded-lg bg-sunken px-2.5 py-2 text-xs leading-relaxed text-muted">
-            {t('inspector.filledParts')}
-          </p>
-        )}
         footnote={(
           <>
             {style === 'duocolor' && !showSecondary && (
