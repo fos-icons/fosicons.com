@@ -378,8 +378,10 @@ export default function IconPage() {
                 {t('iconPage.download', { style: styleLabel })}
               </ButtonAnchor>
             )}
-            <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
-            <Button size="lg" icon="copy" onClick={copySvg} disabled={!shown}>{t('iconPage.copySvg')}</Button>
+            <div className="flex flex-wrap gap-2">
+              <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
+              <Button size="lg" icon="copy" onClick={copySvg} disabled={!shown}>{t('iconPage.copySvg')}</Button>
+            </div>
           </div>
           <LocalLink
             to={editorLink}

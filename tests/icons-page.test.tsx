@@ -594,6 +594,7 @@ describe('Icon page header search (desktop)', () => {
     const copy = screen.getByRole('button', { name: 'Copy SVG' });
     const png = screen.getByRole('button', { name: 'Download PNG' });
     expect(png.nextElementSibling).toBe(copy);
+    expect(png.parentElement!.firstElementChild).toBe(png);
     await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(false));
     expect(screen.getAllByRole('button', { name: 'Copy SVG' })).toHaveLength(1);
     expect(document.querySelector('.code-block[data-lang="svg"]')).toBeNull();
