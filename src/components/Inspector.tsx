@@ -7,14 +7,12 @@ import { useLocation } from 'react-router-dom';
 import {
   compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
-import { copyText } from '../lib/export';
-import { reactSnippet } from '../lib/react-snippet';
+import { reactSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { BASE_STROKE, buildSvg, hasFilledDetails, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
-import { CodeBlock } from './CodeBlock';
-import { KeywordTags } from './LandingParts';
+import { CodeTabs, KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { composeSvg, initialCorner, MODIFIER_BADGE, MODIFIER_SCALE, modifiersFor, type Corner } from '../lib/modifiers';
@@ -167,14 +165,21 @@ export function Inspector({
     }
   };
 
-  const snippet = kind === 'core'
-    ? reactSnippet(icon.name, style, {
-      size,
-      color: duo ? null : look.mono,
-      primary: duo ? colors.primary : undefined,
-      secondary: colors.secondary,
-      modifier: showModifier && modifier ? modifier : undefined,
-    })
+  // Code examples. The packages ship one component per library icon, so a
+  // modifier at a corner (and size) the library authored uses that icon's
+  // component; any other combination falls back to the plain icon.
+  const packaged = badge && authoredMatch && badgeScale === MODIFIER_SCALE.default ? authoredMatch : null;
+  const plainFallback = !!badge && !packaged;
+  const snippetOptions: SnippetOptions = {
+    size,
+    color: duo ? null : look.mono,
+    primary: duo ? colors.primary : undefined,
+    secondary: colors.secondary,
+    modifier: showModifier && modifier ? modifier : undefined,
+  };
+  const snippetName = packaged ?? icon.name;
+  const snippets = kind === 'core'
+    ? { react: reactSnippet(snippetName, style, snippetOptions), vue: vueSnippet(snippetName, style, snippetOptions) }
     : null;
 
   return (
@@ -373,28 +378,29 @@ export function Inspector({
         run={run}
       />
 
-      {snippet && (
-        <Section
-          collapsible
-          defaultOpen={false}
-          title={t('inspector.react')}
-          aside={(
-            <button type="button" className="text-xs font-medium text-brand hover:underline" onClick={() => run(() => copyText(snippet), t('inspector.reactCopied'))}>
-              {t('inspector.copy')}
-            </button>
-          )}
-        >
-          <CodeBlock code={snippet} lang="tsx" />
-          <p className="mt-2 text-xs leading-relaxed text-faint">
+      {snippets && (
+        <Section collapsible defaultOpen={false} title={t('inspector.code')}>
+          <CodeTabs
+            label={t('iconPage.framework')}
+            tabs={[
+              { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
+              { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
+            ]}
+          />
+          <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-faint">
             {strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-              rich('inspector.reactStroke', { strong: (text) => <strong className="font-medium text-ink">{text}</strong> }, { base: BASE_STROKE, value: strokeWidth })
+              <li>{t('inspector.codeStroke', { base: BASE_STROKE, value: strokeWidth })}</li>
             )}
-            {badge && rich('inspector.reactModifier', { strong: (text) => <strong className="font-medium text-ink">{text}</strong> }, { name: icon.name, modifier: label('modifier', badge.modifier.name, badge.modifier.label) })}
-            {rich('inspector.reactInstall', {
-              code: (text) => <code className="font-mono text-ink">{text}</code>,
-              link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs#react')}>{text}</a>,
-            })}
-          </p>
+            {plainFallback && (
+              <li>{t('inspector.codeModifier', { modifier: label('modifier', badge.modifier.name, badge.modifier.label) })}</li>
+            )}
+            <li>
+              {rich('inspector.codeInstall', {
+                code: (text) => <code className="font-mono text-ink">{text}</code>,
+                link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs#react')}>{text}</a>,
+              })}
+            </li>
+          </ul>
         </Section>
       )}
       <div className="h-4" />

@@ -387,7 +387,7 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
   });
 
-  it('carries the grid-wide stroke into the selected icon and its React note', async () => {
+  it('carries the grid-wide stroke into the selected icon and its code note', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
@@ -396,8 +396,8 @@ describe('Side pane (desktop)', () => {
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     expect(preview.innerHTML).toContain('stroke-width="2"');
-    await user.click(within(pane).getByRole('button', { name: 'React' }));
-    expect(within(pane).getByText(/React package draws the standard 1.25px stroke/)).toBeTruthy();
+    await user.click(within(pane).getByRole('button', { name: 'Code' }));
+    expect(within(pane).getByText(/packages always draw the standard 1.25px stroke/)).toBeTruthy();
   });
 });
 
@@ -499,18 +499,22 @@ describe('Search tips', () => {
 describe('Inspector sections (desktop)', () => {
   beforeEach(useDesktop);
 
-  it('keeps React usage collapsed until expanded, with Copy still available', async () => {
+  it('keeps React and Vue usage collapsed until expanded, one tab each', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=search');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    const toggle = await within(pane).findByRole('button', { name: 'React' });
+    const toggle = await within(pane).findByRole('button', { name: 'Code' });
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(true);
-    expect(within(toggle.closest('section')!).getByRole('button', { name: 'Copy' })).toBeTruthy();
     await user.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    const code = pane.querySelector('.code-block code')!;
-    expect(code.textContent).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
+    const section = toggle.closest('section')!;
+    expect(within(section).getByRole('button', { name: 'Copy' })).toBeTruthy();
+    const code = () => section.querySelector('.code-block code')!.textContent;
+    expect(code()).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
+    await user.click(within(section).getByRole('tab', { name: 'Vue' }));
+    expect(code()).toMatch(/import \{ SearchRegular \} from '@fos-icons\/vue';/);
+    await user.click(within(section).getByRole('tab', { name: 'React' }));
     // Syntax colors arrive once the highlighter loads.
     await vi.waitFor(() => expect(pane.querySelector('.code-block .hljs-keyword')?.textContent).toBe('import'));
   });

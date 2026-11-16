@@ -197,6 +197,10 @@ const en = {
   'inspector.actualSize': 'Actual size · {size}px',
   'inspector.shownAt': '{size}px, shown at {max}px',
   'inspector.modifier': 'Modifier',
+  'inspector.code': 'Code',
+  'inspector.codeStroke': 'The packages always draw the standard {base}px stroke. Download the SVG to keep {value}px.',
+  'inspector.codeModifier': 'The packages have no component with {modifier} here, so the code shows the plain icon. Download the SVG to keep the modifier.',
+  'inspector.codeInstall': 'Install <code>@fos-icons/react</code> or <code>@fos-icons/vue</code>. <link>Docs</link>.',
   'inspector.modifierSize': 'Modifier size',
   'inspector.modifierSizeReset': 'Reset',
   'inspector.modifierSizeValue': '{size} on a {icon} icon',
@@ -213,12 +217,6 @@ const en = {
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
   'inspector.modifierGlyph': 'Modifier glyph',
   'inspector.libraryDefault': 'Library default {color}',
-  'inspector.react': 'React',
-  'inspector.copy': 'Copy',
-  'inspector.reactCopied': 'React example copied',
-  'inspector.reactStroke': '<strong>The React package draws the standard {base}px stroke at every size</strong>; use Download SVG to keep this {value}px stroke. ',
-  'inspector.reactModifier': '<strong>The React package has no component for {name} with {modifier}</strong>; this example shows the plain icon. Use Download SVG to keep the modifier. ',
-  'inspector.reactInstall': 'Install with <code>npm install @fos-icons/react</code>. <link>React docs</link>.',
 
   // Modifiers
   'modifiers.none': 'None',
