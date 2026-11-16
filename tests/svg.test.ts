@@ -114,3 +114,20 @@ describe('hasFilledDetails', () => {
     expect(hasFilledDetails(styleSvgs('duotone').search)).toBe(false);
   });
 });
+
+describe('color themes', () => {
+  it('color the whole grid: Ink follows the site, other themes and hand-picked colors set the glyph color', async () => {
+    const { DEFAULT_LOOK, gridVars, themeColors, INK_THEME } = await import('../src/lib/look');
+    // Ink (the default) leaves Regular to the site's ink, so light/dark keep working.
+    expect(DEFAULT_LOOK.paletteName).toBe(INK_THEME);
+    expect(gridVars(DEFAULT_LOOK, 'regular', 'light')['--glyph-color']).toBeUndefined();
+    // Any other theme sets Regular/Solid to its main color, and its duo colors for the duo styles.
+    const blue = { ...DEFAULT_LOOK, paletteName: 'Blue' };
+    expect(gridVars(blue, 'regular', 'light')['--glyph-color']).toBe(themeColors('Blue', 'light').main);
+    expect(gridVars(blue, 'duocolor', 'dark')['--fos-primary']).toBe(themeColors('Blue', 'dark').primary);
+    // A hand-picked foreground wins over the theme, in the grid too.
+    expect(gridVars({ ...blue, mono: '#D93025' }, 'filled', 'light')['--glyph-color']).toBe('#D93025');
+    // Ink's duo colors are the library's default palette.
+    expect(themeColors(INK_THEME, 'light').primary).toBe(themeColors('Blue', 'light').primary);
+  });
+});

@@ -23,6 +23,11 @@ export interface SvgBuildOptions extends SvgColorOptions {
    * keep their proportions. Omit to keep the artwork's own strokes.
    */
   strokeWidth?: number;
+  /**
+   * Leave colors as authored (`currentColor` and the `--fos-*` variables), so
+   * the file still restyles in code; only size and stroke change.
+   */
+  keepColors?: boolean;
 }
 
 /** The library's standard stroke weight on its 24px grid. */
@@ -103,25 +108,27 @@ export function buildSvg(source: string, options: SvgBuildOptions): string {
   const root = parse(source);
   const all = [root, ...Array.from(root.querySelectorAll('*'))];
 
-  for (const node of all) {
-    for (const attr of PAINT_ATTRS) {
-      const value = node.getAttribute(attr);
-      if (value?.includes('var(')) node.setAttribute(attr, resolveVar(value, options));
+  if (!options.keepColors) {
+    for (const node of all) {
+      for (const attr of PAINT_ATTRS) {
+        const value = node.getAttribute(attr);
+        if (value?.includes('var(')) node.setAttribute(attr, resolveVar(value, options));
+      }
     }
-  }
-  // The root color is the user's choice; nested `color` attributes are roles.
-  root.setAttribute('color', options.primary);
+    // The root color is the user's choice; nested `color` attributes are roles.
+    root.setAttribute('color', options.primary);
 
-  const walk = (node: Element, inherited: string) => {
-    const own = node.getAttribute('color');
-    const color = own && own !== 'currentColor' && own !== 'inherit' ? own : inherited;
-    if (own) node.setAttribute('color', color);
-    for (const attr of PAINT_ATTRS) {
-      if (attr !== 'color' && node.getAttribute(attr) === 'currentColor') node.setAttribute(attr, color);
-    }
-    for (const child of Array.from(node.children)) walk(child, color);
-  };
-  walk(root, options.primary);
+    const walk = (node: Element, inherited: string) => {
+      const own = node.getAttribute('color');
+      const color = own && own !== 'currentColor' && own !== 'inherit' ? own : inherited;
+      if (own) node.setAttribute('color', color);
+      for (const attr of PAINT_ATTRS) {
+        if (attr !== 'color' && node.getAttribute(attr) === 'currentColor') node.setAttribute(attr, color);
+      }
+      for (const child of Array.from(node.children)) walk(child, color);
+    };
+    walk(root, options.primary);
+  }
 
   if (options.strokeWidth !== undefined && options.strokeWidth !== BASE_STROKE) {
     const factor = options.strokeWidth / BASE_STROKE;

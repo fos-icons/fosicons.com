@@ -1,13 +1,16 @@
 import { useI18n } from '../i18n';
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { palettes, type StyleId } from '../lib/catalog';
+import { catalog, type StyleId } from '../lib/catalog';
+import { buildFullSet, fullSetName } from '../lib/download-all';
+import { downloadBlob } from '../lib/export';
+import { errorText } from '../i18n/errors';
 import {
-  autoStroke, DEFAULT_LOOK, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
-  strokeAdjustable, strokeOf, type Look,
+  autoStroke, DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
+  strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
 } from '../lib/look';
 import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
-import { IconButton, RangeSlider, Segmented, UiIcon } from './ui';
+import { Button, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 /** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
 const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
@@ -249,64 +252,71 @@ export function CustomizeControls({
 
       <Section
         title={t('customize.color')}
-        aside={duo && (
+        aside={(
           <Segmented
             label={t('customize.paletteVariant')}
             size="sm"
             value={r.mode}
-            // The variant is previewed on the matching background: switch the site theme.
-            onChange={(v) => { setPreference(v); onChange({ custom: null }); }}
+            // Themes have light and dark variants, previewed on the matching background: switch the site theme.
+            onChange={(v) => setPreference(v)}
             options={[{ value: 'light', label: t('theme.light') }, { value: 'dark', label: t('theme.dark') }]}
           />
         )}
       >
-        {duo ? (
-          <div className="space-y-3">
-            <div role="radiogroup" aria-label={t('customize.duoPalette')} className="flex flex-wrap gap-1.5">
-              {palettes.palettes.map((p) => {
-                const checked = !look.custom && p.name === r.palette.name;
-                return (
-                  <button
-                    key={p.name}
-                    type="button"
-                    role="radio"
-                    aria-checked={checked}
-                    aria-label={p.name}
-                    title={p.name}
-                    onClick={() => onChange({ paletteName: p.name, custom: null })}
-                    className={`flex size-8 items-center justify-center rounded-full ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
-                  >
-                    <span className="flex size-6 overflow-hidden rounded-full border border-line" aria-hidden="true">
-                      <span className="flex-1" style={{ background: p[r.mode].primary }} />
-                      <span className="flex-1" style={{ background: p[r.mode].secondary }} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
-            {style === 'duocolor' && (
-              <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
-            )}
-            {style === 'duotone' && (
-              <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
-            )}
-            {footnote}
-            <p className="text-xs text-faint">
-              {t('customize.paletteNote', { current: look.custom ? t('customize.customColors') : t('customize.paletteMode', { palette: r.palette.name, mode: t(`theme.${r.mode}`) }) })}
-            </p>
+        <div className="space-y-3">
+          {/* One theme sets every style: a main color for Regular and Solid, primary and secondary for the duo styles. */}
+          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="flex flex-wrap gap-1.5">
+            {THEME_NAMES.map((name) => {
+              const c = themeColors(name, r.mode);
+              const checked = !look.custom && !look.mono && name === r.themeName;
+              const themeLabel = name === INK_THEME ? t('customize.inkTheme') : name;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  aria-label={themeLabel}
+                  title={themeLabel}
+                  onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
+                  className={`squircle flex size-8 items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
+                >
+                  <span className="squircle flex size-6 overflow-hidden border border-line" aria-hidden="true">
+                    <span className="flex-1" style={{ background: c.main }} />
+                    <span className="flex-1" style={{ background: c.primary }} />
+                    <span className="flex-1" style={{ background: c.secondary }} />
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <>
+          {duo ? (
+            <>
+              <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
+              {style === 'duocolor' && (
+                <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
+              )}
+              {style === 'duotone' && (
+                <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
+              )}
+            </>
+          ) : (
             <ColorField
               label={t('customize.foreground')}
               value={r.mono}
               onChange={(v) => onChange({ mono: v })}
-              hint={look.mono ? undefined : t('customize.followTheme')}
+              hint={look.mono ? undefined : r.monoFollowsSite ? t('customize.followTheme') : t('customize.fromTheme', { theme: r.themeName })}
             />
-            {footnote}
-          </>
-        )}
+          )}
+          {footnote}
+          <p className="text-xs text-faint">
+            {t('customize.paletteNote', {
+              current: (duo ? look.custom : look.mono)
+                ? t('customize.customColors')
+                : t('customize.paletteMode', { palette: r.themeName === INK_THEME ? t('customize.inkTheme') : r.themeName, mode: t(`theme.${r.mode}`) }),
+            })}
+          </p>
+        </div>
       </Section>
     </>
   );
@@ -338,17 +348,95 @@ export function CustomizePanel({
         {onClose && <IconButton icon="x" label={t('customize.close')} onClick={onClose} className="-mr-2 -mt-1" />}
       </div>
       <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} />
-      <div className="border-t border-line px-5 py-4">
-        <button
-          type="button"
-          disabled={!isCustomized(look)}
-          onClick={onReset}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-brand hover:underline disabled:cursor-not-allowed disabled:text-faint disabled:no-underline"
-        >
-          <UiIcon name="undo" className="size-4" />
-          {t('customize.reset')}
-        </button>
-      </div>
+      {/* Last: once the look is set, download it (or start over). */}
+      {kind === 'core' ? (
+        <DownloadSection look={look} onReset={onReset} />
+      ) : (
+        <div className="border-t border-line px-5 py-4">
+          <Button variant="secondary" icon="undo" disabled={!isCustomized(look)} onClick={onReset}>{t('customize.reset')}</Button>
+        </div>
+      )}
     </div>
+  );
+}
+
+/**
+ * Download the set as one ZIP with the look set above: every style by
+ * default, or only the styles the user keeps switched on.
+ */
+export function DownloadSection({ look, onReset }: { look: Look; onReset?: () => void }) {
+  const { t, n } = useI18n();
+  const i18n = useI18n();
+  const toast = useToast();
+  const { resolved: theme } = useTheme();
+  const uid = useId();
+  const [styles, setStyles] = useState<StyleId[]>([...catalog.styles]);
+  const [busy, setBusy] = useState(false);
+  const all = styles.length === catalog.styles.length;
+  const toggle = (style: StyleId) => setStyles((current) => (
+    current.includes(style) ? current.filter((s) => s !== style) : catalog.styles.filter((s) => s === style || current.includes(s))
+  ));
+  const download = async () => {
+    if (busy || !styles.length) return;
+    setBusy(true);
+    try {
+      const name = fullSetName(styles);
+      downloadBlob(await buildFullSet(look, theme, styles), name);
+      toast('success', t('download.done', { file: name }));
+    } catch (error) {
+      toast('error', errorText(error, i18n, 'error.download'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const label = busy
+    ? t('download.preparing')
+    : !styles.length
+      ? t('download.none')
+      : all
+        ? t('download.all')
+        : styles.length === 1
+          ? t('download.one', { style: t(`style.${styles[0]}`) })
+          : t('download.some', { count: styles.length });
+  return (
+    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
+      <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
+      <fieldset className="mt-3">
+        <legend className="sr-only">{t('download.styles')}</legend>
+        <div className="flex flex-wrap gap-1">
+          {catalog.styles.map((style) => (
+            // The keyword-tag shape: brand tint with a tick when included, neutral with a plus when not.
+            <label
+              key={style}
+              className="inline-flex h-7 min-w-0 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
+            >
+              <input type="checkbox" className="sr-only" checked={styles.includes(style)} onChange={() => toggle(style)} />
+              <UiIcon name={styles.includes(style) ? 'check' : 'plus'} className="size-3" />
+              {t(`style.${style}`)}
+            </label>
+          ))}
+        </div>
+      </fieldset>
+      <div className="mt-3 flex gap-2">
+        <Button
+          variant="primary"
+          icon="download"
+          onClick={download}
+          disabled={busy || !styles.length}
+          aria-describedby={`${uid}-note`}
+          className="min-w-0 flex-1 disabled:cursor-wait"
+        >
+          <span className="truncate">{label}</span>
+        </Button>
+        {onReset && (
+          <Button variant="secondary" icon="undo" disabled={!isCustomized(look)} onClick={onReset} aria-label={t('customize.reset')} title={t('customize.reset')} className="shrink-0">
+            {t('customize.resetShort')}
+          </Button>
+        )}
+      </div>
+      <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
+        {t('download.note', { count: n(catalog.icons.length * styles.length) })}
+      </p>
+    </section>
   );
 }
