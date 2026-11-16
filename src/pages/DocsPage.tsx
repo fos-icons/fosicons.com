@@ -320,7 +320,7 @@ export default function DocsPage() {
             <li>Icons are decorative by default (<code>aria-hidden</code>). Pass <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>
             <li>Root imports are tree-shakeable; <code>@fos-icons/react/filled</code> and <code>@fos-icons/react/regular/camera</code> entry points also exist.</li>
           </ul>
-          <p>The inspector&apos;s React example uses these exact props.</p>
+          <p>The inspector&apos;s React and Vue examples use these exact props.</p>
         </Section>
 
         <Section id="vue" title="Vue">

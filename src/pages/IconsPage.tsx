@@ -296,10 +296,12 @@ export function IconsPage() {
     if (state.icon) setMulti([]);
   }, [state.icon]);
 
-  // Selecting always reveals the pane.
+  // A new selection reveals the pane. Keyed on the selection, not on `collapsed`,
+  // so collapsing the pane while an icon stays selected sticks.
+  const selectionKey = multiActive ? `set:${multi.length}` : selected?.name ?? null;
   useEffect(() => {
-    if ((selected || multiActive) && collapsed && desktop) setCollapsed(false);
-  }, [selected, multiActive, collapsed, desktop, setCollapsed]);
+    if (selectionKey && desktop) setCollapsed(false);
+  }, [selectionKey, desktop, setCollapsed]);
 
   /**
    * Plain click opens one icon (or closes it again). Shift/⌘/Ctrl-click

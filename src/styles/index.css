@@ -153,6 +153,8 @@
     from { opacity: 0; }
   }
   /* Native range input, themed with the semantic tokens. */
+  /* Sliders (RangeSlider): a thin track filled in brand up to --fill, with an
+     oval brand handle ringed in the surface color, like a macOS knob. */
   .range {
     appearance: none;
     height: 20px;
@@ -162,30 +164,42 @@
   .range::-webkit-slider-runnable-track {
     height: 4px;
     border-radius: 999px;
-    background: var(--c-line-strong);
+    background: linear-gradient(to right, var(--c-brand) var(--fill, 0%), var(--c-line-strong) var(--fill, 0%));
   }
   .range::-moz-range-track {
     height: 4px;
     border-radius: 999px;
     background: var(--c-line-strong);
   }
+  .range::-moz-range-progress {
+    height: 4px;
+    border-radius: 999px;
+    background: var(--c-brand);
+  }
   .range::-webkit-slider-thumb {
     appearance: none;
     margin-top: -6px;
-    width: 16px;
+    width: 22px;
     height: 16px;
     border-radius: 999px;
-    background: var(--c-surface);
-    border: 1.5px solid var(--c-ink);
-    box-shadow: 0 1px 2px rgb(0 0 0 / 0.15);
+    background: var(--c-brand);
+    border: 2px solid var(--c-surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3), 0 0 0 0.5px rgb(0 0 0 / 0.08);
+    transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1);
   }
   .range::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 12px;
     border-radius: 999px;
-    background: var(--c-surface);
-    border: 1.5px solid var(--c-ink);
+    background: var(--c-brand);
+    border: 2px solid var(--c-surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.3);
   }
+  .range:hover::-webkit-slider-thumb,
+  .range:active::-webkit-slider-thumb { transform: scale(1.08); }
+  .range:focus-visible { outline: none; }
+  .range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-brand) 35%, transparent); }
+  .range:focus-visible::-moz-range-thumb { box-shadow: 0 0 0 3px color-mix(in oklab, var(--c-brand) 35%, transparent); }
   /* Rotating search tips fade in; reduced motion collapses this to a swap. */
   .search-tip {
     animation: tip-in 360ms cubic-bezier(0.22, 1, 0.36, 1);

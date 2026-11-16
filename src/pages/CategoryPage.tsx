@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom';
-import { Breadcrumbs, IconLinkGrid, LandingSection, primaryButton } from '../components/LandingParts';
-import { UiIcon } from '../components/ui';
-import { LocalLink, useI18n } from '../i18n';
+import { Breadcrumbs, IconLinkGrid, LandingSection } from '../components/LandingParts';
+import { ButtonLink, Chip } from '../components/ui';
+import { useI18n } from '../i18n';
 import { catalog } from '../lib/catalog';
 import { categoryBySlug, categoryPath, iconsInCategory } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
@@ -25,9 +25,9 @@ export default function CategoryPage() {
         {t('categoryPage.intro', { count: n(category.count), category: name.toLowerCase(), styles })}
       </p>
       <div className="mt-6">
-        <LocalLink to={`/?${new URLSearchParams({ category: category.name })}`} className={primaryButton}>
-          <UiIcon name="palette" className="size-4" /> {t('categoryPage.customize')}
-        </LocalLink>
+        <ButtonLink to={`/?${new URLSearchParams({ category: category.name })}`} variant="primary" size="lg" icon="palette">
+          {t('categoryPage.customize')}
+        </ButtonLink>
       </div>
 
       <div className="mt-10">
@@ -38,13 +38,7 @@ export default function CategoryPage() {
         <ul className="flex flex-wrap gap-2">
           {catalog.categories.filter((c) => c.name !== category.name).map((c) => (
             <li key={c.name}>
-              <LocalLink
-                to={categoryPath(c.name)}
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-sm text-ink transition hover:border-brand hover:bg-brand-soft"
-              >
-                {label('category', c.name, c.name)}
-                <span className="text-xs tabular-nums text-faint">{n(c.count)}</span>
-              </LocalLink>
+              <Chip to={categoryPath(c.name)} count={n(c.count)}>{label('category', c.name, c.name)}</Chip>
             </li>
           ))}
         </ul>

@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
 import {
-  Breadcrumbs, CopyCode, IconLinkGrid, LandingSection, primaryButton, secondaryButton,
+  Breadcrumbs, CopyCode, IconLinkGrid, LandingSection,
 } from '../components/LandingParts';
-import { UiIcon } from '../components/ui';
+import { ButtonAnchor, ButtonLink, Chip, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
 import { catalog, ICONS_ROUNDED } from '../lib/catalog';
 import { categoryPath, POPULAR_ICONS, type FrameworkId } from '../lib/icon-pages';
@@ -125,12 +125,11 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
       </Lead>
       <div className="mt-6 flex flex-wrap gap-2">
         {FIGMA_URL && (
-          <a href={FIGMA_URL} target="_blank" rel="noreferrer" className={primaryButton}>
-            Open the Figma library <UiIcon name="link-external" className="size-4" />
-            <span className="sr-only">{t('site.newTab')}</span>
-          </a>
+          <ButtonAnchor href={FIGMA_URL} external variant="primary" size="lg" iconEnd="link-external">
+            Open the Figma library
+          </ButtonAnchor>
         )}
-        <LocalLink to="/docs#figma" className={secondaryButton}>Figma docs</LocalLink>
+        <ButtonLink to="/docs#figma" size="lg">Figma docs</ButtonLink>
       </div>
       <LandingSection id="start" title="Get started" className="mt-12">
         <Points items={[
@@ -157,9 +156,7 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
         <ul className="flex flex-wrap gap-2">
           {catalog.categories.map((c) => (
             <li key={c.name}>
-              <LocalLink to={categoryPath(c.name)} className="inline-flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-sm text-ink transition hover:border-brand hover:bg-brand-soft">
-                {c.name} <span className="text-xs tabular-nums text-faint">{n(c.count)}</span>
-              </LocalLink>
+              <Chip to={categoryPath(c.name)} count={n(c.count)}>{c.name}</Chip>
             </li>
           ))}
         </ul>
@@ -175,17 +172,11 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
 }
 
 function Actions({ npm, docs }: { npm: string; docs: string }) {
-  const { t } = useI18n();
   return (
     <div className="mt-6 flex flex-wrap gap-2">
-      <LocalLink to="/" className={primaryButton}>
-        <UiIcon name="search" className="size-4" /> Browse all icons
-      </LocalLink>
-      <LocalLink to={docs} className={secondaryButton}>Docs</LocalLink>
-      <a href={npm} target="_blank" rel="noreferrer" className={secondaryButton}>
-        npm <UiIcon name="link-external" className="size-4" />
-        <span className="sr-only">{t('site.newTab')}</span>
-      </a>
+      <ButtonLink to="/" variant="primary" size="lg" icon="search">Browse all icons</ButtonLink>
+      <ButtonLink to={docs} size="lg">Docs</ButtonLink>
+      <ButtonAnchor href={npm} external size="lg" iconEnd="link-external">npm</ButtonAnchor>
     </div>
   );
 }

@@ -5,3 +5,4 @@ dist
 coverage
 dist-ssr
 .claude/
+storybook-static

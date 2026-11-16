@@ -1,4 +1,6 @@
-import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
+import type { LinkProps } from 'react-router-dom';
+import { LocalLink, useI18n } from '../i18n';
 import uiIcons from '../data/ui-icons.json';
 
 export type UiIconName = keyof typeof uiIcons;
@@ -8,25 +10,115 @@ export function UiIcon({ name, className = 'size-5' }: { name: UiIconName; class
   return <span aria-hidden="true" className={`glyph inline-block shrink-0 ${className}`} dangerouslySetInnerHTML={{ __html: uiIcons[name] }} />;
 }
 
-type Variant = 'primary' | 'secondary' | 'ghost';
-const VARIANTS: Record<Variant, string> = {
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'quiet';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+const VARIANTS: Record<ButtonVariant, string> = {
+  /** The one main action in a region. */
   primary: 'bg-brand text-brand-ink hover:brightness-110 active:brightness-95',
-  secondary: 'bg-surface text-ink border border-line-strong hover:bg-sunken',
+  /** Other actions beside it. */
+  secondary: 'border border-line-strong bg-surface text-ink hover:bg-sunken',
+  /** Toolbar and inline actions. */
   ghost: 'text-ink hover:bg-sunken',
+  /** Low-emphasis actions (back links, copy in a header). */
+  quiet: 'text-muted hover:bg-sunken hover:text-ink',
+};
+const SIZES: Record<ButtonSize, { box: string; icon: string }> = {
+  sm: { box: 'h-8 gap-1.5 rounded-lg px-2.5', icon: 'size-4' },
+  md: { box: 'h-9 gap-2 rounded-lg px-3', icon: 'size-[18px]' },
+  lg: { box: 'h-10 gap-2 rounded-xl px-4', icon: 'size-4' },
 };
 
+export interface ButtonStyle {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  /** A UI icon before the label. */
+  icon?: UiIconName;
+  /** A UI icon after the label (for example link-external). */
+  iconEnd?: UiIconName;
+}
+
+/** The class list behind every button and button-styled link, for the rare element that cannot use them. */
+export const buttonClass = ({ variant = 'secondary', size = 'md' }: ButtonStyle = {}) =>
+  `inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${SIZES[size].box} ${VARIANTS[variant]}`;
+
+const ButtonIcon = ({ icon, size = 'md' }: ButtonStyle) => (icon ? <UiIcon name={icon} className={SIZES[size].icon} /> : null);
+
+/** An action. For navigation use ButtonLink (a page here) or ButtonAnchor (a file or another site). */
 export function Button({
-  variant = 'secondary', className = '', icon, children, ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; icon?: UiIconName }) {
+  variant, size, icon, iconEnd, className = '', children, ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & ButtonStyle) {
   return (
-    <button
-      type="button"
-      className={`inline-flex h-9 items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${className}`}
+    <button type="button" className={`${buttonClass({ variant, size })} ${className}`} {...props}>
+      <ButtonIcon icon={icon} size={size} />
+      {children}
+      <ButtonIcon icon={iconEnd} size={size} />
+    </button>
+  );
+}
+
+/** A page on this site, styled as a button. */
+export function ButtonLink({
+  variant, size, icon, iconEnd, className = '', children, ...props
+}: Omit<LinkProps, 'to'> & { to: string } & ButtonStyle) {
+  return (
+    <LocalLink className={`${buttonClass({ variant, size })} ${className}`} {...props}>
+      <ButtonIcon icon={icon} size={size} />
+      {children}
+      <ButtonIcon icon={iconEnd} size={size} />
+    </LocalLink>
+  );
+}
+
+/**
+ * A file or another site, styled as a button. `external` opens a new tab and
+ * tells screen readers so.
+ */
+export function ButtonAnchor({
+  variant, size, icon, iconEnd, external = false, className = '', children, ...props
+}: AnchorHTMLAttributes<HTMLAnchorElement> & ButtonStyle & { external?: boolean }) {
+  const { t } = useI18n();
+  return (
+    <a
+      className={`${buttonClass({ variant, size })} ${className}`}
+      {...(external ? { target: '_blank', rel: 'noreferrer' } : {})}
       {...props}
     >
-      {icon && <UiIcon name={icon} className="size-[18px]" />}
+      <ButtonIcon icon={icon} size={size} />
       {children}
-    </button>
+      <ButtonIcon icon={iconEnd} size={size} />
+      {external && <span className="sr-only">{t('site.newTab')}</span>}
+    </a>
+  );
+}
+
+/**
+ * A rounded link to a set of icons (a category, a search), with an optional
+ * count or leading artwork.
+ */
+export function Chip({ to, count, children, className = '' }: { to: string; count?: string; children: ReactNode; className?: string }) {
+  return (
+    <LocalLink
+      to={to}
+      className={`inline-flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-sm text-ink transition hover:border-brand hover:bg-brand-soft ${className}`}
+    >
+      {children}
+      {count !== undefined && <span className="text-xs tabular-nums text-faint">{count}</span>}
+    </LocalLink>
+  );
+}
+
+/** A small brand-tinted label that links to a search for its word. */
+export function Tag({ to, size = 'md', children }: { to: string; size?: 'sm' | 'md'; children: ReactNode }) {
+  return (
+    <LocalLink
+      to={to}
+      className={`inline-flex items-center rounded-lg bg-brand-soft font-medium text-brand transition-colors hover:bg-brand-soft/55 ${
+        size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3 text-sm'
+      }`}
+    >
+      {children}
+    </LocalLink>
   );
 }
 
@@ -41,6 +133,68 @@ export function IconButton({ label, icon, className = '', ...props }: ButtonHTML
     >
       <UiIcon name={icon} />
     </button>
+  );
+}
+
+/** Horizontal size of the slider handle; tick positions line up with its center. */
+const THUMB_W = 22;
+
+/**
+ * A slider with tick marks under its track. The track fills in the brand
+ * color up to an oval, brand-colored handle. `marks` places ticks;
+ * `labels` (a subset of marks) also prints their value, shown on hover or
+ * keyboard focus.
+ */
+export function RangeSlider({
+  id, label, min, max, step, value, onChange, valueText, marks, labels = marks, format,
+}: {
+  id: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
+  /** What screen readers announce for the current value. */
+  valueText?: string;
+  marks: readonly number[];
+  labels?: readonly number[];
+  format: (value: number) => string;
+}) {
+  const at = (v: number) => (Math.min(max, Math.max(min, v)) - min) / (max - min);
+  // Center of the handle at fraction p of the track (the handle stays inside the input's box).
+  const left = (p: number) => `calc(${THUMB_W / 2}px + (100% - ${THUMB_W}px) * ${p})`;
+  const shown = new Set(labels);
+  return (
+    // Values under the ticks appear while the slider is hovered or focused.
+    <div className="group">
+      <label htmlFor={id} className="sr-only">{label}</label>
+      <input
+        id={id}
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        aria-valuetext={valueText}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="range w-full"
+        style={{ '--fill': left(at(value)) } as CSSProperties}
+      />
+      {/* Pulled up so the ticks sit just under the track (the input box is taller than the track). */}
+      <div className="relative -mt-1 h-[22px]" aria-hidden="true">
+        {marks.map((m) => (
+          <span key={m} className="absolute top-0 flex -translate-x-1/2 flex-col items-center" style={{ left: left(at(m)) }}>
+            <span className={`h-1.5 w-px ${m <= value ? 'bg-brand/60' : 'bg-line-strong'}`} />
+            {shown.has(m) && (
+              <span className="mt-1 text-[11px] tabular-nums leading-none text-faint opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
+                {format(m)}
+              </span>
+            )}
+          </span>
+        ))}
+      </div>
+    </div>
   );
 }
 

@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LocalLink, useI18n } from '../i18n';
-import { UiIcon, type UiIconName } from '../components/ui';
+import { useI18n } from '../i18n';
+import { ButtonLink, Chip, UiIcon, type UiIconName } from '../components/ui';
 import { catalog, ICONS_ROUNDED } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
 
@@ -61,15 +61,9 @@ export default function NotFoundPage() {
           </form>
 
           <nav aria-label={t('notFound.places')} className="mt-6 flex flex-wrap gap-2">
-            <LocalLink to="/" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition hover:bg-sunken">
-              <UiIcon name="home" className="size-4" /> {t('notFound.browse')}
-            </LocalLink>
-            <LocalLink to="/docs" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition hover:bg-sunken">
-              <UiIcon name="book-open" className="size-4" /> {t('notFound.docs')}
-            </LocalLink>
-            <LocalLink to="/?style=brands" className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-line-strong bg-surface px-3 text-sm font-medium text-ink transition hover:bg-sunken">
-              <UiIcon name="sparkles" className="size-4" /> {t('notFound.brands')}
-            </LocalLink>
+            <ButtonLink to="/" icon="home">{t('notFound.browse')}</ButtonLink>
+            <ButtonLink to="/docs" icon="book-open">{t('notFound.docs')}</ButtonLink>
+            <ButtonLink to="/?style=brands" icon="sparkles">{t('notFound.brands')}</ButtonLink>
           </nav>
         </div>
 
@@ -95,13 +89,7 @@ export default function NotFoundPage() {
         <ul className="mt-4 flex flex-wrap gap-2">
           {POPULAR.map((c) => (
             <li key={c.name}>
-              <LocalLink
-                to={`/?${new URLSearchParams({ category: c.name })}`}
-                className="inline-flex h-9 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-sm text-ink transition hover:border-brand hover:bg-brand-soft"
-              >
-                {label('category', c.name, c.name)}
-                <span className="text-xs tabular-nums text-faint">{n(c.count)}</span>
-              </LocalLink>
+              <Chip to={`/?${new URLSearchParams({ category: c.name })}`} count={n(c.count)}>{label('category', c.name, c.name)}</Chip>
             </li>
           ))}
         </ul>
