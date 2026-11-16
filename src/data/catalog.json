@@ -484,19 +484,6 @@
       "aliases": []
     },
     {
-      "name": "airpods",
-      "category": "Media & devices",
-      "tags": [
-        "earbuds",
-        "earphones",
-        "headphones",
-        "wireless",
-        "audio",
-        "apple"
-      ],
-      "aliases": []
-    },
-    {
       "name": "alarm",
       "category": "Time & weather",
       "tags": [
@@ -6666,6 +6653,19 @@
         "sound",
         "accessibility",
         "noise"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "earbuds",
+      "category": "Media & devices",
+      "tags": [
+        "earphones",
+        "in-ear",
+        "wireless",
+        "bluetooth",
+        "headphones",
+        "audio"
       ],
       "aliases": []
     },
