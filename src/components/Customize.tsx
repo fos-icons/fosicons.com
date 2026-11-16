@@ -408,7 +408,8 @@ export function DownloadSection({ look, onReset }: { look: Look; onReset?: () =>
             // The keyword-tag shape: brand tint with a tick when included, neutral with a plus when not.
             <label
               key={style}
-              className="inline-flex h-7 min-w-0 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
+              // Share the row at the default panel width; in a wider panel, stop at 6rem and sit left.
+              className="inline-flex h-7 min-w-0 max-w-24 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
             >
               <input type="checkbox" className="sr-only" checked={styles.includes(style)} onChange={() => toggle(style)} />
               <UiIcon name={styles.includes(style) ? 'check' : 'plus'} className="size-3" />
