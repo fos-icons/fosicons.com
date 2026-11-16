@@ -1,4 +1,5 @@
-import { useI18n } from '../i18n';
+import { LocalLink, useI18n } from '../i18n';
+import { iconPath } from '../lib/icon-pages';
 import { errorText, LocalizedError } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
@@ -177,6 +178,7 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 text-sm text-muted">
             {label('category', icon.category, icon.category)}
+            {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
             {icon.composition && <> · {t('inspector.base')} <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>{icon.composition.base}</button></>}
           </p>
         </div>

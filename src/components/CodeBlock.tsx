@@ -6,7 +6,7 @@ import { useEffect, useState, type ReactNode } from 'react';
  * A dark code block with syntax colors. Plain text renders first; the
  * highlighter is loaded on demand and swaps in colored markup.
  */
-const CODE_LANGS = ['tsx', 'ts', 'sh', 'html', 'svg', 'css'] as const;
+const CODE_LANGS = ['tsx', 'ts', 'sh', 'html', 'svg', 'vue', 'css'] as const;
 type CodeLang = (typeof CODE_LANGS)[number];
 
 export function CodeBlock({ code, lang, action, className = '' }: {

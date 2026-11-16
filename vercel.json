@@ -12,8 +12,15 @@
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
     },
     {
-      "source": "/icons/(.*)",
+      "source": "/icons/(.*\\.json)",
       "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600, stale-while-revalidate=86400" }]
+    },
+    {
+      "source": "/svg/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400, stale-while-revalidate=604800" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" }
+      ]
     },
     {
       "source": "/(modifiers.json|og-image.png|apple-touch-icon.png|favicon.svg|app/.*)",

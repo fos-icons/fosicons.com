@@ -67,7 +67,7 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(networkFirst(request));
   } else if (url.pathname.startsWith('/assets/')) {
     event.respondWith(cacheFirst(request));
-  } else if (/^\/(icons|brands|app|licenses)\/|^\/(modifiers\.json|og-image\.png|apple-touch-icon\.png|favicon\.svg)$/.test(url.pathname)) {
+  } else if (/^\/(icons\/.*\.json|svg|brands|app|licenses)(\/|$)|^\/(modifiers\.json|og-image\.png|apple-touch-icon\.png|favicon\.svg)$/.test(url.pathname)) {
     event.respondWith(staleWhileRevalidate(request, event));
   }
 });
