@@ -1,25 +1,25 @@
-import { useI18n } from '../i18n';
+import { LocalLink, useI18n } from '../i18n';
+import { iconPath } from '../lib/icon-pages';
 import { errorText, LocalizedError } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useLocation } from 'react-router-dom';
 import {
   compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
-import { copyText } from '../lib/export';
-import { reactSnippet } from '../lib/react-snippet';
+import { reactSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { BASE_STROKE, buildSvg, hasFilledDetails, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
-import { CodeBlock } from './CodeBlock';
+import { CodeTabs, KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
-import { composeSvg, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
-import { ColorField, CustomizeControls, Section, SizeControl } from './Customize';
+import { composeSvg, initialCorner, MODIFIER_BADGE, MODIFIER_SCALE, modifiersFor, type Corner } from '../lib/modifiers';
+import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
 import { ThemeToggle } from './ThemeToggle';
-import { IconButton, Segmented, UiIcon, useToast } from './ui';
+import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
-const FEEDBACK_URL = 'https://github.com/fos-icons/fosicons.com/issues/new';
 
 
 export interface InspectorProps {
@@ -41,6 +41,7 @@ export interface InspectorProps {
   onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
 }
 
+
 /** Largest size the inspector's scaled sample shows at 1:1; bigger sizes show at this size. */
 const SAMPLE_MAX = 64;
 
@@ -57,9 +58,8 @@ export function Inspector({
   const r = resolveLook(look, theme);
   const size = look.size;
   const desktop = useMediaQuery('(min-width: 1024px)');
-  /** The "scaled" sample shows the icon at its real size, up to SAMPLE_MAX; its box is at least 40px. */
+  /** The preview draws the icon at its real size, up to SAMPLE_MAX. */
   const sampleSize = Math.min(size, SAMPLE_MAX);
-  const sampleBox = Math.max(40, sampleSize);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
 
   const [modifier, setModifier] = useState<string | null>(null);
@@ -74,14 +74,21 @@ export function Inspector({
     return { modifier: found, corner };
   }, [canTryModifiers, badgeRequest, modifiers.list, icon.name]);
   const setBadge = (choice: ModifierChoice | null) => onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
+  /**
+   * Badge size relative to the library's (1 = as authored); kept while trying
+   * other modifiers. Stored as a scale so it stays in proportion when the icon
+   * size changes; shown in pixels at the current size.
+   */
+  const [badgeScale, setBadgeScale] = useState<number>(MODIFIER_SCALE.default);
+  const badgePx = (scale: number) => t('customize.pxValue', { value: Math.round((MODIFIER_BADGE / 24) * size * scale) });
   const composed = useMemo(() => {
     if (!badge || !librarySource) return { svg: librarySource, error: null };
     try {
-      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style), error: null };
+      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style, badgeScale), error: null };
     } catch (e) {
       return { svg: librarySource, error: errorText(e, i18n, 'error.compose') };
     }
-  }, [badge, librarySource, style, i18n]);
+  }, [badge, librarySource, style, badgeScale, i18n]);
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
@@ -121,8 +128,6 @@ export function Inspector({
     if (!source) return null;
     try {
       return {
-        large: buildSvg(source, { ...colors, size: 160, idPrefix: `${uid}-l`, strokeWidth }),
-        native: buildSvg(source, { ...colors, size: 24, idPrefix: `${uid}-n`, strokeWidth }),
         actual: buildSvg(source, { ...colors, size: Math.min(size, SAMPLE_MAX), idPrefix: `${uid}-a`, strokeWidth }),
       };
     } catch {
@@ -160,14 +165,21 @@ export function Inspector({
     }
   };
 
-  const snippet = kind === 'core'
-    ? reactSnippet(icon.name, style, {
-      size,
-      color: duo ? null : look.mono,
-      primary: duo ? colors.primary : undefined,
-      secondary: colors.secondary,
-      modifier: showModifier && modifier ? modifier : undefined,
-    })
+  // Code examples. The packages ship one component per library icon, so a
+  // modifier at a corner (and size) the library authored uses that icon's
+  // component; any other combination falls back to the plain icon.
+  const packaged = badge && authoredMatch && badgeScale === MODIFIER_SCALE.default ? authoredMatch : null;
+  const plainFallback = !!badge && !packaged;
+  const snippetOptions: SnippetOptions = {
+    size,
+    color: duo ? null : look.mono,
+    primary: duo ? colors.primary : undefined,
+    secondary: colors.secondary,
+    modifier: showModifier && modifier ? modifier : undefined,
+  };
+  const snippetName = packaged ?? icon.name;
+  const snippets = kind === 'core'
+    ? { react: reactSnippet(snippetName, style, snippetOptions), vue: vueSnippet(snippetName, style, snippetOptions) }
     : null;
 
   return (
@@ -177,46 +189,61 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 text-sm text-muted">
             {label('category', icon.category, icon.category)}
+            {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
             {icon.composition && <> · {t('inspector.base')} <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>{icon.composition.base}</button></>}
           </p>
+          {kind === 'core' && <KeywordTags icon={icon} size="sm" className="mt-2.5" />}
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 -mt-1" />
       </div>
 
-      <div className="px-5 pb-2">
-        <div className="checkerboard flex h-[200px] items-center justify-center rounded-2xl border border-line">
-          {preview ? (
-            <span role="img" aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`) })} data-artwork className="glyph size-40" dangerouslySetInnerHTML={{ __html: preview.large }} />
-          ) : (
-            <span className="size-40 animate-pulse rounded-2xl bg-sunken" />
-          )}
-        </div>
-      </div>
       <div ref={stickySentinel} aria-hidden="true" />
-      {/* Stays in view while the controls below scroll, so changes stay visible. */}
+      {/*
+        The preview stays in view while the controls below scroll, so size, stroke,
+        color, and modifier changes stay visible. It draws the icon at the chosen
+        size (up to SAMPLE_MAX), so the size slider visibly changes it.
+      */}
       <div
-        className={`sticky top-0 z-10 bg-surface px-5 pb-4 transition-shadow [dialog_&]:top-4 ${
+        className={`sticky top-0 z-10 bg-surface px-5 pb-4 pt-1 transition-shadow [dialog_&]:top-4 ${
           samplesStuck ? 'shadow-[0_8px_12px_-10px_rgb(0_0_0/0.25)]' : ''
         }`}
       >
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <figure className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
-            <span className="checkerboard flex size-10 items-center justify-center rounded-lg">
-              {preview && <span data-artwork className="glyph size-6" dangerouslySetInnerHTML={{ __html: preview.native }} />}
-            </span>
-            <figcaption className="text-xs leading-tight text-muted"><strong className="block font-semibold text-ink">{t('customize.pxValue', { value: 24 })}</strong>{t('inspector.native')}</figcaption>
-          </figure>
-          <figure className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
-            {/* Grows with the size (up to SAMPLE_MAX) so size changes, and the badge with them, are visible. */}
-            <span className="checkerboard flex shrink-0 items-center justify-center overflow-hidden rounded-lg" style={{ width: sampleBox, height: sampleBox }}>
-              {preview && <span data-artwork className="glyph" style={{ width: sampleSize, height: sampleSize }} dangerouslySetInnerHTML={{ __html: preview.actual }} />}
-            </span>
-            <figcaption className="text-xs leading-tight text-muted"><strong className="block font-semibold text-ink">{t('customize.pxValue', { value: size })}</strong>{size === 24 ? t('inspector.selectedSize') : t('inspector.scaled')}</figcaption>
-          </figure>
-        </div>
+        <figure className="group checkerboard relative flex h-28 items-center justify-center rounded-2xl border border-line">
+          {preview ? (
+            <span
+              role="img"
+              aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`), size: sampleSize })}
+              data-artwork
+              className="glyph"
+              style={{ width: sampleSize, height: sampleSize }}
+              dangerouslySetInnerHTML={{ __html: preview.actual }}
+            />
+          ) : (
+            <span className="size-16 animate-pulse rounded-2xl bg-sunken" />
+          )}
+          {/* On hover, says what the preview shows: the icon at the chosen size. */}
+          <figcaption
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium tabular-nums text-canvas opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100"
+          >
+            {size > SAMPLE_MAX ? t('inspector.shownAt', { size, max: SAMPLE_MAX }) : t('inspector.actualSize', { size })}
+          </figcaption>
+        </figure>
       </div>
 
       <SizeControl look={look} onChange={onLookChange} />
+      {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
+      <StrokeControl
+        look={look}
+        onChange={onLookChange}
+        style={style}
+        kind={kind}
+        footnote={filledParts && strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
+          <p className="mt-2 rounded-lg bg-sunken px-2.5 py-2 text-xs leading-relaxed text-muted">
+            {t('inspector.filledParts')}
+          </p>
+        )}
+      />
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
@@ -234,6 +261,33 @@ export function Inspector({
           ) : (
             <>
               <ModifierPicker modifiers={modifiersFor(icon.name, modifiers.list)} value={badge} onChange={setBadge} authored={authored.map} />
+              {badge && (
+                <div className="mt-4">
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="text-muted">{t('inspector.modifierSize')}</span>
+                    <span className="flex items-center gap-2">
+                      {badgeScale !== MODIFIER_SCALE.default && (
+                        <button type="button" onClick={() => setBadgeScale(MODIFIER_SCALE.default)} className="font-medium text-brand hover:underline">
+                          {t('inspector.modifierSizeReset')}
+                        </button>
+                      )}
+                      <span className="font-mono tabular-nums text-ink">{badgePx(badgeScale)}</span>
+                    </span>
+                  </div>
+                  <RangeSlider
+                    id={`${uid}-badge-size`}
+                    label={t('inspector.modifierSize')}
+                    min={MODIFIER_SCALE.min}
+                    max={MODIFIER_SCALE.max}
+                    step={MODIFIER_SCALE.step}
+                    value={badgeScale}
+                    valueText={t('inspector.modifierSizeValue', { size: badgePx(badgeScale), icon: t('customize.pxValue', { value: size }) })}
+                    onChange={setBadgeScale}
+                    marks={[0.75, 1, MODIFIER_SCALE.max]}
+                    format={badgePx}
+                  />
+                </div>
+              )}
               <div aria-live="polite" className="mt-3 text-xs leading-relaxed text-faint">
                 {composed.error ? (
                   <p className="text-danger">{composed.error}</p>
@@ -293,13 +347,9 @@ export function Inspector({
         look={look}
         onChange={onLookChange}
         showSize={false}
+        showStroke={false}
         style={style}
         kind={kind}
-        strokeFootnote={filledParts && strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-          <p className="mt-2 rounded-lg bg-sunken px-2.5 py-2 text-xs leading-relaxed text-muted">
-            {t('inspector.filledParts')}
-          </p>
-        )}
         footnote={(
           <>
             {style === 'duocolor' && !showSecondary && (
@@ -328,28 +378,29 @@ export function Inspector({
         run={run}
       />
 
-      {snippet && (
-        <Section
-          collapsible
-          defaultOpen={false}
-          title={t('inspector.react')}
-          aside={(
-            <button type="button" className="text-xs font-medium text-brand hover:underline" onClick={() => run(() => copyText(snippet), t('inspector.reactCopied'))}>
-              {t('inspector.copy')}
-            </button>
-          )}
-        >
-          <CodeBlock code={snippet} lang="tsx" />
-          <p className="mt-2 text-xs leading-relaxed text-faint">
+      {snippets && (
+        <Section collapsible defaultOpen={false} title={t('inspector.code')}>
+          <CodeTabs
+            label={t('iconPage.framework')}
+            tabs={[
+              { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
+              { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
+            ]}
+          />
+          <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-faint">
             {strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-              rich('inspector.reactStroke', { strong: (text) => <strong className="font-medium text-ink">{text}</strong> }, { base: BASE_STROKE, value: strokeWidth })
+              <li>{t('inspector.codeStroke', { base: BASE_STROKE, value: strokeWidth })}</li>
             )}
-            {badge && rich('inspector.reactModifier', { strong: (text) => <strong className="font-medium text-ink">{text}</strong> }, { name: icon.name, modifier: label('modifier', badge.modifier.name, badge.modifier.label) })}
-            {rich('inspector.reactInstall', {
-              code: (text) => <code className="font-mono text-ink">{text}</code>,
-              link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs#react')}>{text}</a>,
-            })}
-          </p>
+            {plainFallback && (
+              <li>{t('inspector.codeModifier', { modifier: label('modifier', badge.modifier.name, badge.modifier.label) })}</li>
+            )}
+            <li>
+              {rich('inspector.codeInstall', {
+                code: (text) => <code className="font-mono text-ink">{text}</code>,
+                link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs#react')}>{text}</a>,
+              })}
+            </li>
+          </ul>
         </Section>
       )}
       <div className="h-4" />
@@ -362,7 +413,7 @@ export function Inspector({
  * pane slot (full height, beside the page). Mobile: a modal bottom sheet.
  */
 export function SidePane({
-  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, children,
+  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, children,
 }: {
   desktop: boolean;
   host: HTMLElement | null;
@@ -375,10 +426,13 @@ export function SidePane({
   headingId: string;
   /** Focus the pane heading whenever this changes to a non-null value. */
   focusKey: string | null;
+  /** Desktop only: a page that shows the pane's subject in full (the selected icon's page). */
+  expandTo?: string;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const { t } = useI18n();
+  const { pathname, search } = useLocation();
   const [width, setWidth] = usePaneWidth();
   const [resizing, setResizing] = useState(false);
 
@@ -463,17 +517,18 @@ export function SidePane({
             onClick={() => onCollapsedChange(!collapsed)}
           />
           {!collapsed && <ThemeToggle />}
-          {!collapsed && (
-            <a
-              href={FEEDBACK_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="ml-auto inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-ink transition hover:bg-sunken"
+          {!collapsed && expandTo && (
+            <LocalLink
+              to={expandTo}
+              // The page's back link returns here, with the search and selection intact.
+              state={{ from: `${pathname}${search}` }}
+              aria-label={t('pane.openPage')}
+              title={t('pane.openPage')}
+              className="ml-auto inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken"
             >
-              <UiIcon name="message-smile-square" className="size-5" />
-              {t('pane.feedback')}
-              <span className="sr-only">{t('pane.feedbackNewTab')}</span>
-            </a>
+              {/* Mirrored so the arrows point to the top-right and bottom-left corners. */}
+              <UiIcon name="expand" className="size-5 -scale-x-100" />
+            </LocalLink>
           )}
         </div>
         {collapsed && (

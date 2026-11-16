@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import catalog from '../src/data/catalog.json';
-import { composeSvg, initialCorner, type Corner, type ModifierAsset } from '../src/lib/modifiers';
+import { composeSvg, initialCorner, MODIFIER_SCALE, type Corner, type ModifierAsset } from '../src/lib/modifiers';
 
 const pub = (file: string) => JSON.parse(readFileSync(join(__dirname, '../public', file), 'utf8'));
 const modifiers: ModifierAsset[] = pub('modifiers.json').modifiers;
@@ -47,6 +47,20 @@ describe('modifier composition', () => {
       }
     }
     expect(matched).toBeGreaterThan(200);
+  });
+
+  it('resizes the badge and its gap together, never past a quarter of the icon', () => {
+    const add = byName.get('add')!;
+    const base = sources.regular.bell;
+    // 1 is the library's own composition; the scale only appears when it changes.
+    expect(composeSvg(base, add, 'top-left', 'regular', 1)).toBe(composeSvg(base, add, 'top-left', 'regular'));
+    const bigger = composeSvg(base, add, 'top-left', 'regular', 1.1);
+    expect(bigger).toContain('scale(1.1)');
+    expect(bigger).toContain('<mask');
+    // A 10×10 badge at 1.2 is 12×12: a quarter of the 24px grid. Larger requests are capped there.
+    expect(MODIFIER_SCALE.max).toBe(1.2);
+    expect(composeSvg(base, add, 'top-left', 'regular', 2)).toBe(composeSvg(base, add, 'top-left', 'regular', MODIFIER_SCALE.max));
+    expect(composeSvg(base, add, 'top-left', 'regular', 0.1)).toBe(composeSvg(base, add, 'top-left', 'regular', MODIFIER_SCALE.min));
   });
 
   it('refuses a corner the modifier does not support', () => {

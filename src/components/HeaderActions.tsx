@@ -3,12 +3,11 @@ import { LocalLink, useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { downloadBlob } from '../lib/export';
 import { buildFullSet, fullSetName } from '../lib/download-all';
-import { FIGMA_URL, LIBRARY_URL } from '../lib/links';
-import { UiIcon, useToast } from './ui';
+import { FEEDBACK_URL, FIGMA_URL, LIBRARY_URL } from '../lib/links';
+import { Button, ButtonAnchor, ButtonLink, UiIcon, useToast } from './ui';
 
-const base = 'inline-flex h-9 items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 text-sm font-medium transition disabled:cursor-wait disabled:opacity-60';
-const primary = `${base} bg-brand text-brand-ink hover:brightness-110 active:brightness-95`;
-const ghost = `${base} text-ink hover:bg-sunken`;
+/** Phone menu rows: full-width ghost buttons, icon and label aligned left. */
+const menuItem = 'w-full justify-start';
 /** Plain text links for the header bar. */
 const linkBase = 'whitespace-nowrap rounded text-sm font-medium underline-offset-4 transition hover:underline disabled:cursor-wait disabled:opacity-60';
 const textLink = `${linkBase} text-muted hover:text-ink`;
@@ -34,8 +33,25 @@ function useDownloadAll() {
   return { busy, run };
 }
 
-export function HeaderActions() {
+/**
+ * The home page's two calls to action under its intro: get started with the
+ * library (primary) and download the whole set (secondary).
+ */
+export function HeroActions({ className = '' }: { className?: string }) {
   const download = useDownloadAll();
+  const { t } = useI18n();
+  return (
+    <div className={`flex flex-wrap gap-2 ${className}`}>
+      <ButtonAnchor href={LIBRARY_URL} external variant="primary" size="lg">{t('header.getStarted')}</ButtonAnchor>
+      <Button size="lg" icon="download" onClick={download.run} disabled={download.busy} aria-describedby="download-all-desc" className="disabled:cursor-wait">
+        {download.busy ? t('header.preparing') : t('header.download')}
+      </Button>
+      <span id="download-all-desc" className="sr-only">{t('header.downloadDescription')}</span>
+    </div>
+  );
+}
+
+export function HeaderActions() {
   const { t } = useI18n();
   const NEW_TAB = <span className="sr-only">{t('site.newTab')}</span>;
   const [open, setOpen] = useState(false);
@@ -59,26 +75,21 @@ export function HeaderActions() {
     };
   }, [open]);
 
-  const downloadLabel = download.busy ? t('header.preparing') : t('header.download');
   const close = () => setOpen(false);
 
   return (
     <>
       <nav aria-label={t('header.main')} className="hidden items-center gap-5 md:flex">
-        <a href={LIBRARY_URL} target="_blank" rel="noreferrer" className={`${linkBase} text-brand`}>
-          {t('header.getStarted')}{NEW_TAB}
-        </a>
         <LocalLink to="/docs" className={textLink}>{t('header.docs')}</LocalLink>
-        <button type="button" className={textLink} onClick={download.run} disabled={download.busy} aria-describedby="download-all-desc">
-          {downloadLabel}
-        </button>
         {FIGMA_URL && (
           <a href={FIGMA_URL} target="_blank" rel="noreferrer" className={textLink}>
             {t('header.figma')}{NEW_TAB}
           </a>
         )}
+        <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className={textLink}>
+          {t('header.feedback')}{NEW_TAB}
+        </a>
       </nav>
-      <span id="download-all-desc" className="sr-only">{t('header.downloadDescription')}</span>
 
       <div ref={wrapRef} className="relative md:hidden">
         <button
@@ -98,22 +109,13 @@ export function HeaderActions() {
           hidden={!open}
           className="absolute right-0 top-11 z-40 w-60 space-y-1 rounded-2xl border border-line bg-surface p-2 shadow-lg"
         >
-          <a href={LIBRARY_URL} target="_blank" rel="noreferrer" onClick={close} className={`${primary} w-full`}>
-            {t('header.getStarted')}{NEW_TAB}
-          </a>
-          <LocalLink to="/docs" onClick={close} className={`${ghost} w-full justify-start`}>
-            <UiIcon name="book-open" className="size-[18px]" />
-            {t('header.docs')}
-          </LocalLink>
-          <button type="button" className={`${ghost} w-full justify-start`} onClick={download.run} disabled={download.busy} aria-describedby="download-all-desc">
-            <UiIcon name="download" className="size-[18px]" />
-            {downloadLabel}
-          </button>
+          <ButtonLink to="/docs" onClick={close} variant="ghost" icon="book-open" className={menuItem}>{t('header.docs')}</ButtonLink>
           {FIGMA_URL && (
-            <a href={FIGMA_URL} target="_blank" rel="noreferrer" onClick={close} className={`${ghost} w-full justify-start`}>
-              {t('header.figma')}{NEW_TAB}
-            </a>
+            <ButtonAnchor href={FIGMA_URL} external onClick={close} variant="ghost" className={menuItem}>{t('header.figma')}</ButtonAnchor>
           )}
+          <ButtonAnchor href={FEEDBACK_URL} external onClick={close} variant="ghost" icon="message-smile-square" className={menuItem}>
+            {t('header.feedback')}
+          </ButtonAnchor>
         </nav>
       </div>
     </>

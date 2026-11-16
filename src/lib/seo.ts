@@ -1,6 +1,9 @@
 import { createI18n, DEFAULT_LOCALE, LOCALES, localizePath, splitLocale, type I18n, type MessageKey } from '../i18n';
 import { brands } from './brands';
-import { catalog, ICONS_ROUNDED, STYLE_META } from './catalog';
+import { catalog, ICONS_ROUNDED, iconsByName, STYLE_META, type IconEntry } from './catalog';
+import {
+  categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, iconsInCategory, svgFilePath,
+} from './icon-pages';
 import { FIGMA_URL, LIBRARY_URL } from './links';
 
 /**
@@ -29,7 +32,9 @@ export const facts = {
   license: catalog.license,
 };
 
-export type PageId = 'home' | 'docs' | 'brands' | 'not-found';
+/** Pages with one fixed URL. */
+export type StaticPageId = 'home' | 'docs' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma';
+export type PageId = StaticPageId | 'icon' | 'category';
 
 export interface PageMeta {
   id: PageId;
@@ -39,23 +44,41 @@ export interface PageMeta {
   description: string;
   /** Keep out of search results (the 404 page). */
   noindex?: boolean;
+  /** The icon an icon page shows. */
+  icon?: IconEntry;
+  /** The category a category page lists. */
+  category?: { name: string; count: number };
 }
 
-const PATHS: Record<PageId, string> = { home: '/', docs: '/docs', brands: '/brands', 'not-found': '/404' };
+const PATHS: Record<StaticPageId, string> = {
+  home: '/', docs: '/docs', brands: '/brands', 'not-found': '/404',
+  react: FRAMEWORK_PATHS.react, vue: FRAMEWORK_PATHS.vue, figma: FRAMEWORK_PATHS.figma,
+};
 const META_KEYS = {
   home: ['meta.home.title', 'meta.home.description'],
   docs: ['meta.docs.title', 'meta.docs.description'],
   brands: ['meta.brands.title', 'meta.brands.description'],
   'not-found': ['meta.notFound.title', 'meta.notFound.description'],
-} as const satisfies Record<PageId, readonly [MessageKey, MessageKey]>;
+  react: ['meta.react.title', 'meta.react.description'],
+  vue: ['meta.vue.title', 'meta.vue.description'],
+  figma: ['meta.figma.title', 'meta.figma.description'],
+} as const satisfies Record<StaticPageId, readonly [MessageKey, MessageKey]>;
 
-export const PAGE_IDS = Object.keys(PATHS) as PageId[];
+export const PAGE_IDS = Object.keys(PATHS) as StaticPageId[];
 
-/** A page's metadata in a language; counts come from the catalog. */
-export function pageMeta(id: PageId, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
+const TITLE_MAX = 60;
+const DESCRIPTION_MAX = 160;
+/** The first title that fits a search result, else the last one. */
+const fit = (titles: string[]) => titles.find((t) => t.length <= TITLE_MAX) ?? titles[titles.length - 1];
+const clip = (text: string) => (text.length <= DESCRIPTION_MAX ? text : `${text.slice(0, DESCRIPTION_MAX - 1).replace(/[\s,;:]+\S*$/, '')}…`);
+
+const styleList = (i18n: I18n) => i18n.list(catalog.styles.map((s) => i18n.t(`style.${s}`)));
+
+/** A fixed page's metadata in a language; counts come from the catalog. */
+export function pageMeta(id: StaticPageId, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
   const vars = {
     icons: facts.icons,
-    styles: i18n.list(catalog.styles.map((s) => i18n.t(`style.${s}`))),
+    styles: styleList(i18n),
     license: facts.license,
     modifiers: facts.modifiers,
     brands: facts.brands,
@@ -64,22 +87,57 @@ export function pageMeta(id: PageId, i18n: I18n = createI18n(DEFAULT_LOCALE)): P
   return { id, path: PATHS[id], title: i18n.t(title, vars), description: i18n.t(description, vars), noindex: id === 'not-found' };
 }
 
-/** English metadata for every page (for the build's sitemap and llms.txt). */
-export const PAGES = Object.fromEntries(PAGE_IDS.map((id) => [id, pageMeta(id)])) as Record<PageId, PageMeta>;
+/** An icon page's metadata, or null for an unknown icon. */
+export function iconMeta(name: string, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta | null {
+  const icon = iconsByName.get(name);
+  if (!icon) return null;
+  const vars = { name: displayName(name), styles: styleList(i18n), license: facts.license };
+  return {
+    id: 'icon',
+    path: iconPath(name),
+    title: fit([i18n.t('meta.icon.title', vars), i18n.t('meta.icon.titleShort', vars), i18n.t('meta.icon.titleShortest', vars)]),
+    description: clip(i18n.t('meta.icon.description', vars)),
+    icon,
+  };
+}
 
-/** Which page a location shows (the path may include a language prefix). */
-export function pageIdFor(pathname: string, search = ''): PageId {
+/** A category page's metadata, or null for an unknown category. */
+export function categoryMeta(slug: string, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta | null {
+  const category = categoryBySlug(slug);
+  if (!category) return null;
+  const name = i18n.label('category', category.name, category.name);
+  const examples = i18n.list(iconsInCategory(category.name).filter((i) => !i.composition).slice(0, 3).map((i) => displayName(i.name).toLowerCase()));
+  // Title case for the title ("Food & Drink Icons"); sentence case reads better in the description.
+  const titled = name.replace(/(^|\s)(\p{Ll})/gu, (_, space: string, letter: string) => space + letter.toLocaleUpperCase(i18n.config.code));
+  const vars = { category: name, count: category.count, styles: styleList(i18n), examples };
+  const titleVars = { ...vars, category: titled };
+  return {
+    id: 'category',
+    path: categoryPath(category.name),
+    title: fit([i18n.t('meta.category.title', titleVars), i18n.t('meta.category.titleShort', titleVars)]),
+    description: clip(i18n.t('meta.category.description', vars)),
+    category,
+  };
+}
+
+/** English metadata for every fixed page (for the build's sitemap and llms.txt). */
+export const PAGES = Object.fromEntries(PAGE_IDS.map((id) => [id, pageMeta(id)])) as Record<StaticPageId, PageMeta>;
+
+/** The metadata for a location in the app, in a language (the path may include a language prefix). */
+export function pageFor(pathname: string, search = '', i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
   const path = splitLocale(pathname).path.replace(/\/+$/, '') || '/';
-  if (path === '/') return new URLSearchParams(search).get('style') === 'brands' ? 'brands' : 'home';
-  if (path === '/docs') return 'docs';
-  if (path === '/brands') return 'brands';
-  return 'not-found';
+  if (path === '/') return pageMeta(new URLSearchParams(search).get('style') === 'brands' ? 'brands' : 'home', i18n);
+  const fixed = PAGE_IDS.find((id) => id !== 'home' && id !== 'not-found' && PATHS[id] === path);
+  if (fixed) return pageMeta(fixed, i18n);
+  const icon = /^\/icons\/([a-z0-9-]+)$/.exec(path);
+  if (icon) return iconMeta(icon[1], i18n) ?? pageMeta('not-found', i18n);
+  const category = /^\/categories\/([a-z0-9-]+)$/.exec(path);
+  if (category) return categoryMeta(category[1], i18n) ?? pageMeta('not-found', i18n);
+  return pageMeta('not-found', i18n);
 }
 
-/** The metadata for a location in the app, in a language. */
-export function pageFor(pathname: string, search = '', i18n?: I18n): PageMeta {
-  return pageMeta(pageIdFor(pathname, search), i18n);
-}
+/** Which page a location shows. */
+export const pageIdFor = (pathname: string, search = ''): PageId => pageFor(pathname, search).id;
 
 export const absolute = (path: string) => `${SITE_URL}${path}`;
 
@@ -100,16 +158,17 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
   const lang = i18n.config.code;
   const url = pageUrl(page, lang);
   const home = pageMeta('home', i18n);
+  const imageUrl = page.icon ? absolute(svgFilePath(catalog.styles[0], page.icon.name)) : null;
   const webPage = {
-    '@type': page.id === 'docs' ? 'TechArticle' : 'WebPage',
+    '@type': { docs: 'TechArticle', react: 'TechArticle', vue: 'TechArticle', icon: 'ItemPage', category: 'CollectionPage' }[page.id as string] ?? 'WebPage',
     '@id': `${url}#webpage`,
     url,
     name: page.title,
-    ...(page.id === 'docs' ? { headline: page.title } : {}),
+    ...(['docs', 'react', 'vue'].includes(page.id) ? { headline: page.title } : {}),
     description: page.description,
     isPartOf: { '@id': `${SITE_URL}/#website` },
     publisher: { '@id': `${SITE_URL}/#organization` },
-    primaryImageOfPage: absolute(SHARE_IMAGE.path),
+    primaryImageOfPage: imageUrl ? { '@id': `${url}#image` } : absolute(SHARE_IMAGE.path),
     inLanguage: lang,
   };
   const graph: object[] = [
@@ -148,12 +207,36 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
       keywords: ['icons', 'SVG icons', 'icon library', 'React icons', 'Vue icons', 'Figma icons', ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
     });
   } else if (!page.noindex) {
+    const crumbs: [string, string][] = [[SITE_NAME, pageUrl(home, lang)]];
+    const category = page.category?.name ?? page.icon?.category;
+    if (category) {
+      crumbs.push([i18n.t('categoryPage.heading', { category: i18n.label('category', category, category) }), pageUrl({ path: categoryPath(category) }, lang)]);
+    }
+    if (page.id !== 'category') {
+      crumbs.push([page.icon ? i18n.t('iconPage.heading', { name: displayName(page.icon.name) }) : page.title.split(/ [—|] /)[0], url]);
+    }
     graph.push({
       '@type': 'BreadcrumbList',
-      itemListElement: [
-        { '@type': 'ListItem', position: 1, name: SITE_NAME, item: pageUrl(home, lang) },
-        { '@type': 'ListItem', position: 2, name: page.title.split(' — ')[0], item: url },
-      ],
+      itemListElement: crumbs.map(([name, item], i) => ({ '@type': 'ListItem', position: i + 1, name, item })),
+    });
+  }
+  if (page.icon && imageUrl) {
+    graph.push({
+      '@type': 'ImageObject',
+      '@id': `${url}#image`,
+      name: i18n.t('iconPage.heading', { name: displayName(page.icon.name) }),
+      description: page.description,
+      contentUrl: imageUrl,
+      encodingFormat: 'image/svg+xml',
+      width: catalog.grid,
+      height: catalog.grid,
+      keywords: [page.icon.name, ...page.icon.tags, ...displayAliases(page.icon)].join(', '),
+      license: 'https://opensource.org/licenses/MIT',
+      acquireLicensePage: absolute('/docs#licensing'),
+      creditText: SITE_NAME,
+      creator: { '@id': `${SITE_URL}/#organization` },
+      copyrightNotice: `${SITE_NAME} contributors`,
+      isAccessibleForFree: true,
     });
   }
   return { '@context': 'https://schema.org', '@graph': graph };

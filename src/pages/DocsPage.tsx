@@ -19,6 +19,7 @@ const SECTIONS = [
   ['styles', 'Styles'],
   ['svg', 'SVG'],
   ['react', 'React'],
+  ['vue', 'Vue'],
   ['figma', 'Figma'],
   ['colors', 'Colors'],
   ['sizes', 'Sizes'],
@@ -269,7 +270,7 @@ export default function DocsPage() {
         <header>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
           <p className="mt-3 text-base text-muted">
-            Use Fos Icons as plain SVG, in React, or in Figma. {nf.format(ICONS_ROUNDED)}+ icons,
+            Use Fos Icons as plain SVG, in React or Vue, or in Figma. {nf.format(ICONS_ROUNDED)}+ icons,
             each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
           </p>
         </header>
@@ -319,7 +320,26 @@ export default function DocsPage() {
             <li>Icons are decorative by default (<code>aria-hidden</code>). Pass <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>
             <li>Root imports are tree-shakeable; <code>@fos-icons/react/filled</code> and <code>@fos-icons/react/regular/camera</code> entry points also exist.</li>
           </ul>
-          <p>The inspector&apos;s React example uses these exact props.</p>
+          <p>The inspector&apos;s React and Vue examples use these exact props.</p>
+        </Section>
+
+        <Section id="vue" title="Vue">
+          <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/vue"><code>@fos-icons/vue</code></a> is on npm. It supports Vue 3.3 and later, ships TypeScript types (including SFC template checking), tree-shakes to the icons you import, and renders on the server (Nuxt included). Source: <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/vue-fos">fos-icons/vue-fos</a>.</p>
+          <Code lang="sh">{`npm install @fos-icons/vue\n# or\npnpm add @fos-icons/vue`}</Code>
+          <p>Component names are the same as in the React package: <code>fuel-pump</code> becomes <code>FuelPumpRegular</code>, <code>FuelPumpFilled</code>, <code>FuelPumpDuocolor</code>, and <code>FuelPumpDuotone</code>.</p>
+          <Code lang="vue">{`<script setup lang="ts">
+import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
+</script>
+
+<template>
+  <CameraRegular :size="24" />
+  <CameraDuocolor :size="32" primary-color="#245B9E" secondary-color="#60A5FA" />
+</template>`}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Props match React: <code>size</code>, <code>color</code>, <code>primaryColor</code>, <code>secondaryColor</code>, and <code>title</code>.</li>
+            <li>Components are plain render functions, so <code>h(CameraRegular, {'{'} size: 32 {'}'})</code> and JSX work without an SFC compiler.</li>
+            <li>Icons are decorative by default. Pass <code>title</code> or <code>aria-label</code> for meaningful icons.</li>
+          </ul>
         </Section>
 
         <Section id="figma" title="Figma">

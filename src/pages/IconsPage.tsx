@@ -3,6 +3,7 @@ import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { CustomizePanel } from '../components/Customize';
+import { HeroActions } from '../components/HeaderActions';
 import { GridHelp, IconGrid } from '../components/IconGrid';
 import { Inspector, SidePane } from '../components/Inspector';
 import { useModifiers } from '../components/ModifierPicker';
@@ -10,7 +11,8 @@ import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, UiIcon } from '../components/ui';
 import { availableBrandStyles, brandCategories, brandEntries, hasBrandStyle, loadBrands } from '../lib/brands';
-import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, type StyleId } from '../lib/catalog';
+import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
 import { DEFAULT_LOOK, gridVars, type Look } from '../lib/look';
 import { modifiersFor } from '../lib/modifiers';
@@ -294,10 +296,12 @@ export function IconsPage() {
     if (state.icon) setMulti([]);
   }, [state.icon]);
 
-  // Selecting always reveals the pane.
+  // A new selection reveals the pane. Keyed on the selection, not on `collapsed`,
+  // so collapsing the pane while an icon stays selected sticks.
+  const selectionKey = multiActive ? `set:${multi.length}` : selected?.name ?? null;
   useEffect(() => {
-    if ((selected || multiActive) && collapsed && desktop) setCollapsed(false);
-  }, [selected, multiActive, collapsed, desktop, setCollapsed]);
+    if (selectionKey && desktop) setCollapsed(false);
+  }, [selectionKey, desktop, setCollapsed]);
 
   /**
    * Plain click opens one icon (or closes it again). Shift/⌘/Ctrl-click
@@ -354,6 +358,7 @@ export function IconsPage() {
         <p className="mt-2 text-base text-muted">
           {t('icons.intro', { count: ICONS_ROUNDED, styles: list(catalog.styles.map((s) => t(`style.${s}`))) })}
         </p>
+        <HeroActions className="mt-5" />
       </div>
 
       <div className="sticky top-0 z-20 -mx-4 bg-canvas/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-canvas/75 sm:-mx-6 sm:px-6">
@@ -480,6 +485,9 @@ export function IconsPage() {
         onDismiss={() => (multiActive ? setMulti([]) : selected ? close() : setCustomizeOpen(false))}
         headingId="pane-heading"
         focusKey={selected?.name ?? null}
+        expandTo={selected && !brandsView && !multiActive
+          ? `${iconPath(selected.name)}${drawStyle === catalog.styles[0] ? '' : `?style=${STYLE_META[drawStyle].slug}`}`
+          : undefined}
       >
         {multiActive ? (
           <SelectionPanel

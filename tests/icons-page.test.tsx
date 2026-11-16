@@ -158,7 +158,7 @@ describe('Icons page', () => {
   it('previews any modifier on an icon, in the corners it supports', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=agent');
-    const preview = await screen.findByRole('img', { name: /agent, Regular, scaled preview/ });
+    const preview = await screen.findByRole('img', { name: /agent, Regular, preview/ });
     expect(preview.innerHTML).not.toContain('clip-path');
 
     await user.click(await screen.findByRole('tab', { name: 'Access' }, { timeout: 8000 }));
@@ -184,7 +184,7 @@ describe('Icons page', () => {
     expect(await screen.findByRole('heading', { name: 'clock', level: 2 }, { timeout: 8000 })).toBeTruthy();
     await waitFor(() => expect(screen.getByRole('button', { name: /^Sparkle modifier/ }).getAttribute('aria-pressed')).toBe('true'), { timeout: 8000 });
     expect(screen.getByText(/Opening clock with the Sparkle modifier/)).toBeTruthy();
-    const preview = screen.getByRole('img', { name: /clock, Regular, scaled preview/ });
+    const preview = screen.getByRole('img', { name: /clock, Regular, preview/ });
     expect(preview.innerHTML).toContain('clip-path');
   });
 
@@ -303,9 +303,9 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
     await screen.findAllByRole('button', { name: 'search' });
     const grid = screen.getByRole('list', { name: 'Regular icons' }).parentElement!;
-    // Default: 48px with the automatic 1px stroke (1 / 1.25 = 0.8).
+    // Default: 48px with the automatic 0.85px stroke (0.85 / 1.25 = 0.68).
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.8');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(within(pane).getByText('Auto')).toBeTruthy();
 
     // The slider covers what the grid previews; larger sizes go in the px field.
@@ -323,10 +323,11 @@ describe('Side pane (desktop)', () => {
     fireEvent.change(within(pane).getByRole('slider', { name: 'Size' }), { target: { value: '32' } });
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('2');
     await user.click(within(pane).getByRole('button', { name: 'Use auto' }));
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.92');
+    // Auto at 32px is 1.1px (1.1 / 1.25 = 0.88).
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.88');
 
     await user.click(within(pane).getByRole('button', { name: /Reset to defaults/ }));
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.8');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
   });
 
@@ -359,10 +360,12 @@ describe('Side pane (desktop)', () => {
     const user = userEvent.setup();
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    const feedback = within(pane).getByRole('link', { name: /Feedback/ });
+    // Feedback lives in the site header; the pane bar has no page link until an icon is selected.
+    const feedback = within(screen.getByRole('banner')).getAllByRole('link', { name: /Feedback/ })[0];
     expect(feedback.getAttribute('href')).toBe('https://github.com/fos-icons/fosicons.com/issues/new');
-    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
     expect(within(pane).queryByRole('link', { name: /Feedback/ })).toBeNull();
+    expect(within(pane).queryByRole('link', { name: 'Open icon page' })).toBeNull();
+    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
     // The theme toggle sits beside the collapse button, and stays on the rail.
     expect(within(pane).getByRole('button', { name: /^Theme:/ })).toBeTruthy();
     expect(within(pane).getByRole('button', { name: 'Expand panel' }).getAttribute('aria-expanded')).toBe('false');
@@ -372,23 +375,29 @@ describe('Side pane (desktop)', () => {
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
     expect(within(pane).getByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
+    expect(within(pane).getByRole('link', { name: 'Open icon page' }).getAttribute('href')).toBe('/icons/search');
+    // Collapsing with an icon still selected sticks; it is not reopened by the selection.
+    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
+    expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
+    await user.click(within(pane).getByRole('button', { name: 'Expand panel' }));
+    expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
 
     await user.click(within(pane).getByRole('button', { name: 'Clear selection' }));
     expect(location).toBe('');
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
   });
 
-  it('carries the grid-wide stroke into the selected icon and its React note', async () => {
+  it('carries the grid-wide stroke into the selected icon and its code note', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
     fireEvent.change(slider, { target: { value: '2' } });
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
-    const preview = await within(pane).findByRole('img', { name: /search, Regular, scaled preview/ });
+    const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     expect(preview.innerHTML).toContain('stroke-width="2"');
-    await user.click(within(pane).getByRole('button', { name: 'React' }));
-    expect(within(pane).getByText(/React package draws the standard 1.25px stroke/)).toBeTruthy();
+    await user.click(within(pane).getByRole('button', { name: 'Code' }));
+    expect(within(pane).getByText(/packages always draw the standard 1.25px stroke/)).toBeTruthy();
   });
 });
 
@@ -490,18 +499,22 @@ describe('Search tips', () => {
 describe('Inspector sections (desktop)', () => {
   beforeEach(useDesktop);
 
-  it('keeps React usage collapsed until expanded, with Copy still available', async () => {
+  it('keeps React and Vue usage collapsed until expanded, one tab each', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=search');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    const toggle = await within(pane).findByRole('button', { name: 'React' });
+    const toggle = await within(pane).findByRole('button', { name: 'Code' });
     expect(toggle.getAttribute('aria-expanded')).toBe('false');
     expect(document.getElementById(toggle.getAttribute('aria-controls')!)!.hidden).toBe(true);
-    expect(within(toggle.closest('section')!).getByRole('button', { name: 'Copy' })).toBeTruthy();
     await user.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    const code = pane.querySelector('.code-block code')!;
-    expect(code.textContent).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
+    const section = toggle.closest('section')!;
+    expect(within(section).getByRole('button', { name: 'Copy' })).toBeTruthy();
+    const code = () => section.querySelector('.code-block code')!.textContent;
+    expect(code()).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
+    await user.click(within(section).getByRole('tab', { name: 'Vue' }));
+    expect(code()).toMatch(/import \{ SearchRegular \} from '@fos-icons\/vue';/);
+    await user.click(within(section).getByRole('tab', { name: 'React' }));
     // Syntax colors arrive once the highlighter loads.
     await vi.waitFor(() => expect(pane.querySelector('.code-block .hljs-keyword')?.textContent).toBe('import'));
   });
@@ -521,7 +534,7 @@ describe('Inspector sections (desktop)', () => {
   it('says when filled parts of an icon keep their weight as the stroke changes', async () => {
     renderAt('/?icon=cloud-moon');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    // Default 48px Auto stroke is 1px, not the drawn 1.25px.
+    // Default 48px Auto stroke is 0.85px, not the drawn 1.25px.
     expect(await within(pane).findByText(/drawn as filled shapes/)).toBeTruthy();
   });
 
