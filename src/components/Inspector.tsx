@@ -59,9 +59,8 @@ export function Inspector({
   const r = resolveLook(look, theme);
   const size = look.size;
   const desktop = useMediaQuery('(min-width: 1024px)');
-  /** The "scaled" sample shows the icon at its real size, up to SAMPLE_MAX; its box is at least 40px. */
+  /** The preview draws the icon at its real size, up to SAMPLE_MAX. */
   const sampleSize = Math.min(size, SAMPLE_MAX);
-  const sampleBox = Math.max(40, sampleSize);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
 
   const [modifier, setModifier] = useState<string | null>(null);
@@ -123,8 +122,6 @@ export function Inspector({
     if (!source) return null;
     try {
       return {
-        large: buildSvg(source, { ...colors, size: 96, idPrefix: `${uid}-l`, strokeWidth }),
-        native: buildSvg(source, { ...colors, size: 24, idPrefix: `${uid}-n`, strokeWidth }),
         actual: buildSvg(source, { ...colors, size: Math.min(size, SAMPLE_MAX), idPrefix: `${uid}-a`, strokeWidth }),
       };
     } catch {
@@ -187,37 +184,38 @@ export function Inspector({
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 -mt-1" />
       </div>
 
-      <div className="px-5 pb-2">
-        <div className="checkerboard flex h-36 items-center justify-center rounded-2xl border border-line">
-          {preview ? (
-            <span role="img" aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`) })} data-artwork className="glyph size-24" dangerouslySetInnerHTML={{ __html: preview.large }} />
-          ) : (
-            <span className="size-24 animate-pulse rounded-2xl bg-sunken" />
-          )}
-        </div>
-      </div>
       <div ref={stickySentinel} aria-hidden="true" />
-      {/* Stays in view while the controls below scroll, so changes stay visible. */}
+      {/*
+        The preview stays in view while the controls below scroll, so size, stroke,
+        color, and modifier changes stay visible. It draws the icon at the chosen
+        size (up to SAMPLE_MAX), so the size slider visibly changes it.
+      */}
       <div
-        className={`sticky top-0 z-10 bg-surface px-5 pb-4 transition-shadow [dialog_&]:top-4 ${
+        className={`sticky top-0 z-10 bg-surface px-5 pb-4 pt-1 transition-shadow [dialog_&]:top-4 ${
           samplesStuck ? 'shadow-[0_8px_12px_-10px_rgb(0_0_0/0.25)]' : ''
         }`}
       >
-        <div className="grid grid-cols-2 gap-2 pt-1">
-          <figure className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
-            <span className="checkerboard flex size-10 items-center justify-center rounded-lg">
-              {preview && <span data-artwork className="glyph size-6" dangerouslySetInnerHTML={{ __html: preview.native }} />}
-            </span>
-            <figcaption className="text-xs leading-tight text-muted"><strong className="block font-semibold text-ink">{t('customize.pxValue', { value: 24 })}</strong>{t('inspector.native')}</figcaption>
-          </figure>
-          <figure className="flex items-center gap-3 rounded-xl border border-line px-3 py-2">
-            {/* Grows with the size (up to SAMPLE_MAX) so size changes, and the badge with them, are visible. */}
-            <span className="checkerboard flex shrink-0 items-center justify-center overflow-hidden rounded-lg" style={{ width: sampleBox, height: sampleBox }}>
-              {preview && <span data-artwork className="glyph" style={{ width: sampleSize, height: sampleSize }} dangerouslySetInnerHTML={{ __html: preview.actual }} />}
-            </span>
-            <figcaption className="text-xs leading-tight text-muted"><strong className="block font-semibold text-ink">{t('customize.pxValue', { value: size })}</strong>{size === 24 ? t('inspector.selectedSize') : t('inspector.scaled')}</figcaption>
-          </figure>
-        </div>
+        <figure className="group checkerboard relative flex h-28 items-center justify-center rounded-2xl border border-line">
+          {preview ? (
+            <span
+              role="img"
+              aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`), size: sampleSize })}
+              data-artwork
+              className="glyph"
+              style={{ width: sampleSize, height: sampleSize }}
+              dangerouslySetInnerHTML={{ __html: preview.actual }}
+            />
+          ) : (
+            <span className="size-16 animate-pulse rounded-2xl bg-sunken" />
+          )}
+          {/* On hover, says what the preview shows: the icon at the chosen size. */}
+          <figcaption
+            aria-hidden="true"
+            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium tabular-nums text-canvas opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100"
+          >
+            {size > SAMPLE_MAX ? t('inspector.shownAt', { size, max: SAMPLE_MAX }) : t('inspector.actualSize', { size })}
+          </figcaption>
+        </figure>
       </div>
 
       <SizeControl look={look} onChange={onLookChange} />

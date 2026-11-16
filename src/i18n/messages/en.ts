@@ -193,10 +193,9 @@ const en = {
   // Inspector
   'inspector.clear': 'Clear selection',
   'inspector.base': 'Base',
-  'inspector.preview': '{name}, {style}, scaled preview',
-  'inspector.native': 'Native master',
-  'inspector.selectedSize': 'Selected size',
-  'inspector.scaled': 'Scaled',
+  'inspector.preview': '{name}, {style}, preview at {size}px',
+  'inspector.actualSize': 'Actual size · {size}px',
+  'inspector.shownAt': '{size}px, shown at {max}px',
   'inspector.modifier': 'Modifier',
   'inspector.libraryIcon': 'A library icon: {composition}.',
   'inspector.tryOthers': 'Try other modifiers on {base}',

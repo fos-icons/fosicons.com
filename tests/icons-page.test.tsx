@@ -158,7 +158,7 @@ describe('Icons page', () => {
   it('previews any modifier on an icon, in the corners it supports', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=agent');
-    const preview = await screen.findByRole('img', { name: /agent, Regular, scaled preview/ });
+    const preview = await screen.findByRole('img', { name: /agent, Regular, preview/ });
     expect(preview.innerHTML).not.toContain('clip-path');
 
     await user.click(await screen.findByRole('tab', { name: 'Access' }, { timeout: 8000 }));
@@ -184,7 +184,7 @@ describe('Icons page', () => {
     expect(await screen.findByRole('heading', { name: 'clock', level: 2 }, { timeout: 8000 })).toBeTruthy();
     await waitFor(() => expect(screen.getByRole('button', { name: /^Sparkle modifier/ }).getAttribute('aria-pressed')).toBe('true'), { timeout: 8000 });
     expect(screen.getByText(/Opening clock with the Sparkle modifier/)).toBeTruthy();
-    const preview = screen.getByRole('img', { name: /clock, Regular, scaled preview/ });
+    const preview = screen.getByRole('img', { name: /clock, Regular, preview/ });
     expect(preview.innerHTML).toContain('clip-path');
   });
 
@@ -394,7 +394,7 @@ describe('Side pane (desktop)', () => {
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
     fireEvent.change(slider, { target: { value: '2' } });
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
-    const preview = await within(pane).findByRole('img', { name: /search, Regular, scaled preview/ });
+    const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     expect(preview.innerHTML).toContain('stroke-width="2"');
     await user.click(within(pane).getByRole('button', { name: 'React' }));
     expect(within(pane).getByText(/React package draws the standard 1.25px stroke/)).toBeTruthy();
