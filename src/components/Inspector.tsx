@@ -17,10 +17,10 @@ import { CodeBlock } from './CodeBlock';
 import { KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
-import { composeSvg, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
+import { composeSvg, initialCorner, MODIFIER_BADGE, MODIFIER_SCALE, modifiersFor, type Corner } from '../lib/modifiers';
 import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
 import { ThemeToggle } from './ThemeToggle';
-import { IconButton, Segmented, UiIcon, useToast } from './ui';
+import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 
 
@@ -42,6 +42,7 @@ export interface InspectorProps {
   /** Called when the user picks or clears a modifier, or moves it. */
   onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
 }
+
 
 /** Largest size the inspector's scaled sample shows at 1:1; bigger sizes show at this size. */
 const SAMPLE_MAX = 64;
@@ -75,14 +76,21 @@ export function Inspector({
     return { modifier: found, corner };
   }, [canTryModifiers, badgeRequest, modifiers.list, icon.name]);
   const setBadge = (choice: ModifierChoice | null) => onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
+  /**
+   * Badge size relative to the library's (1 = as authored); kept while trying
+   * other modifiers. Stored as a scale so it stays in proportion when the icon
+   * size changes; shown in pixels at the current size.
+   */
+  const [badgeScale, setBadgeScale] = useState<number>(MODIFIER_SCALE.default);
+  const badgePx = (scale: number) => t('customize.pxValue', { value: Math.round((MODIFIER_BADGE / 24) * size * scale) });
   const composed = useMemo(() => {
     if (!badge || !librarySource) return { svg: librarySource, error: null };
     try {
-      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style), error: null };
+      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style, badgeScale), error: null };
     } catch (e) {
       return { svg: librarySource, error: errorText(e, i18n, 'error.compose') };
     }
-  }, [badge, librarySource, style, i18n]);
+  }, [badge, librarySource, style, badgeScale, i18n]);
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
@@ -248,6 +256,33 @@ export function Inspector({
           ) : (
             <>
               <ModifierPicker modifiers={modifiersFor(icon.name, modifiers.list)} value={badge} onChange={setBadge} authored={authored.map} />
+              {badge && (
+                <div className="mt-4">
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="text-muted">{t('inspector.modifierSize')}</span>
+                    <span className="flex items-center gap-2">
+                      {badgeScale !== MODIFIER_SCALE.default && (
+                        <button type="button" onClick={() => setBadgeScale(MODIFIER_SCALE.default)} className="font-medium text-brand hover:underline">
+                          {t('inspector.modifierSizeReset')}
+                        </button>
+                      )}
+                      <span className="font-mono tabular-nums text-ink">{badgePx(badgeScale)}</span>
+                    </span>
+                  </div>
+                  <RangeSlider
+                    id={`${uid}-badge-size`}
+                    label={t('inspector.modifierSize')}
+                    min={MODIFIER_SCALE.min}
+                    max={MODIFIER_SCALE.max}
+                    step={MODIFIER_SCALE.step}
+                    value={badgeScale}
+                    valueText={t('inspector.modifierSizeValue', { size: badgePx(badgeScale), icon: t('customize.pxValue', { value: size }) })}
+                    onChange={setBadgeScale}
+                    marks={[0.75, 1, MODIFIER_SCALE.max]}
+                    format={badgePx}
+                  />
+                </div>
+              )}
               <div aria-live="polite" className="mt-3 text-xs leading-relaxed text-faint">
                 {composed.error ? (
                   <p className="text-danger">{composed.error}</p>

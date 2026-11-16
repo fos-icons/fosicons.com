@@ -160,11 +160,24 @@ export function modifierTileSvg(modifier: ModifierAsset): string {
 }
 
 /**
+ * Modifier size range, as a scale of the library's badge (1 = as authored).
+ * A modifier may cover at most a quarter of the icon: 12×12 of the 24×24 grid.
+ * Authored badges are 10×10 (or 14×7), so 1.2 is the largest step that fits.
+ */
+export const MODIFIER_SCALE = { min: 0.75, max: 1.2, step: 0.05, default: 1 } as const;
+/** Edge of a library badge on the 24px grid (most are 10×10). */
+export const MODIFIER_BADGE = 10;
+/** Largest badge area: a quarter of the 24px grid. */
+const MAX_BADGE_AREA = (24 * 24) / 4;
+
+/**
  * Compose a canonical icon with a modifier at a corner. Returns a 24px source
  * SVG with the same CSS color roles as authored compositions, ready for
- * `buildSvg`.
+ * `buildSvg`. `scale` resizes the badge and the gap cut around it together,
+ * anchored at the badge's outer corner; at 1 the output matches the library's
+ * own compositions exactly.
  */
-export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner, style: StyleId): string {
+export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner, style: StyleId, scale = 1): string {
   const placement = modifier.positions[corner];
   if (!placement) throw new LocalizedError('error.badCorner', { modifier: modifier.label, corner: CORNER_LABELS[corner].toLowerCase() });
   const prefix = `fm-${modifier.name}-${corner}`;
@@ -179,25 +192,60 @@ export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner
   result.setAttribute('color', (duo && baseRoot.getAttribute('color')) || 'currentColor');
   if (duo) baseRoot.setAttribute('color', 'currentColor');
 
+  const badge = doc.importNode(parse(modifier.svg), true) as Element;
+  // Scale about the badge's outer corner, so it stays tucked into the icon's corner.
+  const w = Number(badge.getAttribute('width')) || 10;
+  const h = Number(badge.getAttribute('height')) || 10;
+  const ax = corner.endsWith('right') ? placement.x + w : placement.x;
+  const ay = corner.startsWith('bottom') ? placement.y + h : placement.y;
+  // Never more than a quarter of the icon, whatever the caller asks for.
+  scale = Math.min(scale, Math.sqrt(MAX_BADGE_AREA / (w * h)), MODIFIER_SCALE.max);
+  scale = Math.max(scale, MODIFIER_SCALE.min);
+  const scaled = Math.abs(scale - 1) > 1e-6;
+  const transform = `translate(${ax} ${ay}) scale(${scale}) translate(${-ax} ${-ay})`;
+
   const clipId = `${prefix}-clearance`;
   const defs = doc.createElementNS(SVG_NS, 'defs');
-  const clip = doc.createElementNS(SVG_NS, 'clipPath');
-  clip.setAttribute('id', clipId);
-  clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
-  for (const path of placement.clearance) {
+  const clearancePaths = (fill?: string) => placement.clearance.map((path) => {
     const p = doc.createElementNS(SVG_NS, 'path');
     const rule = path.evenodd ? 'evenodd' : 'nonzero';
     p.setAttribute('d', path.d);
     p.setAttribute('fill-rule', rule);
-    p.setAttribute('clip-rule', rule);
-    clip.append(p);
-  }
-  defs.append(clip);
+    if (fill) p.setAttribute('fill', fill);
+    else p.setAttribute('clip-rule', rule);
+    return p;
+  });
   const masked = doc.createElementNS(SVG_NS, 'g');
-  masked.setAttribute('clip-path', `url(#${clipId})`);
+  if (!scaled) {
+    const clip = doc.createElementNS(SVG_NS, 'clipPath');
+    clip.setAttribute('id', clipId);
+    clip.setAttribute('clipPathUnits', 'userSpaceOnUse');
+    clip.append(...clearancePaths());
+    defs.append(clip);
+    masked.setAttribute('clip-path', `url(#${clipId})`);
+  } else {
+    // The clearance (C) is where the icon shows within the 24px square (S); the
+    // gap around the badge is S minus C. Scaled by T, the visible area is S
+    // minus T(S minus C): white everywhere, black over T(S), white again over T(C).
+    const mask = doc.createElementNS(SVG_NS, 'mask');
+    for (const [k, v] of Object.entries({
+      id: clipId, maskUnits: 'userSpaceOnUse', maskContentUnits: 'userSpaceOnUse', 'mask-type': 'luminance',
+      x: '0', y: '0', width: '24', height: '24',
+    })) mask.setAttribute(k, v);
+    const square = (fill: string) => {
+      const r = doc.createElementNS(SVG_NS, 'rect');
+      for (const [k, v] of Object.entries({ x: '0', y: '0', width: '24', height: '24', fill })) r.setAttribute(k, v);
+      return r;
+    };
+    const zone = doc.createElementNS(SVG_NS, 'g');
+    zone.setAttribute('transform', transform);
+    zone.append(square('black'), ...clearancePaths('white'));
+    mask.append(square('white'), zone);
+    defs.append(mask);
+    masked.setAttribute('mask', `url(#${clipId})`);
+  }
   masked.append(baseRoot);
 
-  const badge = doc.importNode(parse(modifier.svg), true) as Element;
   badge.removeAttribute('xmlns');
   prefixIds(badge, `${prefix}-glyph`);
   cutoutStencil(badge, prefix);
@@ -205,6 +253,12 @@ export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner
   badge.setAttribute('y', String(placement.y));
   badge.setAttribute('color', duo ? `var(--fos-modifier, ${modifier.color})` : 'currentColor');
 
-  result.append(defs, masked, badge);
+  let glyph: Element = badge;
+  if (scaled) {
+    glyph = doc.createElementNS(SVG_NS, 'g');
+    glyph.setAttribute('transform', transform);
+    glyph.append(badge);
+  }
+  result.append(defs, masked, glyph);
   return new XMLSerializer().serializeToString(result);
 }
