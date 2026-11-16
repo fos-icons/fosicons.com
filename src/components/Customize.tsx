@@ -1,9 +1,9 @@
 import { useI18n } from '../i18n';
 import { useEffect, useId, useState, type ReactNode } from 'react';
-import { palettes, type StyleId } from '../lib/catalog';
+import type { StyleId } from '../lib/catalog';
 import {
-  autoStroke, DEFAULT_LOOK, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
-  strokeAdjustable, strokeOf, type Look,
+  autoStroke, DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
+  strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
 } from '../lib/look';
 import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
@@ -249,64 +249,71 @@ export function CustomizeControls({
 
       <Section
         title={t('customize.color')}
-        aside={duo && (
+        aside={(
           <Segmented
             label={t('customize.paletteVariant')}
             size="sm"
             value={r.mode}
-            // The variant is previewed on the matching background: switch the site theme.
-            onChange={(v) => { setPreference(v); onChange({ custom: null }); }}
+            // Themes have light and dark variants, previewed on the matching background: switch the site theme.
+            onChange={(v) => setPreference(v)}
             options={[{ value: 'light', label: t('theme.light') }, { value: 'dark', label: t('theme.dark') }]}
           />
         )}
       >
-        {duo ? (
-          <div className="space-y-3">
-            <div role="radiogroup" aria-label={t('customize.duoPalette')} className="flex flex-wrap gap-1.5">
-              {palettes.palettes.map((p) => {
-                const checked = !look.custom && p.name === r.palette.name;
-                return (
-                  <button
-                    key={p.name}
-                    type="button"
-                    role="radio"
-                    aria-checked={checked}
-                    aria-label={p.name}
-                    title={p.name}
-                    onClick={() => onChange({ paletteName: p.name, custom: null })}
-                    className={`flex size-8 items-center justify-center rounded-full ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
-                  >
-                    <span className="flex size-6 overflow-hidden rounded-full border border-line" aria-hidden="true">
-                      <span className="flex-1" style={{ background: p[r.mode].primary }} />
-                      <span className="flex-1" style={{ background: p[r.mode].secondary }} />
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-            <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
-            {style === 'duocolor' && (
-              <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
-            )}
-            {style === 'duotone' && (
-              <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
-            )}
-            {footnote}
-            <p className="text-xs text-faint">
-              {t('customize.paletteNote', { current: look.custom ? t('customize.customColors') : t('customize.paletteMode', { palette: r.palette.name, mode: t(`theme.${r.mode}`) }) })}
-            </p>
+        <div className="space-y-3">
+          {/* One theme sets every style: a main color for Regular and Solid, primary and secondary for the duo styles. */}
+          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="flex flex-wrap gap-1.5">
+            {THEME_NAMES.map((name) => {
+              const c = themeColors(name, r.mode);
+              const checked = !look.custom && !look.mono && name === r.themeName;
+              const themeLabel = name === INK_THEME ? t('customize.inkTheme') : name;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  aria-label={themeLabel}
+                  title={themeLabel}
+                  onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
+                  className={`flex size-8 items-center justify-center rounded-full ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
+                >
+                  <span className="flex size-6 overflow-hidden rounded-full border border-line" aria-hidden="true">
+                    <span className="flex-1" style={{ background: c.main }} />
+                    <span className="flex-1" style={{ background: c.primary }} />
+                    <span className="flex-1" style={{ background: c.secondary }} />
+                  </span>
+                </button>
+              );
+            })}
           </div>
-        ) : (
-          <>
+          {duo ? (
+            <>
+              <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
+              {style === 'duocolor' && (
+                <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
+              )}
+              {style === 'duotone' && (
+                <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
+              )}
+            </>
+          ) : (
             <ColorField
               label={t('customize.foreground')}
               value={r.mono}
               onChange={(v) => onChange({ mono: v })}
-              hint={look.mono ? undefined : t('customize.followTheme')}
+              hint={look.mono ? undefined : r.monoFollowsSite ? t('customize.followTheme') : t('customize.fromTheme', { theme: r.themeName })}
             />
-            {footnote}
-          </>
-        )}
+          )}
+          {footnote}
+          <p className="text-xs text-faint">
+            {t('customize.paletteNote', {
+              current: (duo ? look.custom : look.mono)
+                ? t('customize.customColors')
+                : t('customize.paletteMode', { palette: r.themeName === INK_THEME ? t('customize.inkTheme') : r.themeName, mode: t(`theme.${r.mode}`) }),
+            })}
+          </p>
+        </div>
       </Section>
     </>
   );

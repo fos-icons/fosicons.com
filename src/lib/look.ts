@@ -9,7 +9,9 @@ export interface Look {
   size: number;
   /** Stroke in 24px grid units, or `null` to follow the size (see `autoStroke`). */
   strokeWidth: number | null;
+  /** Regular/Solid color chosen by hand, or `null` to take it from the color theme. */
   mono: string | null;
+  /** The color theme: `INK_THEME` or a library palette name. */
   paletteName: string;
   custom: { primary: string; secondary: string } | null;
 }
@@ -18,9 +20,25 @@ export const DEFAULT_LOOK: Look = {
   size: 48,
   strokeWidth: null,
   mono: null,
-  paletteName: palettes.defaultPalette,
+  paletteName: 'Ink',
   custom: null,
 };
+
+/**
+ * Color themes. Each sets every style at once: a main color for Regular and
+ * Solid, plus primary and secondary for Duocolor and Duotone. "Ink" keeps
+ * Regular and Solid in the site's ink (following light/dark) with the
+ * library's default duo palette; every other theme is a library palette
+ * whose primary is also the main color.
+ */
+export const INK_THEME = 'Ink';
+export const THEME_NAMES: readonly string[] = [INK_THEME, ...palettes.palettes.map((p) => p.name)];
+
+/** A theme's colors in one site mode. */
+export function themeColors(name: string, mode: 'light' | 'dark') {
+  const palette = palettes.palettes.find((p) => p.name === (name === INK_THEME ? palettes.defaultPalette : name)) ?? palettes.palettes[0];
+  return { main: name === INK_THEME ? INK[mode] : palette[mode].primary, ...palette[mode] };
+}
 
 /**
  * Size slider range: what the grid can preview. The px field still accepts
@@ -62,14 +80,16 @@ export const strokeAdjustable = (style: StyleId, kind: 'core' | 'brand' = 'core'
   kind === 'core' && style !== 'filled';
 
 export function resolveLook(look: Look, theme: 'light' | 'dark') {
-  // Duo palettes use the variant for the site theme being previewed.
+  // Themes use the variant for the site theme being previewed.
   const mode = theme;
-  const palette = palettes.palettes.find((p) => p.name === look.paletteName) ?? palettes.palettes[0];
+  const colors = themeColors(look.paletteName, mode);
   return {
-    mono: look.mono ?? INK[theme],
+    mono: look.mono ?? colors.main,
+    /** True when Regular/Solid simply follow the site's ink (Ink theme, no hand-picked color). */
+    monoFollowsSite: look.mono === null && look.paletteName === INK_THEME,
     mode,
-    palette,
-    duo: look.custom ?? palette[mode],
+    themeName: THEME_NAMES.includes(look.paletteName) ? look.paletteName : INK_THEME,
+    duo: look.custom ?? { primary: colors.primary, secondary: colors.secondary },
   };
 }
 
@@ -94,8 +114,9 @@ export function gridVars(look: Look, style: StyleId, theme: 'light' | 'dark', ki
   if (isDuo(style)) {
     vars['--fos-primary'] = r.duo.primary;
     vars['--fos-secondary'] = r.duo.secondary;
-  } else if (look.mono) {
-    vars.color = look.mono;
+  } else if (!r.monoFollowsSite) {
+    // A variable, not `color`: grid cells set their own ink color, which would win over an inherited one.
+    vars['--glyph-color'] = r.mono;
   }
   return vars;
 }
