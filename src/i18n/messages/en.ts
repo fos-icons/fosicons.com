@@ -223,7 +223,9 @@ const en = {
   'inspector.style': 'Style',
   'inspector.filledParts': 'Parts of this icon are drawn as filled shapes, so they keep their drawn weight while its lines change.',
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
-  'inspector.modifierGlyph': 'Modifier glyph',
+  'inspector.modifierColor': 'Modifier color',
+  'inspector.modifierSameAsIcon': 'Same as the icon.',
+  'inspector.modifierColorReset': 'Use the default color',
   'inspector.libraryDefault': 'Library default {color}',
 
   // Modifiers

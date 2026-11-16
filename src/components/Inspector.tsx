@@ -42,8 +42,8 @@ export interface InspectorProps {
 }
 
 
-/** Largest size the inspector's scaled sample shows at 1:1; bigger sizes show at this size. */
-const SAMPLE_MAX = 64;
+/** Largest size the panel's square preview draws at 1:1; bigger sizes are shown at this size. */
+const THUMB_MAX = 48;
 
 export function Inspector({
   icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onSelectIcon, onClose, kind = 'core', headingId,
@@ -58,11 +58,12 @@ export function Inspector({
   const r = resolveLook(look, theme);
   const size = look.size;
   const desktop = useMediaQuery('(min-width: 1024px)');
-  /** The preview draws the icon at its real size, up to SAMPLE_MAX. */
-  const sampleSize = Math.min(size, SAMPLE_MAX);
+  /** The preview draws the icon at its real size, up to THUMB_MAX (it fits a 56px square). */
+  const thumbSize = Math.min(size, THUMB_MAX);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
 
-  const [modifier, setModifier] = useState<string | null>(null);
+  /** Chosen modifier (badge) color, kept with the rest of the look so it carries across icons. */
+  const modifier = look.modifierColor;
   const canTryModifiers = kind === 'core' && !icon.composition;
   const modifiers = useModifiers(canTryModifiers && !!librarySource);
   /** The modifier on the icon: the URL's request, once the library list has loaded and allows it here. */
@@ -84,7 +85,8 @@ export function Inspector({
   const composed = useMemo(() => {
     if (!badge || !librarySource) return { svg: librarySource, error: null };
     try {
-      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style, badgeScale), error: null };
+      // modifierRole: the badge gets its own color role in every style, so it can be recolored.
+      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style, badgeScale, true), error: null };
     } catch (e) {
       return { svg: librarySource, error: errorText(e, i18n, 'error.compose') };
     }
@@ -113,7 +115,7 @@ export function Inspector({
     if (!source) return null;
     try {
       return {
-        actual: buildSvg(source, { ...colors, size: Math.min(size, SAMPLE_MAX), idPrefix: `${uid}-a`, strokeWidth }),
+        actual: buildSvg(source, { ...colors, size: Math.min(size, THUMB_MAX), idPrefix: `${uid}-a`, strokeWidth }),
       };
     } catch {
       return null;
@@ -170,43 +172,44 @@ export function Inspector({
 
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex items-start gap-3 px-5 pb-4 pt-5">
+      {/*
+        Pinned while the controls scroll: a square preview (the height of the
+        name and category) beside them. The preview draws the icon at the chosen
+        size up to THUMB_MAX, so the size slider visibly changes it.
+      */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 bg-surface px-5 py-4 [dialog_&]:top-4">
+        <figure className="group checkerboard relative flex size-14 shrink-0 items-center justify-center rounded-xl border border-line">
+          {preview ? (
+            <span
+              role="img"
+              aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`), size: thumbSize })}
+              data-artwork
+              className="glyph"
+              style={{ width: thumbSize, height: thumbSize }}
+              dangerouslySetInnerHTML={{ __html: preview.actual }}
+            />
+          ) : (
+            <span className="size-8 animate-pulse rounded-lg bg-sunken" />
+          )}
+          {/* On hover, says what the preview shows. */}
+          <figcaption
+            aria-hidden="true"
+            className="pointer-events-none absolute left-0 top-full z-20 mt-1.5 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium tabular-nums text-canvas opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100"
+          >
+            {size > THUMB_MAX ? t('inspector.shownAt', { size, max: THUMB_MAX }) : t('inspector.actualSize', { size })}
+          </figcaption>
+        </figure>
         <div className="min-w-0 flex-1">
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
-          <p className="mt-0.5 text-sm text-muted">
+          <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
             {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
             {icon.composition && <> · {t('inspector.base')} <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>{icon.composition.base}</button></>}
           </p>
-          {kind === 'core' && <KeywordTags icon={icon} size="sm" className="mt-2.5" />}
         </div>
-        <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 -mt-1" />
+        <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 self-start" />
       </div>
-
-      {/* The preview draws the icon at the chosen size (up to SAMPLE_MAX), so the size slider visibly changes it. */}
-      <div className="px-5 pb-4 pt-1">
-        <figure className="group checkerboard relative flex h-28 items-center justify-center rounded-2xl border border-line">
-          {preview ? (
-            <span
-              role="img"
-              aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`), size: sampleSize })}
-              data-artwork
-              className="glyph"
-              style={{ width: sampleSize, height: sampleSize }}
-              dangerouslySetInnerHTML={{ __html: preview.actual }}
-            />
-          ) : (
-            <span className="size-16 animate-pulse rounded-2xl bg-sunken" />
-          )}
-          {/* On hover, says what the preview shows: the icon at the chosen size. */}
-          <figcaption
-            aria-hidden="true"
-            className="pointer-events-none absolute bottom-2 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-ink px-2 py-1 text-[11px] font-medium tabular-nums text-canvas opacity-0 shadow-sm transition-opacity duration-150 group-hover:opacity-100"
-          >
-            {size > SAMPLE_MAX ? t('inspector.shownAt', { size, max: SAMPLE_MAX }) : t('inspector.actualSize', { size })}
-          </figcaption>
-        </figure>
-      </div>
+      {kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
       <SizeControl look={look} onChange={onLookChange} />
       {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
@@ -237,7 +240,28 @@ export function Inspector({
             <div className="h-24 animate-pulse rounded-xl bg-sunken" />
           ) : (
             <>
-              <ModifierPicker modifiers={modifiersFor(icon.name, modifiers.list)} value={badge} onChange={setBadge} authored={authored.map} />
+              <ModifierPicker
+                modifiers={modifiersFor(icon.name, modifiers.list)}
+                value={badge}
+                onChange={setBadge}
+                authored={authored.map}
+                accessory={showModifier && (
+                  // Compact modifier color beside None: a swatch, plus a reset once a color is picked.
+                  <span className="flex items-center gap-1">
+                    <input
+                      type="color"
+                      aria-label={t('inspector.modifierColor')}
+                      title={modifier ? t('inspector.modifierColor') : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
+                      value={(modifier ?? modifierDefault ?? colors.primary).length === 7 ? (modifier ?? modifierDefault ?? colors.primary) : '#000000'}
+                      onChange={(e) => onLookChange({ modifierColor: e.target.value.toUpperCase() })}
+                      className="squircle size-8 shrink-0 cursor-pointer border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
+                    />
+                    {modifier && (
+                      <IconButton icon="undo" label={t('inspector.modifierColorReset')} onClick={() => onLookChange({ modifierColor: null })} className="size-8 text-muted" />
+                    )}
+                  </span>
+                )}
+              />
               {badge && (
                 <div className="mt-4">
                   <div className="mb-1 flex items-center justify-between text-xs">
@@ -304,6 +328,22 @@ export function Inspector({
               )}
             </>
           )}
+          {/* Library icons that already carry a modifier have no picker: a full color field instead. */}
+          {showModifier && !badge && (
+            <div className="mt-4">
+              <ColorField
+                label={t('inspector.modifierColor')}
+                value={modifier ?? modifierDefault ?? colors.primary}
+                onChange={(v) => onLookChange({ modifierColor: v })}
+                hint={modifier ? undefined : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
+              />
+              {modifier && (
+                <button type="button" onClick={() => onLookChange({ modifierColor: null })} className="mt-1 text-xs font-medium text-brand hover:underline">
+                  {t('inspector.modifierColorReset')}
+                </button>
+              )}
+            </div>
+          )}
         </Section>
       )}
 
@@ -331,16 +371,6 @@ export function Inspector({
           <>
             {style === 'duocolor' && !showSecondary && (
               <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
-            )}
-            {showModifier && (
-              <div className="mt-3">
-                <ColorField
-                  label={t('inspector.modifierGlyph')}
-                  value={modifier ?? modifierDefault ?? '#000000'}
-                  onChange={setModifier}
-                  hint={modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : undefined}
-                />
-              </div>
             )}
           </>
         )}

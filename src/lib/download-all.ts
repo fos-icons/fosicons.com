@@ -38,7 +38,7 @@ export async function buildFullSet(
   ]);
   const entries: ZipEntry[] = [{ name: 'LICENSE.txt', data: license }];
   const r = resolveLook(look, theme);
-  const keepColors = r.monoFollowsSite && look.custom === null;
+  const keepColors = r.monoFollowsSite && look.custom === null && look.modifierColor === null;
   const stroke = strokeOf(look);
   styles.forEach((style, i) => {
     const slug = STYLE_META[style].slug;

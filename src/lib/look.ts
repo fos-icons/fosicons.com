@@ -14,6 +14,8 @@ export interface Look {
   /** The color theme: `INK_THEME` or a library palette name. */
   paletteName: string;
   custom: { primary: string; secondary: string } | null;
+  /** Modifier (badge) color, or `null` for the default: the library's color in duo styles, the icon's color otherwise. */
+  modifierColor: string | null;
 }
 
 export const DEFAULT_LOOK: Look = {
@@ -22,6 +24,7 @@ export const DEFAULT_LOOK: Look = {
   mono: null,
   paletteName: 'Ink',
   custom: null,
+  modifierColor: null,
 };
 
 /**
@@ -98,6 +101,7 @@ export const isCustomized = (look: Look) =>
   || look.strokeWidth !== DEFAULT_LOOK.strokeWidth
   || look.mono !== null
   || look.custom !== null
+  || look.modifierColor !== null
   || look.paletteName !== DEFAULT_LOOK.paletteName;
 
 /** CSS variables that restyle inline grid SVGs without rebuilding them. */
@@ -118,6 +122,8 @@ export function gridVars(look: Look, style: StyleId, theme: 'light' | 'dark', ki
     // A variable, not `color`: grid cells set their own ink color, which would win over an inherited one.
     vars['--glyph-color'] = r.mono;
   }
+  // Library icons with a modifier role pick up the chosen modifier color in the grid too.
+  if (look.modifierColor) vars['--fos-modifier'] = look.modifierColor;
   return vars;
 }
 
@@ -139,6 +145,6 @@ export function exportColors(
   return {
     primary: duo ? r.duo.primary : r.mono,
     secondary: duo && hasSecondaryRole(source) ? r.duo.secondary : undefined,
-    modifier: hasModifierRole(source) ? (modifierOverride ?? modifierDefault ?? undefined) : undefined,
+    modifier: hasModifierRole(source) ? (modifierOverride ?? look.modifierColor ?? modifierDefault ?? undefined) : undefined,
   };
 }

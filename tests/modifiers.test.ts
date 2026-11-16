@@ -63,6 +63,16 @@ describe('modifier composition', () => {
     expect(composeSvg(base, add, 'top-left', 'regular', 0.1)).toBe(composeSvg(base, add, 'top-left', 'regular', MODIFIER_SCALE.min));
   });
 
+  it('can give the badge its own color role in Regular, defaulting to the icon color', async () => {
+    const { buildSvg } = await import('../src/lib/svg');
+    const add = byName.get('add')!;
+    const composed = composeSvg(sources.regular.bell, add, 'top-left', 'regular', 1, true);
+    expect(composed).toContain('var(--fos-modifier, currentColor)');
+    // Without a chosen color the badge follows the icon; with one, it takes it.
+    expect(buildSvg(composed, { primary: '#212121', size: 24 })).not.toContain('#D93025');
+    expect(buildSvg(composed, { primary: '#212121', modifier: '#D93025', size: 24 })).toContain('#D93025');
+  });
+
   it('refuses a corner the modifier does not support', () => {
     const pdf = byName.get('pdf')!;
     expect(() => composeSvg(sources.regular.file, pdf, 'top-right', 'regular')).toThrow(/top right/);

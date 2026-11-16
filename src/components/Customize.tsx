@@ -24,16 +24,17 @@ export function ColorField({ label, value, onChange, hint }: { label: string; va
   useEffect(() => setText(value), [value]);
   const valid = isHexColor(text);
   return (
-    <div className="flex items-center gap-3">
-      <input
-        type="color"
-        aria-label={t('customize.colorInput', { label })}
-        value={value.length === 7 ? value : '#000000'}
-        onChange={(e) => onChange(e.target.value.toUpperCase())}
-        className="size-9 shrink-0 cursor-pointer rounded-lg border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
-      />
-      <div className="min-w-0 flex-1">
-        <label htmlFor={id} className="block text-xs font-medium text-muted">{label}</label>
+    // Label on top; the swatch and hex input share one row at the same height, so they line up.
+    <div>
+      <label htmlFor={id} className="block pl-11 text-xs font-medium text-muted">{label}</label>
+      <div className="mt-0.5 flex items-center gap-3">
+        <input
+          type="color"
+          aria-label={t('customize.colorInput', { label })}
+          value={value.length === 7 ? value : '#000000'}
+          onChange={(e) => onChange(e.target.value.toUpperCase())}
+          className="size-8 shrink-0 cursor-pointer rounded-lg border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
+        />
         <input
           id={id}
           value={text}
@@ -45,10 +46,10 @@ export function ColorField({ label, value, onChange, hint }: { label: string; va
             if (isHexColor(e.target.value)) onChange(e.target.value.toUpperCase());
           }}
           onBlur={() => setText(value)}
-          className={`mt-0.5 h-8 w-full rounded-md border bg-surface px-2 font-mono text-sm uppercase ${valid ? 'border-line' : 'border-danger'}`}
+          className={`h-8 min-w-0 flex-1 rounded-md border bg-surface px-2 font-mono text-sm uppercase ${valid ? 'border-line' : 'border-danger'}`}
         />
-        {hint && <p id={`${id}-hint`} className="mt-1 text-xs text-faint">{hint}</p>}
       </div>
+      {hint && <p id={`${id}-hint`} className="mt-1 pl-11 text-xs text-faint">{hint}</p>}
     </div>
   );
 }
@@ -408,7 +409,8 @@ export function DownloadSection({ look, onReset }: { look: Look; onReset?: () =>
             // The keyword-tag shape: brand tint with a tick when included, neutral with a plus when not.
             <label
               key={style}
-              className="inline-flex h-7 min-w-0 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
+              // Share the row at the default panel width; in a wider panel, stop at 6rem and sit left.
+              className="inline-flex h-7 min-w-0 max-w-24 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
             >
               <input type="checkbox" className="sr-only" checked={styles.includes(style)} onChange={() => toggle(style)} />
               <UiIcon name={styles.includes(style) ? 'check' : 'plus'} className="size-3" />
