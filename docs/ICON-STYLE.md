@@ -31,6 +31,37 @@ stroke at 24 px, as documented in [`README.md`](../README.md).
 - Use symmetry when it supports the symbol; don't force mechanical symmetry
   onto forms that should look natural.
 - Keep related geometry consistent across Regular and Filled interpretations.
+- Lead with straight lines and add small corners afterwards; avoid large radii
+  that turn a shape into a blob.
+- Build negative space with real boolean operations (subtract, exclude), never
+  with white or background-colored fills faking a cut-out. Fake cut-outs break
+  as soon as the icon is recolored or placed on a different background.
+
+## Shared parts
+
+- Icons that show the same object reuse the same master part: the same
+  proportions, details, and baseline, not a fresh redraw each time. A shape
+  that appears in several icons (a document, a pin, a bolt, a person) should be
+  built once and reused.
+- Small shared decisions count, such as where a baseline or ground line sits,
+  how big a badge or modifier is, and where it attaches. Keep these the same
+  across every icon that uses them.
+- Judge each icon next to its related icons in the set, not on its own. An
+  icon that looks right alone can still look like it came from another set.
+
+## Editing existing icons
+
+- Refining is not redesigning. When asked to refine, keep the structure
+  (viewpoint, composition, and placement of parts) and change only the details
+  in question.
+- Fix an icon that looks too small or too large through proportion and longer
+  straight segments, not by stretching or scaling the shape. Stretched shapes
+  turn chubby and toy-like.
+- Symbols that come from a standard (for example ISO 7000 or IEC 60417, as for
+  the power symbol) keep their standard structure. Only stroke, caps, gaps, and
+  size may be tuned to fit the set.
+- Check for regressions after every path edit. Rewriting a path can silently
+  flatten round caps or sharpen corners elsewhere in the icon.
 
 ## Style variants
 
@@ -63,9 +94,23 @@ stroke at 24 px, as documented in [`README.md`](../README.md).
   synonyms. Avoid drawing-specification boilerplate such as pixel-grid or
   cap-style details.
 
+## Verification
+
+- Don't trust the layers panel. After every change, look at a 6–8× zoomed
+  screenshot and at the actual 24 px size.
+- Where a visual judgement can be expressed as a number (optical size,
+  inset, cap or corner radius, part proportions), write the number down here
+  and measure against it.
+- When a correction is made during review, add it to this document as a rule
+  so the same fix doesn't have to be repeated.
+
 ## Review checklist
 
 - Is the meaning clear at 24 px?
+- If this was a refinement, is the original structure intact?
+- Does it reuse the shared parts and baselines of its related icons, and does
+  it look like family when placed next to them?
+- Are caps, joins, and corners still correct in a zoomed-in screenshot?
 - Does the icon sit cleanly on the grid with its intended inset?
 - Are its stroke weight, rounding, and optical balance consistent with the set?
 - Are all internal details contained and free of accidental overlaps?
