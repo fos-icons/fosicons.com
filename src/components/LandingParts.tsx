@@ -7,7 +7,7 @@ import { iconKeywords, iconPath, svgFilePath } from '../lib/icon-pages';
 import { DEFAULT_LOOK, gridVars } from '../lib/look';
 import { useTheme } from '../lib/theme';
 import { CodeBlock } from './CodeBlock';
-import { useToast } from './ui';
+import { Tag, useToast } from './ui';
 
 /** Shared pieces of the crawlable landing pages (icon, category, React/Vue/Figma). */
 
@@ -71,14 +71,7 @@ export function KeywordTags({ icon, size = 'md', className = '' }: { icon: IconE
     <ul aria-label={t('iconPage.keywords')} className={`flex flex-wrap gap-1.5 ${className}`}>
       {keywords.map((word) => (
         <li key={word}>
-          <LocalLink
-            to={`/?${new URLSearchParams({ q: word })}`}
-            className={`inline-flex items-center rounded-lg bg-brand-soft font-medium text-brand underline-offset-2 transition hover:underline ${
-              size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3 text-sm'
-            }`}
-          >
-            {word}
-          </LocalLink>
+          <Tag to={`/?${new URLSearchParams({ q: word })}`} size={size}>{word}</Tag>
         </li>
       ))}
     </ul>
@@ -217,5 +210,3 @@ export function LandingSection({ id, title, children, narrow = false, className 
   );
 }
 
-export const primaryButton = 'inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-medium text-brand-ink transition hover:brightness-110';
-export const secondaryButton = 'inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-line-strong bg-surface px-4 text-sm font-medium text-ink transition hover:bg-sunken';

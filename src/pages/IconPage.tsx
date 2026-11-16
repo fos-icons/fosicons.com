@@ -2,9 +2,9 @@ import { useState, type MouseEvent } from 'react';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Inspector, SidePane, type InspectorProps } from '../components/Inspector';
 import {
-  Breadcrumbs, CodeTabs, CopyCode, Glyph, IconLinkGrid, KeywordTags, LandingSection, primaryButton, secondaryButton, useStyleVars,
+  Breadcrumbs, CodeTabs, CopyCode, Glyph, IconLinkGrid, KeywordTags, LandingSection, useStyleVars,
 } from '../components/LandingParts';
-import { Segmented, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork } from '../lib/artwork';
@@ -33,7 +33,8 @@ const openInPlace = (open: () => void) => (e: MouseEvent) => {
 };
 
 /** Sizes icons are usually set at, shown 1:1 so the drawing can be judged where it ships. */
-const backLink = '-ml-2 mb-4 inline-flex h-8 items-center gap-1.5 rounded-lg px-2 text-sm font-medium text-muted transition hover:bg-sunken hover:text-ink';
+/** Pulled left so its arrow lines up with the breadcrumbs below. */
+const backLink = '-ml-2 mb-4 px-2';
 
 const ACTUAL_SIZES = [
   { px: 16, className: 'size-4' },
@@ -69,16 +70,9 @@ function PreviewStage({ name, style, svg, onStyleChange, onCopy }: {
             onChange={onStyleChange}
           />
         </div>
-        <button
-          type="button"
-          onClick={onCopy}
-          disabled={!svg}
-          title={t('iconPage.copySvg')}
-          className="inline-flex h-9 shrink-0 items-center gap-2 rounded-lg px-2.5 text-sm font-medium text-muted transition hover:bg-sunken hover:text-ink disabled:opacity-50"
-        >
-          <UiIcon name="copy" className="size-4" />
+        <Button variant="quiet" icon="copy" onClick={onCopy} disabled={!svg} title={t('iconPage.copySvg')} className="shrink-0 px-2.5">
           <span className="max-sm:sr-only">{t('iconPage.copySvg')}</span>
-        </button>
+        </Button>
       </div>
       <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
         <Glyph svg={svg} idPrefix="stage-" className="size-28 sm:size-36" label={t('iconPage.preview', { name: title, style: t(`style.${style}`) })} />
@@ -160,18 +154,12 @@ export default function IconPage() {
   return (
     <div className={`${CONTAINER} pb-24 pt-6 sm:pt-8`}>
       {backTo ? (
-        <Link
-          to={backTo}
-          // Going back in history also restores the list's scroll position.
-          onClick={openInPlace(() => navigate(-1))}
-          className={backLink}
-        >
+        // A plain Link: backTo is already a full path. Going back in history also restores the list's scroll.
+        <Link to={backTo} onClick={openInPlace(() => navigate(-1))} className={`${buttonClass({ variant: 'quiet', size: 'sm' })} ${backLink}`}>
           <UiIcon name="arrow-left" className="size-4" /> {t('iconPage.back')}
         </Link>
       ) : (
-        <LocalLink to="/" className={backLink}>
-          <UiIcon name="arrow-left" className="size-4" /> {t('iconPage.back')}
-        </LocalLink>
+        <ButtonLink to="/" variant="quiet" size="sm" icon="arrow-left" className={backLink}>{t('iconPage.back')}</ButtonLink>
       )}
       <Breadcrumbs
         items={[
@@ -197,12 +185,10 @@ export default function IconPage() {
 
         <div className="lg:col-start-1 lg:row-start-2">
           <div className="flex flex-wrap gap-2">
-            <a href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} className={primaryButton}>
-              <UiIcon name="download" className="size-4" /> {t('iconPage.download', { style: styleLabel })}
-            </a>
-            <button type="button" onClick={downloadPng} disabled={!svg} className={`${secondaryButton} disabled:opacity-50`}>
-              {t('iconPage.downloadPng')}
-            </button>
+            <ButtonAnchor href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} variant="primary" size="lg" icon="download">
+              {t('iconPage.download', { style: styleLabel })}
+            </ButtonAnchor>
+            <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
           </div>
           <LocalLink
             to={editorLink}
