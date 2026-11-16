@@ -359,10 +359,12 @@ describe('Side pane (desktop)', () => {
     const user = userEvent.setup();
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    const feedback = within(pane).getByRole('link', { name: /Feedback/ });
+    // Feedback lives in the site header; the pane bar has no page link until an icon is selected.
+    const feedback = within(screen.getByRole('banner')).getAllByRole('link', { name: /Feedback/ })[0];
     expect(feedback.getAttribute('href')).toBe('https://github.com/fos-icons/fosicons.com/issues/new');
-    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
     expect(within(pane).queryByRole('link', { name: /Feedback/ })).toBeNull();
+    expect(within(pane).queryByRole('link', { name: 'Open icon page' })).toBeNull();
+    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
     // The theme toggle sits beside the collapse button, and stays on the rail.
     expect(within(pane).getByRole('button', { name: /^Theme:/ })).toBeTruthy();
     expect(within(pane).getByRole('button', { name: 'Expand panel' }).getAttribute('aria-expanded')).toBe('false');
@@ -372,6 +374,7 @@ describe('Side pane (desktop)', () => {
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
     expect(within(pane).getByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
+    expect(within(pane).getByRole('link', { name: 'Open icon page' }).getAttribute('href')).toBe('/icons/search');
 
     await user.click(within(pane).getByRole('button', { name: 'Clear selection' }));
     expect(location).toBe('');

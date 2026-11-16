@@ -25,6 +25,16 @@ export const editorPath = (name: string) => `/?${new URLSearchParams({ icon: nam
 /** The library's own SVG file, published at build time (scripts/postbuild.mjs). */
 export const svgFilePath = (style: string, name: string) => `/svg/${style}/${name}.svg`;
 
+/**
+ * Words people search for this icon by: its aliases, then its tags, lowercased
+ * and without repeats of the icon's own name or category.
+ */
+export const iconKeywords = (icon: IconEntry) => {
+  const skip = new Set([icon.name.replace(/-/g, ' '), icon.category.toLowerCase()]);
+  const words = [...displayAliases(icon), ...icon.tags.map((t) => t.replace(/-/g, ' '))].map((w) => w.toLowerCase());
+  return [...new Set(words)].filter((w) => !skip.has(w));
+};
+
 /** Other names people search for (legacy library paths such as "interface/x" are left out). */
 export const displayAliases = (icon: IconEntry) =>
   [...new Set(icon.aliases.filter((a) => !a.includes('/')).map((a) => a.replace(/-/g, ' ')))].filter((a) => a !== icon.name.replace(/-/g, ' '));
