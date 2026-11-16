@@ -375,6 +375,11 @@ describe('Side pane (desktop)', () => {
     expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
     expect(within(pane).getByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
     expect(within(pane).getByRole('link', { name: 'Open icon page' }).getAttribute('href')).toBe('/icons/search');
+    // Collapsing with an icon still selected sticks; it is not reopened by the selection.
+    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
+    expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
+    await user.click(within(pane).getByRole('button', { name: 'Expand panel' }));
+    expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
 
     await user.click(within(pane).getByRole('button', { name: 'Clear selection' }));
     expect(location).toBe('');

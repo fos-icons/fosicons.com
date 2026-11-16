@@ -113,7 +113,7 @@ export function Tag({ to, size = 'md', children }: { to: string; size?: 'sm' | '
   return (
     <LocalLink
       to={to}
-      className={`inline-flex items-center rounded-lg bg-brand-soft font-medium text-brand underline-offset-2 transition hover:underline ${
+      className={`inline-flex items-center rounded-lg bg-brand-soft font-medium text-brand transition-colors hover:bg-brand-soft/55 ${
         size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3 text-sm'
       }`}
     >
