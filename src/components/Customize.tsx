@@ -280,7 +280,7 @@ export function CustomizeControls({
                   aria-label={themeLabel}
                   title={themeLabel}
                   onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
-                  className={`squircle flex size-8 items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
+                  className={`theme-swatch squircle flex size-8 items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
                 >
                   <span className="squircle flex size-6 overflow-hidden border border-line" aria-hidden="true">
                     <span className="flex-1" style={{ background: c.main }} />
