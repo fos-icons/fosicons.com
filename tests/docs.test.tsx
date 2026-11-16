@@ -39,6 +39,27 @@ describe('Docs page', () => {
     expect(section.textContent).toContain('fos-pane-width');
   });
 
+  it('documents Svelte setup and copies a complete Svelte example', async () => {
+    const user = userEvent.setup();
+    render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
+    const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    expect(within(nav).getByRole('link', { name: 'Svelte' }).getAttribute('href')).toBe('#svelte');
+    const section = document.getElementById('svelte')!;
+    expect(section.textContent).toContain('Svelte 5.20');
+    expect(section.textContent).toContain('Not yet published to npm');
+    expect(section.textContent).toContain('one shared Svelte renderer');
+    expect(within(section).getByRole('link', { name: 'fos-icons/svelte-fos' }).getAttribute('href'))
+      .toBe('https://github.com/fos-icons/svelte-fos');
+    const block = section.querySelector('.code-block[data-lang="svelte"]')!;
+    expect(block.textContent).toMatch(/^Svelte/);
+    const code = block.querySelector('code')!.textContent;
+    expect(code).toContain('<script lang="ts">');
+    expect(code).toContain("from '@fos-icons/svelte'");
+    expect(code).toContain('<CameraDuocolor size={32} primaryColor="#245B9E" secondaryColor="#60A5FA" />');
+    await user.click(within(block as HTMLElement).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code);
+  });
+
   it('filters sections and the side nav with the search box', async () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });

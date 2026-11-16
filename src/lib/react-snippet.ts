@@ -30,13 +30,23 @@ function snippetProps(style: StyleId, options: SnippetOptions): [string, string 
   return props;
 }
 
+function componentAttributes(style: StyleId, options: SnippetOptions): string {
+  return snippetProps(style, options)
+    .map(([k, v]) => (typeof v === 'number' ? ` ${k}={${v}}` : ` ${k}="${v}"`))
+    .join('');
+}
+
 /** React usage example (@fos-icons/react). */
 export function reactSnippet(name: string, style: StyleId, options: SnippetOptions): string {
   const component = componentName(name, style);
-  const attrs = snippetProps(style, options)
-    .map(([k, v]) => (typeof v === 'number' ? ` ${k}={${v}}` : ` ${k}="${v}"`))
-    .join('');
+  const attrs = componentAttributes(style, options);
   return `import { ${component} } from '@fos-icons/react';\n\n<${component}${attrs} />`;
+}
+
+/** Svelte usage example (@fos-icons/svelte), using the same camelCase props. */
+export function svelteSnippet(name: string, style: StyleId, options: SnippetOptions): string {
+  const component = componentName(name, style);
+  return `<script lang="ts">\nimport { ${component} } from '@fos-icons/svelte';\n</script>\n\n<${component}${componentAttributes(style, options)} />`;
 }
 
 /** Vue usage example (@fos-icons/vue): the same props, in kebab-case. */

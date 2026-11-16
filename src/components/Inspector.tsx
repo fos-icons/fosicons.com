@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 import {
   compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
-import { reactSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
+import { reactSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { BASE_STROKE, buildSvg, hasFilledDetails, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
@@ -167,7 +167,11 @@ export function Inspector({
   };
   const snippetName = packaged ?? icon.name;
   const snippets = kind === 'core'
-    ? { react: reactSnippet(snippetName, style, snippetOptions), vue: vueSnippet(snippetName, style, snippetOptions) }
+    ? {
+      react: reactSnippet(snippetName, style, snippetOptions),
+      vue: vueSnippet(snippetName, style, snippetOptions),
+      svelte: svelteSnippet(snippetName, style, snippetOptions),
+    }
     : null;
 
   return (
@@ -392,6 +396,7 @@ export function Inspector({
             tabs={[
               { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
               { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
+              { id: 'svelte', label: t('iconPage.svelte'), code: snippets.svelte, lang: 'svelte' },
             ]}
           />
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-faint">
@@ -404,7 +409,7 @@ export function Inspector({
             <li>
               {rich('inspector.codeInstall', {
                 code: (text) => <code className="font-mono text-ink">{text}</code>,
-                link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs#react')}>{text}</a>,
+                link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs')}>{text}</a>,
               })}
             </li>
           </ul>
