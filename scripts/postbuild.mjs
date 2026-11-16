@@ -16,7 +16,7 @@ const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
   PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, catalog, brands,
-  SITE_NAME, LIBRARY_URL, FIGMA_URL, LOCALES, DEFAULT_LOCALE, localizePath, i18nFor,
+  SITE_NAME, LIBRARY_URL, FIGMA_URL, LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath, FRAMEWORK_PATHS, displayName,
 } = server;
 
@@ -179,31 +179,7 @@ writeFileSync(join(dist, 'llms.txt'), [
 ].join('\n'));
 
 // Web app manifest: makes the site installable (with public/sw.js).
-writeFileSync(join(dist, 'manifest.webmanifest'), JSON.stringify({
-  name: SITE_NAME,
-  short_name: SITE_NAME,
-  description: PAGES.home.description,
-  id: '/',
-  start_url: '/',
-  scope: '/',
-  display: 'standalone',
-  display_override: ['window-controls-overlay', 'standalone'],
-  background_color: '#fbfbfa',
-  theme_color: '#fbfbfa',
-  lang: 'en',
-  dir: 'ltr',
-  categories: ['design', 'developer', 'productivity', 'utilities'],
-  icons: [
-    { src: '/app/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
-    { src: '/app/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
-    { src: '/app/icon-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
-    { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-  ],
-  shortcuts: [
-    { name: 'Brand icons', url: '/?style=brands', icons: [{ src: '/app/icon-192.png', sizes: '192x192' }] },
-    { name: 'Docs', url: '/docs', icons: [{ src: '/app/icon-192.png', sizes: '192x192' }] },
-  ],
-}, null, 2) + '\n');
+writeFileSync(join(dist, 'manifest.webmanifest'), JSON.stringify(webManifest(PAGES.home.description), null, 2) + '\n');
 
 // Version the service worker's caches by library revision and build, so a
 // new snapshot or deploy never mixes with stale artwork.
