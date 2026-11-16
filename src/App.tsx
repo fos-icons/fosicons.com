@@ -6,6 +6,9 @@ import { DEFAULT_LOCALE, I18nProvider, localizePath, type Translation } from './
 import { docsPageFor } from './i18n/content';
 import { ThemeProvider } from './lib/theme';
 import { IconsPage } from './pages/IconsPage';
+import CategoryPage from './pages/CategoryPage';
+import FrameworkPage from './pages/FrameworkPage';
+import IconPage from './pages/IconPage';
 import NotFoundPage from './pages/NotFoundPage';
 
 
@@ -31,6 +34,12 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 {/* Brands moved into the style switcher; keep old links working. */}
                 <Route path="brands" element={<Navigate to={localizePath('/?style=brands', locale)} replace />} />
                 <Route path="docs" element={<DocsPage />} />
+                {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
+                <Route path="icons/:name" element={<IconPage />} />
+                <Route path="categories/:slug" element={<CategoryPage />} />
+                <Route path="react-icons" element={<FrameworkPage framework="react" />} />
+                <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
+                <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}

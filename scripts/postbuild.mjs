@@ -15,9 +15,30 @@ const dist = join(root, 'dist');
 const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
-  PAGES, PAGE_IDS, pageMeta, pageUrl, headTags, facts, absolute, catalog, brands,
+  PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, catalog, brands,
   SITE_NAME, LIBRARY_URL, FIGMA_URL, LOCALES, DEFAULT_LOCALE, localizePath, i18nFor,
+  primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath, FRAMEWORK_PATHS, displayName,
 } = server;
+
+// Every style's artwork, for prerendering the landing pages and publishing
+// one SVG file per icon and style (/svg/<style>/<name>.svg) that pages link
+// to, Google Images can index, and anyone can download without JavaScript.
+const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(dist, 'icons', `${style}.json`), 'utf8'))]));
+primeArtwork(artwork);
+for (const icon of catalog.icons) {
+  // /icons/<name>/ pages share the folder with the artwork chunks (/icons/<style>/).
+  if (catalog.styles.includes(icon.name)) throw new Error(`Icon name "${icon.name}" collides with the /icons/${icon.name}/ artwork folder`);
+}
+let svgFiles = 0;
+for (const style of catalog.styles) {
+  mkdirSync(join(dist, 'svg', style), { recursive: true });
+  for (const icon of catalog.icons) {
+    const svg = artwork[style][icon.name];
+    if (!svg) throw new Error(`Missing ${style} artwork for ${icon.name}`);
+    writeFileSync(join(dist, svgFilePath(style, icon.name)), `${svg}\n`);
+    svgFiles += 1;
+  }
+}
 
 const template = readFileSync(join(dist, 'index.html'), 'utf8');
 const META = /<!-- page-meta:start[^>]*-->[\s\S]*?<!-- page-meta:end -->/;
@@ -35,44 +56,77 @@ const fontPreloads = ['funnel-display-latin-wght-normal', 'asta-sans-latin-wght-
 // The home grid's first artwork chunk, so icons paint without waiting for the app.
 const homePreloads = [`<link rel="preload" href="/icons/${catalog.styles[0]}/0.json" as="fetch" crossorigin />`];
 
-async function writePage(file, id, location, locale) {
+const embed = (store) => {
+  const used = Object.fromEntries(Object.entries(store).filter(([, svgs]) => Object.keys(svgs).length));
+  return Object.keys(used).length
+    ? `<script type="application/json" id="fos-artwork">${JSON.stringify(used).replace(/</g, '\\u003c')}</script>`
+    : '';
+};
+
+async function writePage(file, location, locale, extraPreloads = []) {
   const i18n = await i18nFor(locale);
+  const [pathname, search = ''] = location.split('?');
+  const page = pageFor(pathname, search ? `?${search}` : '', i18n);
+  trackArtwork();
   const body = await server.render(localizePath(location, locale), locale);
-  const preloads = [...fontPreloads, ...(id === 'home' ? homePreloads : [])];
+  const art = embed(takeTrackedArtwork());
+  const preloads = [...fontPreloads, ...extraPreloads];
   const html = template
     .replace(HTML_TAG, `<html lang="${i18n.config.code}" dir="${i18n.dir}">`)
-    .replace(META, [headTags(pageMeta(id, i18n), i18n), ...preloads].join('\n    '))
-    .replace(ROOT, `<div id="root">${body}</div>`);
+    .replace(META, [headTags(page, i18n), ...preloads].join('\n    '))
+    .replace(ROOT, `<div id="root">${body}</div>${art}`);
   mkdirSync(dirname(join(dist, file)), { recursive: true });
   writeFileSync(join(dist, file), html);
+  return page;
 }
 
 // Every page in every language. Non-default languages live under /<locale>/;
 // one 404.html serves every language (the app reads the language from the URL).
-const ROUTES = [['home', '/'], ['docs', '/docs'], ['brands', '/?style=brands']];
+const pageFile = (path) => (path === '/' ? 'index.html' : `${path.slice(1)}/index.html`);
+const ROUTES = [
+  ['/', homePreloads],
+  ['/docs'],
+  ['/?style=brands', [], 'brands/index.html'],
+  ...Object.values(FRAMEWORK_PATHS).map((path) => [path]),
+  ...catalog.categories.map((c) => [categoryPath(c.name)]),
+  ...catalog.icons.map((icon) => [iconPath(icon.name)]),
+];
 let written = 0;
 for (const { code } of LOCALES) {
   const prefix = code === DEFAULT_LOCALE ? '' : `${code}/`;
-  for (const [id, location] of ROUTES) {
-    await writePage(`${prefix}${id === 'home' ? '' : `${id}/`}index.html`, id, location, code);
+  for (const [location, preloads = [], file] of ROUTES) {
+    const page = await writePage(`${prefix}${file ?? pageFile(location)}`, location, code, preloads);
+    if (page.id === 'not-found') throw new Error(`Route ${location} prerendered as the 404 page`);
     written += 1;
   }
 }
-await writePage('404.html', 'not-found', '/404', DEFAULT_LOCALE);
+await writePage('404.html', '/404', DEFAULT_LOCALE);
 written += 1;
 
 // Every page in every language, each listing its translations (hreflang).
-const indexed = PAGE_IDS.map((id) => PAGES[id]).filter((page) => !page.noindex);
+const english = await i18nFor(DEFAULT_LOCALE);
+const indexed = [
+  ...PAGE_IDS.map((id) => PAGES[id]).filter((page) => !page.noindex),
+  ...catalog.categories.map((c) => pageFor(categoryPath(c.name), '', english)),
+  ...catalog.icons.map((icon) => pageFor(iconPath(icon.name), '', english)),
+];
 const urls = indexed.flatMap((page) => LOCALES.map(({ code }) => [
   '  <url>',
   `    <loc>${pageUrl(page, code)}</loc>`,
-  ...LOCALES.map((alt) => `    <xhtml:link rel="alternate" hreflang="${alt.code}" href="${pageUrl(page, alt.code)}" />`),
-  `    <xhtml:link rel="alternate" hreflang="x-default" href="${pageUrl(page, DEFAULT_LOCALE)}" />`,
+  ...(LOCALES.length > 1 ? [
+    ...LOCALES.map((alt) => `    <xhtml:link rel="alternate" hreflang="${alt.code}" href="${pageUrl(page, alt.code)}" />`),
+    `    <xhtml:link rel="alternate" hreflang="x-default" href="${pageUrl(page, DEFAULT_LOCALE)}" />`,
+  ] : []),
+  ...(page.icon ? catalog.styles.map((style) => [
+    '    <image:image>',
+    `      <image:loc>${absolute(svgFilePath(style, page.icon.name))}</image:loc>`,
+    '    </image:image>',
+  ].join('\n')) : []),
   '  </url>',
 ].join('\n')));
 writeFileSync(join(dist, 'sitemap.xml'), [
   '<?xml version="1.0" encoding="UTF-8"?>',
-  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">',
+  '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
   ...urls,
   '</urlset>',
   '',
@@ -111,10 +165,12 @@ writeFileSync(join(dist, 'llms.txt'), [
   '- React: `npm install @fos-icons/react` ([npm](https://www.npmjs.com/package/@fos-icons/react))',
   '- Vue 3: `npm install @fos-icons/vue` ([npm](https://www.npmjs.com/package/@fos-icons/vue))',
   ...(FIGMA_URL ? [`- [Figma library](${FIGMA_URL})`] : []),
+  `- [React icons](${absolute(FRAMEWORK_PATHS.react)}), [Vue icons](${absolute(FRAMEWORK_PATHS.vue)}), [Figma icons](${absolute(FRAMEWORK_PATHS.figma)}): getting started with each.`,
+  `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its SVG at ${absolute('/svg/<style>/<name>.svg')}.`,
   '',
   '## Categories',
   '',
-  ...catalog.categories.map((c) => `- ${c.name}: ${nf.format(c.count)} icons`),
+  ...catalog.categories.map((c) => `- [${c.name}](${absolute(categoryPath(c.name))}): ${nf.format(c.count)} icons`),
   '',
   '## Optional',
   '',
@@ -157,4 +213,4 @@ const swPath = join(dist, 'sw.js');
 writeFileSync(swPath, readFileSync(swPath, 'utf8').replace("const VERSION = 'v1';", `const VERSION = '${(lock.revision ?? 'local').slice(0, 7)}-${entry}';`));
 
 rmSync(ssrDir, { recursive: true, force: true });
-console.log(`Prerendered ${written} pages in ${LOCALES.length} language(s); wrote sitemap.xml (${urls.length} URLs), robots.txt, llms.txt, manifest.webmanifest, sw.js.`);
+console.log(`Prerendered ${written} pages in ${LOCALES.length} language(s); wrote ${svgFiles} SVG files, sitemap.xml (${urls.length} URLs), robots.txt, llms.txt, manifest.webmanifest, sw.js.`);

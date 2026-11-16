@@ -4,7 +4,9 @@ import { StaticRouter } from 'react-router-dom';
 import { AppShell } from './App';
 import { createI18n, DEFAULT_LOCALE, loadMessages } from './i18n';
 
-export { headTags, pageFor, pageMeta, pageUrl, PAGES, PAGE_IDS, facts, SITE_URL, SITE_NAME, absolute } from './lib/seo';
+export { headTags, pageFor, pageMeta, iconMeta, categoryMeta, pageUrl, PAGES, PAGE_IDS, facts, SITE_URL, SITE_NAME, absolute } from './lib/seo';
+export { primeArtwork, trackArtwork, takeTrackedArtwork } from './lib/artwork';
+export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, iconPath, svgFilePath } from './lib/icon-pages';
 export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 
 /** A language's translator, with its messages loaded (for the build). */

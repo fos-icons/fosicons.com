@@ -9,7 +9,7 @@ hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('css', css);
 
-const ALIASES: Record<string, string> = { tsx: 'typescript', ts: 'typescript', sh: 'bash', html: 'xml', svg: 'xml', css: 'css' };
+const ALIASES: Record<string, string> = { tsx: 'typescript', ts: 'typescript', sh: 'bash', html: 'xml', svg: 'xml', vue: 'xml', css: 'css' };
 
 /** Escaped, highlighted HTML for a snippet, or null for an unknown language. */
 export function highlight(code: string, lang: string): string | null {

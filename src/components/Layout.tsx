@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import markRegular from '../brand/mark-regular.svg?raw';
+import { catalog } from '../lib/catalog';
+import { categoryPath, FRAMEWORK_PATHS } from '../lib/icon-pages';
 import { CONTAINER, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { LIBRARY_URL, NPM_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
@@ -16,7 +18,7 @@ export function Layout() {
   const [paneHost, setPaneHost] = useState<HTMLElement | null>(null);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useDocumentMeta();
-  const { t } = useI18n();
+  const { t, label } = useI18n();
   const { pathname } = useLocation();
   return (
     <PaneHostContext.Provider value={paneHost}>
@@ -47,6 +49,25 @@ export function Layout() {
             </div>
           </main>
           <footer className="border-t border-line">
+            {/* Every page links to every category and framework page, so crawlers reach each icon page. */}
+            <div className={`${CONTAINER} grid gap-6 border-b border-line py-8 text-sm md:grid-cols-[auto_1fr] md:gap-16`}>
+              <nav aria-label={t('footer.browse')}>
+                <h2 className="font-medium text-ink">{t('footer.browse')}</h2>
+                <ul className="mt-3 space-y-2">
+                  <li><LocalLink to={FRAMEWORK_PATHS.react} className={footerLink}>{t('footer.reactIcons')}</LocalLink></li>
+                  <li><LocalLink to={FRAMEWORK_PATHS.vue} className={footerLink}>{t('footer.vueIcons')}</LocalLink></li>
+                  <li><LocalLink to={FRAMEWORK_PATHS.figma} className={footerLink}>{t('footer.figmaIcons')}</LocalLink></li>
+                </ul>
+              </nav>
+              <nav aria-label={t('footer.categories')}>
+                <h2 className="font-medium text-ink">{t('footer.categories')}</h2>
+                <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
+                  {catalog.categories.map((c) => (
+                    <li key={c.name}><LocalLink to={categoryPath(c.name)} className={footerLink}>{label('category', c.name, c.name)}</LocalLink></li>
+                  ))}
+                </ul>
+              </nav>
+            </div>
             <div className={`${CONTAINER} flex flex-col gap-3 py-6 text-sm text-muted md:flex-row md:items-center md:justify-between`}>
               <nav aria-label={t('footer.nav')} className="flex flex-wrap items-center gap-x-5 gap-y-2">
                 <LocalLink to="/docs#privacy" className={footerLink}>{t('footer.privacy')}</LocalLink>
