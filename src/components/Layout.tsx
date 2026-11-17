@@ -10,7 +10,6 @@ import { LIBRARY_URL, NPM_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
 import { LanguageMenu } from './LanguageMenu';
-import { ThemeToggle } from './ThemeToggle';
 import { UiIcon } from './ui';
 
 const footerLink = 'inline-flex items-center gap-1 rounded text-muted underline-offset-2 transition hover:text-ink hover:underline';
@@ -50,8 +49,6 @@ export function Layout() {
               <div ref={setHeaderSlot} className="hidden min-w-0 flex-1 justify-center px-6 empty:hidden md:flex" />
               <div className="ml-auto flex items-center gap-2 md:gap-5">
                 <HeaderActions />
-                {/* With the desktop side pane open, the toggle lives in the pane's bar. */}
-                <ThemeToggle className="-mr-2 [:root:has(#side-pane-body)_&]:hidden" />
               </div>
             </div>
           </header>

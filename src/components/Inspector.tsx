@@ -17,7 +17,6 @@ import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { composeSvg, initialCorner, MODIFIER_BADGE, MODIFIER_SCALE, modifiersFor, type Corner } from '../lib/modifiers';
 import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
-import { ThemeToggle } from './ThemeToggle';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 
@@ -391,14 +390,16 @@ export function Inspector({
 
       {snippets && (
         <Section collapsible defaultOpen={false} title={t('inspector.code')}>
-          <CodeTabs
-            label={t('iconPage.framework')}
-            tabs={[
-              { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
-              { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
-              { id: 'svelte', label: t('iconPage.svelte'), code: snippets.svelte, lang: 'svelte' },
-            ]}
-          />
+          <div className="code-stone">
+            <CodeTabs
+              label={t('iconPage.framework')}
+              tabs={[
+                { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
+                { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
+                { id: 'svelte', label: t('iconPage.svelte'), code: snippets.svelte, lang: 'svelte' },
+              ]}
+            />
+          </div>
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-faint">
             {strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
               <li>{t('inspector.codeStroke', { base: BASE_STROKE, value: strokeWidth })}</li>
@@ -528,7 +529,6 @@ export function SidePane({
             aria-controls="side-pane-body"
             onClick={() => onCollapsedChange(!collapsed)}
           />
-          {!collapsed && <ThemeToggle />}
           {!collapsed && expandTo && (
             <LocalLink
               to={expandTo}
@@ -543,11 +543,6 @@ export function SidePane({
             </LocalLink>
           )}
         </div>
-        {collapsed && (
-          <div className="flex justify-center pt-2.5">
-            <ThemeToggle />
-          </div>
-        )}
         <div
           id="side-pane-body"
           hidden={collapsed}

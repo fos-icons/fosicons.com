@@ -57,6 +57,10 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   whole grid and carried into exports. Selecting an icon shows its inspector:
   previews, style, modifiers, the same controls, exports, and React, Vue, and Svelte usage. On
   mobile both open as a modal bottom sheet (native `<dialog>`).
+- **Appearance**: the Light/Dark selector in Color switches the whole site
+  and remembers the choice. There is no separate theme-cycling icon in the
+  header or side-panel rail. With no saved choice, the site follows the
+  system appearance.
 - **Size and stroke**: icons default to 48px (Auto stroke 1px). Size is a
   slider over what the grid previews (16–64px, 4px steps) plus a px field for
   any export size from 8 to 512. Stroke is **Auto** by default and
@@ -105,8 +109,10 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   `solid/`, `duocolor/`, `duotone/`, plus LICENSE and README, built in the
   browser from the pinned snapshot), Figma (the Figma file,
   new tab; `FIGMA_URL` in `src/lib/links.ts`). Phones get a menu.
-- **Code samples**: dark in both themes, with syntax colors (highlight.js
-  core with TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
+- **Code samples**: icon-page and inspector examples share a light stone
+  surface in light mode and warm charcoal in dark mode. Other code blocks
+  remain dark in both themes, with syntax colors (highlight.js core with
+  TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
   shown as a terminal. Icon pages and the inspector offer React, Vue, and
   Svelte tabs with copyable examples. Svelte uses a `<script lang="ts">` import
   and camelCase props; the docs explain its source/tarball setup until npm publication.
