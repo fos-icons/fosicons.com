@@ -366,7 +366,7 @@ dialog.sheet::backdrop {
 .code-block .hljs-punctuation { color: #b9b9c0; }
 
 /*
- * Stone code blocks (the icon page's usage section): a near-neutral stone
+ * Stone code blocks (icon-page usage and the inspector): a near-neutral stone
  * gray in the light theme, stone charcoal in the dark one. Each token keeps its color role (red
  * keywords, blue strings and attributes, purple names, green tags), deepened
  * to read on ivory.

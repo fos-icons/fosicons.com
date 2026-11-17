@@ -376,9 +376,9 @@ describe('Side pane (desktop)', () => {
     expect(feedback.getAttribute('href')).toBe('https://github.com/fos-icons/fosicons.com/issues/new');
     expect(within(pane).queryByRole('link', { name: /Feedback/ })).toBeNull();
     expect(within(pane).queryByRole('link', { name: 'Open icon page' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
     await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
-    // The theme toggle sits beside the collapse button, and stays on the rail.
-    expect(within(pane).getByRole('button', { name: /^Theme:/ })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
     expect(within(pane).getByRole('button', { name: 'Expand panel' }).getAttribute('aria-expanded')).toBe('false');
     expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
     expect(localStorage.getItem('fos-pane-collapsed')).toBe('1');
@@ -520,6 +520,7 @@ describe('Inspector sections (desktop)', () => {
     await user.click(toggle);
     expect(toggle.getAttribute('aria-expanded')).toBe('true');
     const section = toggle.closest('section')!;
+    expect(section.querySelector('.code-block')!.closest('.code-stone')).not.toBeNull();
     expect(within(section).getByRole('button', { name: 'Copy' })).toBeTruthy();
     const code = () => section.querySelector('.code-block code')!.textContent;
     expect(code()).toMatch(/^import \{ SearchRegular \} from '@fos-icons\/react';/);
@@ -537,10 +538,11 @@ describe('Inspector sections (desktop)', () => {
     await vi.waitFor(() => expect(pane.querySelector('.code-block .hljs-keyword')?.textContent).toBe('import'));
   });
 
-  it('previews a duo palette variant by switching the whole site theme', async () => {
+  it.each(['regular', 'solid', 'duocolor', 'duotone'])('switches the site theme from Color for %s icons', async (style) => {
     const user = userEvent.setup();
-    renderAt('/?style=duocolor');
+    renderAt(`/?style=${style}`);
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
+    expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
     const variant = within(pane).getByRole('radiogroup', { name: 'Light or dark' });
     await user.click(within(variant).getByRole('radio', { name: 'Dark' }));
     expect(document.documentElement.classList.contains('dark')).toBe(true);

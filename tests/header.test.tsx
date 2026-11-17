@@ -43,6 +43,11 @@ beforeEach(() => { resetStyleCache(); fetchMock.mockClear(); vi.stubGlobal('fetc
 afterEach(() => { cleanup(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 
 describe('Header actions', () => {
+  it.each(['/', '/docs'])('does not show a theme-cycling button on %s', (url) => {
+    renderAt(url);
+    expect(within(screen.getByRole('banner')).queryByRole('button', { name: /^Theme:/ })).toBeNull();
+  });
+
   it('links Figma from the header and Get started from the home page', () => {
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: 'Main' });
