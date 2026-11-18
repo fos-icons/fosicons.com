@@ -65,6 +65,10 @@ stroke at 24 px, as documented in [`README.md`](../README.md).
 
 ## Style variants
 
+- Every icon has four styles: Regular, Filled, Duocolor, and Duotone. Any
+  redraw or edit covers all four in the same pass, built on the same geometry,
+  and each must be finished to the same standard. Never leave one style on old
+  geometry.
 - Make Filled a deliberate, legible filled interpretation—not simply a heavier
   outline. Preserve meaningful counters and open negative space. If a symbol
   does not naturally support a filled form, use a considered alternative rather
@@ -93,6 +97,17 @@ stroke at 24 px, as documented in [`README.md`](../README.md).
 - Keep icon descriptions concise and focused on the name, meaning, and useful
   synonyms. Avoid drawing-specification boilerplate such as pixel-grid or
   cap-style details.
+
+## Approval
+
+- All new designs and redraws start as drafts on the Figma **Scratchpad**
+  page, never on any other page. Lay them out with 8× previews and an
+  actual-size comparison against the current icon.
+- The owner approves drafts visually. Only then are components created or
+  updated on the Components page, and the approved drafts removed from the
+  Scratchpad.
+- Only approved changes are applied to the component and synced onward to the
+  `fos-icons` packages and the website.
 
 ## Verification
 
