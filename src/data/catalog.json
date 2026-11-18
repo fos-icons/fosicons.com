@@ -79,7 +79,7 @@
     },
     {
       "name": "Time & weather",
-      "count": 87
+      "count": 103
     },
     {
       "name": "Transport & space",
@@ -211,6 +211,10 @@
       "label": "Key",
       "group": "access-identity"
     },
+    "link": {
+      "label": "Link",
+      "group": "actions"
+    },
     "list": {
       "label": "List",
       "group": "actions"
@@ -235,9 +239,17 @@
       "label": "MP4",
       "group": "file-types"
     },
+    "note": {
+      "label": "Note",
+      "group": "actions"
+    },
     "pdf": {
       "label": "PDF",
       "group": "file-types"
+    },
+    "phone": {
+      "label": "Phone",
+      "group": "actions"
     },
     "png": {
       "label": "PNG",
@@ -255,12 +267,20 @@
       "label": "Question",
       "group": "actions"
     },
+    "record": {
+      "label": "Record",
+      "group": "actions"
+    },
     "refresh": {
       "label": "Refresh",
       "group": "actions"
     },
     "remove": {
       "label": "Remove",
+      "group": "actions"
+    },
+    "reply": {
+      "label": "Reply",
       "group": "actions"
     },
     "search": {
@@ -3112,6 +3132,18 @@
       ]
     },
     {
+      "name": "calendar-3-day",
+      "category": "Time & weather",
+      "tags": [
+        "three day view",
+        "3 days",
+        "columns",
+        "multi-day",
+        "schedule"
+      ],
+      "aliases": []
+    },
+    {
       "name": "calendar-add",
       "category": "Time & weather",
       "tags": [
@@ -3124,7 +3156,28 @@
       ],
       "aliases": [
         "interface/calendar-add"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-agenda",
+      "category": "Time & weather",
+      "tags": [
+        "list view",
+        "events list",
+        "itinerary",
+        "schedule",
+        "planner"
+      ],
+      "aliases": []
     },
     {
       "name": "calendar-alert",
@@ -3140,7 +3193,16 @@
       ],
       "aliases": [
         "interface/calendar-alert"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "warning",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-check",
@@ -3156,7 +3218,16 @@
       ],
       "aliases": [
         "interface/calendar-check"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-clock",
@@ -3174,18 +3245,17 @@
       ]
     },
     {
-      "name": "calendar-day",
+      "name": "calendar-copy",
       "category": "Time & weather",
       "tags": [
-        "today",
-        "single day",
-        "date",
-        "daily",
-        "agenda day",
-        "day view"
+        "duplicate event",
+        "copy event",
+        "clone",
+        "multiple calendars",
+        "stack"
       ],
       "aliases": [
-        "interface/calendar-day"
+        "calendar-multiple"
       ]
     },
     {
@@ -3201,7 +3271,16 @@
       ],
       "aliases": [
         "interface/calendar-disabled"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "block",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-dots",
@@ -3220,6 +3299,19 @@
       ]
     },
     {
+      "name": "calendar-dots-rtl",
+      "category": "Time & weather",
+      "tags": [
+        "right to left",
+        "rtl layout",
+        "arabic",
+        "hebrew",
+        "month grid",
+        "dates"
+      ],
+      "aliases": []
+    },
+    {
       "name": "calendar-download",
       "category": "Time & weather",
       "tags": [
@@ -3232,7 +3324,28 @@
       ],
       "aliases": [
         "interface/calendar-download"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "download",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-event",
+      "category": "Time & weather",
+      "tags": [
+        "timeline",
+        "appointment",
+        "meeting",
+        "time slot",
+        "now line"
+      ],
+      "aliases": []
     },
     {
       "name": "calendar-heart",
@@ -3263,6 +3376,27 @@
       ]
     },
     {
+      "name": "calendar-link",
+      "category": "Time & weather",
+      "tags": [
+        "share link",
+        "meeting link",
+        "url",
+        "invite link",
+        "hyperlink"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "link",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "calendar-lock",
       "category": "Time & weather",
       "tags": [
@@ -3275,7 +3409,16 @@
       ],
       "aliases": [
         "interface/calendar-lock"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "lock",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-minus",
@@ -3293,19 +3436,196 @@
       ]
     },
     {
-      "name": "calendar-month",
+      "name": "calendar-month-1",
+      "category": "Time & weather",
+      "tags": [
+        "today",
+        "single day",
+        "date",
+        "daily",
+        "agenda day",
+        "day view"
+      ],
+      "aliases": [
+        "calendar-day",
+        "interface/calendar-day"
+      ]
+    },
+    {
+      "name": "calendar-month-25",
+      "category": "Time & weather",
+      "tags": [
+        "25th",
+        "christmas",
+        "payday",
+        "date",
+        "deadline"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "calendar-month-28",
+      "category": "Time & weather",
+      "tags": [
+        "28th",
+        "february",
+        "end of february",
+        "date",
+        "deadline"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "calendar-month-29",
+      "category": "Time & weather",
+      "tags": [
+        "29th",
+        "leap day",
+        "leap year",
+        "february",
+        "date"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "calendar-month-30",
+      "category": "Time & weather",
+      "tags": [
+        "30th",
+        "end of the month",
+        "date",
+        "deadline",
+        "monthly"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "calendar-month-31",
       "category": "Time & weather",
       "tags": [
         "monthly",
         "month view",
-        "31",
         "date",
         "agenda",
-        "planner"
+        "planner",
+        "month end"
       ],
       "aliases": [
+        "calendar-month",
         "interface/calendar-month"
       ]
+    },
+    {
+      "name": "calendar-month-5",
+      "category": "Time & weather",
+      "tags": [
+        "fifth",
+        "day 5",
+        "date",
+        "schedule",
+        "planner"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "calendar-month-7",
+      "category": "Time & weather",
+      "tags": [
+        "weekly",
+        "week view",
+        "schedule",
+        "planner",
+        "agenda"
+      ],
+      "aliases": [
+        "calendar-week",
+        "interface/calendar-week"
+      ]
+    },
+    {
+      "name": "calendar-note",
+      "category": "Time & weather",
+      "tags": [
+        "memo",
+        "event notes",
+        "sticky note",
+        "annotation",
+        "meeting notes"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "note",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-person",
+      "category": "Time & weather",
+      "tags": [
+        "attendee",
+        "organizer",
+        "participant",
+        "invitee",
+        "guest",
+        "user"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "user",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-phone",
+      "category": "Time & weather",
+      "tags": [
+        "phone call",
+        "mobile",
+        "call",
+        "dial-in",
+        "smartphone"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "phone",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-record",
+      "category": "Time & weather",
+      "tags": [
+        "recording",
+        "record meeting",
+        "capture",
+        "live",
+        "rec"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "record",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-remove",
@@ -3320,7 +3640,37 @@
       ],
       "aliases": [
         "interface/calendar-remove"
-      ]
+      ],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "calendar-reply",
+      "category": "Time & weather",
+      "tags": [
+        "respond",
+        "rsvp",
+        "answer invite",
+        "meeting reply",
+        "invitation"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "reply",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-settings",
@@ -3348,7 +3698,16 @@
         "special event",
         "suggestions"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "sparkle",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "calendar-star",
@@ -3377,22 +3736,16 @@
       ],
       "aliases": [
         "interface/calendar-upload"
-      ]
-    },
-    {
-      "name": "calendar-week",
-      "category": "Time & weather",
-      "tags": [
-        "weekly",
-        "week view",
-        "7",
-        "schedule",
-        "planner",
-        "agenda"
       ],
-      "aliases": [
-        "interface/calendar-week"
-      ]
+      "composition": {
+        "base": "calendar",
+        "modifiers": [
+          {
+            "name": "upload",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "camera",
