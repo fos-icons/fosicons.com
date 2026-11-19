@@ -61,11 +61,20 @@ export function ModifierPicker({
     tabRefs.current[to]?.focus();
   };
 
+  /**
+   * The corner the user last chose (or opened with). It outlives None and
+   * modifiers that only fit elsewhere, so the next modifier goes back to it.
+   */
+  const chosenCorner = useRef<Corner | null>(value?.corner ?? null);
   const pick = (m: ModifierAsset) => {
     if (value?.modifier.name === m.name) return onChange(null);
-    // Switching modifiers keeps the chosen corner when the new one can sit there.
-    const corner = value && m.positions[value.corner] ? value.corner : initialCorner(m);
-    onChange({ modifier: m, corner });
+    const preferred = chosenCorner.current;
+    onChange({ modifier: m, corner: preferred && m.positions[preferred] ? preferred : initialCorner(m) });
+  };
+  const place = (corner: Corner) => {
+    if (!value) return;
+    chosenCorner.current = corner;
+    onChange({ ...value, corner });
   };
 
   return (
@@ -102,7 +111,7 @@ export function ModifierPicker({
                   })}
                   aria-pressed={active}
                   disabled={!allowed}
-                  onClick={() => value && onChange({ ...value, corner })}
+                  onClick={() => place(corner)}
                   className={`flex size-6 rounded-md border p-1 transition-colors disabled:opacity-35 ${
                     v === 'top' ? 'items-start' : 'items-end'
                   } ${h === 'left' ? 'justify-start' : 'justify-end'} ${

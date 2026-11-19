@@ -311,6 +311,21 @@ describe('Icons page', () => {
     await user.click(screen.getByRole('tab', { name: 'Files' }));
     await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
     expect(screen.getByRole('button', { name: 'Bottom left' }).getAttribute('aria-pressed')).toBe('true');
+    // The chosen corner comes back for the next modifier that fits there.
+    await user.click(screen.getByRole('tab', { name: 'Actions' }));
+    await user.click(screen.getByRole('button', { name: /^Arrow up modifier/ }));
+    expect(screen.getByRole('button', { name: 'Top right' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('remembers the chosen corner through None', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=agent');
+    await user.click(await screen.findByRole('tab', { name: 'Actions' }, { timeout: 8000 }));
+    await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
+    await user.click(screen.getByRole('button', { name: 'Top left' }));
+    await user.click(screen.getByRole('button', { name: 'None' }));
+    await user.click(screen.getByRole('button', { name: /^Arrow right modifier/ }));
+    expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('downloads through Figma-style scale and format rows', async () => {
