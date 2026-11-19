@@ -225,10 +225,11 @@ describe('Icons page', () => {
 
     await user.click(screen.getByRole('button', { name: 'Top left' }));
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
+    // Switching modifiers keeps the chosen corner.
     await user.click(screen.getByRole('tab', { name: 'Actions' }));
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
-    expect(screen.getByRole('button', { name: 'Bottom right' }).getAttribute('aria-pressed')).toBe('true');
-
+    expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
+    expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
 
     // File-type and image-quality modifiers only apply to files, folders, and images.
     expect(screen.queryByRole('tab', { name: 'Files' })).toBeNull();
@@ -299,6 +300,17 @@ describe('Icons page', () => {
     const enabled = ['Top left', 'Top right', 'Bottom left', 'Bottom right']
       .filter((c) => !(screen.getByRole('button', { name: c }) as HTMLButtonElement).disabled);
     expect(enabled).toEqual(['Bottom left']);
+  });
+
+  it('falls back to a modifier\'s own corner when it cannot sit in the chosen one', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=file');
+    await user.click(await screen.findByRole('tab', { name: 'Actions' }, { timeout: 8000 }));
+    await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
+    await user.click(screen.getByRole('button', { name: 'Top right' }));
+    await user.click(screen.getByRole('tab', { name: 'Files' }));
+    await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
+    expect(screen.getByRole('button', { name: 'Bottom left' }).getAttribute('aria-pressed')).toBe('true');
   });
 
   it('downloads through Figma-style scale and format rows', async () => {
