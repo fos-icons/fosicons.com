@@ -419,7 +419,7 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByText(/no stroke to adjust/)).toBeTruthy();
   });
 
-  it('collapses, remembers it, and reopens when an icon is selected', async () => {
+  it('keeps quick actions available while collapsed and expands directly to code', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
@@ -435,15 +435,23 @@ describe('Side pane (desktop)', () => {
     expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
     expect(localStorage.getItem('fos-pane-collapsed')).toBe('1');
 
+    expect(within(pane).getByRole('button', { name: 'Size' })).toBeTruthy();
+    expect(within(pane).getByRole('button', { name: 'Stroke width' })).toBeTruthy();
+    expect(within(pane).getByRole('button', { name: 'Download all icons' })).toBeTruthy();
+
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
+    expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
+    const copy = within(pane).getByRole('button', { name: 'Copy SVG' });
+    await waitFor(() => expect((copy as HTMLButtonElement).disabled).toBe(false));
+    expect(within(pane).getByRole('button', { name: 'Download SVG' })).toBeTruthy();
+    await user.click(copy);
+    expect(await navigator.clipboard.readText()).toContain('width="48"');
+
+    await user.click(within(pane).getByRole('button', { name: 'Open code snippets' }));
     expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
     expect(within(pane).getByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
     expect(within(pane).getByRole('link', { name: 'Open icon page' }).getAttribute('href')).toBe('/icons/search');
-    // Collapsing with an icon still selected sticks; it is not reopened by the selection.
-    await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
-    expect(document.getElementById('side-pane-body')!.hidden).toBe(true);
-    await user.click(within(pane).getByRole('button', { name: 'Expand panel' }));
-    expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
+    await waitFor(() => expect(within(pane).getByRole('button', { name: 'Code' }).getAttribute('aria-expanded')).toBe('true'));
 
     await user.click(within(pane).getByRole('button', { name: 'Clear selection' }));
     expect(location).toBe('');
