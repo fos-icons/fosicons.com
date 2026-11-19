@@ -64,7 +64,6 @@ const en = {
   'theme.warm': 'Warm',
   'learning.label': 'Learning tip',
   'learning.dismiss': 'Got it',
-  'learning.search': 'Search by icon name, keyword, or category. Try “clock with sparkle” to open an icon with a modifier.',
   'learning.modifier': 'Pick a modifier to preview it, then choose its corner. Downloads and copies include the preview. A dot marks a designed library version.',
   'learning.color': 'Choose a site appearance, then pick a palette to recolor the icons. The palette also applies to downloads.',
   'theme.toggle': 'Theme: {current}. Switch to {next}.',
