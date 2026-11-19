@@ -12,7 +12,7 @@ import {
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
-import { BASE_STROKE, buildSvg, hasFilledDetails, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
+import { BASE_STROKE, buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
@@ -119,7 +119,6 @@ export function Inspector({
   const showSecondary = !!source && duo && hasSecondaryRole(source);
   const modifierDefault = source?.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase() ?? null;
   const showModifier = !!source && hasModifierRole(source);
-  const filledParts = useMemo(() => !!source && hasFilledDetails(source), [source]);
 
   const colors = useMemo(() => ({
     primary: duo ? r.duo.primary : r.mono,
@@ -247,11 +246,6 @@ export function Inspector({
         onChange={onLookChange}
         style={style}
         kind={kind}
-        footnote={filledParts && strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-          <p className="mt-2 rounded-lg bg-sunken px-2.5 py-2 text-xs leading-relaxed text-muted">
-            {t('inspector.filledParts')}
-          </p>
-        )}
       />
 
       {kind === 'core' && (
