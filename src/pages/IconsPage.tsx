@@ -2,7 +2,6 @@ import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { TeachingTip } from '../components/TeachingTip';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { HeroActions } from '../components/HeaderActions';
@@ -374,7 +373,6 @@ export function IconsPage() {
           value={state.q}
           onChange={(q) => update({ q }, true)}
         />
-        {!brandsView && <TeachingTip tip="search" />}
         {phrase && phraseTarget && phraseLabel && (
           <p className="mt-2 flex items-center gap-1.5 px-1 text-xs text-muted">
             <UiIcon name="sparkles" className="size-3.5 text-brand" />

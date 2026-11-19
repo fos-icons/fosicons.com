@@ -4,7 +4,7 @@ import { Button, UiIcon } from './ui';
 
 const STORAGE_KEY = 'fos-learned-tips';
 const sessionSeen = new Set<string>();
-type Tip = 'search' | 'modifier' | 'color';
+type Tip = 'modifier' | 'color';
 
 function learnedTips(): string[] {
   try {
