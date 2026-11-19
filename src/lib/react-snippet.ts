@@ -49,6 +49,23 @@ export function svelteSnippet(name: string, style: StyleId, options: SnippetOpti
   return `<script lang="ts">\nimport { ${component} } from '@fos-icons/svelte';\n</script>\n\n<${component}${componentAttributes(style, options)} />`;
 }
 
+/** Angular usage example with a standalone component and a native SVG host. */
+export function angularSnippet(name: string, style: StyleId, options: SnippetOptions): string {
+  const component = componentName(name, style);
+  const attrs = snippetProps(style, options)
+    .map(([key, value]) => typeof value === 'number' ? ` [${key}]="${value}"` : ` ${key}="${value}"`)
+    .join('');
+  return `import { Component } from '@angular/core';
+import { ${component} } from '@fos-icons/angular';
+
+@Component({
+  selector: 'app-icon-example',
+  imports: [${component}],
+  template: '<svg fos-${name}-${style}${attrs}></svg>',
+})
+export class IconExample {}`;
+}
+
 /** Vue usage example (@fos-icons/vue): the same props, in kebab-case. */
 export function vueSnippet(name: string, style: StyleId, options: SnippetOptions): string {
   const component = componentName(name, style);

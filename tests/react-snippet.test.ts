@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { componentName, reactSnippet, svelteSnippet, vueSnippet } from '../src/lib/react-snippet';
+import { angularSnippet, componentName, reactSnippet, svelteSnippet, vueSnippet } from '../src/lib/react-snippet';
 
 describe('React snippet', () => {
   it('follows the package naming rule', () => {
@@ -45,5 +45,22 @@ describe('React snippet', () => {
     expect(code).toContain(`<${component} />`);
     expect(code).not.toContain('<template>');
     expect(code).not.toContain('setup');
+  });
+});
+
+describe('Angular snippet', () => {
+  it('imports the standalone component and binds numeric inputs on the native SVG', () => {
+    const code = angularSnippet('user-add', 'duocolor', {
+      size: 32, color: null, primary: '#111111', secondary: '#222222', modifier: '#333333',
+    });
+    expect(code).toContain("import { UserAddDuocolor } from '@fos-icons/angular';");
+    expect(code).toContain('imports: [UserAddDuocolor]');
+    expect(code).toContain('<svg fos-user-add-duocolor [size]="32" primaryColor="#111111" secondaryColor="#222222" modifierColor="#333333"></svg>');
+  });
+
+  it('uses the canonical selector for Solid and omits the default size', () => {
+    const code = angularSnippet('pie-clock', 'filled', { size: 24, color: null });
+    expect(code).toContain('PieClockFilled');
+    expect(code).toContain('<svg fos-pie-clock-filled></svg>');
   });
 });
