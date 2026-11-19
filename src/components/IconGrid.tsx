@@ -65,7 +65,7 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-[46px] sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
+        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-9 sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
           selected ? 'bg-brand-soft ring-1 ring-inset ring-brand' : 'hover:bg-sunken'
         }`}
       >
