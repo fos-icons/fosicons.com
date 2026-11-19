@@ -1,3 +1,4 @@
+import { orderBrowseIcons } from './browse-order';
 import { catalog, iconsByName, type IconEntry } from './catalog';
 
 /**
@@ -39,7 +40,7 @@ export const iconKeywords = (icon: IconEntry) => {
 export const displayAliases = (icon: IconEntry) =>
   [...new Set(icon.aliases.filter((a) => !a.includes('/')).map((a) => a.replace(/-/g, ' ')))].filter((a) => a !== icon.name.replace(/-/g, ' '));
 
-export const iconsInCategory = (category: string): IconEntry[] => catalog.icons.filter((i) => i.category === category);
+export const iconsInCategory = (category: string): IconEntry[] => orderBrowseIcons(catalog.icons.filter((i) => i.category === category));
 
 /** Icons to suggest next to one: shared tags first, then the rest of its category. */
 export function relatedIcons(icon: IconEntry, limit = 24): IconEntry[] {

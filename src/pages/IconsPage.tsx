@@ -14,6 +14,7 @@ import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, UiIcon } from '../components/ui';
 import { availableBrandStyles, brandCategories, brandEntries, hasBrandStyle, loadBrands } from '../lib/brands';
 import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
 import { DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
@@ -27,6 +28,8 @@ import {
 } from '../lib/url-state';
 
 const coreIndex = createIndex(catalog.icons);
+const browseIndex = createIndex(orderBrowseIcons(catalog.icons));
+const browseCategories = [...catalog.categories].sort((a, b) => compareBrowseCategories(a.name, b.name));
 const brandIndex = createIndex(brandEntries);
 const brandsByName = new Map(brandEntries.map((b) => [b.name, b]));
 const config: UrlStateConfig = {
@@ -243,7 +246,8 @@ export function IconsPage() {
   );
   const searchQ = phrase?.iconQuery ?? state.q;
 
-  const index = brandsView ? brandIndex : coreIndex;
+  const browsingCore = !brandsView && !searchQ.trim();
+  const index = brandsView ? brandIndex : browsingCore ? browseIndex : coreIndex;
   const results = useMemo(() => {
     const found = search(index, searchQ, state.category);
     return brandsView ? found.filter((e) => hasBrandStyle(e.name, brandStyle)) : found;
@@ -334,7 +338,7 @@ export function IconsPage() {
     });
   }, [state.icon, update]);
 
-  const categories = brandsView ? brandCategories : catalog.categories;
+  const categories = brandsView ? brandCategories : browseCategories;
   const counted = t(brandsView ? 'icons.brandCount' : 'icons.count', { count: results.length });
   const query = searchQ.trim();
   const categoryName = state.category ? label('category', state.category, state.category) : '';
@@ -454,6 +458,7 @@ export function IconsPage() {
             <IconGrid
               label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(`style.${drawStyle}`) })}
               items={results}
+              categoryTitle={browsingCore && !state.category ? (category) => label('category', category, category) : undefined}
               svgs={gridSvgs}
               selected={selectedSet}
               onSelect={select}

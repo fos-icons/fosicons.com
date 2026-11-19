@@ -1,8 +1,9 @@
 import { useI18n } from '../i18n';
-import { memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { Fragment, memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 
 export interface GridItem {
   name: string;
+  category?: string;
 }
 
 interface Props {
@@ -15,6 +16,7 @@ interface Props {
   label: string;
   /** Called with icons near the viewport, so their artwork can load lazily. */
   onNeed?: (names: string[]) => void;
+  categoryTitle?: (category: string) => string;
 }
 
 /** Cells rendered into the static HTML: enough for a first screen, without shipping the whole grid. */
@@ -94,7 +96,7 @@ const Cell = memo(function Cell({
  * Dense, keyboard-navigable icon grid. The grid is one tab stop; arrow keys,
  * Home/End, and PageUp/PageDown move between icons; Enter/Space opens one.
  */
-export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onNeed }: Props) {
+export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onNeed, categoryTitle }: Props) {
   const items = allItems;
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -167,14 +169,12 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onN
 
   const columns = () => {
     const list = listRef.current;
-    if (!list || !list.children.length) return 1;
-    const top = (list.children[0] as HTMLElement).offsetTop;
-    let count = 0;
-    for (const child of Array.from(list.children)) {
-      if ((child as HTMLElement).offsetTop !== top) break;
-      count += 1;
-    }
-    return Math.max(count, 1);
+    if (!list) return 1;
+    // Read the track count so a short category row never changes keyboard stepping.
+    const tracks = getComputedStyle(list).gridTemplateColumns.trim().split(/\s+/);
+    if (tracks.every((track) => /^\d+(?:\.\d+)?px$/.test(track))) return tracks.length;
+    const cells = Array.from(list.querySelectorAll<HTMLElement>(':scope > .icon-cell'));
+    return Math.max(1, cells.filter((cell) => cell.offsetTop === cells[0]?.offsetTop).length);
   };
 
   const focusIndex = (index: number) => {
@@ -191,15 +191,32 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onN
 
   const onKeyDown = (event: KeyboardEvent<HTMLUListElement>) => {
     const cols = columns();
+    // Category headers start a new row, including when the preceding row is short.
+    const rows: { start: number; end: number }[] = [];
+    for (let i = 0; i < items.length; i += 1) {
+      const row = rows.at(-1);
+      if (!row || i - row.start === cols || (categoryTitle && items[i].category !== items[i - 1]?.category)) {
+        rows.push({ start: i, end: i });
+      } else {
+        row.end = i;
+      }
+    }
+    const rowIndex = rows.findIndex((row) => row.end >= activeIndex);
+    const row = rows[rowIndex];
+    if (!row) return;
+    const moveRows = (offset: number) => {
+      const next = rows[Math.max(0, Math.min(rows.length - 1, rowIndex + offset))];
+      return Math.min(next.end, next.start + activeIndex - row.start);
+    };
     const map: Record<string, number> = {
       ArrowRight: activeIndex + 1,
       ArrowLeft: activeIndex - 1,
-      ArrowDown: activeIndex + cols,
-      ArrowUp: activeIndex - cols,
-      Home: event.ctrlKey ? 0 : activeIndex - (activeIndex % cols),
-      End: event.ctrlKey ? items.length - 1 : activeIndex - (activeIndex % cols) + cols - 1,
-      PageDown: activeIndex + cols * 4,
-      PageUp: activeIndex - cols * 4,
+      ArrowDown: moveRows(1),
+      ArrowUp: moveRows(-1),
+      Home: event.ctrlKey ? 0 : row.start,
+      End: event.ctrlKey ? items.length - 1 : row.end,
+      PageDown: moveRows(4),
+      PageUp: moveRows(-4),
     };
     if (event.key in map) {
       event.preventDefault();
@@ -218,16 +235,22 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onN
       className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-1 sm:grid-cols-[repeat(auto-fill,minmax(max(96px,calc((100%-28px)/8)),1fr))]"
     >
       {shown.map((item, index) => (
-        <Cell
-          key={item.name}
-          name={item.name}
-          index={index}
-          svg={svgs?.[item.name]}
-          selected={selected.has(item.name)}
-          tabbable={index === activeIndex}
-          onSelect={onSelect}
-          onFocusIndex={onFocusIndex}
-        />
+        <Fragment key={item.name}>
+          {categoryTitle && item.category && item.category !== shown[index - 1]?.category && (
+            <li role="presentation" className="col-span-full px-1 pb-2 pt-5 first:pt-0">
+              <h2 className="text-base font-semibold text-ink">{categoryTitle(item.category)}</h2>
+            </li>
+          )}
+          <Cell
+            name={item.name}
+            index={index}
+            svg={svgs?.[item.name]}
+            selected={selected.has(item.name)}
+            tabbable={index === activeIndex}
+            onSelect={onSelect}
+            onFocusIndex={onFocusIndex}
+          />
+        </Fragment>
       ))}
       {shown.length < items.length && <li ref={sentinelRef} aria-hidden="true" className="col-span-full h-px" />}
     </ul>
