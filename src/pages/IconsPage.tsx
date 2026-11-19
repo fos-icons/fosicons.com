@@ -225,7 +225,10 @@ export function IconsPage() {
     return () => { cancelled = true; };
   }, [lazyArtwork, brandsView, brandStyle, drawStyle, svgKey, attempt, reportArtworkError]);
 
+  /** A new deploy replaced this page's artwork: only a reload can fetch it. */
+  const artworkUpdated = error === t('error.artworkUpdated');
   const retryArtwork = () => {
+    if (artworkUpdated) { window.location.reload(); return; }
     setArtworkErrors((errors) => ({ ...errors, [svgKey]: undefined }));
     setAttempt((a) => a + 1);
   };
@@ -449,7 +452,7 @@ export function IconsPage() {
         ) : error ? (
           <div role="alert" className="rounded-2xl border border-line bg-surface p-8 text-center">
             <p className="font-medium">{error}</p>
-            <Button className="mt-4" onClick={retryArtwork}>{t('icons.tryAgain')}</Button>
+            <Button className="mt-4" onClick={retryArtwork}>{t(artworkUpdated ? 'icons.reload' : 'icons.tryAgain')}</Button>
           </div>
         ) : results.length ? (
           <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>

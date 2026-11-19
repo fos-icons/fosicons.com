@@ -88,12 +88,40 @@ export function modifierFamily(name: string): { base: IconEntry; variants: IconE
 
 let cache: Partial<Record<StyleId, Promise<Record<string, string>>>> = {};
 
+const RELOAD_KEY = 'fos-artwork-reload';
+
+/**
+ * Artwork lives under a folder named after the library snapshot, and each
+ * deploy ships only its own snapshot. A 404 therefore means this page was
+ * loaded before a deploy (an open tab, or a cached page): reload once to pick
+ * up the new snapshot. The session flag stops a reload loop, and without
+ * session storage we never reload automatically.
+ */
+function recoverFromStaleArtwork(): boolean {
+  try {
+    if (sessionStorage.getItem(RELOAD_KEY) === lock.manifestSha256) return false;
+    sessionStorage.setItem(RELOAD_KEY, lock.manifestSha256);
+  } catch {
+    return false;
+  }
+  window.location.reload();
+  return true;
+}
+
+/** Fetch one artwork file of the current snapshot. */
+async function fetchArtwork(file: string, style: StyleId): Promise<Record<string, string>> {
+  const res = await fetch(`${import.meta.env.BASE_URL}${artworkDirectory}/${file}`);
+  if (res.status === 404) {
+    if (recoverFromStaleArtwork()) return new Promise(() => {}); // the page is reloading
+    throw new LocalizedError('error.artworkUpdated');
+  }
+  if (!res.ok) throw new LocalizedError('error.loadStyle', { style: STYLE_META[style].label, status: String(res.status) });
+  return res.json() as Promise<Record<string, string>>;
+}
+
 /** Fetch one style's SVG snapshot. Only requested styles are downloaded. */
 export function loadStyle(style: StyleId): Promise<Record<string, string>> {
-  cache[style] ??= fetch(`${import.meta.env.BASE_URL}${artworkDirectory}/${style}.json`).then((res) => {
-    if (!res.ok) throw new LocalizedError('error.loadStyle', { style: STYLE_META[style].label, status: String(res.status) });
-    return res.json() as Promise<Record<string, string>>;
-  }).catch((error: unknown) => {
+  cache[style] ??= fetchArtwork(`${style}.json`, style).catch((error: unknown) => {
     delete cache[style];
     throw error;
   });
@@ -118,10 +146,7 @@ export function chunksFor(names: Iterable<string>): number[] {
 /** One chunk of a style's artwork, fetched once. */
 export function loadIconChunk(style: StyleId, chunk: number): Promise<Record<string, string>> {
   const key = `${style}/${chunk}`;
-  chunkCache[key] ??= fetch(`${import.meta.env.BASE_URL}${artworkDirectory}/${key}.json`).then((res) => {
-    if (!res.ok) throw new LocalizedError('error.loadStyle', { style: STYLE_META[style].label, status: String(res.status) });
-    return res.json() as Promise<Record<string, string>>;
-  }).catch((error: unknown) => {
+  chunkCache[key] ??= fetchArtwork(`${key}.json`, style).catch((error: unknown) => {
     delete chunkCache[key];
     throw error;
   });

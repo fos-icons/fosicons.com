@@ -7,7 +7,7 @@ import { Layout } from '../src/components/Layout';
 import { resetSectionState } from '../src/components/Customize';
 import { resetExportRows } from '../src/components/ExportPanel';
 import { ToastProvider } from '../src/components/ui';
-import { artworkDirectory, catalog, resetStyleCache } from '../src/lib/catalog';
+import { artworkDirectory, catalog, lock, resetStyleCache } from '../src/lib/catalog';
 import { ThemeProvider } from '../src/lib/theme';
 import { IconsPage } from '../src/pages/IconsPage';
 import IconPage from '../src/pages/IconPage';
@@ -107,6 +107,25 @@ describe('Icons page', () => {
     await user.click(screen.getByRole('button', { name: 'Try again' }));
     await screen.findByRole('img', { name: /cloud, Regular, preview/ });
     expect(screen.queryByText(/Could not load Regular icons/)).toBeNull();
+  });
+
+  it('reloads once for artwork from a newer deploy, then offers a reload', async () => {
+    const reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    fetchMock.mockImplementation(async () => new Response(null, { status: 404 }));
+    sessionStorage.removeItem('fos-artwork-reload');
+    renderAt('/');
+    await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
+    expect(sessionStorage.getItem('fos-artwork-reload')).toBe(lock.manifestSha256);
+
+    cleanup();
+    resetStyleCache();
+    renderAt('/');
+    await screen.findByText('Fos Icons was just updated. Reload the page to get the latest icons.');
+    expect(reload).toHaveBeenCalledTimes(1);
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Reload' }));
+    expect(reload).toHaveBeenCalledTimes(2);
+    sessionStorage.removeItem('fos-artwork-reload');
   });
 
   it('filters by search and writes the query to the URL', async () => {
