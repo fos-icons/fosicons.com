@@ -63,7 +63,9 @@ export function ModifierPicker({
 
   const pick = (m: ModifierAsset) => {
     if (value?.modifier.name === m.name) return onChange(null);
-    onChange({ modifier: m, corner: initialCorner(m) });
+    // Switching modifiers keeps the chosen corner when the new one can sit there.
+    const corner = value && m.positions[value.corner] ? value.corner : initialCorner(m);
+    onChange({ modifier: m, corner });
   };
 
   return (
