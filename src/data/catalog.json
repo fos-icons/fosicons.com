@@ -27,7 +27,7 @@
     },
     {
       "name": "Files",
-      "count": 106
+      "count": 110
     },
     {
       "name": "Food & drink",
@@ -2785,6 +2785,18 @@
       "aliases": []
     },
     {
+      "name": "book-bookmark",
+      "category": "Files",
+      "tags": [
+        "reading",
+        "saved page",
+        "library",
+        "ribbon",
+        "chapter"
+      ],
+      "aliases": []
+    },
+    {
       "name": "book-closed",
       "category": "Workspace",
       "tags": [
@@ -2841,6 +2853,18 @@
       "aliases": []
     },
     {
+      "name": "bookmark-block",
+      "category": "Files",
+      "tags": [
+        "blocked",
+        "not allowed",
+        "restricted",
+        "saved",
+        "forbidden"
+      ],
+      "aliases": []
+    },
+    {
       "name": "bookmark-check",
       "category": "Files",
       "tags": [
@@ -2864,6 +2888,30 @@
         "delete",
         "unfavorite",
         "reduce",
+        "ribbon"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "bookmark-off",
+      "category": "Files",
+      "tags": [
+        "unsave",
+        "remove bookmark",
+        "unfavorite",
+        "hide",
+        "disabled"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "bookmark-square",
+      "category": "Files",
+      "tags": [
+        "saved",
+        "favorite",
+        "tab",
+        "marker",
         "ribbon"
       ],
       "aliases": []
