@@ -1,13 +1,13 @@
 {
   "repository": "fos-icons/fos-icons",
-  "revision": "8af0d8b36475827000b61e4081a4dbe5b08bdf9c",
+  "revision": "37c716c334616c1975e7d2cb11309dfcdc3e54b6",
   "dirty": false,
-  "manifestSha256": "6b9e10370758daadd290c51fe7fecc49a6801602aeef0a7b466d32b2b4fd22d0",
+  "manifestSha256": "67f61ca8d59aca199f4c2704a0aacd14943c61fee772a7a9b86c0464916ff795",
   "brandManifestSha256": "6be71515980cc4a1f700036ee7de0220663818893e9401282e95204b5313590a",
   "snapshotSha256": {
-    "regular": "c0c9db003f47caeacc47ab1ee843ce4901ee0c8f0546d5f5e8eb09ce52528374",
-    "filled": "cbc6bc77c008e43370c27074216eaee5eaa99a4ebfefb938e75964e4b3f1c317",
-    "duocolor": "bc6c787036c4e395314703a19682703dafee0f4458c715d406eeadf7c7db23ad",
-    "duotone": "31f3826021ed6854aae7b674814190844ab55f22eeb3a81dfe5b81200426fcff"
+    "regular": "10714642412a56b957c25d1a0f2b87856697c4b7fb824c22ae3718cb8de9de03",
+    "filled": "d715f29b70487d61ec1d07bf6af2b0c8fcb28d13a9c0c643a3a5677b1ca97ae4",
+    "duocolor": "adea2bd0d94de1bf02ec5eb5c16f8a264654aae8870637fad7f6fc15d4ded0fd",
+    "duotone": "b5adc8ca158bd590a47bc54a40d134b95688362508206298e60b2e5d29794272"
   }
 }

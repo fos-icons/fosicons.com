@@ -39,11 +39,11 @@
     },
     {
       "name": "Interfaces",
-      "count": 101
+      "count": 127
     },
     {
       "name": "Media & devices",
-      "count": 101
+      "count": 111
     },
     {
       "name": "Music & instruments",
@@ -55,7 +55,7 @@
     },
     {
       "name": "Navigation",
-      "count": 149
+      "count": 157
     },
     {
       "name": "Professions",
@@ -67,15 +67,15 @@
     },
     {
       "name": "Security",
-      "count": 22
+      "count": 58
     },
     {
       "name": "Shapes",
-      "count": 53
+      "count": 73
     },
     {
       "name": "Sports & fitness",
-      "count": 56
+      "count": 74
     },
     {
       "name": "Time & calendar",
@@ -91,7 +91,7 @@
     },
     {
       "name": "Workspace",
-      "count": 132
+      "count": 149
     }
   ],
   "modifiers": {
@@ -2042,6 +2042,42 @@
       ]
     },
     {
+      "name": "award-check",
+      "category": "Sports & fitness",
+      "tags": [
+        "approved",
+        "certified",
+        "verified",
+        "quality",
+        "ribbon"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "award-crystal",
+      "category": "Sports & fitness",
+      "tags": [
+        "glass",
+        "plaque",
+        "recognition",
+        "honor",
+        "prize"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "award-star",
+      "category": "Sports & fitness",
+      "tags": [
+        "statuette",
+        "oscar",
+        "prize",
+        "honor",
+        "recognition"
+      ],
+      "aliases": []
+    },
+    {
       "name": "backpack",
       "category": "Transport & space",
       "tags": [
@@ -3158,6 +3194,18 @@
       "aliases": []
     },
     {
+      "name": "bug-shield",
+      "category": "Security",
+      "tags": [
+        "vulnerability",
+        "malware",
+        "antivirus",
+        "exploit",
+        "patch"
+      ],
+      "aliases": []
+    },
+    {
       "name": "building",
       "category": "Navigation",
       "tags": [
@@ -4113,6 +4161,18 @@
       "aliases": []
     },
     {
+      "name": "cctv-camera",
+      "category": "Security",
+      "tags": [
+        "surveillance",
+        "spy cam",
+        "monitoring",
+        "video",
+        "watch"
+      ],
+      "aliases": []
+    },
+    {
       "name": "certificate",
       "category": "Workspace",
       "tags": [
@@ -4673,6 +4733,66 @@
       "aliases": []
     },
     {
+      "name": "chevron-large-down",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "wide",
+        "angle",
+        "disclosure",
+        "expand",
+        "dropdown",
+        "south"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-large-left",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "wide",
+        "angle",
+        "disclosure",
+        "back",
+        "previous",
+        "west"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-large-right",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "wide",
+        "angle",
+        "disclosure",
+        "next",
+        "forward",
+        "east"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-large-up",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "wide",
+        "angle",
+        "disclosure",
+        "collapse",
+        "north",
+        "top"
+      ],
+      "aliases": []
+    },
+    {
       "name": "chevron-left",
       "category": "Navigation",
       "tags": [
@@ -4683,6 +4803,66 @@
         "arrow head",
         "less than",
         "collapse"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-outline-down",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "bold",
+        "hollow",
+        "angle",
+        "expand",
+        "dropdown",
+        "south"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-outline-left",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "bold",
+        "hollow",
+        "angle",
+        "back",
+        "previous",
+        "west"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-outline-right",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "bold",
+        "hollow",
+        "angle",
+        "next",
+        "forward",
+        "east"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-outline-up",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "arrow head",
+        "bold",
+        "hollow",
+        "angle",
+        "collapse",
+        "north",
+        "top"
       ],
       "aliases": []
     },
@@ -6252,6 +6432,70 @@
       ]
     },
     {
+      "name": "crown",
+      "category": "Sports & fitness",
+      "tags": [
+        "king",
+        "queen",
+        "royal",
+        "premium",
+        "vip"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "crown-minus",
+      "category": "Sports & fitness",
+      "tags": [
+        "remove premium",
+        "downgrade",
+        "vip",
+        "royal"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "crown",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "crown-plus",
+      "category": "Sports & fitness",
+      "tags": [
+        "add premium",
+        "upgrade",
+        "vip",
+        "royal"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "crown",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "crown-simple",
+      "category": "Sports & fitness",
+      "tags": [
+        "royal",
+        "premium",
+        "vip",
+        "leader",
+        "best"
+      ],
+      "aliases": []
+    },
+    {
       "name": "crutch",
       "category": "Health & medical",
       "tags": [
@@ -6645,6 +6889,26 @@
       "aliases": []
     },
     {
+      "name": "cursor-block",
+      "category": "Workspace",
+      "tags": [
+        "not allowed",
+        "forbidden",
+        "pointer",
+        "disabled"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "block",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "cursor-box",
       "category": "Workspace",
       "tags": [
@@ -6658,6 +6922,38 @@
       "aliases": []
     },
     {
+      "name": "cursor-busy",
+      "category": "Workspace",
+      "tags": [
+        "loading",
+        "wait",
+        "hourglass",
+        "pointer",
+        "working"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-check",
+      "category": "Workspace",
+      "tags": [
+        "confirm",
+        "pointer",
+        "selected",
+        "done"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "cursor-click",
       "category": "Workspace",
       "tags": [
@@ -6667,6 +6963,209 @@
         "press",
         "select",
         "interact"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-hand",
+      "category": "Workspace",
+      "tags": [
+        "pointer",
+        "link",
+        "finger",
+        "click",
+        "hover"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-hand-block",
+      "category": "Workspace",
+      "tags": [
+        "not allowed",
+        "pointer",
+        "finger",
+        "forbidden"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor-hand",
+        "modifiers": [
+          {
+            "name": "block",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-hand-click",
+      "category": "Workspace",
+      "tags": [
+        "tap",
+        "press",
+        "finger",
+        "select",
+        "interaction"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-hand-plus",
+      "category": "Workspace",
+      "tags": [
+        "add",
+        "pointer",
+        "finger",
+        "insert"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor-hand",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-lasso",
+      "category": "Workspace",
+      "tags": [
+        "free select",
+        "selection",
+        "circle",
+        "pointer",
+        "marquee"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-minus",
+      "category": "Workspace",
+      "tags": [
+        "remove",
+        "pointer",
+        "subtract"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-plus",
+      "category": "Workspace",
+      "tags": [
+        "add",
+        "pointer",
+        "copy",
+        "insert"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-question",
+      "category": "Workspace",
+      "tags": [
+        "help",
+        "pointer",
+        "what is this",
+        "context help"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "question",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-select",
+      "category": "Workspace",
+      "tags": [
+        "marquee",
+        "selection",
+        "drag select",
+        "pointer",
+        "area"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-sparkle",
+      "category": "Workspace",
+      "tags": [
+        "ai",
+        "magic",
+        "pointer",
+        "smart select"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "cursor",
+        "modifiers": [
+          {
+            "name": "sparkle",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "cursor-target",
+      "category": "Workspace",
+      "tags": [
+        "click",
+        "aim",
+        "focus",
+        "pointer",
+        "hit"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-text",
+      "category": "Workspace",
+      "tags": [
+        "i-beam",
+        "type",
+        "caret",
+        "edit text",
+        "input"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cursor-window",
+      "category": "Workspace",
+      "tags": [
+        "browser",
+        "web page",
+        "pointer",
+        "app",
+        "click"
       ],
       "aliases": []
     },
@@ -7482,6 +7981,18 @@
         "round",
         "egg",
         "stretched"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "encryption",
+      "category": "Security",
+      "tags": [
+        "binary",
+        "cipher",
+        "crypto",
+        "encoded",
+        "secret key"
       ],
       "aliases": []
     },
@@ -8816,6 +9327,70 @@
       "aliases": []
     },
     {
+      "name": "filter-check",
+      "category": "Interfaces",
+      "tags": [
+        "applied",
+        "active",
+        "confirmed",
+        "funnel"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-circle",
+      "category": "Interfaces",
+      "tags": [
+        "refine",
+        "options",
+        "narrow",
+        "results",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "filter-dollar",
+      "category": "Interfaces",
+      "tags": [
+        "price",
+        "cost",
+        "budget",
+        "money",
+        "range"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "filter-edit",
+      "category": "Interfaces",
+      "tags": [
+        "modify",
+        "change rule",
+        "adjust",
+        "funnel"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "filter-lines",
       "category": "Interfaces",
       "tags": [
@@ -8830,6 +9405,147 @@
       "aliases": []
     },
     {
+      "name": "filter-lines-edit",
+      "category": "Interfaces",
+      "tags": [
+        "modify",
+        "change rule",
+        "adjust"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter-lines",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-lines-plus",
+      "category": "Interfaces",
+      "tags": [
+        "add filter",
+        "new rule",
+        "refine"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter-lines",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-lines-x",
+      "category": "Interfaces",
+      "tags": [
+        "clear filter",
+        "remove",
+        "reset"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter-lines",
+        "modifiers": [
+          {
+            "name": "delete",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-off",
+      "category": "Interfaces",
+      "tags": [
+        "no filter",
+        "clear",
+        "disabled",
+        "remove filter",
+        "unfiltered"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "filter-plus",
+      "category": "Interfaces",
+      "tags": [
+        "add filter",
+        "new rule",
+        "refine",
+        "funnel"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-search",
+      "category": "Interfaces",
+      "tags": [
+        "find",
+        "refine",
+        "query",
+        "funnel"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter",
+        "modifiers": [
+          {
+            "name": "search",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filter-square",
+      "category": "Interfaces",
+      "tags": [
+        "refine",
+        "options",
+        "narrow",
+        "results",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "filter-x",
+      "category": "Interfaces",
+      "tags": [
+        "clear filter",
+        "remove",
+        "reset",
+        "funnel"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "filter",
+        "modifiers": [
+          {
+            "name": "delete",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "fingerprint",
       "category": "Security",
       "tags": [
@@ -8839,6 +9555,112 @@
         "touch id",
         "thumbprint",
         "scan"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "fingerprint-check",
+      "category": "Security",
+      "tags": [
+        "verified",
+        "biometric",
+        "authenticated",
+        "touch id",
+        "approved"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "fingerprint",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "fingerprint-minus",
+      "category": "Security",
+      "tags": [
+        "remove biometric",
+        "unenroll",
+        "delete",
+        "touch id"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "fingerprint",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "fingerprint-plus",
+      "category": "Security",
+      "tags": [
+        "enroll",
+        "add biometric",
+        "register",
+        "touch id"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "fingerprint",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "fingerprint-scan",
+      "category": "Security",
+      "tags": [
+        "biometric",
+        "touch id",
+        "authentication",
+        "verify",
+        "sensor"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "fingerprint-x",
+      "category": "Security",
+      "tags": [
+        "failed",
+        "rejected",
+        "denied",
+        "biometric error",
+        "touch id"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "fingerprint",
+        "modifiers": [
+          {
+            "name": "delete",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "firewall",
+      "category": "Security",
+      "tags": [
+        "network protection",
+        "brick wall",
+        "fire",
+        "block traffic",
+        "perimeter"
       ],
       "aliases": []
     },
@@ -9407,6 +10229,18 @@
         "petrol-pump",
         "gas-station"
       ]
+    },
+    {
+      "name": "game-controller",
+      "category": "Media & devices",
+      "tags": [
+        "gamepad",
+        "gaming",
+        "console",
+        "play",
+        "video game"
+      ],
+      "aliases": []
     },
     {
       "name": "gaming-pad",
@@ -10590,6 +11424,51 @@
       "aliases": []
     },
     {
+      "name": "id-badge",
+      "category": "Security",
+      "tags": [
+        "employee",
+        "staff",
+        "access pass",
+        "name tag",
+        "lanyard"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "id-card",
+      "category": "Security",
+      "tags": [
+        "identity",
+        "license",
+        "membership",
+        "profile",
+        "credentials"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "id-card-check",
+      "category": "Security",
+      "tags": [
+        "verified identity",
+        "kyc",
+        "approved",
+        "credentials",
+        "validated"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "id-card",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "image",
       "category": "Media & devices",
       "tags": [
@@ -11213,6 +12092,18 @@
       "aliases": []
     },
     {
+      "name": "incognito",
+      "category": "Security",
+      "tags": [
+        "private browsing",
+        "spy",
+        "anonymous",
+        "hidden identity",
+        "disguise"
+      ],
+      "aliases": []
+    },
+    {
       "name": "infinity",
       "category": "Essentials",
       "tags": [
@@ -11323,6 +12214,18 @@
       "aliases": []
     },
     {
+      "name": "iris-scan",
+      "category": "Security",
+      "tags": [
+        "eye scan",
+        "retina",
+        "biometric",
+        "authentication",
+        "recognition"
+      ],
+      "aliases": []
+    },
+    {
       "name": "italic",
       "category": "Workspace",
       "tags": [
@@ -11347,6 +12250,18 @@
         "font style",
         "format",
         "typography"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "joystick",
+      "category": "Media & devices",
+      "tags": [
+        "arcade",
+        "gaming",
+        "stick",
+        "retro",
+        "video game"
       ],
       "aliases": []
     },
@@ -11389,6 +12304,30 @@
       "aliases": [
         "interface/key"
       ]
+    },
+    {
+      "name": "key-card",
+      "category": "Security",
+      "tags": [
+        "access card",
+        "hotel key",
+        "entry",
+        "smart card",
+        "keycard"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "key-skeleton",
+      "category": "Security",
+      "tags": [
+        "old key",
+        "antique",
+        "master key",
+        "vintage",
+        "unlock"
+      ],
+      "aliases": []
     },
     {
       "name": "keyboard",
@@ -11493,6 +12432,53 @@
         "device",
         "work",
         "portable"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "laptop-shield",
+      "category": "Security",
+      "tags": [
+        "antivirus",
+        "endpoint protection",
+        "notebook",
+        "device security"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "laurel-branch",
+      "category": "Sports & fitness",
+      "tags": [
+        "olive",
+        "peace",
+        "leaf",
+        "nature",
+        "honor"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "laurel-wreath",
+      "category": "Sports & fitness",
+      "tags": [
+        "victory",
+        "champion",
+        "olive",
+        "honor",
+        "prize"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "laurel-wreath-1",
+      "category": "Sports & fitness",
+      "tags": [
+        "first place",
+        "winner",
+        "champion",
+        "victory",
+        "top"
       ],
       "aliases": []
     },
@@ -12173,6 +13159,30 @@
       "aliases": []
     },
     {
+      "name": "loader-rays",
+      "category": "Interfaces",
+      "tags": [
+        "loading",
+        "progress",
+        "busy",
+        "wait",
+        "activity"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "loader-spinner",
+      "category": "Interfaces",
+      "tags": [
+        "loading",
+        "progress",
+        "busy",
+        "wait",
+        "activity"
+      ],
+      "aliases": []
+    },
+    {
       "name": "loading",
       "category": "Interfaces",
       "tags": [
@@ -12214,6 +13224,119 @@
       "aliases": [
         "interface/lock"
       ]
+    },
+    {
+      "name": "lock-check",
+      "category": "Security",
+      "tags": [
+        "secured",
+        "locked",
+        "verified",
+        "protected",
+        "confirmed"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "lock",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "lock-dots",
+      "category": "Security",
+      "tags": [
+        "password field",
+        "pin",
+        "masked",
+        "hidden",
+        "secret"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "lock-minus",
+      "category": "Security",
+      "tags": [
+        "remove protection",
+        "unsecure",
+        "delete password"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "lock",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "lock-plus",
+      "category": "Security",
+      "tags": [
+        "add protection",
+        "new password",
+        "secure",
+        "create lock"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "lock",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "lock-question",
+      "category": "Security",
+      "tags": [
+        "forgot password",
+        "unknown",
+        "help",
+        "recovery"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "lock",
+        "modifiers": [
+          {
+            "name": "question",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "lock-x",
+      "category": "Security",
+      "tags": [
+        "unlock failed",
+        "insecure",
+        "denied",
+        "error",
+        "remove lock"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "lock",
+        "modifiers": [
+          {
+            "name": "delete",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "log-in",
@@ -12331,6 +13454,18 @@
       "aliases": [
         "interface/magnet"
       ]
+    },
+    {
+      "name": "magnet-zap",
+      "category": "Workspace",
+      "tags": [
+        "attract",
+        "energy",
+        "power",
+        "lightning",
+        "magnetic"
+      ],
+      "aliases": []
     },
     {
       "name": "mail",
@@ -12493,6 +13628,52 @@
         "badge",
         "champion",
         "reward"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "medal-1",
+      "category": "Sports & fitness",
+      "tags": [
+        "gold",
+        "first place",
+        "winner",
+        "champion",
+        "top"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "medal-2",
+      "category": "Sports & fitness",
+      "tags": [
+        "silver",
+        "second place",
+        "runner up",
+        "podium"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "medal-3",
+      "category": "Sports & fitness",
+      "tags": [
+        "bronze",
+        "third place",
+        "podium",
+        "finisher"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "medal-military",
+      "category": "Sports & fitness",
+      "tags": [
+        "honor",
+        "service",
+        "decoration",
+        "veteran",
+        "ribbon bar"
       ],
       "aliases": []
     },
@@ -13212,6 +14393,28 @@
       "aliases": []
     },
     {
+      "name": "monitor-lock",
+      "category": "Security",
+      "tags": [
+        "screen lock",
+        "desktop security",
+        "computer",
+        "locked display"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "monitor-shield",
+      "category": "Security",
+      "tags": [
+        "antivirus",
+        "desktop protection",
+        "computer security",
+        "endpoint"
+      ],
+      "aliases": []
+    },
+    {
       "name": "monument",
       "category": "Navigation",
       "tags": [
@@ -13441,6 +14644,54 @@
       "aliases": []
     },
     {
+      "name": "mouse-left-click",
+      "category": "Media & devices",
+      "tags": [
+        "primary button",
+        "select",
+        "press",
+        "pointer device",
+        "computer"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "mouse-right-click",
+      "category": "Media & devices",
+      "tags": [
+        "context menu",
+        "secondary button",
+        "options",
+        "pointer device",
+        "computer"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "mouse-scroll",
+      "category": "Media & devices",
+      "tags": [
+        "wheel",
+        "scrolling",
+        "pointer device",
+        "navigate",
+        "computer"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "mouse-wired",
+      "category": "Media & devices",
+      "tags": [
+        "cable",
+        "usb",
+        "pointer device",
+        "computer",
+        "peripheral"
+      ],
+      "aliases": []
+    },
+    {
       "name": "move",
       "category": "Navigation",
       "tags": [
@@ -13574,6 +14825,58 @@
       "aliases": []
     },
     {
+      "name": "network-3g",
+      "category": "Media & devices",
+      "tags": [
+        "mobile data",
+        "cellular",
+        "signal",
+        "generation",
+        "carrier",
+        "connectivity"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "network-4g",
+      "category": "Media & devices",
+      "tags": [
+        "mobile data",
+        "cellular",
+        "signal",
+        "generation",
+        "carrier",
+        "connectivity"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "network-5g",
+      "category": "Media & devices",
+      "tags": [
+        "mobile data",
+        "cellular",
+        "signal",
+        "generation",
+        "carrier",
+        "connectivity"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "network-6g",
+      "category": "Media & devices",
+      "tags": [
+        "mobile data",
+        "cellular",
+        "signal",
+        "generation",
+        "carrier",
+        "connectivity"
+      ],
+      "aliases": []
+    },
+    {
       "name": "neural-network",
       "category": "AI & agents",
       "tags": [
@@ -13680,6 +14983,266 @@
         "article",
         "dot",
         "indicator"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-1",
+      "category": "Shapes",
+      "tags": [
+        "one",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-10",
+      "category": "Shapes",
+      "tags": [
+        "ten",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-11",
+      "category": "Shapes",
+      "tags": [
+        "eleven",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-12",
+      "category": "Shapes",
+      "tags": [
+        "twelve",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-13",
+      "category": "Shapes",
+      "tags": [
+        "thirteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-14",
+      "category": "Shapes",
+      "tags": [
+        "fourteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-15",
+      "category": "Shapes",
+      "tags": [
+        "fifteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-16",
+      "category": "Shapes",
+      "tags": [
+        "sixteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-17",
+      "category": "Shapes",
+      "tags": [
+        "seventeen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-18",
+      "category": "Shapes",
+      "tags": [
+        "eighteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-19",
+      "category": "Shapes",
+      "tags": [
+        "nineteen",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-2",
+      "category": "Shapes",
+      "tags": [
+        "two",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-20",
+      "category": "Shapes",
+      "tags": [
+        "twenty",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-3",
+      "category": "Shapes",
+      "tags": [
+        "three",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-4",
+      "category": "Shapes",
+      "tags": [
+        "four",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-5",
+      "category": "Shapes",
+      "tags": [
+        "five",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-6",
+      "category": "Shapes",
+      "tags": [
+        "six",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-7",
+      "category": "Shapes",
+      "tags": [
+        "seven",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-8",
+      "category": "Shapes",
+      "tags": [
+        "eight",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "number-9",
+      "category": "Shapes",
+      "tags": [
+        "nine",
+        "digit",
+        "count",
+        "step",
+        "badge",
+        "ordinal"
       ],
       "aliases": []
     },
@@ -14052,6 +15615,18 @@
       ]
     },
     {
+      "name": "password-manager",
+      "category": "Security",
+      "tags": [
+        "vault",
+        "credentials",
+        "keychain",
+        "logins",
+        "secrets"
+      ],
+      "aliases": []
+    },
+    {
       "name": "pause",
       "category": "Media & devices",
       "tags": [
@@ -14158,6 +15733,18 @@
       "aliases": [
         "interface/pencils"
       ]
+    },
+    {
+      "name": "pennant",
+      "category": "Sports & fitness",
+      "tags": [
+        "banner",
+        "flag",
+        "league",
+        "team",
+        "star"
+      ],
+      "aliases": []
     },
     {
       "name": "pentagon",
@@ -14512,6 +16099,18 @@
         "telephone",
         "inbound",
         "call in"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "phone-lock",
+      "category": "Security",
+      "tags": [
+        "mobile security",
+        "device lock",
+        "screen lock",
+        "smartphone",
+        "pin"
       ],
       "aliases": []
     },
@@ -15339,6 +16938,18 @@
         "sport",
         "quads",
         "retro"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "rosette",
+      "category": "Sports & fitness",
+      "tags": [
+        "ribbon",
+        "prize",
+        "first prize",
+        "show",
+        "star badge"
       ],
       "aliases": []
     },
@@ -16250,6 +17861,32 @@
       "aliases": []
     },
     {
+      "name": "shield-alert",
+      "category": "Security",
+      "tags": [
+        "warning",
+        "threat",
+        "danger",
+        "risk",
+        "attention",
+        "caution"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "shield-block",
+      "category": "Security",
+      "tags": [
+        "blocked",
+        "ad blocker",
+        "forbidden",
+        "prevent",
+        "deny",
+        "stop"
+      ],
+      "aliases": []
+    },
+    {
       "name": "shield-dollar",
       "category": "Security",
       "tags": [
@@ -16259,6 +17896,18 @@
         "insurance",
         "payment safety",
         "currency"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "shield-dots",
+      "category": "Security",
+      "tags": [
+        "pending",
+        "secure chat",
+        "processing",
+        "encrypted message",
+        "waiting"
       ],
       "aliases": []
     },
@@ -16319,6 +17968,18 @@
       "aliases": []
     },
     {
+      "name": "shield-star",
+      "category": "Security",
+      "tags": [
+        "premium",
+        "favorite",
+        "trusted",
+        "verified",
+        "rating"
+      ],
+      "aliases": []
+    },
+    {
       "name": "shield-tick",
       "category": "Security",
       "tags": [
@@ -16328,6 +17989,30 @@
         "protected",
         "safe",
         "checkmark"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "shield-user",
+      "category": "Security",
+      "tags": [
+        "account protection",
+        "identity",
+        "privacy",
+        "profile",
+        "guard"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "shield-wifi",
+      "category": "Security",
+      "tags": [
+        "secure network",
+        "vpn",
+        "wireless",
+        "hotspot",
+        "protected connection"
       ],
       "aliases": []
     },
@@ -16444,6 +18129,18 @@
       "aliases": []
     },
     {
+      "name": "signature",
+      "category": "Security",
+      "tags": [
+        "sign",
+        "contract",
+        "agreement",
+        "e-sign",
+        "document"
+      ],
+      "aliases": []
+    },
+    {
       "name": "simcard",
       "category": "Media & devices",
       "tags": [
@@ -16454,6 +18151,18 @@
         "chip",
         "telecom",
         "carrier"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "siren",
+      "category": "Security",
+      "tags": [
+        "alarm",
+        "emergency",
+        "alert",
+        "police light",
+        "beacon"
       ],
       "aliases": []
     },
@@ -16714,6 +18423,150 @@
         "frost",
         "ice",
         "cool"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-0-9-down",
+      "category": "Interfaces",
+      "tags": [
+        "numeric",
+        "order",
+        "arrange",
+        "list",
+        "descending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-0-9-up",
+      "category": "Interfaces",
+      "tags": [
+        "numeric",
+        "order",
+        "arrange",
+        "list",
+        "ascending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-9-0-down",
+      "category": "Interfaces",
+      "tags": [
+        "reverse numeric",
+        "order",
+        "arrange",
+        "list",
+        "descending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-9-0-up",
+      "category": "Interfaces",
+      "tags": [
+        "reverse numeric",
+        "order",
+        "arrange",
+        "list",
+        "ascending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-a-z-down",
+      "category": "Interfaces",
+      "tags": [
+        "alphabetical",
+        "order",
+        "arrange",
+        "list",
+        "descending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-a-z-up",
+      "category": "Interfaces",
+      "tags": [
+        "alphabetical",
+        "order",
+        "arrange",
+        "list",
+        "ascending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-lines-ascending",
+      "category": "Interfaces",
+      "tags": [
+        "increasing",
+        "smallest first",
+        "order",
+        "rank",
+        "list"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-lines-descending",
+      "category": "Interfaces",
+      "tags": [
+        "decreasing",
+        "largest first",
+        "order",
+        "rank",
+        "list"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-swap",
+      "category": "Interfaces",
+      "tags": [
+        "reorder",
+        "exchange",
+        "switch order",
+        "move",
+        "arrange"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-vertical",
+      "category": "Interfaces",
+      "tags": [
+        "reorder",
+        "order",
+        "both directions",
+        "list",
+        "arrange"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-z-a-down",
+      "category": "Interfaces",
+      "tags": [
+        "reverse alphabetical",
+        "order",
+        "arrange",
+        "list",
+        "descending arrow"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sort-z-a-up",
+      "category": "Interfaces",
+      "tags": [
+        "reverse alphabetical",
+        "order",
+        "arrange",
+        "list",
+        "ascending arrow"
       ],
       "aliases": []
     },
@@ -18144,6 +19997,38 @@
       "aliases": []
     },
     {
+      "name": "trophy-check",
+      "category": "Sports & fitness",
+      "tags": [
+        "winner confirmed",
+        "achieved",
+        "completed",
+        "won"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "trophy",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "trophy-star",
+      "category": "Sports & fitness",
+      "tags": [
+        "winner",
+        "champion",
+        "cup",
+        "prize",
+        "first place"
+      ],
+      "aliases": []
+    },
+    {
       "name": "truck",
       "category": "Transport & space",
       "tags": [
@@ -18460,6 +20345,18 @@
         "portable storage",
         "removable",
         "jump drive"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "usb-lock",
+      "category": "Security",
+      "tags": [
+        "encrypted drive",
+        "flash drive",
+        "storage",
+        "thumb drive",
+        "secure media"
       ],
       "aliases": []
     },

@@ -183,7 +183,7 @@ The site is built for several languages; it ships in English today.
 
 - The grid mounts its first 96 cells, then another 96 whenever you scroll
   near the end (or all at once for keyboard jumps and deep selections), so
-  a phone never lays out 1,319 cells up front.
+  a phone never lays out 1,454 cells up front.
 - Icon artwork loads in 96-icon chunks (`public/icons/<style>/<n>.json`) as
   cells approach the viewport; the first chunk is preloaded with the page.
   Off-screen cells skip rendering (`content-visibility`).
