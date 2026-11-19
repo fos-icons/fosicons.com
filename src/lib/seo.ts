@@ -126,7 +126,7 @@ export const PAGES = Object.fromEntries(PAGE_IDS.map((id) => [id, pageMeta(id)])
 /** The metadata for a location in the app, in a language (the path may include a language prefix). */
 export function pageFor(pathname: string, search = '', i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
   const path = splitLocale(pathname).path.replace(/\/+$/, '') || '/';
-  if (path === '/') return pageMeta(new URLSearchParams(search).get('style') === 'brands' ? 'brands' : 'home', i18n);
+  if (path === '/') return pageMeta((new URLSearchParams(search).get('style') === 'brands' || new URLSearchParams(search).get('category') === 'Brands') ? 'brands' : 'home', i18n);
   const fixed = PAGE_IDS.find((id) => id !== 'home' && id !== 'not-found' && PATHS[id] === path);
   if (fixed) return pageMeta(fixed, i18n);
   const icon = /^\/icons\/([a-z0-9-]+)$/.exec(path);

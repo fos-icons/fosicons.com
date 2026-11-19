@@ -32,7 +32,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
               <Route path={base} element={<Layout />}>
                 <Route index element={<IconsPage />} />
                 {/* Brands moved into the style switcher; keep old links working. */}
-                <Route path="brands" element={<Navigate to={localizePath('/?style=brands', locale)} replace />} />
+                <Route path="brands" element={<Navigate to={localizePath('/?category=Brands', locale)} replace />} />
                 <Route path="docs" element={<DocsPage />} />
                 {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
                 <Route path="icons/:name" element={<IconPage />} />

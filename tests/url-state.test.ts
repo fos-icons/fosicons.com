@@ -4,8 +4,8 @@ import { parseState, serializeState, type UrlStateConfig } from '../src/lib/url-
 
 const config: UrlStateConfig = {
   styles: catalog.styles,
-  core: { categories: catalog.categories.map((c) => c.name), icons: new Set(iconsByName.keys()) },
-  brands: { categories: ['Social'], icons: new Set(['acme']) },
+  core: { categories: [...catalog.categories.map((c) => c.name), 'Brands'], icons: new Set([...iconsByName.keys(), 'acme']) },
+  brands: { categories: [], icons: new Set(['acme']) },
 };
 
 describe('URL state', () => {
@@ -35,16 +35,11 @@ describe('URL state', () => {
     }
   });
 
-  it('treats Brands as a view with its own Regular/Solid variant and catalog', () => {
-    const state = { q: '', category: 'Social', style: 'brands' as const, brandStyle: 'filled' as const, icon: 'acme', modifier: null, corner: null };
-    const url = serializeState(state, config);
-    expect(url).toBe('?category=Social&style=brands&variant=solid&icon=acme');
-    expect(parseState(url, config)).toEqual(state);
-    // Core icons and categories are not valid inside Brands, and vice versa.
-    expect(parseState('?style=brands&icon=user&category=Essentials', config)).toMatchObject({ icon: null, category: null });
-    expect(parseState('?icon=acme', config).icon).toBeNull();
-    // Duo variants never apply to brands.
-    expect(parseState('?style=brands&variant=duotone', config).brandStyle).toBe('regular');
+  it('opens old Brands-tab links in the Brands category of the one catalog', () => {
+    expect(parseState('?style=brands', config)).toMatchObject({ style: 'regular', category: 'Brands' });
+    expect(parseState('?style=brands&icon=acme', config).icon).toBe('acme');
+    // Brand marks never take modifiers.
+    expect(parseState('?icon=acme&modifier=sparkle', config).modifier).toBeNull();
   });
 
   it('keeps a modifier and corner only alongside a core icon', () => {
@@ -54,7 +49,6 @@ describe('URL state', () => {
     expect(parseState(url, config)).toEqual(state);
     expect(parseState('?modifier=sparkle', config).modifier).toBeNull();
     expect(parseState('?icon=clock&modifier=sparkle&corner=middle', config)).toMatchObject({ modifier: 'sparkle', corner: null });
-    expect(parseState('?style=brands&icon=acme&modifier=sparkle', config).modifier).toBeNull();
     expect(parseState('?icon=clock&modifier=%3Cscript%3E', config).modifier).toBeNull();
   });
 });

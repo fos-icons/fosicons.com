@@ -34,19 +34,22 @@ export interface UrlStateConfig {
 export function parseState(search: string, config: UrlStateConfig): CatalogState {
   const params = new URLSearchParams(search);
   const slug = params.get('style');
-  const style: View = slug === 'brands' ? 'brands' : styleFromSlug(slug, config.styles) ?? config.styles[0];
-  const collection = style === 'brands' ? config.brands : config.core;
-  const category = params.get('category');
+  // Brands used to be a style tab; old links now open the Brands category.
+  const legacyBrands = slug === 'brands';
+  const style: View = legacyBrands ? config.styles[0] : styleFromSlug(slug, config.styles) ?? config.styles[0];
+  const collection = config.core;
+  const category = legacyBrands ? params.get('category') ?? 'Brands' : params.get('category');
   const icon = params.get('icon');
   const iconOk = !!icon && collection.icons.has(icon);
   const modifier = params.get('modifier');
-  const modifierOk = iconOk && style !== 'brands' && !!modifier && /^[a-z0-9-]{1,40}$/.test(modifier);
+  // Brand marks never take modifiers.
+  const modifierOk = iconOk && !config.brands.icons.has(icon) && !!modifier && /^[a-z0-9-]{1,40}$/.test(modifier);
   const corner = params.get('corner') as Corner | null;
   return {
     q: (params.get('q') ?? '').slice(0, 100),
     category: category && collection.categories.includes(category) ? category : null,
     style,
-    brandStyle: style === 'brands' ? styleFromSlug(params.get('variant'), BRAND_STYLES) as BrandStyle ?? 'regular' : 'regular',
+    brandStyle: 'regular',
     icon: iconOk ? icon : null,
     modifier: modifierOk ? modifier : null,
     corner: modifierOk && corner && CORNERS.includes(corner) ? corner : null,

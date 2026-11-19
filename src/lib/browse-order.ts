@@ -6,7 +6,9 @@ const figmaOrder = [
 ];
 const categoryRanks = new Map(figmaOrder.map((name, i) => [name, i]));
 // Categories in the Figma Lifestyle group remain individually filterable on the site.
-const categoryRank = (name: string) => name === 'Weather' ? figmaOrder.length + 1 : categoryRanks.get(name) ?? figmaOrder.length;
+// Brand marks come last, after every icon category.
+const categoryRank = (name: string) => name === 'Brands' ? figmaOrder.length + 2
+  : name === 'Weather' ? figmaOrder.length + 1 : categoryRanks.get(name) ?? figmaOrder.length;
 
 export function compareBrowseCategories(a: string, b: string): number {
   return categoryRank(a) - categoryRank(b) || a.localeCompare(b);

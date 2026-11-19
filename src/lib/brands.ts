@@ -1,6 +1,6 @@
 import { LocalizedError } from '../i18n/errors';
 import brandData from '../data/brands.json';
-import type { IconEntry } from './catalog';
+import { iconsByName, type IconEntry } from './catalog';
 import { scopeSvg } from './svg';
 import { BRAND_STYLES, type BrandStyle } from './url-state';
 
@@ -51,4 +51,33 @@ export function loadBrands(style: BrandStyle): Promise<Record<string, string>> {
     }));
   }
   return cache.get(style)!;
+}
+
+/** The category brand marks are filed under in the icon grid. */
+export const BRANDS_CATEGORY = 'Brands';
+
+/**
+ * A brand's name in the combined catalog. A few brands share a name with a
+ * core icon (apple, signal, x…); those marks are listed as "<name>-logo".
+ */
+const catalogName = (name: string) => (iconsByName.has(name) ? `${name}-logo` : name);
+
+/** Brand marks as entries of the combined catalog, all in the Brands category. */
+export const brandCatalogEntries: IconEntry[] = brands.approved.map((b) => ({
+  name: catalogName(b.name),
+  category: BRANDS_CATEGORY,
+  tags: [b.owner.toLowerCase(), b.category.toLowerCase(), 'brand', 'logo', ...(catalogName(b.name) === b.name ? [] : [b.name])],
+  aliases: b.aliases ?? [],
+}));
+
+const brandByCatalogName = new Map(brands.approved.map((b) => [catalogName(b.name), b]));
+
+/** Whether a catalog name is a brand mark. */
+export const isBrand = (name: string) => brandByCatalogName.has(name);
+
+/** The approved brand marks (they ship in Regular only), keyed by catalog name. */
+export function loadBrandMarks(): Promise<Record<string, string>> {
+  return loadBrands('regular').then((marks) => Object.fromEntries(
+    brands.approved.filter((b) => marks[b.name]).map((b) => [catalogName(b.name), marks[b.name]]),
+  ));
 }
