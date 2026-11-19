@@ -56,6 +56,20 @@
   --fos-secondary: #5b87b7;
 }
 
+/* Ivory light roles from fos-icons/metadata/warm-themes.json. */
+.ivory {
+  --c-canvas: #f3f1eb;
+  --c-surface: #faf9f5;
+  --c-sunken: #fffdf8;
+  --c-ink: #292720;
+  --c-muted: #6e685f;
+  --c-faint: #6e685f;
+  --c-line: #ded9cf;
+  --c-line-strong: #ded9cf;
+  --fos-primary: #353127;
+  --fos-secondary: #82745e;
+}
+
 .dark {
   color-scheme: dark;
   --c-canvas: #121212;

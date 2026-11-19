@@ -1,3 +1,4 @@
+import type { SiteTheme } from './theme';
 import { LocalizedError } from '../i18n/errors';
 import { catalog, loadStyle, lock, STYLE_META, type StyleId } from './catalog';
 import { DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
@@ -25,7 +26,7 @@ export const fullSetName = (styles: readonly StyleId[] = catalog.styles) => {
  */
 export async function buildFullSet(
   look: Look = DEFAULT_LOOK,
-  theme: 'light' | 'dark' = 'light',
+  theme: SiteTheme = 'light',
   only: readonly StyleId[] = catalog.styles,
 ): Promise<Blob> {
   const styles = catalog.styles.filter((s) => only.includes(s));
@@ -38,7 +39,7 @@ export async function buildFullSet(
   ]);
   const entries: ZipEntry[] = [{ name: 'LICENSE.txt', data: license }];
   const r = resolveLook(look, theme);
-  const keepColors = r.monoFollowsSite && look.custom === null && look.modifierColor === null;
+  const keepColors = theme !== 'ivory' && r.monoFollowsSite && look.custom === null && look.modifierColor === null;
   const stroke = strokeOf(look);
   styles.forEach((style, i) => {
     const slug = STYLE_META[style].slug;
