@@ -78,12 +78,16 @@
       "count": 56
     },
     {
-      "name": "Time & weather",
-      "count": 103
+      "name": "Time & calendar",
+      "count": 62
     },
     {
       "name": "Transport & space",
       "count": 39
+    },
+    {
+      "name": "Weather",
+      "count": 51
     },
     {
       "name": "Workspace",
@@ -505,7 +509,7 @@
     },
     {
       "name": "alarm",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "alarm clock",
         "wake up",
@@ -520,7 +524,7 @@
     },
     {
       "name": "alarm-clock-check",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "alarm set",
         "confirmed",
@@ -535,7 +539,7 @@
     },
     {
       "name": "alarm-clock-minus",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "remove",
         "subtract",
@@ -548,7 +552,7 @@
     },
     {
       "name": "alarm-clock-off",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "mute",
         "disabled",
@@ -562,7 +566,7 @@
     },
     {
       "name": "alarm-clock-plus",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "add",
         "new",
@@ -575,7 +579,7 @@
     },
     {
       "name": "alarm-snooze",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "sleep",
         "nap",
@@ -3118,7 +3122,7 @@
     },
     {
       "name": "calendar",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "date",
         "schedule",
@@ -3133,7 +3137,7 @@
     },
     {
       "name": "calendar-3-day",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "three day view",
         "3 days",
@@ -3145,7 +3149,7 @@
     },
     {
       "name": "calendar-add",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "new event",
         "add event",
@@ -3169,7 +3173,7 @@
     },
     {
       "name": "calendar-agenda",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "list view",
         "events list",
@@ -3181,7 +3185,7 @@
     },
     {
       "name": "calendar-alert",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "event warning",
         "reminder",
@@ -3206,7 +3210,7 @@
     },
     {
       "name": "calendar-check",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "event confirmed",
         "done",
@@ -3231,7 +3235,7 @@
     },
     {
       "name": "calendar-clock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "schedule time",
         "appointment",
@@ -3246,7 +3250,7 @@
     },
     {
       "name": "calendar-copy",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "duplicate event",
         "copy event",
@@ -3260,7 +3264,7 @@
     },
     {
       "name": "calendar-disabled",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "no events",
         "unavailable",
@@ -3284,7 +3288,7 @@
     },
     {
       "name": "calendar-dots",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "events",
         "busy days",
@@ -3300,7 +3304,7 @@
     },
     {
       "name": "calendar-dots-rtl",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "right to left",
         "rtl layout",
@@ -3313,7 +3317,7 @@
     },
     {
       "name": "calendar-download",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "export calendar",
         "save events",
@@ -3337,7 +3341,7 @@
     },
     {
       "name": "calendar-event",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "timeline",
         "appointment",
@@ -3349,7 +3353,7 @@
     },
     {
       "name": "calendar-heart",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "anniversary",
         "date night",
@@ -3362,7 +3366,7 @@
     },
     {
       "name": "calendar-home",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "house events",
         "home schedule",
@@ -3377,7 +3381,7 @@
     },
     {
       "name": "calendar-link",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "share link",
         "meeting link",
@@ -3398,7 +3402,7 @@
     },
     {
       "name": "calendar-lock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "private calendar",
         "locked schedule",
@@ -3422,7 +3426,7 @@
     },
     {
       "name": "calendar-minus",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "remove event",
         "cancel",
@@ -3437,7 +3441,7 @@
     },
     {
       "name": "calendar-month-1",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "today",
         "single day",
@@ -3453,7 +3457,7 @@
     },
     {
       "name": "calendar-month-25",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "25th",
         "christmas",
@@ -3465,7 +3469,7 @@
     },
     {
       "name": "calendar-month-28",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "28th",
         "february",
@@ -3477,7 +3481,7 @@
     },
     {
       "name": "calendar-month-29",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "29th",
         "leap day",
@@ -3489,7 +3493,7 @@
     },
     {
       "name": "calendar-month-30",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "30th",
         "end of the month",
@@ -3501,7 +3505,7 @@
     },
     {
       "name": "calendar-month-31",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "monthly",
         "month view",
@@ -3517,7 +3521,7 @@
     },
     {
       "name": "calendar-month-5",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "fifth",
         "day 5",
@@ -3529,7 +3533,7 @@
     },
     {
       "name": "calendar-month-7",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "weekly",
         "week view",
@@ -3544,7 +3548,7 @@
     },
     {
       "name": "calendar-note",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "memo",
         "event notes",
@@ -3565,7 +3569,7 @@
     },
     {
       "name": "calendar-person",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "attendee",
         "organizer",
@@ -3587,7 +3591,7 @@
     },
     {
       "name": "calendar-phone",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "phone call",
         "mobile",
@@ -3608,7 +3612,7 @@
     },
     {
       "name": "calendar-record",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "recording",
         "record meeting",
@@ -3629,7 +3633,7 @@
     },
     {
       "name": "calendar-remove",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "delete event",
         "cancel event",
@@ -3653,7 +3657,7 @@
     },
     {
       "name": "calendar-reply",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "respond",
         "rsvp",
@@ -3674,7 +3678,7 @@
     },
     {
       "name": "calendar-settings",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "calendar options",
         "preferences",
@@ -3689,7 +3693,7 @@
     },
     {
       "name": "calendar-sparkles",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "ai schedule",
         "smart planning",
@@ -3711,7 +3715,7 @@
     },
     {
       "name": "calendar-star",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "favorite event",
         "important date",
@@ -3726,7 +3730,7 @@
     },
     {
       "name": "calendar-upload",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "share calendar",
         "publish",
@@ -4857,7 +4861,7 @@
     },
     {
       "name": "clock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "hour",
         "watch",
@@ -4872,7 +4876,7 @@
     },
     {
       "name": "clock-check",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "time confirmed",
         "on time",
@@ -4882,11 +4886,20 @@
         "done",
         "tick"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "clock",
+        "modifiers": [
+          {
+            "name": "check",
+            "position": "bottom-left"
+          }
+        ]
+      }
     },
     {
       "name": "clock-forward",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "fast forward",
         "future",
@@ -4900,7 +4913,7 @@
     },
     {
       "name": "clock-plus",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "add time",
         "new reminder",
@@ -4908,11 +4921,20 @@
         "schedule",
         "create alarm"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "clock",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-left"
+          }
+        ]
+      }
     },
     {
       "name": "clock-refresh",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "history",
         "reset time",
@@ -4928,7 +4950,7 @@
     },
     {
       "name": "clock-square",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "hour",
         "watch",
@@ -4959,7 +4981,7 @@
     },
     {
       "name": "cloud",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "overcast",
         "cloudy",
@@ -4971,7 +4993,7 @@
     },
     {
       "name": "cloud-drizzle",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "light rain",
         "shower",
@@ -4984,7 +5006,7 @@
     },
     {
       "name": "cloud-fog",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "mist",
         "haze",
@@ -4997,7 +5019,7 @@
     },
     {
       "name": "cloud-hail",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "hailstorm",
         "ice",
@@ -5010,7 +5032,7 @@
     },
     {
       "name": "cloud-lightning",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "thunderstorm",
         "storm",
@@ -5023,7 +5045,7 @@
     },
     {
       "name": "cloud-moon",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night",
         "cloudy night",
@@ -5035,7 +5057,7 @@
     },
     {
       "name": "cloud-moon-lightning",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night storm",
         "thunderstorm",
@@ -5047,7 +5069,7 @@
     },
     {
       "name": "cloud-moon-rain",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night rain",
         "rainy night",
@@ -5059,7 +5081,7 @@
     },
     {
       "name": "cloud-moon-snow",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night snow",
         "snowy night",
@@ -5071,7 +5093,7 @@
     },
     {
       "name": "cloud-off",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "offline",
         "disconnected",
@@ -5084,7 +5106,7 @@
     },
     {
       "name": "cloud-rain",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "rainy",
         "shower",
@@ -5099,7 +5121,7 @@
     },
     {
       "name": "cloud-rain-lightning",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "thunderstorm",
         "storm",
@@ -5112,7 +5134,7 @@
     },
     {
       "name": "cloud-rainbow",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "after rain",
         "pride",
@@ -5124,7 +5146,7 @@
     },
     {
       "name": "cloud-sleet",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "wintry mix",
         "freezing rain",
@@ -5136,7 +5158,7 @@
     },
     {
       "name": "cloud-snowing",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "snow",
         "snowfall",
@@ -5149,7 +5171,7 @@
     },
     {
       "name": "cloud-sun",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "partly cloudy",
         "daytime",
@@ -5161,7 +5183,7 @@
     },
     {
       "name": "cloud-sun-lightning",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "thunderstorm",
         "storm",
@@ -5173,7 +5195,7 @@
     },
     {
       "name": "cloud-sun-rain",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "sun shower",
         "showers",
@@ -5185,7 +5207,7 @@
     },
     {
       "name": "cloud-sun-snow",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "snowfall",
         "winter",
@@ -5196,7 +5218,7 @@
     },
     {
       "name": "cloud-wind",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "windy",
         "breeze",
@@ -6942,7 +6964,7 @@
     },
     {
       "name": "droplets",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "water",
         "rain",
@@ -9861,7 +9883,7 @@
     },
     {
       "name": "history",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "clock",
         "past",
@@ -10053,7 +10075,7 @@
     },
     {
       "name": "hourglass",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "timer",
         "sand",
@@ -10067,8 +10089,72 @@
       ]
     },
     {
+      "name": "hourglass-end",
+      "category": "Time & calendar",
+      "tags": [
+        "timer",
+        "sand",
+        "time up",
+        "expired",
+        "done",
+        "countdown end"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hourglass-half",
+      "category": "Time & calendar",
+      "tags": [
+        "timer",
+        "sand",
+        "in progress",
+        "halfway",
+        "waiting",
+        "loading"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hourglass-horizontal",
+      "category": "Time & calendar",
+      "tags": [
+        "paused",
+        "timer",
+        "sand",
+        "idle",
+        "on hold",
+        "stopped"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hourglass-horizontal-sand",
+      "category": "Time & calendar",
+      "tags": [
+        "paused",
+        "timer",
+        "on hold",
+        "idle",
+        "settled",
+        "stopped"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hourglass-start",
+      "category": "Time & calendar",
+      "tags": [
+        "timer",
+        "sand",
+        "begin",
+        "countdown",
+        "waiting"
+      ],
+      "aliases": []
+    },
+    {
       "name": "hurricane",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "cyclone",
         "typhoon",
@@ -12717,7 +12803,7 @@
     },
     {
       "name": "moon",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night",
         "crescent",
@@ -12732,7 +12818,7 @@
     },
     {
       "name": "moon-eclipse",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar eclipse",
         "solar eclipse",
@@ -12746,7 +12832,7 @@
     },
     {
       "name": "moon-phase-first-quarter",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "half moon",
@@ -12759,7 +12845,7 @@
     },
     {
       "name": "moon-phase-full",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "night",
@@ -12771,7 +12857,7 @@
     },
     {
       "name": "moon-phase-last-quarter",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "half moon",
@@ -12784,7 +12870,7 @@
     },
     {
       "name": "moon-phase-new",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "dark moon",
@@ -12797,7 +12883,7 @@
     },
     {
       "name": "moon-phase-waning-crescent",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "sliver",
@@ -12810,7 +12896,7 @@
     },
     {
       "name": "moon-phase-waning-gibbous",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "almost full",
@@ -12823,7 +12909,7 @@
     },
     {
       "name": "moon-phase-waxing-crescent",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "sliver",
@@ -12836,7 +12922,7 @@
     },
     {
       "name": "moon-phase-waxing-gibbous",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "lunar phase",
         "almost full",
@@ -12849,7 +12935,7 @@
     },
     {
       "name": "moon-star",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "night",
         "dark mode",
@@ -14072,7 +14158,7 @@
     },
     {
       "name": "pie-clock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "timer",
         "progress",
@@ -14703,7 +14789,7 @@
     },
     {
       "name": "rewind-clock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "history",
         "undo",
@@ -16145,7 +16231,7 @@
     },
     {
       "name": "snowflake",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "cold",
         "winter",
@@ -16442,7 +16528,7 @@
     },
     {
       "name": "stars",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "favorites",
         "rating",
@@ -16539,7 +16625,7 @@
     },
     {
       "name": "stopwatch",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "timer",
         "clock",
@@ -16604,7 +16690,7 @@
     },
     {
       "name": "sun",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "brightness",
         "sunny",
@@ -16619,7 +16705,7 @@
     },
     {
       "name": "sun-half",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "brightness",
         "contrast",
@@ -16634,7 +16720,7 @@
     },
     {
       "name": "sunrise",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "morning",
         "dawn",
@@ -16648,7 +16734,7 @@
     },
     {
       "name": "sunset",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "evening",
         "dusk",
@@ -16662,7 +16748,7 @@
     },
     {
       "name": "sunset-angle",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "evening",
         "dusk",
@@ -16942,6 +17028,58 @@
       "aliases": []
     },
     {
+      "name": "temperature-celsius",
+      "category": "Weather",
+      "tags": [
+        "degrees",
+        "centigrade",
+        "metric",
+        "deg c",
+        "forecast",
+        "climate"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "temperature-celsius-square",
+      "category": "Weather",
+      "tags": [
+        "degrees",
+        "centigrade",
+        "metric",
+        "deg c",
+        "badge",
+        "unit"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "temperature-fahrenheit",
+      "category": "Weather",
+      "tags": [
+        "degrees",
+        "imperial",
+        "deg f",
+        "us units",
+        "forecast",
+        "climate"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "temperature-fahrenheit-square",
+      "category": "Weather",
+      "tags": [
+        "degrees",
+        "imperial",
+        "deg f",
+        "us units",
+        "badge",
+        "unit"
+      ],
+      "aliases": []
+    },
+    {
       "name": "terminal",
       "category": "Workspace",
       "tags": [
@@ -17049,7 +17187,7 @@
     },
     {
       "name": "thermometer",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "temperature",
         "celsius",
@@ -17062,7 +17200,7 @@
     },
     {
       "name": "thermometer-cold",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "freezing",
         "low temperature",
@@ -17075,7 +17213,7 @@
     },
     {
       "name": "thermometer-warm",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "high temperature",
         "hot",
@@ -17132,7 +17270,7 @@
     },
     {
       "name": "timer",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "stopwatch",
         "countdown",
@@ -17221,6 +17359,19 @@
         "japanese",
         "temple",
         "entrance"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "tornado",
+      "category": "Weather",
+      "tags": [
+        "twister",
+        "funnel",
+        "storm",
+        "whirlwind",
+        "cyclone",
+        "disaster"
       ],
       "aliases": []
     },
@@ -17599,7 +17750,7 @@
     },
     {
       "name": "umbrella",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "rain",
         "storm",
@@ -18648,7 +18799,7 @@
     },
     {
       "name": "watch-circle",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "smartwatch",
         "wristwatch",
@@ -18661,7 +18812,7 @@
     },
     {
       "name": "watch-square",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "smartwatch",
         "wristwatch",
@@ -18674,7 +18825,7 @@
     },
     {
       "name": "waves",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "water",
         "sea",
@@ -18778,7 +18929,7 @@
     },
     {
       "name": "wind",
-      "category": "Time & weather",
+      "category": "Weather",
       "tags": [
         "breeze",
         "air",
@@ -18792,7 +18943,7 @@
     },
     {
       "name": "wind-clock",
-      "category": "Time & weather",
+      "category": "Time & calendar",
       "tags": [
         "wind forecast",
         "hourly",
