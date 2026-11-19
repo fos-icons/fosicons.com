@@ -652,20 +652,6 @@ describe('Inspector sections (desktop)', () => {
     expect(document.documentElement.classList.contains('dark')).toBe(false);
     expect(localStorage.getItem('fos-theme')).toBe('ivory');
   });
-
-  it('says when filled parts of an icon keep their weight as the stroke changes', async () => {
-    renderAt('/?icon=alert-circle');
-    const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    // Default 48px Auto stroke is 0.85px, not the drawn 1.25px.
-    expect(await within(pane).findByText(/drawn as filled shapes/)).toBeTruthy();
-  });
-
-  it('does not show that note for an icon made only of strokes', async () => {
-    renderAt('/?icon=search');
-    const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    await within(pane).findByRole('img', { name: /search, Regular/ });
-    expect(within(pane).queryByText(/drawn as filled shapes/)).toBeNull();
-  });
 });
 
 describe('Icon page header search (desktop)', () => {

@@ -225,7 +225,6 @@ const en = {
   'inspector.libraryVersions': 'Library versions',
   'inspector.openVersion': 'Open a library version…',
   'inspector.style': 'Style',
-  'inspector.filledParts': 'Parts of this icon are drawn as filled shapes, so they keep their drawn weight while its lines change.',
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
   'inspector.modifierColor': 'Modifier color',
   'inspector.modifierSameAsIcon': 'Same as the icon.',
