@@ -107,8 +107,8 @@ describe('autoStroke', () => {
 
 describe('hasFilledDetails', () => {
   it('flags filled parts that do not follow the stroke, ignoring the Duotone tint', () => {
-    expect(hasFilledDetails(styleSvgs('regular')['cloud-moon'])).toBe(true);
-    expect(hasFilledDetails(styleSvgs('duotone')['cloud-moon'])).toBe(true);
+    expect(hasFilledDetails(styleSvgs('regular')['alert-circle'])).toBe(true);
+    expect(hasFilledDetails(styleSvgs('duotone')['alert-circle'])).toBe(true);
     expect(hasFilledDetails(styleSvgs('regular').search)).toBe(false);
     // Duotone search only adds a translucent tint, which is not a filled detail.
     expect(hasFilledDetails(styleSvgs('duotone').search)).toBe(false);

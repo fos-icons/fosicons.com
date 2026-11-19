@@ -552,7 +552,7 @@ describe('Inspector sections (desktop)', () => {
   });
 
   it('says when filled parts of an icon keep their weight as the stroke changes', async () => {
-    renderAt('/?icon=cloud-moon');
+    renderAt('/?icon=alert-circle');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     // Default 48px Auto stroke is 0.85px, not the drawn 1.25px.
     expect(await within(pane).findByText(/drawn as filled shapes/)).toBeTruthy();

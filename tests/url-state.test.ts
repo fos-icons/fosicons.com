@@ -26,6 +26,15 @@ describe('URL state', () => {
     });
   });
 
+  it('clears the retired Time & weather filter while preserving the search and selected icon', () => {
+    const state = parseState('?category=Time+%26+weather&q=cloud&style=duotone&icon=cloud', config);
+    expect(state).toMatchObject({ category: null, q: 'cloud', style: 'duotone', icon: 'cloud' });
+    expect(serializeState(state, config)).toBe('?q=cloud&style=duotone&icon=cloud');
+    for (const category of ['Time & calendar', 'Weather']) {
+      expect(parseState(new URLSearchParams({ category }).toString(), config).category).toBe(category);
+    }
+  });
+
   it('treats Brands as a view with its own Regular/Solid variant and catalog', () => {
     const state = { q: '', category: 'Social', style: 'brands' as const, brandStyle: 'filled' as const, icon: 'acme', modifier: null, corner: null };
     const url = serializeState(state, config);
