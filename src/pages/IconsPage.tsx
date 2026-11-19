@@ -487,11 +487,11 @@ export function IconsPage() {
         focusKey={selected?.name ?? null}
         quickControls={(
           <>
-            <QuickPopover icon="ruler" label={t('customize.size')}>
+            <QuickPopover icon="arrows-fit-horizontal" label={t('customize.size')}>
               <SizeControl compact look={look} onChange={changeLook} />
             </QuickPopover>
             {strokeAdjustable(drawStyle, kind) && (
-              <QuickPopover icon="settings-sliders" label={t('customize.stroke')}>
+              <QuickPopover icon="slider-horizontal" label={t('customize.stroke')}>
                 <StrokeControl compact look={look} onChange={changeLook} style={drawStyle} kind={kind} />
               </QuickPopover>
             )}
