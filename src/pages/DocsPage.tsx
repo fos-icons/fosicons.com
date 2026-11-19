@@ -447,7 +447,7 @@ npm pack`}</Code>
         </Section>
 
         <Section id="privacy" title="Privacy">
-          <p>This site sets no cookies and runs no analytics, ads, or tracking scripts. Fonts and icons are served from this site, not from third parties.</p>
+          <p>This site sets no cookies. We use Vercel Web Analytics on the public site to count visitors and page views. The page URLs we report omit search terms, inspector settings, and fragments. See <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">Vercel Web Analytics privacy</a> for details.</p>
           <p>Your browser&apos;s local storage keeps preferences on your device:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li><code>fos-theme</code>: light, warm (Ivory), or dark, when you pick one instead of following your system.</li>
@@ -455,7 +455,7 @@ npm pack`}</Code>
             <li><code>fos-learned-tips</code>: which learning tips this browser has already shown.</li>
             <li><code>fos-pane-width</code>: the side pane&apos;s width, when you resize it.</li>
           </ul>
-          <p>Searches, customizations, and downloads happen in your browser and aren&apos;t sent anywhere. Links to GitHub, npm, and Figma take you to those services, which have their own privacy policies. Like any website, the server hosting this one may keep standard request logs.</p>
+          <p>Icon searches, customizations, and downloads are processed in your browser. We do not track them as separate analytics events. Links to GitHub, npm, and Figma take you to those services, which have their own privacy policies. Like any website, the server hosting this one may keep standard request logs.</p>
           <p>To clear the stored preferences, clear this site&apos;s data in your browser settings.</p>
         </Section>
 

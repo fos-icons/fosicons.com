@@ -19,7 +19,7 @@ import { DEFAULT_LOOK, exportColors, type Look } from '../lib/look';
 import { buildSvg } from '../lib/svg';
 import { useMediaQuery } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
-import { componentName, svelteSnippet } from '../lib/react-snippet';
+import { angularSnippet, componentName, svelteSnippet } from '../lib/react-snippet';
 import { useSlashToFocus } from './IconsPage';
 import NotFoundPage from './NotFoundPage';
 import { useModifiers } from '../components/ModifierPicker';
@@ -409,6 +409,7 @@ export default function IconPage() {
               { id: 'react', label: t('iconPage.react'), code: react, lang: 'tsx' },
               { id: 'vue', label: t('iconPage.vue'), code: vue, lang: 'vue' },
               { id: 'svelte', label: t('iconPage.svelte'), code: svelte, lang: 'svelte' },
+              { id: 'angular', label: t('iconPage.angular'), code: angularSnippet(icon.name, style, { size: 24, color: null }), lang: 'ts' },
             ]}
           />
           <p className="mt-3 text-sm text-muted">

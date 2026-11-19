@@ -682,7 +682,7 @@ describe('Icon page header search (desktop)', () => {
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('filled')['triangle-right']);
   });
 
-  it('offers copyable Svelte code on icon pages and updates it with the style', async () => {
+  it('offers copyable Svelte and Angular code on icon pages and updates it with the style', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/triangle-right');
     const section = document.getElementById('use')!.closest('section')!;
@@ -698,6 +698,17 @@ describe('Icon page header search (desktop)', () => {
     expect(code()).toContain('TriangleRightFilled');
     expect(code()).not.toContain('TriangleRightRegular');
     expect(tab.getAttribute('aria-selected')).toBe('true');
+
+    const angular = within(section).getByRole('tab', { name: 'Angular' });
+    await user.click(angular);
+    const angularCode = () => section.querySelector('.code-block[data-lang="ts"] code')!.textContent;
+    expect(angularCode()).toContain("import { TriangleRightFilled } from '@fos-icons/angular';");
+    expect(angularCode()).toContain('<svg fos-triangle-right-filled></svg>');
+    await user.click(within(section).getAllByRole('button', { name: 'Copy' })[0]);
+    expect(await navigator.clipboard.readText()).toBe(angularCode());
+    await user.click(within(preview).getByRole('radio', { name: 'Regular' }));
+    expect(angularCode()).toContain('<svg fos-triangle-right-regular></svg>');
+    expect(angular.getAttribute('aria-selected')).toBe('true');
   });
 
   it('shows the icon as a removable tag; removing it goes back to the icons', async () => {
