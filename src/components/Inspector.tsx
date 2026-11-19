@@ -1,4 +1,6 @@
 import { LocalLink, useI18n } from '../i18n';
+import { copyText, downloadBlob, svgBlob } from '../lib/export';
+import { RailActions, RailContext } from './QuickTools';
 import { iconPath } from '../lib/icon-pages';
 import { errorText, LocalizedError } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -104,6 +106,7 @@ export function Inspector({
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
+  const codeTrigger = useRef<HTMLButtonElement>(null);
 
   const showSecondary = !!source && duo && hasSecondaryRole(source);
   const modifierDefault = source?.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase() ?? null;
@@ -393,6 +396,26 @@ export function Inspector({
         )}
       />
 
+      <RailActions>{(expand) => (
+        <>
+          <IconButton icon="download" label={t('pane.downloadSvg')} disabled={!source || busy} onClick={() => {
+            const file = `${baseName}.svg`;
+            void run(() => downloadBlob(svgBlob(build(size)), file), t('export.downloaded', { file }));
+          }} />
+          <IconButton icon="copy" label={t('pane.copySvg')} disabled={!source || busy} onClick={() => {
+            void run(() => copyText(build(size)), t('export.copiedSvg'));
+          }} />
+          {snippets && <IconButton icon="code" label={t('pane.openCode')} onClick={() => {
+            expand();
+            requestAnimationFrame(() => {
+              const trigger = codeTrigger.current;
+              if (trigger?.getAttribute('aria-expanded') === 'false') trigger.click();
+              trigger?.focus();
+            });
+          }} />}
+        </>
+      )}</RailActions>
+
       <ExportPanel
         name={icon.name}
         baseName={baseName}
@@ -403,7 +426,7 @@ export function Inspector({
       />
 
       {snippets && (
-        <Section collapsible defaultOpen={false} title={t('inspector.code')}>
+        <Section collapsible defaultOpen={false} triggerRef={codeTrigger} title={t('inspector.code')}>
           <div className="code-stone">
             <CodeTabs
               label={t('iconPage.framework')}
@@ -441,7 +464,7 @@ export function Inspector({
  * pane slot (full height, beside the page). Mobile: a modal bottom sheet.
  */
 export function SidePane({
-  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, children,
+  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, quickControls, children,
 }: {
   desktop: boolean;
   host: HTMLElement | null;
@@ -456,6 +479,7 @@ export function SidePane({
   focusKey: string | null;
   /** Desktop only: a page that shows the pane's subject in full (the selected icon's page). */
   expandTo?: string;
+  quickControls?: ReactNode;
   children: ReactNode;
 }) {
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -463,6 +487,7 @@ export function SidePane({
   const { pathname, search } = useLocation();
   const [width, setWidth] = usePaneWidth();
   const [resizing, setResizing] = useState(false);
+  const [railHost, setRailHost] = useState<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -558,13 +583,21 @@ export function SidePane({
             </LocalLink>
           )}
         </div>
+        {collapsed && quickControls && (
+          <div className="flex flex-col items-center gap-1 py-2">
+            {quickControls}
+            <div ref={setRailHost} className="flex flex-col items-center gap-1" />
+          </div>
+        )}
         <div
           id="side-pane-body"
           hidden={collapsed}
           style={{ width }}
           className="min-h-0 flex-1 overflow-y-auto overscroll-contain"
         >
-          {children}
+          <RailContext.Provider value={collapsed && railHost ? { host: railHost, expand: () => onCollapsedChange(false) } : null}>
+            {children}
+          </RailContext.Provider>
         </div>
       </aside>,
       host,

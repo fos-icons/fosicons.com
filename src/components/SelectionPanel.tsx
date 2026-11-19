@@ -7,6 +7,7 @@ import { exportColors, strokeAdjustable, strokeOf, type Look } from '../lib/look
 import { buildSvg } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { buildZip, type ZipEntry } from '../lib/zip';
+import { RailActions } from './QuickTools';
 import { CustomizeControls, Section } from './Customize';
 import { Button, IconButton, Segmented, UiIcon, useToast } from './ui';
 
@@ -81,6 +82,9 @@ export function SelectionPanel({
 
   return (
     <div className="flex min-h-full flex-col">
+      <RailActions>{() => (
+        <IconButton icon="download" label={t('pane.downloadSelection')} onClick={download} disabled={!ready || busy} />
+      )}</RailActions>
       <div className="flex items-start gap-3 px-5 pb-4 pt-5">
         <div className="min-w-0 flex-1">
           <h2 id={headingId} tabIndex={-1} className="text-xl font-semibold outline-none">

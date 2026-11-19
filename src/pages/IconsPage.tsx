@@ -2,7 +2,8 @@ import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { CustomizePanel } from '../components/Customize';
+import { QuickPopover } from '../components/QuickTools';
+import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { HeroActions } from '../components/HeaderActions';
 import { GridHelp, IconGrid } from '../components/IconGrid';
 import { Inspector, SidePane } from '../components/Inspector';
@@ -14,7 +15,7 @@ import { availableBrandStyles, brandCategories, brandEntries, hasBrandStyle, loa
 import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
-import { DEFAULT_LOOK, gridVars, type Look } from '../lib/look';
+import { DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
 import { modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
@@ -302,13 +303,6 @@ export function IconsPage() {
     if (state.icon) setMulti([]);
   }, [state.icon]);
 
-  // A new selection reveals the pane. Keyed on the selection, not on `collapsed`,
-  // so collapsing the pane while an icon stays selected sticks.
-  const selectionKey = multiActive ? `set:${multi.length}` : selected?.name ?? null;
-  useEffect(() => {
-    if (selectionKey && desktop) setCollapsed(false);
-  }, [selectionKey, desktop, setCollapsed]);
-
   /**
    * Plain click opens one icon (or closes it again). Shift/⌘/Ctrl-click
    * toggles an icon in the set; the set starts from the open icon.
@@ -491,6 +485,18 @@ export function IconsPage() {
         onDismiss={() => (multiActive ? setMulti([]) : selected ? close() : setCustomizeOpen(false))}
         headingId="pane-heading"
         focusKey={selected?.name ?? null}
+        quickControls={(
+          <>
+            <QuickPopover icon="arrows-fit-horizontal" label={t('customize.size')}>
+              <SizeControl compact look={look} onChange={changeLook} />
+            </QuickPopover>
+            {strokeAdjustable(drawStyle, kind) && (
+              <QuickPopover icon="slider-horizontal" label={t('customize.stroke')}>
+                <StrokeControl compact look={look} onChange={changeLook} style={drawStyle} kind={kind} />
+              </QuickPopover>
+            )}
+          </>
+        )}
         expandTo={selected && !brandsView && !multiActive
           ? `${iconPath(selected.name)}${drawStyle === catalog.styles[0] ? '' : `?style=${STYLE_META[drawStyle].slug}`}`
           : undefined}

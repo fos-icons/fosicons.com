@@ -65,7 +65,7 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-[38px] sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
+        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-9 sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
           selected ? 'bg-brand-soft ring-1 ring-inset ring-brand' : 'hover:bg-sunken'
         }`}
       >
@@ -79,7 +79,7 @@ const Cell = memo(function Cell({
         )}
         <span
           aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-1 bottom-1.5 line-clamp-2 text-center text-[11px] leading-[14px] text-muted [overflow-wrap:anywhere] transition-opacity ${
+          className={`pointer-events-none absolute inset-x-1 bottom-2.5 line-clamp-2 text-center text-[11px] leading-[14px] text-muted [overflow-wrap:anywhere] transition-opacity ${
             selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
           }`}
         >

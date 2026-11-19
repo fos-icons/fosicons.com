@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { catalog, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
@@ -10,6 +10,7 @@ import {
 } from '../lib/look';
 import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
+import { RailActions } from './QuickTools';
 import { Button, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 /** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
@@ -59,7 +60,7 @@ const sectionOpen = new Map<string, boolean>();
 export const resetSectionState = () => sectionOpen.clear();
 
 export function Section({
-  title, children, aside, collapsible = true, defaultOpen = true,
+  title, children, aside, collapsible = true, defaultOpen = true, triggerRef,
 }: {
   title: string;
   children: ReactNode;
@@ -67,6 +68,7 @@ export function Section({
   /** Render the title as a disclosure button that shows or hides the body. */
   collapsible?: boolean;
   defaultOpen?: boolean;
+  triggerRef?: Ref<HTMLButtonElement>;
 }) {
   const [open, setOpenState] = useState(() => sectionOpen.get(title) ?? defaultOpen);
   const setOpen = (update: (o: boolean) => boolean) => setOpenState((o) => {
@@ -84,6 +86,7 @@ export function Section({
           <h3 className={heading}>
             <button
               type="button"
+              ref={triggerRef}
               aria-expanded={open}
               aria-controls={bodyId}
               onClick={() => setOpen((o) => !o)}
@@ -108,7 +111,7 @@ export function Section({
 const fmtStroke = (w: number) => `${Number(w.toFixed(2))}px`;
 
 /** The Size section: a slider for common sizes plus a field for any size. */
-export function SizeControl({ look, onChange }: { look: Look; onChange: (patch: Partial<Look>) => void }) {
+export function SizeControl({ look, onChange, compact = false }: { look: Look; onChange: (patch: Partial<Look>) => void; compact?: boolean }) {
   const { t } = useI18n();
   const uid = useId();
   const [sizeText, setSizeText] = useState(String(look.size));
@@ -123,6 +126,7 @@ export function SizeControl({ look, onChange }: { look: Look; onChange: (patch: 
   return (
     <Section
       title={t('customize.size')}
+      collapsible={!compact}
       aside={(
         <label className="flex items-center gap-1.5 text-xs text-muted">
           <span className="sr-only">{t('customize.sizeCustom')}</span>
@@ -165,13 +169,14 @@ export function SizeControl({ look, onChange }: { look: Look; onChange: (patch: 
 }
 
 /** Stroke width: Auto follows the size; the slider pins a width. Explains why solid and brand icons have none. */
-export function StrokeControl({ look, onChange, style, kind = 'core', footnote }: {
+export function StrokeControl({ look, onChange, style, kind = 'core', footnote, compact = false }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
   style: StyleId;
   kind?: 'core' | 'brand';
   /** Stroke notes that only make sense for one icon (e.g. filled parts). */
   footnote?: ReactNode;
+  compact?: boolean;
 }) {
   const { t } = useI18n();
   const uid = useId();
@@ -180,6 +185,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
   return (
     <Section
       title={t('customize.stroke')}
+      collapsible={!compact}
       aside={canStroke && (
         <span className="flex items-center gap-2 text-xs">
           {look.strokeWidth === null ? (
@@ -397,6 +403,9 @@ export function DownloadSection({ look }: { look: Look }) {
           : t('download.some', { count: styles.length });
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
+      <RailActions>{() => (
+        <IconButton icon="download" label={label} onClick={download} disabled={busy || !styles.length} />
+      )}</RailActions>
       <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
       <fieldset className="mt-3">
         <legend className="sr-only">{t('download.styles')}</legend>
