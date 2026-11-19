@@ -2,7 +2,9 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import catalog from '../src/data/catalog.json';
-import { composeSvg, initialCorner, MODIFIER_SCALE, type Corner, type ModifierAsset } from '../src/lib/modifiers';
+import {
+  authoredModifierPx, autoModifierPx, composeSvg, initialCorner, MODIFIER_SCALE, modifierPx, modifierPxRange, modifierScaleFor, type Corner, type ModifierAsset,
+} from '../src/lib/modifiers';
 
 const pub = (file: string) => JSON.parse(readFileSync(join(__dirname, '../public', file), 'utf8'));
 const modifiers: ModifierAsset[] = pub('modifiers.json').modifiers;
@@ -76,5 +78,61 @@ describe('modifier composition', () => {
   it('refuses a corner the modifier does not support', () => {
     const pdf = byName.get('pdf')!;
     expect(() => composeSvg(sources.regular.file, pdf, 'top-right', 'regular')).toThrow(/top right/);
+  });
+});
+
+describe('size-linked modifier size', () => {
+  it('holds the anchors exactly: 20px on a 48px icon, 11px on a 24px icon', () => {
+    expect(autoModifierPx(48)).toBe(20);
+    expect(autoModifierPx(24)).toBe(11);
+    // 48px is drawn as authored, so the library's packaged components match it.
+    expect(modifierScaleFor(48, autoModifierPx(48))).toBe(1);
+    expect(authoredModifierPx(48)).toBe(20);
+  });
+
+  it('follows a straight line through the anchors at every slider size', () => {
+    const expected: Record<number, number> = {
+      16: 8, 20: 10, 24: 11, 28: 13, 32: 14, 36: 16, 40: 17, 44: 19, 48: 20, 52: 22, 56: 23, 60: 25, 64: 26,
+    };
+    for (const [size, px] of Object.entries(expected)) expect(autoModifierPx(Number(size)), `${size}px`).toBe(px);
+    expect(autoModifierPx(96)).toBe(38);
+    expect(autoModifierPx(512)).toBe(194);
+  });
+
+  it('never grows as the icon shrinks, and stays within a quarter of the icon', () => {
+    let previous = 0;
+    for (let size = 8; size <= 512; size++) {
+      const px = autoModifierPx(size);
+      const { min, max } = modifierPxRange(size);
+      expect(px, `${size}px`).toBeGreaterThanOrEqual(previous);
+      expect(px).toBeGreaterThanOrEqual(min);
+      expect(px).toBeLessThanOrEqual(max);
+      expect(modifierScaleFor(size, px)).toBeLessThanOrEqual(MODIFIER_SCALE.max + 1e-9);
+      expect(modifierScaleFor(size, px)).toBeGreaterThanOrEqual(MODIFIER_SCALE.min - 1e-9);
+      previous = px;
+    }
+    // Below 16px the line would pass a quarter of the icon, so it is held there.
+    expect(autoModifierPx(8)).toBe(4);
+    expect(autoModifierPx(12)).toBe(6);
+  });
+
+  it('applies the user adjustment as a ratio of the linked size, within range', () => {
+    expect(modifierPx(48)).toBe(20);
+    expect(modifierPx(24)).toBe(11);
+    expect(modifierPxRange(48)).toEqual({ min: 15, max: 24 });
+    expect(modifierPxRange(24)).toEqual({ min: 8, max: 12 });
+    // 24px on a 48px icon (1.2×) becomes the 12px cap on a 24px icon.
+    expect(modifierPx(48, 24 / 20)).toBe(24);
+    expect(modifierPx(24, 24 / 20)).toBe(12);
+    expect(modifierPx(48, 15 / 20)).toBe(15);
+    expect(modifierPx(24, 15 / 20)).toBe(8);
+  });
+
+  it('draws the badge at the size the slider shows', () => {
+    const add = byName.get('add')!;
+    const base = sources.regular.bell;
+    // 11px on a 24px icon is 1.1× the 10px authored badge.
+    expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(24, 11))).toContain('scale(1.1');
+    expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(48, 20))).toBe(composeSvg(base, add, 'top-left', 'regular'));
   });
 });

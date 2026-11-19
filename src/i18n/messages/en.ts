@@ -214,6 +214,7 @@ const en = {
   'inspector.code': 'Code',
   'inspector.codeStroke': 'These examples use the standard {base}px stroke. Download the SVG to keep {value}px.',
   'inspector.codeModifier': 'The packages have no component with {modifier} here, so the code shows the plain icon. Download the SVG to keep the modifier.',
+  'inspector.codeModifierSize': 'The packages draw {modifier} at {authored} on an icon this size, not {size}, so the code shows the plain icon. Download the SVG to keep this modifier size.',
   'inspector.codeInstall': 'Use <code>@fos-icons/react</code>, <code>@fos-icons/vue</code>, <code>@fos-icons/svelte</code>, or <code>@fos-icons/angular</code>. <link>Setup docs</link>.',
   'inspector.modifierSize': 'Modifier size',
   'inspector.modifierSizeReset': 'Reset',

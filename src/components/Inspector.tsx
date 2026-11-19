@@ -18,7 +18,9 @@ import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
-import { composeSvg, CORNERS, initialCorner, MODIFIER_BADGE, MODIFIER_SCALE, modifiersFor, type Corner } from '../lib/modifiers';
+import {
+  authoredModifierPx, autoModifierPx, composeSvg, CORNERS, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
+} from '../lib/modifiers';
 import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
@@ -89,12 +91,17 @@ export function Inspector({
     onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner }, preset ? base : undefined);
   };
   /**
-   * Badge size relative to the library's (1 = as authored); kept while trying
-   * other modifiers. Stored as a scale so it stays in proportion when the icon
-   * size changes; shown in pixels at the current size.
+   * Badge size follows the icon size (20px at 48px, 11px at 24px; see
+   * `autoModifierPx`). The slider adjusts it in whole px; the adjustment is kept
+   * as a ratio of the linked size (1 = linked), so it carries across icon sizes
+   * and modifiers.
    */
-  const [badgeScale, setBadgeScale] = useState<number>(MODIFIER_SCALE.default);
-  const badgePx = (scale: number) => t('customize.pxValue', { value: Math.round((MODIFIER_BADGE / 24) * size * scale) });
+  const [badgeAdjust, setBadgeAdjust] = useState(1);
+  const linkedBadgePx = autoModifierPx(size);
+  const badgeRange = modifierPxRange(size);
+  const badgeSize = modifierPx(size, badgeAdjust);
+  const badgeScale = modifierScaleFor(size, badgeSize);
+  const pxText = (value: number) => t('customize.pxValue', { value });
   const composed = useMemo(() => {
     if (!trialBadge || !librarySource) return { svg: librarySource, error: null };
     try {
@@ -169,7 +176,10 @@ export function Inspector({
   // Code examples. The packages ship one component per library icon, so a
   // modifier at a corner (and size) the library authored uses that icon's
   // component; any other combination falls back to the plain icon.
-  const packaged = trialBadge && authoredMatch && badgeScale === MODIFIER_SCALE.default ? authoredMatch : null;
+  // The packaged components draw the badge as authored, so they only match the
+  // preview when the modifier size is exactly that.
+  const packagedSize = Math.abs(badgeSize - authoredModifierPx(size)) < 1e-9;
+  const packaged = trialBadge && authoredMatch && packagedSize ? authoredMatch : null;
   const plainFallback = !!trialBadge && !packaged;
   const snippetOptions: SnippetOptions = {
     size,
@@ -287,25 +297,25 @@ export function Inspector({
                   <div className="mb-1 flex items-center justify-between text-xs">
                     <span className="text-muted">{t('inspector.modifierSize')}</span>
                     <span className="flex items-center gap-2">
-                      {badgeScale !== MODIFIER_SCALE.default && (
-                        <button type="button" onClick={() => setBadgeScale(MODIFIER_SCALE.default)} className="font-medium text-brand hover:underline">
+                      {badgeAdjust !== 1 && (
+                        <button type="button" onClick={() => setBadgeAdjust(1)} className="font-medium text-brand hover:underline">
                           {t('inspector.modifierSizeReset')}
                         </button>
                       )}
-                      <span className="font-mono tabular-nums text-ink">{badgePx(badgeScale)}</span>
+                      <span className="font-mono tabular-nums text-ink">{pxText(badgeSize)}</span>
                     </span>
                   </div>
                   <RangeSlider
                     id={`${uid}-badge-size`}
                     label={t('inspector.modifierSize')}
-                    min={MODIFIER_SCALE.min}
-                    max={MODIFIER_SCALE.max}
-                    step={MODIFIER_SCALE.step}
-                    value={badgeScale}
-                    valueText={t('inspector.modifierSizeValue', { size: badgePx(badgeScale), icon: t('customize.pxValue', { value: size }) })}
-                    onChange={setBadgeScale}
-                    marks={[0.75, 1, MODIFIER_SCALE.max]}
-                    format={badgePx}
+                    min={badgeRange.min}
+                    max={badgeRange.max}
+                    step={1}
+                    value={badgeSize}
+                    valueText={t('inspector.modifierSizeValue', { size: pxText(badgeSize), icon: pxText(size) })}
+                    onChange={(px) => setBadgeAdjust(px === linkedBadgePx ? 1 : px / linkedBadgePx)}
+                    marks={[...new Set([badgeRange.min, linkedBadgePx, badgeRange.max])]}
+                    format={pxText}
                   />
                 </div>
               )}
@@ -435,7 +445,15 @@ export function Inspector({
               <li>{t('inspector.codeStroke', { base: BASE_STROKE, value: strokeWidth })}</li>
             )}
             {plainFallback && (
-              <li>{t('inspector.codeModifier', { modifier: label('modifier', trialBadge.modifier.name, trialBadge.modifier.label) })}</li>
+              <li>
+                {authoredMatch
+                  ? t('inspector.codeModifierSize', {
+                    modifier: label('modifier', trialBadge.modifier.name, trialBadge.modifier.label),
+                    authored: pxText(Math.round(authoredModifierPx(size) * 10) / 10),
+                    size: pxText(badgeSize),
+                  })
+                  : t('inspector.codeModifier', { modifier: label('modifier', trialBadge.modifier.name, trialBadge.modifier.label) })}
+              </li>
             )}
             <li>
               {rich('inspector.codeInstall', {
