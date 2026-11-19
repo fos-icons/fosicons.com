@@ -7,7 +7,7 @@ import { Layout } from '../src/components/Layout';
 import { resetSectionState } from '../src/components/Customize';
 import { resetExportRows } from '../src/components/ExportPanel';
 import { ToastProvider } from '../src/components/ui';
-import { catalog, resetStyleCache } from '../src/lib/catalog';
+import { artworkDirectory, catalog, resetStyleCache } from '../src/lib/catalog';
 import { ThemeProvider } from '../src/lib/theme';
 import { IconsPage } from '../src/pages/IconsPage';
 import IconPage from '../src/pages/IconPage';
@@ -78,7 +78,33 @@ describe('Icons page', () => {
     expect(screen.getByText(`${catalog.icons.length.toLocaleString('en-US')} icons`)).toBeTruthy();
     await screen.findAllByRole('button', { name: 'search' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toMatch(/regular\.json$/);
+    expect(fetchMock.mock.calls[0][0]).toBe(`/${artworkDirectory}/regular.json`);
+  });
+
+  it('keeps the active grid available when another style’s artwork request fails', async () => {
+    vi.stubGlobal('IntersectionObserver', class {
+      observe() {}
+      disconnect() {}
+    });
+    let finishRegular!: (response: Response) => void;
+    const pendingRegular = new Promise<Response>((resolve) => { finishRegular = resolve; });
+    fetchMock.mockImplementationOnce(() => pendingRegular);
+
+    const user = userEvent.setup();
+    renderAt('/?q=cloud&icon=cloud');
+    await waitFor(() => expect(fetchMock.mock.calls[0]?.[0]).toMatch(/regular\/\d+\.json$/));
+    const [toolbarStyle] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
+    await user.click(within(toolbarStyle).getByRole('radio', { name: 'Duocolor' }));
+    await screen.findByRole('img', { name: /cloud, Duocolor, preview/ });
+    await act(async () => { finishRegular(new Response(null, { status: 503 })); });
+    expect(screen.queryByText(/Could not load Regular icons/)).toBeNull();
+    expect(screen.getByRole('list', { name: 'Duocolor icons' })).toBeTruthy();
+
+    await user.click(within(toolbarStyle).getByRole('radio', { name: 'Regular' }));
+    await screen.findByText(/Could not load Regular icons/);
+    await user.click(screen.getByRole('button', { name: 'Try again' }));
+    await screen.findByRole('img', { name: /cloud, Regular, preview/ });
+    expect(screen.queryByText(/Could not load Regular icons/)).toBeNull();
   });
 
   it('filters by search and writes the query to the URL', async () => {
@@ -552,7 +578,7 @@ describe('Inspector sections (desktop)', () => {
   });
 
   it('says when filled parts of an icon keep their weight as the stroke changes', async () => {
-    renderAt('/?icon=cloud-moon');
+    renderAt('/?icon=alert-circle');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     // Default 48px Auto stroke is 0.85px, not the drawn 1.25px.
     expect(await within(pane).findByText(/drawn as filled shapes/)).toBeTruthy();

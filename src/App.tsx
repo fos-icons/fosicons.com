@@ -36,6 +36,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 <Route path="docs" element={<DocsPage />} />
                 {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
                 <Route path="icons/:name" element={<IconPage />} />
+                <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />
                 <Route path="categories/:slug" element={<CategoryPage />} />
                 <Route path="react-icons" element={<FrameworkPage framework="react" />} />
                 <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />

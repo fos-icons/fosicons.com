@@ -147,7 +147,7 @@ export function IconsPage() {
   const [params, setParams] = useSearchParams();
   const state = useMemo(() => parseState(params.toString(), config), [params]);
   const [svgs, setSvgs] = useState<Record<string, Record<string, string>>>({});
-  const [error, setError] = useState<string | null>(null);
+  const [artworkErrors, setArtworkErrors] = useState<Record<string, string | undefined>>({});
   const [attempt, setAttempt] = useState(0);
   const [look, setLook] = useState<Look>(DEFAULT_LOOK);
   const [collapsed, setCollapsedState] = useState(readCollapsed);
@@ -167,6 +167,11 @@ export function IconsPage() {
   /** The artwork style actually drawn: a core style, or Regular/Solid within Brands. */
   const drawStyle: StyleId = brandsView ? brandStyle : state.style as StyleId;
   const svgKey = brandsView ? `brands:${brandStyle}` : drawStyle;
+
+  const error = artworkErrors[svgKey];
+  const reportArtworkError = useCallback((key: string, cause: unknown) => {
+    setArtworkErrors((errors) => ({ ...errors, [key]: errorText(cause, i18n, 'icons.loadError') }));
+  }, [i18n]);
 
   const update = useCallback((patch: Partial<CatalogState>, replace = false) => {
     // A modifier belongs to the icon it was tried on: opening another icon drops it.
@@ -203,22 +208,23 @@ export function IconsPage() {
           mergedChunks.current.add(key);
           setSvgs((s) => ({ ...s, [drawStyle]: { ...s[drawStyle], ...data } }));
         })
-        .catch((e: unknown) => setError(errorText(e, i18n, 'icons.loadError')));
+        .catch((e: unknown) => reportArtworkError(drawStyle, e));
     }
-  }, [lazyArtwork, drawStyle, attempt, i18n]); // eslint-disable-line react-hooks/exhaustive-deps -- a retry re-asks for what's in view
+  }, [lazyArtwork, drawStyle, attempt, reportArtworkError]); // eslint-disable-line react-hooks/exhaustive-deps -- a retry re-asks for what's in view
 
   useEffect(() => {
     if (lazyArtwork || (brandsView && brandEntries.length === 0)) return;
     let cancelled = false;
-    setError(null);
     (brandsView ? loadBrands(brandStyle) : loadStyle(drawStyle))
       .then((data) => { if (!cancelled) setSvgs((s) => ({ ...s, [svgKey]: data })); })
-      .catch((e: unknown) => { if (!cancelled) setError(errorText(e, i18n, 'icons.loadError')); });
+      .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
     return () => { cancelled = true; };
-  }, [lazyArtwork, brandsView, brandStyle, drawStyle, svgKey, attempt, i18n]);
+  }, [lazyArtwork, brandsView, brandStyle, drawStyle, svgKey, attempt, reportArtworkError]);
 
-  // A retry clears the failed chunks so the grid asks for them again.
-  useEffect(() => { if (attempt) setError(null); }, [attempt]);
+  const retryArtwork = () => {
+    setArtworkErrors((errors) => ({ ...errors, [svgKey]: undefined }));
+    setAttempt((a) => a + 1);
+  };
 
   // "clock with sparkle": search for the icon part and open the best match with that modifier.
   // The modifier list is large: load it only for a connector, or a multi-word search with no plain match ("edit clock").
@@ -445,7 +451,7 @@ export function IconsPage() {
         ) : error ? (
           <div role="alert" className="rounded-2xl border border-line bg-surface p-8 text-center">
             <p className="font-medium">{error}</p>
-            <Button className="mt-4" onClick={() => setAttempt((a) => a + 1)}>{t('icons.tryAgain')}</Button>
+            <Button className="mt-4" onClick={retryArtwork}>{t('icons.tryAgain')}</Button>
           </div>
         ) : results.length ? (
           <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>

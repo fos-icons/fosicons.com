@@ -44,7 +44,7 @@ export async function buildFullSet(
     const slug = STYLE_META[style].slug;
     for (const icon of catalog.icons) {
       const source = maps[i][icon.name];
-      if (!source) continue;
+      if (!source) throw new LocalizedError('error.missingArtwork', { style: STYLE_META[style].label, icon: icon.name });
       const svg = buildSvg(source, {
         ...(keepColors ? { primary: 'currentColor', keepColors: true } : exportColors(source, style, look, theme)),
         size: look.size,

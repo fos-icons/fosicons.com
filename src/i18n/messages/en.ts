@@ -327,6 +327,7 @@ const en = {
   'error.loadModifiersStatus': 'Could not load modifiers ({status})',
   'error.loadStyle': 'Could not load {style} icons ({status})',
   'error.loadBrand': 'Could not load {name} ({status})',
+  'error.missingArtwork': 'The {style} artwork for {icon} is missing. Reload the page and try again.',
   'error.loadLicense': 'Could not load the license ({status})',
   'error.render': 'The browser could not render this SVG as an image.',
   'error.canvas': 'Canvas is unavailable in this browser.',
