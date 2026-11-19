@@ -18,8 +18,8 @@ const en = {
   // Page metadata (titles ≤ 60 characters, descriptions ~150)
   'meta.home.title': 'Fos Icons — Find the right icon, then ship it',
   'meta.home.description': '{icons}+ free, {license}-licensed SVG icons in {styles}. Search, recolor, and resize them, then download SVG or PNG, or use them in React, Vue, and Figma.',
-  'meta.docs.title': 'Docs — Use Fos Icons in SVG, React, Vue, Svelte, and Figma',
-  'meta.docs.description': 'How to use Fos Icons: SVG, React, Vue, Svelte, Figma, four styles, colors, sizes, {modifiers} modifiers, accessibility, licensing, and privacy.',
+  'meta.docs.title': 'Fos Icons Docs — SVG, React, Vue, Svelte, Angular, Figma',
+  'meta.docs.description': 'How to use Fos Icons: SVG, React, Vue, Svelte, Angular, Figma, four styles, colors, sizes, {modifiers} modifiers, accessibility, licensing, and privacy.',
   'meta.brands.title': 'Brand icons — Fos Icons',
   'meta.brands.description': '{brands} brand logos, including social networks, Google Chrome, and Microsoft Edge, Teams, and Windows, shown as their owners provide them. Not covered by the {license} license.',
   'meta.notFound.title': 'Page not found — Fos Icons',

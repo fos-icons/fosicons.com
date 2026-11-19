@@ -60,6 +60,23 @@ describe('Docs page', () => {
     expect(await navigator.clipboard.readText()).toBe(code);
   });
 
+  it('lists Angular in the sidebar and copies a standalone example', async () => {
+    const user = userEvent.setup();
+    render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
+    const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    expect(within(nav).getByRole('link', { name: 'Angular' }).getAttribute('href')).toBe('#angular');
+    const section = document.getElementById('angular')!;
+    expect(section.textContent).toContain('npm pack');
+    expect(within(section).getByRole('link', { name: 'fos-icons/angular-fos' }).getAttribute('href'))
+      .toBe('https://github.com/fos-icons/angular-fos');
+    const block = section.querySelector<HTMLElement>('.code-block[data-lang="ts"]')!;
+    const code = block.querySelector('code')!.textContent;
+    expect(code).toContain('imports: [CameraDuocolor]');
+    expect(code).toContain('<svg fos-camera-duocolor [size]="32"');
+    await user.click(within(block).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code);
+  });
+
   it('filters sections and the side nav with the search box', async () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });

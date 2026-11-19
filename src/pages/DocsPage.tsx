@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
+import { angularSnippet } from '../lib/react-snippet';
 import { CodeBlock } from '../components/CodeBlock';
 import { useToast } from '../components/ui';
 import { createPortal } from 'react-dom';
@@ -21,6 +22,7 @@ const SECTIONS = [
   ['react', 'React'],
   ['vue', 'Vue'],
   ['svelte', 'Svelte'],
+  ['angular', 'Angular'],
   ['figma', 'Figma'],
   ['colors', 'Colors'],
   ['sizes', 'Sizes'],
@@ -271,7 +273,7 @@ export default function DocsPage() {
         <header>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
           <p className="mt-3 text-base text-muted">
-            Use Fos Icons as plain SVG, in React, Vue, or Svelte, or in Figma. {nf.format(ICONS_ROUNDED)}+ icons,
+            Use Fos Icons as plain SVG, in React, Vue, Svelte, Angular, or Figma. {nf.format(ICONS_ROUNDED)}+ icons,
             each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
           </p>
         </header>
@@ -364,6 +366,24 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/svelte';
             <li>Icons are decorative by default. Give meaningful icons a <code>title</code> or <code>aria-label</code>, and label icon-only buttons on the button itself.</li>
             <li>The package uses JavaScript icon modules and one shared Svelte renderer, not thousands of <code>.svelte</code> files. Title, mask, and clip-path IDs stay unique and stable during hydration.</li>
             <li>Style imports such as <code>@fos-icons/svelte/filled</code> and individual imports such as <code>@fos-icons/svelte/regular/camera</code> are available. Prefer one import style consistently in your app.</li>
+          </ul>
+        </Section>
+
+        <Section id="angular" title="Angular">
+          <p><code>@fos-icons/angular</code> supports Angular 20 through 22. The package provides standalone components with typed inputs and tree-shakeable imports. Get the source from <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/angular-fos">fos-icons/angular-fos</a>.</p>
+          <p>To install a local build, clone the source and create a tarball.</p>
+          <Code lang="sh">{`git clone https://github.com/fos-icons/angular-fos.git
+cd angular-fos
+npm ci
+npm pack`}</Code>
+          <p>From your Angular application, install the tarball and add the icon component to your component&apos;s <code>imports</code>.</p>
+          <Code lang="sh">{`npm install /path/to/angular-fos/fos-icons-angular-0.1.0.tgz`}</Code>
+          <Code lang="ts">{angularSnippet('camera', 'duocolor', { size: 32, color: null, primary: '#245B9E', secondary: '#60A5FA' })}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Put the icon selector on a native <code>svg</code> element. Use bindings such as <code>[size]="32"</code> for numbers, or pass a CSS size such as <code>size="2em"</code>.</li>
+            <li>Customize colors with <code>color</code>, <code>primaryColor</code>, <code>secondaryColor</code>, and <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
+            <li>Icons are decorative by default. Use <code>title</code> or <code>label</code> for a meaningful standalone icon. Give an icon-only button its own accessible name.</li>
+            <li>Use <code>@fos-icons/angular/filled</code> for a style entry point or <code>@fos-icons/angular/regular/camera</code> for an individual default import.</li>
           </ul>
         </Section>
 
