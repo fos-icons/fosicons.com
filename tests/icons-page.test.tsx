@@ -14,6 +14,7 @@ import IconPage from '../src/pages/IconPage';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { styleSvgs } from './helpers';
+import { brands } from '../src/lib/brands';
 
 let location = '';
 function Spy() {
@@ -75,12 +76,12 @@ afterEach(() => { cleanup(); resetSectionState(); resetExportRows(); vi.unstubAl
 describe('Icons page', () => {
   it('shows the full catalog count from source data and loads only one style', async () => {
     renderAt('/');
-    expect(screen.getByText(`${catalog.icons.length.toLocaleString('en-US')} icons`)).toBeTruthy();
+    expect(screen.getByText(`${(catalog.icons.length + brands.approved.length).toLocaleString('en-US')} icons`)).toBeTruthy();
     const headings = within(screen.getByRole('list', { name: 'Regular icons' })).getAllByRole('heading');
     expect(headings.slice(0, 4).map((heading) => heading.textContent)).toEqual(['Essentials', 'AI & agents', 'Time & calendar', 'Interfaces']);
     await screen.findAllByRole('button', { name: 'search' });
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe(`/${artworkDirectory}/regular.json`);
+    const artwork = fetchMock.mock.calls.map(([url]) => String(url)).filter((url) => !url.includes('brands/'));
+    expect(artwork).toEqual([`/${artworkDirectory}/regular.json`]);
   });
 
   it('keeps the active grid available when another style’s artwork request fails', async () => {
@@ -169,9 +170,9 @@ describe('Icons page', () => {
     expect(location).toBe('?q=calendar');
   });
 
-  it('offers the other catalog when only it has matches', () => {
+  it('finds brand marks in the same grid as icons', async () => {
     renderAt('/?q=spotify');
-    expect(screen.getByRole('button', { name: 'Show 1 in Brands' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'spotify' })).toBeTruthy();
   });
 
   it('restores style, category, and the selected icon from a shared URL', async () => {
@@ -402,25 +403,15 @@ describe('Icons page', () => {
     expect(footer.textContent).not.toMatch(/Library [0-9a-f]{7}|licensed separately|MIT licensed/);
   });
 
-  it('offers Brands as the last style option with the approved marks', async () => {
-    const user = userEvent.setup();
-    renderAt('/?q=twitter');
-    const switcher = screen.getByRole('radiogroup', { name: 'Icon style' });
-    const labels = within(switcher).getAllByRole('radio').map((r) => r.textContent);
-    expect(labels).toEqual(['Regular', 'Solid', 'Duocolor', 'Duotone', 'Brands']);
-    await user.click(within(switcher).getByRole('radio', { name: 'Brands' }));
-    expect(location).toBe('?q=twitter&style=brands');
-    expect(screen.getByText('All brand icons belong to their respective owners.')).toBeTruthy();
-    expect(screen.getByRole('searchbox', { name: 'Search brands' })).toBeTruthy();
-    // No brand ships Solid yet, so there is no Regular/Solid switch.
-    expect(screen.queryByRole('radiogroup', { name: 'Brand style' })).toBeNull();
-    // X is found by its former name.
-    const grid = screen.getByRole('list', { name: 'Brand icons' });
-    await vi.waitFor(() => expect(grid.querySelector('svg')).toBeTruthy());
-    expect(within(grid).getAllByRole('button').map((b) => b.getAttribute('aria-label'))).toEqual(['x']);
-  });
-
-  it('namespaces brand IDs so marks sharing gradient IDs do not collide', async () => {
+  it('lists Brands as the last category, not a style, and opens old Brands links there', async () => {
+    renderAt('/?style=brands');
+    const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
+    const labels = within(switcher).getAllByRole('radio').map((radio) => radio.textContent);
+    expect(labels).toEqual(['Regular', 'Solid', 'Duocolor', 'Duotone']);
+    const category = screen.getByRole('combobox', { name: 'Category' }) as HTMLSelectElement;
+    expect(category.value).toBe('Brands');
+    expect([...category.options].at(-1)?.value).toBe('Brands');
+    expect(await screen.findByRole('button', { name: 'spotify' })).toBeTruthy();
     const { loadBrands } = await import('../src/lib/brands');
     const svgs = await loadBrands('regular');
     expect(Object.keys(svgs)).toHaveLength(32);

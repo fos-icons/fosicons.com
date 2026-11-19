@@ -11,7 +11,7 @@ import { useModifiers } from '../components/ModifierPicker';
 import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, UiIcon } from '../components/ui';
-import { availableBrandStyles, brandCategories, brandEntries, hasBrandStyle, loadBrands } from '../lib/brands';
+import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, loadBrandMarks } from '../lib/brands';
 import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
@@ -26,15 +26,18 @@ import {
   parseState, serializeState, type CatalogState, type UrlStateConfig, type View,
 } from '../lib/url-state';
 
-const coreIndex = createIndex(catalog.icons);
-const browseIndex = createIndex(orderBrowseIcons(catalog.icons));
-const browseCategories = [...catalog.categories].sort((a, b) => compareBrowseCategories(a.name, b.name));
-const brandIndex = createIndex(brandEntries);
-const brandsByName = new Map(brandEntries.map((b) => [b.name, b]));
+/** Core icons and brand marks share one catalog; marks are the Brands category. */
+const allEntries = [...catalog.icons, ...brandCatalogEntries];
+const coreIndex = createIndex(allEntries);
+const browseIndex = createIndex(orderBrowseIcons(allEntries));
+const browseCategories = [...catalog.categories, ...(brandCatalogEntries.length ? [{ name: BRANDS_CATEGORY, count: brandCatalogEntries.length }] : [])]
+  .sort((a, b) => compareBrowseCategories(a.name, b.name));
+const brandsByName = new Map(brandCatalogEntries.map((b) => [b.name, b]));
 const config: UrlStateConfig = {
   styles: catalog.styles,
-  core: { categories: catalog.categories.map((c) => c.name), icons: new Set(iconsByName.keys()) },
-  brands: { categories: brandCategories.map((c) => c.name), icons: new Set(brandsByName.keys()) },
+  core: { categories: browseCategories.map((c) => c.name), icons: new Set([...iconsByName.keys(), ...brandsByName.keys()]) },
+  /** Brand names, so URL parsing can refuse modifiers on a mark. */
+  brands: { categories: [], icons: new Set(brandsByName.keys()) },
 };
 const COLLAPSE_KEY = 'fos-pane-collapsed';
 
@@ -164,13 +167,11 @@ export function IconsPage() {
   const { resolved: theme } = useTheme();
   useSlashToFocus(searchRef);
 
-  const brandsView = state.style === 'brands';
-  const kind = brandsView ? 'brand' as const : 'core' as const;
-  /** A shared Solid link falls back to Regular while no brand ships Solid. */
-  const brandStyle = availableBrandStyles.includes(state.brandStyle) ? state.brandStyle : availableBrandStyles[0] ?? 'regular';
-  /** The artwork style actually drawn: a core style, or Regular/Solid within Brands. */
-  const drawStyle: StyleId = brandsView ? brandStyle : state.style as StyleId;
-  const svgKey = brandsView ? `brands:${brandStyle}` : drawStyle;
+  /** Brands are a category of the one catalog now, not a separate view. */
+  const brandsView = false;
+  const kind = 'core' as const;
+  const drawStyle: StyleId = state.style === 'brands' ? catalog.styles[0] : state.style;
+  const svgKey = drawStyle;
 
   const error = artworkErrors[svgKey];
   const reportArtworkError = useCallback((key: string, cause: unknown) => {
@@ -189,21 +190,18 @@ export function IconsPage() {
   }, []);
   const changeLook = useCallback((patch: Partial<Look>) => setLook((l) => ({ ...l, ...patch })), []);
 
-  // Brand marks are shown as provided, so dark ones get a light backing tile
-  // in the dark theme (grid, side pane, and sheet) rather than being recolored.
-  useEffect(() => {
-    document.documentElement.toggleAttribute('data-brand-marks', brandsView);
-    return () => document.documentElement.removeAttribute('data-brand-marks');
-  }, [brandsView]);
 
   // Core artwork loads in chunks as icons near the viewport (see IconGrid's
   // onNeed); brands are few and load at once. Without IntersectionObserver
   // (old browsers, tests) the whole style loads in one request instead.
   const lazyArtwork = !brandsView && typeof IntersectionObserver !== 'undefined';
   const mergedChunks = useRef(new Set<string>());
+  const [brandsInView, setBrandsInView] = useState(false);
   const need = useCallback((names: Iterable<string>) => {
     if (!lazyArtwork) return;
-    for (const chunk of chunksFor(names)) {
+    const list = [...names];
+    if (list.some(isBrand)) setBrandsInView(true);
+    for (const chunk of chunksFor(list)) {
       const key = `${drawStyle}/${chunk}`;
       if (mergedChunks.current.has(key)) continue;
       loadIconChunk(drawStyle, chunk)
@@ -217,13 +215,13 @@ export function IconsPage() {
   }, [lazyArtwork, drawStyle, attempt, reportArtworkError]); // eslint-disable-line react-hooks/exhaustive-deps -- a retry re-asks for what's in view
 
   useEffect(() => {
-    if (lazyArtwork || (brandsView && brandEntries.length === 0)) return;
+    if (lazyArtwork) return;
     let cancelled = false;
-    (brandsView ? loadBrands(brandStyle) : loadStyle(drawStyle))
+    loadStyle(drawStyle)
       .then((data) => { if (!cancelled) setSvgs((s) => ({ ...s, [svgKey]: data })); })
       .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
     return () => { cancelled = true; };
-  }, [lazyArtwork, brandsView, brandStyle, drawStyle, svgKey, attempt, reportArtworkError]);
+  }, [lazyArtwork, drawStyle, svgKey, attempt, reportArtworkError]);
 
   /** A new deploy replaced this page's artwork: only a reload can fetch it. */
   const artworkUpdated = error === t('error.artworkUpdated');
@@ -249,21 +247,15 @@ export function IconsPage() {
   const searchQ = phrase?.iconQuery ?? state.q;
 
   const browsingCore = !brandsView && !searchQ.trim();
-  const index = brandsView ? brandIndex : browsingCore ? browseIndex : coreIndex;
-  const results = useMemo(() => {
-    const found = search(index, searchQ, state.category);
-    return brandsView ? found.filter((e) => hasBrandStyle(e.name, brandStyle)) : found;
-  }, [index, searchQ, state.category, brandsView, brandStyle]);
+  const index = browsingCore ? browseIndex : coreIndex;
+  const results = useMemo(() => search(index, searchQ, state.category), [index, searchQ, state.category]);
   const elsewhere = useMemo(
     () => (state.category && searchQ && results.length === 0 ? search(index, searchQ).length : 0),
     [index, searchQ, state.category, results.length],
   );
   const noResults = !!searchQ.trim() && results.length === 0;
   const suggestions = useMemo(() => (noResults ? suggest(index, searchQ) : []), [noResults, index, searchQ]);
-  const otherCatalog = useMemo(
-    () => (noResults ? search(brandsView ? coreIndex : brandIndex, searchQ).length : 0),
-    [noResults, brandsView, searchQ],
-  );
+  const otherCatalog = 0;
 
   /** The icon a modifier phrase opens: the best result that can take that modifier. */
   const phraseTarget = useMemo(() => {
@@ -290,13 +282,39 @@ export function IconsPage() {
     [state.modifier, state.corner],
   );
 
-  const selected = state.icon ? (brandsView ? brandsByName.get(state.icon) : iconsByName.get(state.icon)) ?? null : null;
+  const selected = state.icon ? iconsByName.get(state.icon) ?? brandsByName.get(state.icon) ?? null : null;
+  const selectedBrand = !!selected && isBrand(selected.name);
+
+  // Brand marks load once, the first time one is on screen or open.
+  const [brandMarks, setBrandMarks] = useState<Record<string, string> | null>(null);
+  const brandsNeeded = selectedBrand || multi.some(isBrand) || brandsInView || (!lazyArtwork && results.some((r) => isBrand(r.name)));
+  useEffect(() => {
+    if (!brandsNeeded || brandMarks) return;
+    let cancelled = false;
+    loadBrandMarks()
+      .then((marks) => { if (!cancelled) setBrandMarks(marks); })
+      .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
+    return () => { cancelled = true; };
+  }, [brandsNeeded, brandMarks, svgKey, attempt, reportArtworkError]);
   // The pane and selection need their artwork even when scrolled out of view.
   useEffect(() => { need([...multi, ...(selected ? [selected.name] : [])]); }, [need, multi, selected]);
-  const styleSvgs = svgs[svgKey] ?? null;
+  const coreSvgs = svgs[svgKey] ?? null;
+  /** Artwork by name: this style's icons plus the brand marks, which ship in Regular only. */
+  const styleSvgs = useMemo(
+    () => (coreSvgs || brandMarks ? {
+      ...coreSvgs,
+      ...Object.fromEntries(Object.entries(brandMarks ?? {}).map(([k, v]) => [k, v.replace('<svg', '<svg data-brand')])),
+    } : null),
+    [coreSvgs, brandMarks],
+  );
+  // Marks keep their own colors on Regular; on the other styles they show as
+  // muted monochrome marks, since a brand has no Solid or duo artwork.
+  const muteBrands = drawStyle !== catalog.styles[0];
   const gridSvgs = useMemo(
-    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([k, v]) => [k, prepareGridSvg(v)])) : null),
-    [styleSvgs],
+    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([k, v]) => [k, isBrand(k)
+      ? (muteBrands ? v.replace('<svg data-brand', '<svg data-brand data-brand-muted') : v)
+      : prepareGridSvg(v)])) : null),
+    [styleSvgs, muteBrands],
   );
 
   const multiActive = multi.length >= 2;
@@ -340,7 +358,7 @@ export function IconsPage() {
     });
   }, [state.icon, update]);
 
-  const categories = brandsView ? brandCategories : browseCategories;
+  const categories = browseCategories;
   const counted = t(brandsView ? 'icons.brandCount' : 'icons.count', { count: results.length });
   const query = searchQ.trim();
   const categoryName = state.category ? label('category', state.category, state.category) : '';
@@ -348,10 +366,8 @@ export function IconsPage() {
     : query ? t('icons.summaryFor', { results: counted, query })
       : categoryName ? t('icons.summaryIn', { results: counted, category: categoryName })
         : counted;
-  const viewOptions: { value: View; label: string; title?: string }[] = [
-    ...catalog.styles.map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`) })),
-    { value: 'brands', label: t('style.brands'), title: t('style.brands.description') },
-  ];
+  const viewOptions: { value: View; label: string; title?: string }[] = catalog.styles
+    .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`) }));
   const tips = brandsView
     ? [t('icons.searchBrands')]
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
@@ -391,26 +407,10 @@ export function IconsPage() {
         <Segmented
           fill
           label={t('icons.styleSwitcher')}
-          value={state.style}
-          onChange={(style) => {
-            if ((style === 'brands') === brandsView) {
-              update({ style });
-              return;
-            }
-            // Core icons and brands are different catalogs: drop what does not carry over.
-            setMulti([]);
-            update({ style, category: null, icon: null });
-          }}
+          value={drawStyle}
+          onChange={(style) => update({ style })}
           options={viewOptions}
         />
-        {brandsView && availableBrandStyles.length > 1 && (
-          <Segmented
-            label={t('icons.brandStyle')}
-            value={brandStyle}
-            onChange={(brandStyle) => update({ brandStyle })}
-            options={availableBrandStyles.map((s) => ({ value: s, label: t(`style.${s}`) }))}
-          />
-        )}
         {(!brandsView || brandEntries.length > 0) && (
           <p className="sr-only" aria-live="polite" aria-atomic="true">{summary}</p>
         )}
@@ -438,7 +438,7 @@ export function IconsPage() {
         </div>
       </div>
 
-      {brandsView && (
+      {(state.category === BRANDS_CATEGORY || selectedBrand) && (
         <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-sunken px-3 py-1.5 text-sm font-medium text-ink">
           <UiIcon name="info-circle" className="size-4 text-muted" />
           {t('icons.brandDisclaimer')}
@@ -505,7 +505,7 @@ export function IconsPage() {
             )}
           </>
         )}
-        expandTo={selected && !brandsView && !multiActive
+        expandTo={selected && !selectedBrand && !multiActive
           ? `${iconPath(selected.name)}${drawStyle === catalog.styles[0] ? '' : `?style=${STYLE_META[drawStyle].slug}`}`
           : undefined}
       >
@@ -523,15 +523,15 @@ export function IconsPage() {
           />
         ) : selected ? (
           <Inspector
-            key={`${kind}:${selected.name}`}
-            kind={kind}
+            key={`${selectedBrand ? 'brand' : 'core'}:${selected.name}`}
+            kind={selectedBrand ? 'brand' : 'core'}
             icon={selected}
-            style={drawStyle}
-            styles={brandsView ? availableBrandStyles.filter((s) => hasBrandStyle(selected.name, s)) : catalog.styles}
+            style={selectedBrand ? 'regular' : drawStyle}
+            styles={selectedBrand ? ['regular'] : catalog.styles}
             source={styleSvgs?.[selected.name]}
             look={look}
             onLookChange={changeLook}
-            onStyleChange={(style) => update(brandsView ? { brandStyle: style as 'regular' | 'filled' } : { style })}
+            onStyleChange={(style) => update({ style })}
             onSelectIcon={(icon) => update({ icon })}
             onClose={close}
             headingId="pane-heading"
