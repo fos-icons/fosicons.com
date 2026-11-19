@@ -487,7 +487,7 @@ export function IconsPage() {
         focusKey={selected?.name ?? null}
         quickControls={(
           <>
-            <QuickPopover icon="expand" label={t('customize.size')}>
+            <QuickPopover icon="ruler" label={t('customize.size')}>
               <SizeControl compact look={look} onChange={changeLook} />
             </QuickPopover>
             {strokeAdjustable(drawStyle, kind) && (
