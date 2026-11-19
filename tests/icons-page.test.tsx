@@ -559,7 +559,7 @@ describe('Search tips', () => {
 describe('Inspector sections (desktop)', () => {
   beforeEach(useDesktop);
 
-  it('keeps React, Vue, and Svelte usage collapsed until expanded, with copyable tabs', async () => {
+  it('keeps framework usage collapsed until expanded, with copyable tabs', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=search');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
@@ -582,6 +582,12 @@ describe('Inspector sections (desktop)', () => {
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
     expect(await navigator.clipboard.readText()).toBe(code());
     expect(localStorage.getItem('fos:code-tab')).toBe('svelte');
+    await user.click(within(section).getByRole('tab', { name: 'Angular' }));
+    expect(code()).toContain("import { SearchRegular } from '@fos-icons/angular';");
+    expect(code()).toContain('<svg fos-search-regular [size]="48"></svg>');
+    await user.click(within(section).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code());
+    expect(localStorage.getItem('fos:code-tab')).toBe('angular');
     await user.click(within(section).getByRole('tab', { name: 'React' }));
     // Syntax colors arrive once the highlighter loads.
     await vi.waitFor(() => expect(pane.querySelector('.code-block .hljs-keyword')?.textContent).toBe('import'));
