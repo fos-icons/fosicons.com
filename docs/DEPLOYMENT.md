@@ -2,7 +2,7 @@
 
 `pnpm run build` writes a static site to `dist/`. No server code is needed,
 and the build doesn't need a fos-icons checkout (the synced data is
-committed). Use Node 24 (`.nvmrc`, `engines`) and pnpm (`packageManager`); dependencies
+committed). Use Node 26 (`.nvmrc`, `engines`) and pnpm (`packageManager`); dependencies
 install from the public npm registry (`.npmrc`). `pnpm-workspace.yaml` allows
 esbuild's install script, which fetches Vite's native bundler binary.
 

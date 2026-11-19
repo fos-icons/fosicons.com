@@ -23,7 +23,7 @@ synchronized library. The site builds to static files.
 
 ## Development
 
-Node.js 24 (`.nvmrc`) and pnpm (the version is pinned in `package.json`;
+Node.js 26 (`.nvmrc`) and pnpm (the version is pinned in `package.json`;
 run `corepack enable` once, or install pnpm globally).
 
 ```sh
