@@ -60,10 +60,10 @@ export const CORNER_LABELS: Record<Corner, string> = {
   'bottom-right': 'Bottom right',
 };
 
-/** Where a modifier starts: its library default, else bottom right, else its only corner. */
+/** Where a modifier starts: bottom right when supported, otherwise its library default or first supported corner. */
 export function initialCorner(modifier: ModifierAsset): Corner {
-  if (modifier.defaultPosition && modifier.positions[modifier.defaultPosition]) return modifier.defaultPosition;
   if (modifier.positions['bottom-right']) return 'bottom-right';
+  if (modifier.defaultPosition && modifier.positions[modifier.defaultPosition]) return modifier.defaultPosition;
   return CORNERS.find((c) => modifier.positions[c])!;
 }
 

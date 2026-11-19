@@ -1,5 +1,6 @@
 import { LocalLink, useI18n } from '../i18n';
 import { copyText, downloadBlob, svgBlob } from '../lib/export';
+import { TeachingTip } from './TeachingTip';
 import { RailActions, RailContext } from './QuickTools';
 import { iconPath } from '../lib/icon-pages';
 import { errorText, LocalizedError } from '../i18n/errors';
@@ -280,6 +281,7 @@ export function Inspector({
                   </span>
                 )}
               />
+              <TeachingTip tip="modifier" />
               {trialBadge && (
                 <div className="mt-4">
                   <div className="mb-1 flex items-center justify-between text-xs">
@@ -307,7 +309,7 @@ export function Inspector({
                   />
                 </div>
               )}
-              <div aria-live="polite" className="mt-3 text-xs leading-relaxed text-faint">
+              <div aria-live="polite" className="text-xs leading-relaxed text-faint [&>p]:mt-3">
                 {composed.error ? (
                   <p className="text-danger">{composed.error}</p>
                 ) : preset && icon.composition ? (
@@ -318,17 +320,7 @@ export function Inspector({
                       link: (text) => <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(authoredMatch)}>{text}</button>,
                     }, { name: authoredMatch })}
                   </p>
-                ) : badge ? (
-                  <p>
-                    {t('inspector.previewNote', { modifier: label('modifier', badge.modifier.name, badge.modifier.label), corner: t(`corner.${badge.corner}.inline`) })}
-                    {authored.map.size > 0 && t('inspector.dotted')}
-                  </p>
-                ) : (
-                  <p>
-                    {t('inspector.pickModifier')}
-                    {authored.map.size > 0 && t('inspector.dotted')}
-                  </p>
-                )}
+                ) : null}
               </div>
               {family && (
                 <div className="mt-3">

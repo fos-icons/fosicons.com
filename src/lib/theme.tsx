@@ -1,12 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
-export type ThemePreference = 'system' | 'light' | 'dark';
+export type SiteTheme = 'light' | 'dark' | 'ivory';
+export type ThemePreference = 'system' | SiteTheme;
 const KEY = 'fos-theme';
 
 function readPreference(): ThemePreference {
   try {
     const value = localStorage.getItem(KEY);
-    return value === 'light' || value === 'dark' ? value : 'system';
+    return value === 'light' || value === 'dark' || value === 'ivory' ? value : 'system';
   } catch {
     return 'system';
   }
@@ -16,7 +17,7 @@ const media = () => window.matchMedia('(prefers-color-scheme: dark)');
 
 interface ThemeValue {
   preference: ThemePreference;
-  resolved: 'light' | 'dark';
+  resolved: SiteTheme;
   setPreference: (value: ThemePreference) => void;
 }
 
@@ -37,6 +38,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', resolved === 'dark');
+    document.documentElement.classList.toggle('ivory', resolved === 'ivory');
   }, [resolved]);
 
   const setPreference = useCallback((value: ThemePreference) => {

@@ -220,10 +220,13 @@ describe('Icons page', () => {
     expect(screen.getByRole('button', { name: /^Lock modifier/ }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Bottom right' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="12.75" y="12.75"/);
-    expect(screen.getByText(/Preview, not a library icon/)).toBeTruthy();
 
     await user.click(screen.getByRole('button', { name: 'Top left' }));
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
+    await user.click(screen.getByRole('tab', { name: 'Actions' }));
+    await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
+    expect(screen.getByRole('button', { name: 'Bottom right' }).getAttribute('aria-pressed')).toBe('true');
+
 
     // File-type and image-quality modifiers only apply to files, folders, and images.
     expect(screen.queryByRole('tab', { name: 'Files' })).toBeNull();
@@ -609,12 +612,16 @@ describe('Inspector sections (desktop)', () => {
     renderAt(`/?style=${style}`);
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
-    const variant = within(pane).getByRole('radiogroup', { name: 'Light or dark' });
+    const variant = within(pane).getByRole('radiogroup', { name: 'Site appearance' });
     await user.click(within(variant).getByRole('radio', { name: 'Dark' }));
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(localStorage.getItem('fos-theme')).toBe('dark');
     await user.click(within(variant).getByRole('radio', { name: 'Light' }));
     expect(document.documentElement.classList.contains('dark')).toBe(false);
+    await user.click(within(variant).getByRole('radio', { name: 'Ivory' }));
+    expect(document.documentElement.classList.contains('ivory')).toBe(true);
+    expect(document.documentElement.classList.contains('dark')).toBe(false);
+    expect(localStorage.getItem('fos-theme')).toBe('ivory');
   });
 
   it('says when filled parts of an icon keep their weight as the stroke changes', async () => {

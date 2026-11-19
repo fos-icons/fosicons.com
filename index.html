@@ -25,6 +25,7 @@
         try { pref = localStorage.getItem('fos-theme') || 'system'; } catch (e) {}
         var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
         document.documentElement.classList.toggle('dark', dark);
+        document.documentElement.classList.toggle('ivory', pref === 'ivory');
       })();
     </script>
   </head>

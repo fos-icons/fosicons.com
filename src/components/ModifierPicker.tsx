@@ -63,8 +63,7 @@ export function ModifierPicker({
 
   const pick = (m: ModifierAsset) => {
     if (value?.modifier.name === m.name) return onChange(null);
-    const keep = value && m.positions[value.corner] ? value.corner : initialCorner(m);
-    onChange({ modifier: m, corner: keep });
+    onChange({ modifier: m, corner: initialCorner(m) });
   };
 
   return (

@@ -1,3 +1,5 @@
+import ivory from '../data/ivory.json';
+import type { SiteTheme } from './theme';
 import { palettes, type StyleId } from './catalog';
 import { BASE_STROKE, hasModifierRole, hasSecondaryRole, isDuo, type SvgColorOptions } from './svg';
 
@@ -38,9 +40,13 @@ export const INK_THEME = 'Ink';
 export const THEME_NAMES: readonly string[] = [INK_THEME, ...palettes.palettes.map((p) => p.name)];
 
 /** A theme's colors in one site mode. */
-export function themeColors(name: string, mode: 'light' | 'dark') {
+export function themeColors(name: string, mode: SiteTheme) {
+  if (name === INK_THEME && mode === 'ivory') {
+    return { main: ivory.foreground, primary: ivory['duo-primary'], secondary: ivory['duo-secondary'] };
+  }
+  const variant = mode === 'dark' ? 'dark' : 'light';
   const palette = palettes.palettes.find((p) => p.name === (name === INK_THEME ? palettes.defaultPalette : name)) ?? palettes.palettes[0];
-  return { main: name === INK_THEME ? INK[mode] : palette[mode].primary, ...palette[mode] };
+  return { main: name === INK_THEME ? INK[variant] : palette[variant].primary, ...palette[variant] };
 }
 
 /**
@@ -82,7 +88,7 @@ export const INK = { light: '#212121', dark: '#F2F2F2' } as const;
 export const strokeAdjustable = (style: StyleId, kind: 'core' | 'brand' = 'core') =>
   kind === 'core' && style !== 'filled';
 
-export function resolveLook(look: Look, theme: 'light' | 'dark') {
+export function resolveLook(look: Look, theme: SiteTheme) {
   // Themes use the variant for the site theme being previewed.
   const mode = theme;
   const colors = themeColors(look.paletteName, mode);
@@ -105,7 +111,7 @@ export const isCustomized = (look: Look) =>
   || look.paletteName !== DEFAULT_LOOK.paletteName;
 
 /** CSS variables that restyle inline grid SVGs without rebuilding them. */
-export function gridVars(look: Look, style: StyleId, theme: 'light' | 'dark', kind: 'core' | 'brand' = 'core') {
+export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'core' | 'brand' = 'core') {
   const r = resolveLook(look, theme);
   const vars: Record<string, string> = {
     '--glyph-size': `${Math.min(look.size, GRID_MAX_SIZE)}px`,
@@ -134,7 +140,7 @@ export function exportColors(
   source: string,
   style: StyleId,
   look: Look,
-  theme: 'light' | 'dark',
+  theme: SiteTheme,
   modifierOverride?: string | null,
 ): SvgColorOptions {
   const r = resolveLook(look, theme);

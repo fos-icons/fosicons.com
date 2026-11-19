@@ -10,6 +10,7 @@ import {
 } from '../lib/look';
 import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
+import { TeachingTip } from './TeachingTip';
 import { RailActions } from './QuickTools';
 import { Button, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
@@ -266,18 +267,18 @@ export function CustomizeControls({
             value={r.mode}
             // Themes have light and dark variants, previewed on the matching background: switch the site theme.
             onChange={(v) => setPreference(v)}
-            options={[{ value: 'light', label: t('theme.light') }, { value: 'dark', label: t('theme.dark') }]}
+            options={[{ value: 'light', label: t('theme.light') }, { value: 'dark', label: t('theme.dark') }, { value: 'ivory', label: t('theme.ivory') }]}
           />
         )}
       >
         <div className="space-y-3">
           {/* One theme sets every style: a main color for Regular and Solid, primary and secondary for the duo styles. */}
-          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="flex flex-wrap gap-1.5">
+          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="grid grid-cols-[repeat(7,auto)] items-start justify-start gap-1">
             {THEME_NAMES.map((name) => {
               const c = themeColors(name, r.mode);
               const checked = !look.custom && !look.mono && name === r.themeName;
               const themeLabel = name === INK_THEME ? t('customize.inkTheme') : name;
-              return (
+              const swatch = (
                 <button
                   key={name}
                   type="button"
@@ -295,8 +296,12 @@ export function CustomizeControls({
                   </span>
                 </button>
               );
+              return name === INK_THEME
+                ? <div key={name} className="col-start-1 row-span-2 row-start-1 mr-1 border-r border-line pr-2">{swatch}</div>
+                : swatch;
             })}
           </div>
+          <TeachingTip tip="color" />
           {duo ? (
             <>
               <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
