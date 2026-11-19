@@ -65,17 +65,17 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={`group relative flex aspect-square sm:min-h-[var(--cell-min-h,0px)] w-full items-center justify-center rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
+        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-[38px] sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
           selected ? 'bg-brand-soft ring-1 ring-inset ring-brand' : 'hover:bg-sunken'
         }`}
       >
         {svg ? (
           <span
-            data-artwork className={`glyph text-[color:var(--glyph-color)] size-[min(var(--glyph-size,24px),40px)] sm:size-[var(--glyph-size,24px)]`}
+            data-artwork className={`glyph shrink-0 text-[color:var(--glyph-color)] size-[min(var(--glyph-size,24px),40px)] sm:size-[var(--glyph-size,24px)]`}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         ) : (
-          <span className="size-[min(var(--glyph-size,24px),40px)] animate-pulse rounded-md bg-sunken sm:size-[var(--glyph-size,24px)]" />
+          <span className="size-[min(var(--glyph-size,24px),40px)] shrink-0 animate-pulse rounded-md bg-sunken sm:size-[var(--glyph-size,24px)]" />
         )}
         <span
           aria-hidden="true"

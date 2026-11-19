@@ -290,7 +290,7 @@ describe('Icons page', () => {
     expect(scale2.selectedOptions[0].textContent).toBe('1x');
     await user.click(ex.getByRole('button', { name: 'Add a format' }));
     expect((ex.getByLabelText('Format, row 3') as HTMLSelectElement).value).toBe('jpg');
-    expect(ex.getByText(/JPGs have white ones/)).toBeTruthy();
+    expect(ex.getByText(/JPGs have white backgrounds/)).toBeTruthy();
     await user.click(ex.getByRole('button', { name: 'Add a format' }));
     expect((ex.getByLabelText('Format, row 4') as HTMLSelectElement).value).toBe('png');
     expect((ex.getByLabelText('Scale, row 4') as HTMLSelectElement).selectedOptions[0].textContent).toBe('1.5x');
@@ -367,6 +367,7 @@ describe('Side pane (desktop)', () => {
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(within(pane).getByText('Auto')).toBeTruthy();
+    expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
 
     // The slider covers what the grid previews; larger sizes go in the px field.
     expect(within(pane).getByRole('slider', { name: 'Size' }).getAttribute('max')).toBe('64');
@@ -387,6 +388,8 @@ describe('Side pane (desktop)', () => {
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.88');
 
     await user.click(within(pane).getByRole('button', { name: /Reset to defaults/ }));
+    expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
+    expect(document.activeElement).toBe(within(pane).getByRole('heading', { name: 'Customize' }));
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
   });
