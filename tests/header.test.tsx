@@ -71,6 +71,16 @@ describe('Header actions', () => {
     expect(await screen.findByRole('heading', { name: 'Documentation' })).toBeTruthy();
   });
 
+  it('rejects a full-set download when a cached snapshot is missing a catalog icon', async () => {
+    const { buildFullSet } = await import('../src/lib/download-all');
+    const partial = { ...styleSvgs('regular') };
+    delete partial.tornado;
+    vi.stubGlobal('fetch', vi.fn(async (url: string) =>
+      new Response(url.endsWith('fos-icons-LICENSE.txt') ? license : JSON.stringify(partial)),
+    ));
+    await expect(buildFullSet(DEFAULT_LOOK, 'light', ['regular'])).rejects.toThrow(/Regular artwork for tornado is missing/);
+  });
+
   it('Download all builds a ZIP of every core icon in every style with the chosen look, plus the license', async () => {
     const user = userEvent.setup();
     let blob: Blob | null = null;

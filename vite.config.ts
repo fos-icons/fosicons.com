@@ -4,6 +4,21 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
 import type { Plugin } from 'vite';
+import sourceLock from './src/data/source-lock.json';
+
+function versionedArtwork(): Plugin {
+  return {
+    name: 'fos-versioned-artwork',
+    apply: 'serve',
+    configureServer(server) {
+      const prefix = `/icon-artwork/${sourceLock.manifestSha256}/icons/`;
+      server.middlewares.use((req, _res, next) => {
+        if (req.url?.startsWith(prefix)) req.url = `/icons/${req.url.slice(prefix.length)}`;
+        next();
+      });
+    },
+  };
+}
 
 /** Dev only: serve /svg/<style>/<name>.svg from the artwork snapshot (the build writes real files; see scripts/postbuild.mjs). */
 function svgFiles(): Plugin {
@@ -47,7 +62,7 @@ function webManifest(): Plugin {
 }
 
 export default defineConfig({
-  plugins: [react(), tailwindcss(), svgFiles(), webManifest()],
+  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest()],
   build: { target: 'es2022', chunkSizeWarningLimit: 700 },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },

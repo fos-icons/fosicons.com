@@ -1,4 +1,4 @@
-import { cleanup, render } from '@testing-library/react';
+import { cleanup, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
@@ -38,4 +38,14 @@ describe('external links', () => {
       expect(sameTab).toEqual([]);
     });
   }
+});
+
+it('redirects the former Time & weather landing page to Time & calendar', async () => {
+  vi.stubGlobal('fetch', fetchMock);
+  render(
+    <MemoryRouter initialEntries={['/categories/time-weather']}>
+      <AppShell />
+    </MemoryRouter>,
+  );
+  expect(await screen.findByRole('heading', { name: 'Time & calendar icons' })).toBeTruthy();
 });

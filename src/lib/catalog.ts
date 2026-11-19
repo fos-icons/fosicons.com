@@ -34,6 +34,9 @@ export const catalog = catalogData as {
   icons: IconEntry[];
 };
 
+// Chunk membership and SVG content belong to the same snapshot as the catalog.
+export const artworkDirectory = `icon-artwork/${sourceLock.manifestSha256}/icons`;
+
 export const palettes = paletteData as { defaultPalette: string; palettes: Palette[] };
 export const lock = sourceLock as {
   repository: string;
@@ -87,7 +90,7 @@ let cache: Partial<Record<StyleId, Promise<Record<string, string>>>> = {};
 
 /** Fetch one style's SVG snapshot. Only requested styles are downloaded. */
 export function loadStyle(style: StyleId): Promise<Record<string, string>> {
-  cache[style] ??= fetch(`${import.meta.env.BASE_URL}icons/${style}.json`).then((res) => {
+  cache[style] ??= fetch(`${import.meta.env.BASE_URL}${artworkDirectory}/${style}.json`).then((res) => {
     if (!res.ok) throw new LocalizedError('error.loadStyle', { style: STYLE_META[style].label, status: String(res.status) });
     return res.json() as Promise<Record<string, string>>;
   }).catch((error: unknown) => {
@@ -115,7 +118,7 @@ export function chunksFor(names: Iterable<string>): number[] {
 /** One chunk of a style's artwork, fetched once. */
 export function loadIconChunk(style: StyleId, chunk: number): Promise<Record<string, string>> {
   const key = `${style}/${chunk}`;
-  chunkCache[key] ??= fetch(`${import.meta.env.BASE_URL}icons/${key}.json`).then((res) => {
+  chunkCache[key] ??= fetch(`${import.meta.env.BASE_URL}${artworkDirectory}/${key}.json`).then((res) => {
     if (!res.ok) throw new LocalizedError('error.loadStyle', { style: STYLE_META[style].label, status: String(res.status) });
     return res.json() as Promise<Record<string, string>>;
   }).catch((error: unknown) => {

@@ -6,7 +6,7 @@
 // tags, and JSON-LD. 404.html serves the app for unknown paths. Also writes
 // robots.txt, sitemap.xml, and llms.txt. The prerender bundle (dist-ssr/)
 // is built by `vite build --ssr` and removed afterwards.
-import { mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
@@ -15,7 +15,7 @@ const dist = join(root, 'dist');
 const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
-  PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, catalog, brands,
+  PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands,
   SITE_NAME, LIBRARY_URL, FIGMA_URL, LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath, FRAMEWORK_PATHS, displayName,
 } = server;
@@ -23,12 +23,11 @@ const {
 // Every style's artwork, for prerendering the landing pages and publishing
 // one SVG file per icon and style (/svg/<style>/<name>.svg) that pages link
 // to, Google Images can index, and anyone can download without JavaScript.
-const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(dist, 'icons', `${style}.json`), 'utf8'))]));
+const versionedArtwork = join(dist, artworkDirectory);
+mkdirSync(dirname(versionedArtwork), { recursive: true });
+renameSync(join(dist, 'icons'), versionedArtwork);
+const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(versionedArtwork, `${style}.json`), 'utf8'))]));
 primeArtwork(artwork);
-for (const icon of catalog.icons) {
-  // /icons/<name>/ pages share the folder with the artwork chunks (/icons/<style>/).
-  if (catalog.styles.includes(icon.name)) throw new Error(`Icon name "${icon.name}" collides with the /icons/${icon.name}/ artwork folder`);
-}
 let svgFiles = 0;
 for (const style of catalog.styles) {
   mkdirSync(join(dist, 'svg', style), { recursive: true });
@@ -54,7 +53,7 @@ const fontPreloads = ['funnel-display-latin-wght-normal', 'asta-sans-latin-wght-
   return `<link rel="preload" href="/assets/${file}" as="font" type="font/woff2" crossorigin />`;
 });
 // The home grid's first artwork chunk, so icons paint without waiting for the app.
-const homePreloads = [`<link rel="preload" href="/icons/${catalog.styles[0]}/0.json" as="fetch" crossorigin />`];
+const homePreloads = [`<link rel="preload" href="/${artworkDirectory}/${catalog.styles[0]}/0.json" as="fetch" crossorigin />`];
 
 const embed = (store) => {
   const used = Object.fromEntries(Object.entries(store).filter(([, svgs]) => Object.keys(svgs).length));

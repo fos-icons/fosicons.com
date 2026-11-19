@@ -2,8 +2,8 @@
 // repeat visits, and keeps it usable offline.
 //
 // - Pages: network first, falling back to the cached copy offline.
-// - /assets/ (content-hashed JS, CSS, fonts): cache first; names change when contents do.
-// - Icon artwork and data (/icons/, /brands/, modifiers.json, app images):
+// - /assets/ and /icon-artwork/: cache first for build- or library-versioned assets.
+// - Public SVG links and other data (/svg/, /brands/, modifiers.json, app images):
 //   served from cache immediately and refreshed in the background.
 // Nothing personal is cached: the site has no accounts or user data.
 const VERSION = 'v1';
@@ -65,9 +65,9 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== self.location.origin) return;
   if (request.mode === 'navigate') {
     event.respondWith(networkFirst(request));
-  } else if (url.pathname.startsWith('/assets/')) {
+  } else if (url.pathname.startsWith('/assets/') || url.pathname.startsWith('/icon-artwork/')) {
     event.respondWith(cacheFirst(request));
-  } else if (/^\/(icons\/.*\.json|svg|brands|app|licenses)(\/|$)|^\/(modifiers\.json|og-image\.png|apple-touch-icon\.png|favicon\.svg)$/.test(url.pathname)) {
+  } else if (/^\/(svg|brands|app|licenses)(\/|$)|^\/(modifiers\.json|og-image\.png|apple-touch-icon\.png|favicon\.svg)$/.test(url.pathname)) {
     event.respondWith(staleWhileRevalidate(request, event));
   }
 });
