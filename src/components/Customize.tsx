@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n';
-import { useEffect, useId, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { catalog, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
@@ -310,13 +310,6 @@ export function CustomizeControls({
             />
           )}
           {footnote}
-          <p className="text-xs text-faint">
-            {t('customize.paletteNote', {
-              current: (duo ? look.custom : look.mono)
-                ? t('customize.customColors')
-                : t('customize.paletteMode', { palette: r.themeName === INK_THEME ? t('customize.inkTheme') : r.themeName, mode: t(`theme.${r.mode}`) }),
-            })}
-          </p>
         </div>
       </Section>
     </>
@@ -337,26 +330,29 @@ export function CustomizePanel({
   headingId: string;
 }) {
   const { t } = useI18n();
+  const heading = useRef<HTMLHeadingElement>(null);
   return (
     <div className="flex min-h-full flex-col">
-      <div className="flex items-start gap-3 px-5 pb-4 pt-5">
-        <div className="min-w-0 flex-1">
-          <h2 id={headingId} tabIndex={-1} className="text-xl font-semibold outline-none">{t('customize.title')}</h2>
-          <p className="mt-1 text-sm text-muted">
-            {t('customize.intro')}
-          </p>
+      <div className="px-5 pb-4 pt-5">
+        <div className="flex items-center gap-2">
+          <h2 ref={heading} id={headingId} tabIndex={-1} className="min-w-0 flex-1 text-xl font-semibold outline-none">{t('customize.title')}</h2>
+          {isCustomized(look) && (
+            <Button
+              variant="secondary"
+              size="sm"
+              icon="undo"
+              aria-label={t('customize.reset')}
+              onClick={() => { heading.current?.focus(); onReset(); }}
+            >
+              {t('customize.resetShort')}
+            </Button>
+          )}
+          {onClose && <IconButton icon="x" label={t('customize.close')} onClick={onClose} className="-mr-2" />}
         </div>
-        {onClose && <IconButton icon="x" label={t('customize.close')} onClick={onClose} className="-mr-2 -mt-1" />}
+        <p className="mt-1 text-sm text-muted">{t('customize.intro')}</p>
       </div>
       <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} />
-      {/* Last: once the look is set, download it (or start over). */}
-      {kind === 'core' ? (
-        <DownloadSection look={look} onReset={onReset} />
-      ) : (
-        <div className="border-t border-line px-5 py-4">
-          <Button variant="secondary" icon="undo" disabled={!isCustomized(look)} onClick={onReset}>{t('customize.reset')}</Button>
-        </div>
-      )}
+      {kind === 'core' && <DownloadSection look={look} />}
     </div>
   );
 }
@@ -365,7 +361,7 @@ export function CustomizePanel({
  * Download the set as one ZIP with the look set above: every style by
  * default, or only the styles the user keeps switched on.
  */
-export function DownloadSection({ look, onReset }: { look: Look; onReset?: () => void }) {
+export function DownloadSection({ look }: { look: Look }) {
   const { t, n } = useI18n();
   const i18n = useI18n();
   const toast = useToast();
@@ -430,11 +426,6 @@ export function DownloadSection({ look, onReset }: { look: Look; onReset?: () =>
         >
           <span className="truncate">{label}</span>
         </Button>
-        {onReset && (
-          <Button variant="secondary" icon="undo" disabled={!isCustomized(look)} onClick={onReset} aria-label={t('customize.reset')} title={t('customize.reset')} className="shrink-0">
-            {t('customize.resetShort')}
-          </Button>
-        )}
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
         {t('download.note', { count: n(catalog.icons.length * styles.length) })}

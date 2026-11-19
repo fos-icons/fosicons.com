@@ -109,6 +109,11 @@ export function ExportPanel({
     return run(() => copyPng(Promise.resolve().then(() => svgToPng(build(px), px))), t('export.copiedPng', { px }));
   };
 
+  const downloadNote = [
+    rows.length > 1 && t('export.zipNote'),
+    rows.some((r) => r.format === 'jpg') && t('export.jpgNote'),
+  ].filter(Boolean).join(' ');
+
   return (
     <Section
       title={t('export.title')}
@@ -186,9 +191,7 @@ export function ExportPanel({
       <Button variant="primary" icon="download" className="h-10 w-full" disabled={disabled} onClick={exportAll}>
         {rows.length > 1 ? t('export.buttonMany', { name, count: rows.length }) : t('export.button', { name })}
       </Button>
-      <p className="text-xs text-faint">
-        {rows.length > 1 ? t('export.zipNote') : ''}{t(rows.some((r) => r.format === 'jpg') ? 'export.jpgNote' : 'export.pngNote')}
-      </p>
+      {downloadNote && <p className="text-xs text-faint">{downloadNote}</p>}
 
       <div className="border-t border-line pt-3">
         <h4 className="mb-2 text-xs text-muted">{t('export.copy')}</h4>
