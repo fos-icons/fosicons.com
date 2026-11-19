@@ -109,8 +109,6 @@ export function gridVars(look: Look, style: StyleId, theme: 'light' | 'dark', ki
   const r = resolveLook(look, theme);
   const vars: Record<string, string> = {
     '--glyph-size': `${Math.min(look.size, GRID_MAX_SIZE)}px`,
-    // How far a glyph lifts on hover/selection so its name fits underneath.
-    '--glyph-lift': `${Math.max(6, Math.round(Math.min(look.size, GRID_MAX_SIZE) / 2 - 18))}px`,
     // Tall enough for the glyph plus a two-line name (only matters on desktop).
     '--cell-min-h': `${Math.max(0, Math.min(look.size, GRID_MAX_SIZE) + 48)}px`,
     '--stroke-scale': String(strokeAdjustable(style, kind) ? Math.round((strokeOf(look) / BASE_STROKE) * 10000) / 10000 : 1),

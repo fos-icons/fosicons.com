@@ -71,7 +71,7 @@ const Cell = memo(function Cell({
       >
         {svg ? (
           <span
-            data-artwork className={`glyph text-[color:var(--glyph-color)] size-[min(var(--glyph-size,24px),40px)] transition-transform sm:size-[var(--glyph-size,24px)] duration-200 ${selected ? '-translate-y-[var(--glyph-lift,6px)]' : 'group-hover:-translate-y-[var(--glyph-lift,6px)] group-focus-visible:-translate-y-[var(--glyph-lift,6px)]'}`}
+            data-artwork className={`glyph text-[color:var(--glyph-color)] size-[min(var(--glyph-size,24px),40px)] sm:size-[var(--glyph-size,24px)]`}
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         ) : (
