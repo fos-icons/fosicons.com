@@ -23,7 +23,7 @@ interface Props {
 const PRERENDER_CELLS = 96;
 /**
  * Cells mounted on the first client render; the rest mount in batches while
- * the browser is idle. Mounting all 1,280 at once blocks a phone's main
+ * the browser is idle. Mounting all 1,319 at once blocks a phone's main
  * thread for most of a second.
  */
 const progressive = { first: 96, batch: 96 };
