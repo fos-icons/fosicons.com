@@ -61,7 +61,7 @@ const en = {
   'theme.system': 'System',
   'theme.light': 'Light',
   'theme.dark': 'Dark',
-  'theme.ivory': 'Ivory',
+  'theme.warm': 'Warm',
   'learning.label': 'Learning tip',
   'learning.dismiss': 'Got it',
   'learning.search': 'Search by icon name, keyword, or category. Try “clock with sparkle” to open an icon with a modifier.',

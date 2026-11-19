@@ -267,7 +267,11 @@ export function CustomizeControls({
             value={r.mode}
             // Themes have light and dark variants, previewed on the matching background: switch the site theme.
             onChange={(v) => setPreference(v)}
-            options={[{ value: 'light', label: t('theme.light') }, { value: 'dark', label: t('theme.dark') }, { value: 'ivory', label: t('theme.ivory') }]}
+            options={[
+              { value: 'light', label: t('theme.light') },
+              { value: 'ivory', label: t('theme.warm') },
+              { value: 'dark', label: t('theme.dark') },
+            ]}
           />
         )}
       >

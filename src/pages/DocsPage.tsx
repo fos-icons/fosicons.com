@@ -450,7 +450,7 @@ npm pack`}</Code>
           <p>This site sets no cookies and runs no analytics, ads, or tracking scripts. Fonts and icons are served from this site, not from third parties.</p>
           <p>Your browser&apos;s local storage keeps preferences on your device:</p>
           <ul className="list-disc space-y-1 pl-5">
-            <li><code>fos-theme</code>: light, dark, or ivory, when you pick one instead of following your system.</li>
+            <li><code>fos-theme</code>: light, warm (Ivory), or dark, when you pick one instead of following your system.</li>
             <li><code>fos-pane-collapsed</code>: whether the side pane is collapsed.</li>
             <li><code>fos-learned-tips</code>: which learning tips this browser has already shown.</li>
             <li><code>fos-pane-width</code>: the side pane&apos;s width, when you resize it.</li>

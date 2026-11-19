@@ -613,12 +613,13 @@ describe('Inspector sections (desktop)', () => {
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
     const variant = within(pane).getByRole('radiogroup', { name: 'Site appearance' });
+    expect(within(variant).getAllByRole('radio').map((option) => option.textContent)).toEqual(['Light', 'Warm', 'Dark']);
     await user.click(within(variant).getByRole('radio', { name: 'Dark' }));
     expect(document.documentElement.classList.contains('dark')).toBe(true);
     expect(localStorage.getItem('fos-theme')).toBe('dark');
     await user.click(within(variant).getByRole('radio', { name: 'Light' }));
     expect(document.documentElement.classList.contains('dark')).toBe(false);
-    await user.click(within(variant).getByRole('radio', { name: 'Ivory' }));
+    await user.click(within(variant).getByRole('radio', { name: 'Warm' }));
     expect(document.documentElement.classList.contains('ivory')).toBe(true);
     expect(document.documentElement.classList.contains('dark')).toBe(false);
     expect(localStorage.getItem('fos-theme')).toBe('ivory');
