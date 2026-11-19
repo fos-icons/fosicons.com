@@ -76,6 +76,8 @@ describe('Icons page', () => {
   it('shows the full catalog count from source data and loads only one style', async () => {
     renderAt('/');
     expect(screen.getByText(`${catalog.icons.length.toLocaleString('en-US')} icons`)).toBeTruthy();
+    const headings = within(screen.getByRole('list', { name: 'Regular icons' })).getAllByRole('heading');
+    expect(headings.slice(0, 4).map((heading) => heading.textContent)).toEqual(['Essentials', 'AI & agents', 'Time & calendar', 'Interfaces']);
     await screen.findAllByRole('button', { name: 'search' });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe(`/${artworkDirectory}/regular.json`);
