@@ -55,7 +55,7 @@
     },
     {
       "name": "Navigation",
-      "count": 110
+      "count": 149
     },
     {
       "name": "Professions",
@@ -1317,6 +1317,19 @@
       "aliases": []
     },
     {
+      "name": "arrow-down-to-line",
+      "category": "Navigation",
+      "tags": [
+        "bottom",
+        "end",
+        "download",
+        "last",
+        "jump",
+        "south"
+      ],
+      "aliases": []
+    },
+    {
       "name": "arrow-enter",
       "category": "Navigation",
       "tags": [
@@ -1357,6 +1370,19 @@
       "aliases": []
     },
     {
+      "name": "arrow-left-to-line",
+      "category": "Navigation",
+      "tags": [
+        "start",
+        "beginning",
+        "first",
+        "jump",
+        "west",
+        "home"
+      ],
+      "aliases": []
+    },
+    {
       "name": "arrow-merge",
       "category": "Navigation",
       "tags": [
@@ -1380,6 +1406,19 @@
         "proceed",
         "pointer",
         "continue"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrow-right-to-line",
+      "category": "Navigation",
+      "tags": [
+        "end",
+        "last",
+        "finish",
+        "jump",
+        "east",
+        "tab"
       ],
       "aliases": []
     },
@@ -1668,6 +1707,31 @@
       "aliases": []
     },
     {
+      "name": "arrow-up-to-line",
+      "category": "Navigation",
+      "tags": [
+        "top",
+        "start",
+        "upload",
+        "first",
+        "jump",
+        "north"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrow-uturn-down",
+      "category": "Navigation",
+      "tags": [
+        "turn back",
+        "return",
+        "reverse",
+        "loop",
+        "bend"
+      ],
+      "aliases": []
+    },
+    {
       "name": "arrow-uturn-left",
       "category": "Navigation",
       "tags": [
@@ -1690,6 +1754,57 @@
         "return",
         "turn around",
         "repeat"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrow-uturn-up",
+      "category": "Navigation",
+      "tags": [
+        "turn back",
+        "return",
+        "reverse",
+        "loop",
+        "bend"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrow-wave-right",
+      "category": "Navigation",
+      "tags": [
+        "squiggle",
+        "flow",
+        "signal",
+        "path",
+        "wavy",
+        "journey"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-diagonal",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "resize",
+        "scale",
+        "fullscreen",
+        "enlarge",
+        "stretch"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-diagonal-reverse",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "resize",
+        "scale",
+        "fullscreen",
+        "enlarge",
+        "stretch"
       ],
       "aliases": []
     },
@@ -2185,6 +2300,19 @@
       "aliases": []
     },
     {
+      "name": "barn",
+      "category": "Navigation",
+      "tags": [
+        "farm",
+        "agriculture",
+        "rural",
+        "stable",
+        "countryside",
+        "ranch"
+      ],
+      "aliases": []
+    },
+    {
       "name": "bat-baseball",
       "category": "Sports & fitness",
       "tags": [
@@ -2273,6 +2401,19 @@
         "power level",
         "energy",
         "50 percent"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "beach-umbrella",
+      "category": "Navigation",
+      "tags": [
+        "parasol",
+        "summer",
+        "vacation",
+        "holiday",
+        "seaside",
+        "shade"
       ],
       "aliases": []
     },
@@ -2924,6 +3065,19 @@
       "aliases": []
     },
     {
+      "name": "bridge",
+      "category": "Navigation",
+      "tags": [
+        "crossing",
+        "suspension",
+        "river",
+        "connection",
+        "span",
+        "infrastructure"
+      ],
+      "aliases": []
+    },
+    {
       "name": "briefcase",
       "category": "Workspace",
       "tags": [
@@ -3017,6 +3171,19 @@
       "aliases": []
     },
     {
+      "name": "building-apartment",
+      "category": "Navigation",
+      "tags": [
+        "flats",
+        "residential",
+        "housing",
+        "condo",
+        "home",
+        "block"
+      ],
+      "aliases": []
+    },
+    {
       "name": "building-bank",
       "category": "Navigation",
       "tags": [
@@ -3030,6 +3197,19 @@
       "aliases": []
     },
     {
+      "name": "building-office",
+      "category": "Navigation",
+      "tags": [
+        "company",
+        "headquarters",
+        "business",
+        "workplace",
+        "corporate",
+        "commercial"
+      ],
+      "aliases": []
+    },
+    {
       "name": "building-store",
       "category": "Navigation",
       "tags": [
@@ -3039,6 +3219,19 @@
         "storefront",
         "awning",
         "commerce"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "buildings",
+      "category": "Navigation",
+      "tags": [
+        "city",
+        "skyline",
+        "offices",
+        "urban",
+        "downtown",
+        "company"
       ],
       "aliases": []
     },
@@ -3894,6 +4087,19 @@
       "aliases": []
     },
     {
+      "name": "castle",
+      "category": "Navigation",
+      "tags": [
+        "fortress",
+        "palace",
+        "kingdom",
+        "medieval",
+        "fort",
+        "tower"
+      ],
+      "aliases": []
+    },
+    {
       "name": "cat",
       "category": "Nature & animals",
       "tags": [
@@ -4403,6 +4609,56 @@
       "aliases": []
     },
     {
+      "name": "chevron-circle-down",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "expand",
+        "dropdown",
+        "open",
+        "disclosure",
+        "button"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-circle-left",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "back",
+        "previous",
+        "button",
+        "return"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-circle-right",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "next",
+        "forward",
+        "button",
+        "continue"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-circle-up",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "collapse",
+        "close",
+        "disclosure",
+        "button",
+        "top"
+      ],
+      "aliases": []
+    },
+    {
       "name": "chevron-down",
       "category": "Navigation",
       "tags": [
@@ -4473,6 +4729,56 @@
       "aliases": []
     },
     {
+      "name": "chevron-square-down",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "expand",
+        "dropdown",
+        "open",
+        "disclosure",
+        "button"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-square-left",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "back",
+        "previous",
+        "button",
+        "return"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-square-right",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "next",
+        "forward",
+        "button",
+        "continue"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevron-square-up",
+      "category": "Navigation",
+      "tags": [
+        "caret",
+        "collapse",
+        "close",
+        "disclosure",
+        "button",
+        "top"
+      ],
+      "aliases": []
+    },
+    {
       "name": "chevron-up",
       "category": "Navigation",
       "tags": [
@@ -4483,6 +4789,19 @@
         "close",
         "raise",
         "hide"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevrons-collapse-vertical",
+      "category": "Navigation",
+      "tags": [
+        "merge",
+        "fold",
+        "compress",
+        "shrink",
+        "close",
+        "minimize"
       ],
       "aliases": []
     },
@@ -7389,6 +7708,19 @@
       "aliases": []
     },
     {
+      "name": "factory",
+      "category": "Navigation",
+      "tags": [
+        "industry",
+        "manufacturing",
+        "plant",
+        "production",
+        "industrial",
+        "mill"
+      ],
+      "aliases": []
+    },
+    {
       "name": "fast-backward",
       "category": "Media & devices",
       "tags": [
@@ -7428,6 +7760,19 @@
       "aliases": []
     },
     {
+      "name": "fence",
+      "category": "Navigation",
+      "tags": [
+        "boundary",
+        "enclosure",
+        "garden",
+        "yard",
+        "pickets",
+        "barrier"
+      ],
+      "aliases": []
+    },
+    {
       "name": "fencing",
       "category": "Sports & fitness",
       "tags": [
@@ -7438,6 +7783,19 @@
         "duel",
         "olympic",
         "swordsmanship"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "ferris-wheel",
+      "category": "Navigation",
+      "tags": [
+        "amusement",
+        "fair",
+        "carnival",
+        "attraction",
+        "theme park",
+        "ride"
       ],
       "aliases": []
     },
@@ -10100,6 +10458,19 @@
       "aliases": []
     },
     {
+      "name": "hotel",
+      "category": "Navigation",
+      "tags": [
+        "lodging",
+        "accommodation",
+        "stay",
+        "travel",
+        "inn",
+        "resort"
+      ],
+      "aliases": []
+    },
+    {
       "name": "hourglass",
       "category": "Time & calendar",
       "tags": [
@@ -11705,6 +12076,19 @@
       "aliases": []
     },
     {
+      "name": "lighthouse",
+      "category": "Navigation",
+      "tags": [
+        "beacon",
+        "coast",
+        "harbor",
+        "maritime",
+        "sea",
+        "guidance"
+      ],
+      "aliases": []
+    },
+    {
       "name": "line-height",
       "category": "Workspace",
       "tags": [
@@ -12824,6 +13208,19 @@
         "computer",
         "tv",
         "television"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "monument",
+      "category": "Navigation",
+      "tags": [
+        "obelisk",
+        "memorial",
+        "landmark",
+        "historic",
+        "tribute",
+        "heritage"
       ],
       "aliases": []
     },
@@ -14773,6 +15170,19 @@
       "aliases": []
     },
     {
+      "name": "refresh-off",
+      "category": "Navigation",
+      "tags": [
+        "sync disabled",
+        "reload",
+        "paused",
+        "offline",
+        "stop",
+        "rotate"
+      ],
+      "aliases": []
+    },
+    {
       "name": "refresh-window",
       "category": "Interfaces",
       "tags": [
@@ -14797,6 +15207,32 @@
         "again",
         "shuffle",
         "recurring"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "resize-horizontal",
+      "category": "Navigation",
+      "tags": [
+        "width",
+        "column",
+        "split",
+        "divider",
+        "drag",
+        "adjust"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "resize-vertical",
+      "category": "Navigation",
+      "tags": [
+        "height",
+        "row",
+        "split",
+        "divider",
+        "drag",
+        "adjust"
       ],
       "aliases": []
     },
@@ -15152,6 +15588,19 @@
       "aliases": [
         "interface/scan"
       ]
+    },
+    {
+      "name": "school",
+      "category": "Navigation",
+      "tags": [
+        "education",
+        "learning",
+        "classroom",
+        "campus",
+        "academy",
+        "college"
+      ],
+      "aliases": []
     },
     {
       "name": "scissors",
@@ -16495,6 +16944,19 @@
       ]
     },
     {
+      "name": "stadium",
+      "category": "Navigation",
+      "tags": [
+        "arena",
+        "sports",
+        "venue",
+        "match",
+        "concert",
+        "ground"
+      ],
+      "aliases": []
+    },
+    {
       "name": "stamp",
       "category": "Workspace",
       "tags": [
@@ -17102,6 +17564,19 @@
         "us units",
         "badge",
         "unit"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "tent",
+      "category": "Navigation",
+      "tags": [
+        "camping",
+        "outdoors",
+        "shelter",
+        "campsite",
+        "adventure",
+        "festival"
       ],
       "aliases": []
     },
@@ -18824,6 +19299,19 @@
       ]
     },
     {
+      "name": "warehouse",
+      "category": "Navigation",
+      "tags": [
+        "storage",
+        "depot",
+        "logistics",
+        "inventory",
+        "garage",
+        "shed"
+      ],
+      "aliases": []
+    },
+    {
       "name": "watch-circle",
       "category": "Time & calendar",
       "tags": [
@@ -18846,6 +19334,19 @@
         "wearable",
         "timepiece",
         "apple watch"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "water-tower",
+      "category": "Navigation",
+      "tags": [
+        "tank",
+        "reservoir",
+        "utility",
+        "supply",
+        "rural",
+        "storage"
       ],
       "aliases": []
     },
