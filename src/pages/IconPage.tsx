@@ -250,12 +250,13 @@ export default function IconPage() {
   const badge: InspectorProps['badgeRequest'] = modifierParam
     ? { name: modifierParam, corner: (CORNERS as readonly string[]).includes(cornerParam ?? '') ? cornerParam as Corner : null }
     : null;
-  const setBadge = (choice: InspectorProps['badgeRequest']) => setParams((p) => {
-    const q = new URLSearchParams(p);
-    if (choice) q.set('modifier', choice.name); else q.delete('modifier');
-    if (choice?.corner) q.set('corner', choice.corner); else q.delete('corner');
-    return q;
-  }, { replace: true, preventScrollReset: true, state: location.state });
+  const setBadge = (choice: InspectorProps['badgeRequest'], base?: string) => {
+    const next = new URLSearchParams(params);
+    if (choice) next.set('modifier', choice.name); else next.delete('modifier');
+    if (choice?.corner) next.set('corner', choice.corner); else next.delete('corner');
+    if (base) navigate({ pathname: path(iconPath(base)), search: next.toString() });
+    else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
+  };
   const canModify = !!icon && !icon.composition;
   const modifiers = useModifiers(canModify && (wide || !!badge));
   const available = useMemo(() => (icon && canModify && modifiers.list ? modifiersFor(icon.name, modifiers.list) : []), [icon, canModify, modifiers.list]);

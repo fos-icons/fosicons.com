@@ -186,6 +186,29 @@ describe('Icons page', () => {
     expect(options).toEqual(['', ...expected]);
   });
 
+  it.each([
+    ['calendar-record', 'calendar', 'Record', 'Bottom right', '12.75'],
+    ['clock-check', 'clock', 'Check', 'Bottom left', '1.25'],
+  ])('opens %s with its authored modifier selected and lets the user edit the base', async (preset, base, label, corner, x) => {
+    const user = userEvent.setup();
+    renderAt(`/?q=${preset}&icon=${preset}`);
+
+    const chosen = await screen.findByRole('button', { name: new RegExp(`^${label} modifier`) });
+    expect(chosen.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.getByRole('button', { name: corner }).getAttribute('aria-pressed')).toBe('true');
+    const preview = screen.getByRole('img', { name: new RegExp(`${preset}, Regular, preview`) });
+    expect(preview.querySelectorAll(`svg[x="${x}"][y="12.75"]`)).toHaveLength(1);
+
+    await user.click(screen.getByRole('button', { name: 'Top left' }));
+    expect(location).toBe(`?q=${preset}&icon=${base}&modifier=${label.toLowerCase()}&corner=top-left`);
+    const edited = await screen.findByRole('img', { name: new RegExp(`${base}, Regular, preview`) });
+    await waitFor(() => expect(edited.querySelectorAll('svg[x="1.25"][y="1.25"]')).toHaveLength(1));
+
+    await user.click(screen.getByRole('button', { name: 'None' }));
+    expect(location).toBe(`?q=${preset}&icon=${base}`);
+    expect(edited.querySelector('svg[x][y]')).toBeNull();
+  });
+
   it('previews any modifier on an icon, in the corners it supports', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=agent');

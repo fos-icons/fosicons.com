@@ -522,7 +522,11 @@ export function IconsPage() {
             onClose={close}
             headingId="pane-heading"
             badgeRequest={badgeRequest}
-            onBadgeChange={(choice) => update({ modifier: choice?.name ?? null, corner: choice?.corner ?? null }, true)}
+            onBadgeChange={(choice, base) => update({
+              ...(base ? { icon: base } : {}),
+              modifier: choice?.name ?? null,
+              corner: choice?.corner ?? null,
+            }, !base)}
           />
         ) : (
           <CustomizePanel
