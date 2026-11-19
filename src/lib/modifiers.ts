@@ -170,6 +170,45 @@ export const MODIFIER_BADGE = 10;
 /** Largest badge area: a quarter of the 24px grid. */
 const MAX_BADGE_AREA = (24 * 24) / 4;
 
+/** Edge of the library's badge, in px, drawn at this icon size (scale 1). */
+export const authoredModifierPx = (iconSize: number) => (MODIFIER_BADGE / 24) * iconSize;
+
+/** Whole-px modifier sizes the scale range allows at this icon size. */
+export function modifierPxRange(iconSize: number): { min: number; max: number } {
+  const authored = authoredModifierPx(iconSize);
+  return {
+    min: Math.ceil(authored * MODIFIER_SCALE.min - 1e-9),
+    max: Math.floor(authored * MODIFIER_SCALE.max + 1e-9),
+  };
+}
+
+/**
+ * Size-linked modifier size: 20px on a 48px icon (the default size, as
+ * authored) and 11px on a 24px icon, so small icons get a relatively larger,
+ * still legible badge. Linear through the two anchors (px = 0.375 × size + 2),
+ * rounded to whole px and held within the scale range, which only binds below
+ * 16px (where a quarter of the icon is the limit).
+ */
+export const MODIFIER_ANCHORS = [{ size: 24, px: 11 }, { size: 48, px: 20 }] as const;
+export function autoModifierPx(iconSize: number): number {
+  const [a, b] = MODIFIER_ANCHORS;
+  const value = a.px + ((iconSize - a.size) * (b.px - a.px)) / (b.size - a.size);
+  const { min, max } = modifierPxRange(iconSize);
+  return Math.min(max, Math.max(min, Math.round(value)));
+}
+
+/**
+ * The modifier size drawn, in whole px: the size-linked default times the
+ * user's adjustment (1 = linked default), kept within the allowed range.
+ */
+export function modifierPx(iconSize: number, adjust = 1): number {
+  const { min, max } = modifierPxRange(iconSize);
+  return Math.min(max, Math.max(min, Math.round(autoModifierPx(iconSize) * adjust)));
+}
+
+/** The `composeSvg` scale that draws the badge at `px` on an icon of `iconSize`. */
+export const modifierScaleFor = (iconSize: number, px: number) => px / authoredModifierPx(iconSize);
+
 /**
  * Compose a canonical icon with a modifier at a corner. Returns a 24px source
  * SVG with the same CSS color roles as authored compositions, ready for

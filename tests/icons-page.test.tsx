@@ -238,6 +238,32 @@ describe('Icons page', () => {
     expect(preview.innerHTML).not.toContain('clip-path');
   });
 
+  it('sizes the modifier with the icon: 20px at 48px, 11px at 24px', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=agent');
+    const preview = await screen.findByRole('img', { name: /agent, Regular, preview/ });
+    await user.click(await screen.findByRole('tab', { name: 'Actions' }, { timeout: 8000 }));
+    await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
+    const modifierSize = () => screen.getByRole('slider', { name: 'Modifier size' });
+    const iconSize = () => screen.getByRole('slider', { name: 'Size' });
+    // 48px (the default) draws the badge as authored.
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('20px on a 48px icon');
+    expect(preview.innerHTML).not.toContain('scale(');
+
+    fireEvent.change(iconSize(), { target: { value: '24' } });
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('11px on a 24px icon');
+    expect([modifierSize().getAttribute('min'), modifierSize().getAttribute('max')]).toEqual(['8', '12']);
+    expect(preview.innerHTML).toContain('scale(1.1');
+
+    // An adjustment carries across sizes in proportion, until reset.
+    fireEvent.change(modifierSize(), { target: { value: '12' } });
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('12px on a 24px icon');
+    fireEvent.change(iconSize(), { target: { value: '48' } });
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('22px on a 48px icon');
+    await user.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('20px on a 48px icon');
+  });
+
   it('opens "clock with sparkle" as the clock icon with the Sparkle modifier', async () => {
     renderAt('/?q=clock%20with%20sparkle');
     expect(await screen.findByRole('heading', { name: 'clock', level: 2 }, { timeout: 8000 })).toBeTruthy();
