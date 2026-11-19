@@ -15,7 +15,7 @@
     },
     {
       "name": "Communication",
-      "count": 99
+      "count": 101
     },
     {
       "name": "Data & commerce",
@@ -9508,6 +9508,32 @@
       "aliases": [
         "interface/head-profile"
       ]
+    },
+    {
+      "name": "head-profile-man",
+      "category": "Communication",
+      "tags": [
+        "male",
+        "person",
+        "side view",
+        "avatar",
+        "hair",
+        "gentleman"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "head-profile-woman",
+      "category": "Communication",
+      "tags": [
+        "female",
+        "person",
+        "side view",
+        "avatar",
+        "hair",
+        "lady"
+      ],
+      "aliases": []
     },
     {
       "name": "heading",
