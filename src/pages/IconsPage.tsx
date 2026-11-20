@@ -171,7 +171,11 @@ export function IconsPage() {
   /** Brands are a category of the one catalog now, not a separate view. */
   const brandsView = false;
   const kind = 'core' as const;
-  const drawStyle: StyleId = state.style === 'brands' ? catalog.styles[0] : state.style;
+  /** Brand marks come in Regular and a one-color Solid only, so the Brands category has no duo styles. */
+  const brandsOnly = state.category === BRANDS_CATEGORY;
+  const isDuo = (style: string) => style === 'duocolor' || style === 'duotone';
+  const requested: StyleId = state.style === 'brands' ? catalog.styles[0] : state.style;
+  const drawStyle: StyleId = brandsOnly && isDuo(requested) ? 'filled' : requested;
   const svgKey = drawStyle;
 
   const error = artworkErrors[svgKey];
@@ -368,6 +372,7 @@ export function IconsPage() {
       : categoryName ? t('icons.summaryIn', { results: counted, category: categoryName })
         : counted;
   const viewOptions: { value: View; label: string; title?: string }[] = catalog.styles
+    .filter((s) => !brandsOnly || !isDuo(s))
     .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`) }));
   const tips = brandsView
     ? [t('icons.searchBrands')]
@@ -425,7 +430,11 @@ export function IconsPage() {
               <select
                 id="category"
                 value={state.category ?? ''}
-                onChange={(e) => update({ category: e.target.value || null })}
+                onChange={(e) => {
+                  const category = e.target.value || null;
+                  // Brands have no duo styles: picking Brands from a duo tab shows Solid.
+                  update(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { category, style: 'filled' } : { category });
+                }}
                 className="h-9 appearance-none rounded-lg border border-line-strong bg-surface pl-3 pr-9 text-sm font-medium text-ink"
               >
                 <option value="">{t('icons.allCategories')}</option>

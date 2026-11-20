@@ -11,7 +11,7 @@
  */
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -268,11 +268,16 @@ function main() {
     throw new Error(`No fos-icons checkout at ${source}. Pass --source <path>.`);
   }
   const outputs = buildOutputs(source);
+  // Brand files the source no longer has (a removed brand) are stale too.
+  const brandDir = join(ROOT, 'public/brands');
+  const leftovers = existsSync(brandDir)
+    ? readdirSync(brandDir).map((f) => `public/brands/${f}`).filter((p) => !(p in outputs))
+    : [];
   if (args.check) {
     const stale = Object.entries(outputs).filter(([path, body]) => {
       const full = join(ROOT, path);
       return !existsSync(full) || readFileSync(full, 'utf8') !== body;
-    });
+    }).concat(leftovers.map((p) => [p]));
     if (stale.length) {
       console.error('Synchronized data is out of date:\n  ' + stale.map(([p]) => p).join('\n  '));
       console.error('Run: pnpm run sync --source <path-to-fos-icons>');
@@ -286,6 +291,7 @@ function main() {
     mkdirSync(dirname(full), { recursive: true });
     writeFileSync(full, body);
   }
+  for (const path of leftovers) rmSync(join(ROOT, path));
   const lock = readJson(LOCK_PATH);
   const catalog = readJson(join(ROOT, 'src/data/catalog.json'));
   console.log(`Synced ${catalog.icons.length} icons x ${catalog.styles.length} styles from ` +

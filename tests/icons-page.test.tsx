@@ -403,32 +403,45 @@ describe('Icons page', () => {
     expect(footer.textContent).not.toMatch(/Library [0-9a-f]{7}|licensed separately|MIT licensed/);
   });
 
-  it('shows one-color Solid brand marks off Regular, and keeps product marks in color', async () => {
+  it('shows one-color Solid brand marks off Regular', async () => {
     renderAt('/?category=Brands&style=solid');
     const spotify = await screen.findByRole('button', { name: 'spotify' });
     await waitFor(() => expect(spotify.querySelector('svg')).toBeTruthy());
     const mark = spotify.querySelector('svg')!;
     expect(mark.hasAttribute('data-brand')).toBe(false);
     expect(mark.innerHTML).toContain('currentColor');
-    const chrome = screen.getByRole('button', { name: 'google-chrome' });
-    await waitFor(() => expect(chrome.querySelector('svg[data-brand]')).toBeTruthy());
+  });
+
+  it('keeps brand marks in their own colors on Regular', async () => {
+    renderAt('/?category=Brands');
+    const spotify = await screen.findByRole('button', { name: 'spotify' });
+    await waitFor(() => expect(spotify.querySelector('svg[data-brand]')).toBeTruthy());
+  });
+
+  it('offers only Regular and Solid in the Brands category, and moves duo links to Solid', async () => {
+    renderAt('/?category=Brands&style=duotone');
+    const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
+    expect(within(switcher).getAllByRole('radio').map((radio) => radio.textContent)).toEqual(['Regular', 'Solid']);
+    expect(within(switcher).getByRole('radio', { name: 'Solid' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('list', { name: /Solid icons/ })).toBeTruthy();
   });
 
   it('lists Brands as the last category, not a style, and opens old Brands links there', async () => {
     renderAt('/?style=brands');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
     const labels = within(switcher).getAllByRole('radio').map((radio) => radio.textContent);
-    expect(labels).toEqual(['Regular', 'Solid', 'Duocolor', 'Duotone']);
+    // Brands come in Regular and Solid only.
+    expect(labels).toEqual(['Regular', 'Solid']);
     const category = screen.getByRole('combobox', { name: 'Category' }) as HTMLSelectElement;
     expect(category.value).toBe('Brands');
     expect([...category.options].at(-1)?.value).toBe('Brands');
     expect(await screen.findByRole('button', { name: 'spotify' })).toBeTruthy();
     const { loadBrands } = await import('../src/lib/brands');
     const svgs = await loadBrands('regular');
-    expect(Object.keys(svgs)).toHaveLength(32);
+    expect(Object.keys(svgs)).toHaveLength(28);
     const ids = Object.values(svgs).flatMap((svg) => [...svg.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
     expect(new Set(ids).size).toBe(ids.length);
-    expect(svgs['google-chrome']).toMatch(/id="brand-google-chrome-regular-0"/);
+    expect(svgs.facebook).toMatch(/id="brand-facebook-regular-0"/);
   });
 });
 

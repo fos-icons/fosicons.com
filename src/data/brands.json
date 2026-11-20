@@ -131,20 +131,6 @@
       }
     },
     {
-      "name": "google-chrome",
-      "owner": "Google LLC",
-      "category": "Apps",
-      "aliases": [
-        "chrome"
-      ],
-      "officialSource": "https://www.google.com/chrome/static/images/chrome-logo-m100.svg",
-      "retrieved": "2026-11-12",
-      "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
-      "files": {
-        "regular": "brands/google-chrome-regular.svg"
-      }
-    },
-    {
       "name": "instagram",
       "owner": "Meta Platforms, Inc.",
       "category": "Social",
@@ -190,34 +176,6 @@
       "files": {
         "regular": "brands/linkedin-regular.svg",
         "filled": "brands/linkedin-filled.svg"
-      }
-    },
-    {
-      "name": "microsoft-edge",
-      "owner": "Microsoft Corporation",
-      "category": "Apps",
-      "aliases": [
-        "edge"
-      ],
-      "officialSource": "https://upload.wikimedia.org/wikipedia/commons/9/98/Microsoft_Edge_logo_%282019%29.svg",
-      "retrieved": "2026-11-12",
-      "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
-      "files": {
-        "regular": "brands/microsoft-edge-regular.svg"
-      }
-    },
-    {
-      "name": "microsoft-teams",
-      "owner": "Microsoft Corporation",
-      "category": "Apps",
-      "aliases": [
-        "teams"
-      ],
-      "officialSource": "https://cdn-dynmedia-1.microsoft.com/is/content/microsoftcorp/Teams-Icon-FY26?resMode=sharp2&op_usm=1.5,0.65,15,0&qlt=100",
-      "retrieved": "2026-11-12",
-      "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
-      "files": {
-        "regular": "brands/microsoft-teams-regular.svg"
       }
     },
     {
@@ -458,20 +416,6 @@
       "files": {
         "regular": "brands/whatsapp-regular.svg",
         "filled": "brands/whatsapp-filled.svg"
-      }
-    },
-    {
-      "name": "windows",
-      "owner": "Microsoft Corporation",
-      "category": "Apps",
-      "aliases": [
-        "microsoft-windows"
-      ],
-      "officialSource": "https://upload.wikimedia.org/wikipedia/commons/8/87/Windows_logo_-_2021.svg",
-      "retrieved": "2026-11-12",
-      "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
-      "files": {
-        "regular": "brands/windows-regular.svg"
       }
     },
     {
