@@ -6,7 +6,10 @@ it('uses the Figma category order while retaining the separate Lifestyle categor
   const categories = [...new Set(orderBrowseIcons(catalog.icons).map((icon) => icon.category))];
   expect(categories.slice(0, 4)).toEqual(['Essentials', 'AI & agents', 'Time & calendar', 'Interfaces']);
   expect(categories.at(-1)).toBe('Weather');
-  expect(categories.indexOf('Food & drink')).toBeGreaterThan(categories.indexOf('Shapes'));
+  expect(categories.slice(categories.indexOf('Shapes') + 1, -1)).toEqual([
+    'Sports & fitness', 'Transport & space', 'Health & medical', 'Food & drink',
+    'Nature & animals', 'Music & instruments', 'Religion & spirituality', 'Professions',
+  ]);
   expect(categories).toHaveLength(catalog.categories.length);
 });
 

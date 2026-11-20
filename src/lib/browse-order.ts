@@ -3,9 +3,11 @@ import type { IconEntry } from './catalog';
 const figmaOrder = [
   'Essentials', 'AI & agents', 'Time & calendar', 'Interfaces', 'Navigation', 'Files',
   'Communication', 'Security', 'Media & devices', 'Data & commerce', 'Workspace', 'Shapes',
+  // The Figma Lifestyle group, in its frame order; each stays its own filter on the site.
+  'Sports & fitness', 'Transport & space', 'Health & medical', 'Food & drink',
+  'Nature & animals', 'Music & instruments', 'Religion & spirituality', 'Professions',
 ];
 const categoryRanks = new Map(figmaOrder.map((name, i) => [name, i]));
-// Categories in the Figma Lifestyle group remain individually filterable on the site.
 // Brand marks come last, after every icon category.
 const categoryRank = (name: string) => name === 'Brands' ? figmaOrder.length + 2
   : name === 'Weather' ? figmaOrder.length + 1 : categoryRanks.get(name) ?? figmaOrder.length;
