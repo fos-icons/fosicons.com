@@ -316,6 +316,8 @@ const en = {
   'code.vue': 'Vue',
   'code.svelte': 'Svelte',
   'code.css': 'CSS',
+  'code.dart': 'Dart',
+  'code.yaml': 'YAML',
   'code.copy': 'Copy',
   'code.copied': 'Copied',
 

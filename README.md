@@ -6,7 +6,7 @@ Production domain: **fosicons.com**.
 | Repository | Owns |
 | --- | --- |
 | `fos-icons/fosicons.com` (this repo) | Website code, synchronized data snapshot |
-| [`fos-icons/fos-icons`](https://github.com/fos-icons/fos-icons) | Canonical SVGs and packages for React, Vue, Svelte, SolidJS, and Angular |
+| [`fos-icons/fos-icons`](https://github.com/fos-icons/fos-icons) | Canonical SVGs and packages for React, Vue, Svelte, SolidJS, Angular, and Flutter |
 
 This repo never edits artwork. It consumes a verified, revision-pinned snapshot
 of the library (see [docs/ASSETS.md](docs/ASSETS.md)).

@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useI18n } from '../i18n';
-import { FEEDBACK_URL, FIGMA_URL, LIBRARY_URL } from '../lib/links';
+import { FEEDBACK_URL, FIGMA_URL, ORG_URL } from '../lib/links';
 import { ButtonAnchor, ButtonLink, UiIcon } from './ui';
 
 /** Phone menu rows: full-width ghost buttons, icon and label aligned left. */
@@ -10,14 +10,14 @@ const linkBase = 'whitespace-nowrap rounded text-sm font-medium underline-offset
 const textLink = `${linkBase} text-muted hover:text-ink`;
 
 /**
- * The home page's two calls to action under its intro: get started with the
- * library (primary) and the docs (secondary).
+ * The home page's two calls to action under its intro: get started on the
+ * GitHub organization (primary) and the docs (secondary).
  */
 export function HeroActions({ className = '' }: { className?: string }) {
   const { t } = useI18n();
   return (
     <div className={`flex flex-wrap gap-2 ${className}`}>
-      <ButtonAnchor href={LIBRARY_URL} external variant="primary" size="lg">{t('header.getStarted')}</ButtonAnchor>
+      <ButtonAnchor href={ORG_URL} external variant="primary" size="lg">{t('header.getStarted')}</ButtonAnchor>
       <ButtonLink to="/docs" size="lg">{t('header.documentation')}</ButtonLink>
     </div>
   );

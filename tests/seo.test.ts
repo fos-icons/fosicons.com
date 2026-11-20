@@ -30,7 +30,7 @@ describe('page metadata', () => {
   it('lists supported frameworks in both the Vite fallback and generated descriptions', () => {
     const html = readFileSync('index.html', 'utf8');
     const fallback = html.match(/<meta name="description" content="([^"]+)"/)![1];
-    for (const framework of FRAMEWORK_NAMES) {
+    for (const framework of [...FRAMEWORK_NAMES, 'Flutter']) {
       expect(fallback).toContain(framework);
       expect(PAGES.home.description).toContain(framework);
       expect(PAGES.docs.description).toContain(framework);

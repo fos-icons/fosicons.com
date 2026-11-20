@@ -155,7 +155,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   `- ${facts.license} licensed, free for personal and commercial use; keep the license notice when you redistribute the files.`,
   `- ${facts.modifiers} reusable modifiers (badges such as add, check, or lock) that can sit in a corner of any icon.`,
   `- ${nf.format(facts.brands)} brand logos (social networks, Google, Microsoft) are offered separately; they belong to their owners and are not covered by the ${facts.license} license.`,
-  `- Available as SVG files, a Figma library, and components for ${list(frameworkPackages.map(([, { label }]) => label))}.`,
+  `- Available as SVG files, a Figma library, and components for ${list([...frameworkPackages.map(([, { label }]) => label), 'Flutter'])}.`,
   '',
   '## Use the icons',
   '',

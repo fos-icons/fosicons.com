@@ -55,7 +55,7 @@ describe('Header actions', () => {
     expect(within(nav).queryByRole('link', { name: /Get started/ })).toBeNull();
     expect(within(nav).queryByRole('button', { name: /Download/ })).toBeNull();
     const start = within(screen.getByRole('main')).getByRole('link', { name: /Get started/ });
-    expect(start.getAttribute('href')).toBe('https://github.com/fos-icons/fos-icons');
+    expect(start.getAttribute('href')).toBe('https://github.com/fos-icons');
     expect(start.getAttribute('target')).toBe('_blank');
     const figma = within(nav).getByRole('link', { name: /^Figma/ });
     expect(figma.getAttribute('href')).toMatch(/^https:\/\/www\.figma\.com\/design\/5zcUV9E4Bu8FSssDfhyOWw\//);
