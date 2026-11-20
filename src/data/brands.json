@@ -131,6 +131,23 @@
       }
     },
     {
+      "name": "hugging-face",
+      "owner": "Hugging Face",
+      "category": "AI",
+      "officialSource": {
+        "url": "https://huggingface.co/brand",
+        "file": "https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg",
+        "fileSha256": "942cad1ccda905ac5a659dfd2d78b344fccfb84a8a3ac3721e08f488205638a0",
+        "figmaComponentNodeId": "179:162386"
+      },
+      "retrieved": "2026-11-20",
+      "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
+      "files": {
+        "regular": "brands/hugging-face-regular.svg",
+        "filled": "brands/hugging-face-filled.svg"
+      }
+    },
+    {
       "name": "instagram",
       "owner": "Meta Platforms, Inc.",
       "category": "Social",

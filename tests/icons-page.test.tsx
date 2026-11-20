@@ -438,7 +438,8 @@ describe('Icons page', () => {
     expect(await screen.findByRole('button', { name: 'spotify' })).toBeTruthy();
     const { loadBrands } = await import('../src/lib/brands');
     const svgs = await loadBrands('regular');
-    expect(Object.keys(svgs)).toHaveLength(28);
+    expect(Object.keys(svgs)).toHaveLength(brands.approved.length);
+    expect(svgs['hugging-face']).toBeTruthy();
     const ids = Object.values(svgs).flatMap((svg) => [...svg.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
     expect(new Set(ids).size).toBe(ids.length);
     expect(svgs.facebook).toMatch(/id="brand-facebook-regular-0"/);

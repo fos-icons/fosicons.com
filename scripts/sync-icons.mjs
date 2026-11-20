@@ -197,7 +197,8 @@ export function buildOutputs(source) {
       const [group, file] = asset.path.split('/');
       const base = file.replace(/\.svg$/, '');
       const meta = BRAND_META[asset.path] ?? {};
-      const name = meta.name ?? (group === 'social' ? base : `${group}-${base}`);
+      // Social and AI marks keep their plain names; other groups are prefixed.
+      const name = meta.name ?? (group === 'social' || group === 'ai' ? base : `${group}-${base}`);
       if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name)) throw new Error(`Bad brand name: ${name}`);
       if (brandNames.has(name)) throw new Error(`Duplicate brand: ${name}`);
       brandNames.add(name);
@@ -209,10 +210,10 @@ export function buildOutputs(source) {
       brandEntries.push({
         name,
         owner: asset.owner,
-        category: group === 'social' ? 'Social' : 'Apps',
+        category: group === 'social' ? 'Social' : group === 'ai' ? 'AI' : 'Apps',
         ...(meta.aliases ? { aliases: meta.aliases } : {}),
         officialSource: asset.source,
-        retrieved: bm.retrievedAt,
+        retrieved: asset.retrieved ?? bm.retrievedAt,
         terms: bm.rights.license,
         files: { regular: publicPath, ...(solidPath ? { filled: solidPath } : {}) },
       });
