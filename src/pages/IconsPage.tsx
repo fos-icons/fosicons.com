@@ -11,7 +11,7 @@ import { useModifiers } from '../components/ModifierPicker';
 import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, UiIcon } from '../components/ui';
-import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, loadBrandMarks } from '../lib/brands';
+import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
@@ -286,17 +286,20 @@ export function IconsPage() {
   const selected = state.icon ? iconsByName.get(state.icon) ?? brandsByName.get(state.icon) ?? null : null;
   const selectedBrand = !!selected && isBrand(selected.name);
 
-  // Brand marks load once, the first time one is on screen or open.
-  const [brandMarks, setBrandMarks] = useState<Record<string, string> | null>(null);
+  // Brand marks load the first time one is on screen or open: their own colors
+  // on Regular, and the one-color Solid marks on the other styles.
+  const brandStyle = drawStyle === catalog.styles[0] ? 'regular' as const : 'filled' as const;
+  const [brandMarkSets, setBrandMarkSets] = useState<Partial<Record<'regular' | 'filled', Record<string, string>>>>({});
+  const brandMarks = brandMarkSets[brandStyle] ?? null;
   const brandsNeeded = selectedBrand || multi.some(isBrand) || brandsInView || (!lazyArtwork && results.some((r) => isBrand(r.name)));
   useEffect(() => {
     if (!brandsNeeded || brandMarks) return;
     let cancelled = false;
-    loadBrandMarks()
-      .then((marks) => { if (!cancelled) setBrandMarks(marks); })
+    loadBrandMarks(brandStyle)
+      .then((marks) => { if (!cancelled) setBrandMarkSets((sets) => ({ ...sets, [brandStyle]: marks })); })
       .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
     return () => { cancelled = true; };
-  }, [brandsNeeded, brandMarks, svgKey, attempt, reportArtworkError]);
+  }, [brandsNeeded, brandMarks, brandStyle, svgKey, attempt, reportArtworkError]);
   // The pane and selection need their artwork even when scrolled out of view.
   useEffect(() => { need([...multi, ...(selected ? [selected.name] : [])]); }, [need, multi, selected]);
   const coreSvgs = svgs[svgKey] ?? null;
@@ -304,18 +307,15 @@ export function IconsPage() {
   const styleSvgs = useMemo(
     () => (coreSvgs || brandMarks ? {
       ...coreSvgs,
-      ...Object.fromEntries(Object.entries(brandMarks ?? {}).map(([k, v]) => [k, v.replace('<svg', '<svg data-brand')])),
+      // Full-color marks get data-brand (a light tile in the dark theme); one-color
+      // Solid marks use currentColor like the icons around them.
+      ...Object.fromEntries(Object.entries(brandMarks ?? {}).map(([k, v]) => [k, isColorMark(k, brandStyle) ? v.replace('<svg', '<svg data-brand') : v])),
     } : null),
-    [coreSvgs, brandMarks],
+    [coreSvgs, brandMarks, brandStyle],
   );
-  // Marks keep their own colors on Regular; on the other styles they show as
-  // muted monochrome marks, since a brand has no Solid or duo artwork.
-  const muteBrands = drawStyle !== catalog.styles[0];
   const gridSvgs = useMemo(
-    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([k, v]) => [k, isBrand(k)
-      ? (muteBrands ? v.replace('<svg data-brand', '<svg data-brand data-brand-muted') : v)
-      : prepareGridSvg(v)])) : null),
-    [styleSvgs, muteBrands],
+    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([k, v]) => [k, isBrand(k) ? v : prepareGridSvg(v)])) : null),
+    [styleSvgs],
   );
 
   const multiActive = multi.length >= 2;
@@ -527,8 +527,8 @@ export function IconsPage() {
             key={`${selectedBrand ? 'brand' : 'core'}:${selected.name}`}
             kind={selectedBrand ? 'brand' : 'core'}
             icon={selected}
-            style={selectedBrand ? 'regular' : drawStyle}
-            styles={selectedBrand ? ['regular'] : catalog.styles}
+            style={selectedBrand ? (isColorMark(selected.name, brandStyle) ? 'regular' : 'filled') : drawStyle}
+            styles={selectedBrand ? (isColorMark(selected.name, 'filled') ? ['regular'] : ['regular', 'filled']) : catalog.styles}
             source={styleSvgs?.[selected.name]}
             look={look}
             onLookChange={changeLook}
