@@ -207,7 +207,6 @@ const en = {
 
   // Inspector
   'inspector.clear': 'Clear selection',
-  'inspector.base': 'Base',
   'inspector.preview': '{name}, {style}, preview at {size}px',
   'inspector.actualSize': 'Actual size · {size}px',
   'inspector.shownAt': '{size}px, shown at {max}px',
@@ -220,11 +219,6 @@ const en = {
   'inspector.modifierSize': 'Modifier size',
   'inspector.modifierSizeReset': 'Reset',
   'inspector.modifierSizeValue': '{size} on a {icon} icon',
-  'inspector.libraryIcon': 'A library icon: {composition}.',
-  'inspector.tryOthers': 'Try other modifiers on {base}',
-  'inspector.authoredMatch': 'The library has a designed version of this combination: <link>{name}</link>.',
-  'inspector.libraryVersions': 'Library versions',
-  'inspector.openVersion': 'Open a library version…',
   'inspector.style': 'Style',
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
   'inspector.modifierColor': 'Modifier color',

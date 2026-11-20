@@ -1,5 +1,5 @@
 import { LocalizedError } from '../i18n/errors';
-import { lock, type StyleId } from './catalog';
+import { iconsByName, lock, type IconEntry, type StyleId } from './catalog';
 import { isDuo } from './svg';
 
 /**
@@ -13,6 +13,15 @@ import { isDuo } from './svg';
 
 export const CORNERS = ['top-left', 'top-right', 'bottom-left', 'bottom-right'] as const;
 export type Corner = (typeof CORNERS)[number];
+
+export function editablePreset(icon: IconEntry | null | undefined) {
+  const composition = icon?.composition;
+  if (composition?.modifiers.length !== 1) return null;
+  const { name, position } = composition.modifiers[0];
+  const base = iconsByName.get(composition.base);
+  const corner = CORNERS.find((corner) => corner === position);
+  return base && !base.composition && corner ? { base, badge: { name, corner } } : null;
+}
 
 export interface Placement {
   x: number;

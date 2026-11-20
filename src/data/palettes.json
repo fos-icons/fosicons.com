@@ -68,6 +68,28 @@
       }
     },
     {
+      "name": "Indigo",
+      "light": {
+        "primary": "#4338CA",
+        "secondary": "#6366D9"
+      },
+      "dark": {
+        "primary": "#A5B4FC",
+        "secondary": "#818CF8"
+      }
+    },
+    {
+      "name": "Violet",
+      "light": {
+        "primary": "#6D28D9",
+        "secondary": "#8B5BD6"
+      },
+      "dark": {
+        "primary": "#C4B5FD",
+        "secondary": "#A78BFA"
+      }
+    },
+    {
       "name": "Lime",
       "light": {
         "primary": "#4D7C0F",
@@ -131,6 +153,28 @@
       "dark": {
         "primary": "#FDA4AF",
         "secondary": "#FB7185"
+      }
+    },
+    {
+      "name": "Fuchsia",
+      "light": {
+        "primary": "#A21CAF",
+        "secondary": "#C34FC5"
+      },
+      "dark": {
+        "primary": "#F0ABFC",
+        "secondary": "#E879F9"
+      }
+    },
+    {
+      "name": "Stone",
+      "light": {
+        "primary": "#57534E",
+        "secondary": "#78716C"
+      },
+      "dark": {
+        "primary": "#D6D3D1",
+        "secondary": "#A8A29E"
       }
     }
   ]
