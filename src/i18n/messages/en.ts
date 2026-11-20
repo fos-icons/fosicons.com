@@ -17,21 +17,21 @@ const en = {
 
   // Page metadata (titles ≤ 60 characters, descriptions ~150)
   'meta.home.title': 'Fos Icons — Find the right icon, then ship it',
-  'meta.home.description': '{icons}+ free, {license}-licensed SVG icons in {styles}. Search, recolor, and resize them, then download SVG or PNG, or use them in React, Vue, and Figma.',
-  'meta.docs.title': 'Fos Icons Docs — SVG, React, Vue, Svelte, Angular, Figma',
-  'meta.docs.description': 'How to use Fos Icons: SVG, React, Vue, Svelte, Angular, Figma, four styles, colors, sizes, {modifiers} modifiers, accessibility, licensing, and privacy.',
+  'meta.home.description': '{icons}+ free, {license}-licensed SVG icons. Customize and export SVG or PNG, or use Fos Icons with {platforms}.',
+  'meta.docs.title': 'Fos Icons Docs — {frameworks}',
+  'meta.docs.description': 'Set up Fos Icons with {platforms}. Learn how to use SVGs, icons in four styles, modifiers, and accessible labels.',
   'meta.brands.title': 'Brand icons — Fos Icons',
   'meta.brands.description': '{brands} brand logos, including social networks, Google Chrome, and Microsoft Edge, Teams, and Windows, shown as their owners provide them. Not covered by the {license} license.',
   'meta.notFound.title': 'Page not found — Fos Icons',
   'meta.notFound.description': 'That page does not exist. Browse Fos Icons instead.',
   'meta.library.description': '{icons}+ open-source SVG icons on a 24px grid in {styles}, with {modifiers} reusable modifiers.',
-  'meta.icon.title': '{name} Icon — Free SVG, React & Vue | Fos Icons',
+  'meta.icon.title': '{name} Icon — Free SVG Downloads | Fos Icons',
   'meta.icon.titleShort': '{name} Icon — Free SVG | Fos Icons',
   'meta.icon.titleShortest': '{name} Icon | Fos Icons',
-  'meta.icon.description': 'Free {name} icon in {styles}. Copy the SVG, download a PNG, or use it in React, Vue, or Figma. {license} licensed.',
+  'meta.icon.description': 'Free {name} icon for {platforms}. Copy SVG or download PNG in four styles.',
   'meta.category.title': '{category} Icons — {count} Free SVG Icons | Fos Icons',
   'meta.category.titleShort': '{category} Icons | Fos Icons',
-  'meta.category.description': '{count} free {category} icons, including {examples}. In {styles}, as SVG, PNG, React, Vue, and Figma components.',
+  'meta.category.description': '{count} free {category} icons for {platforms}. Download SVG or PNG, including {examples}.',
   'meta.react.title': 'React Icons — {icons}+ Free SVG Icon Components | Fos Icons',
   'meta.react.description': '@fos-icons/react: {icons}+ free, tree-shakeable React icon components in {styles}. TypeScript types, React 18 and 19, {license} licensed.',
   'meta.vue.title': 'Vue Icons — {icons}+ Free SVG Icon Components | Fos Icons',
@@ -82,7 +82,7 @@ const en = {
 
   // Icons page
   'icons.headline': 'Find the <em>right</em> icon, then ship it.',
-  'icons.intro': '{count}+ open-source icons with soft, rounded line work, drawn in {styles}. Available as Figma icons, SVG files, and React and Vue icon libraries. Set the size, stroke width, and colors once, and every icon and download follows.',
+  'icons.intro': '{count}+ open-source icons with soft, rounded line work, drawn in {styles}. Download SVGs or use the library with {platforms}. Set the size, stroke width, and colors once, and every icon and download follows.',
   'icons.searchIcons': 'Search icons',
   'icons.searchBrands': 'Search brands',
   'icons.clearSearch': 'Clear search',
@@ -216,7 +216,7 @@ const en = {
   'inspector.codeStroke': 'These examples use the standard {base}px stroke. Download the SVG to keep {value}px.',
   'inspector.codeModifier': 'The packages have no component with {modifier} here, so the code shows the plain icon. Download the SVG to keep the modifier.',
   'inspector.codeModifierSize': 'The packages draw {modifier} at {authored} on an icon this size, not {size}, so the code shows the plain icon. Download the SVG to keep this modifier size.',
-  'inspector.codeInstall': 'Use <code>@fos-icons/react</code>, <code>@fos-icons/vue</code>, <code>@fos-icons/svelte</code>, or <code>@fos-icons/angular</code>. <link>Setup docs</link>.',
+  'inspector.codeInstall': 'Find your framework’s installation instructions in the <link>setup docs</link>.',
   'inspector.modifierSize': 'Modifier size',
   'inspector.modifierSizeReset': 'Reset',
   'inspector.modifierSizeValue': '{size} on a {icon} icon',
@@ -367,6 +367,7 @@ const en = {
   'iconPage.react': 'React',
   'iconPage.vue': 'Vue',
   'iconPage.svelte': 'Svelte',
+  'iconPage.solid': 'SolidJS',
   'iconPage.angular': 'Angular',
   'iconPage.framework': 'Framework',
   'iconPage.figma': 'Figma',
@@ -384,7 +385,7 @@ const en = {
 
   // Category pages (/categories/<slug>)
   'categoryPage.heading': '{category} icons',
-  'categoryPage.intro': '{count} free {category} icons in {styles}. Open one for its SVG, React, and Vue code, or customize the whole set at once.',
+  'categoryPage.intro': '{count} free {category} icons in {styles}. Open an icon for its SVG or examples for {frameworks}, or customize the whole set at once.',
   'categoryPage.customize': 'Customize these icons',
   'categoryPage.others': 'Other categories',
 

@@ -16,7 +16,7 @@ const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
   PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands,
-  SITE_NAME, LIBRARY_URL, FIGMA_URL, LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
+  SITE_NAME, LIBRARY_URL, FIGMA_URL, FRAMEWORK_PACKAGES, LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath, FRAMEWORK_PATHS, displayName,
 } = server;
 
@@ -143,6 +143,7 @@ writeFileSync(join(dist, 'robots.txt'), [
 // llms.txt (https://llmstxt.org): a plain summary for AI assistants and answer engines.
 const nf = new Intl.NumberFormat('en-US');
 const list = (items) => new Intl.ListFormat('en', { type: 'conjunction' }).format(items);
+const frameworkPackages = Object.entries(FRAMEWORK_PACKAGES);
 writeFileSync(join(dist, 'llms.txt'), [
   `# ${SITE_NAME}`,
   '',
@@ -154,15 +155,17 @@ writeFileSync(join(dist, 'llms.txt'), [
   `- ${facts.license} licensed, free for personal and commercial use; keep the license notice when you redistribute the files.`,
   `- ${facts.modifiers} reusable modifiers (badges such as add, check, or lock) that can sit in a corner of any icon.`,
   `- ${nf.format(facts.brands)} brand logos (social networks, Google, Microsoft) are offered separately; they belong to their owners and are not covered by the ${facts.license} license.`,
-  '- Available as SVG files, the `@fos-icons/react` and `@fos-icons/vue` npm packages, and a Figma library.',
+  `- Available as SVG files, a Figma library, and components for ${list(frameworkPackages.map(([, { label }]) => label))}.`,
   '',
   '## Use the icons',
   '',
-  `- [Browse and export icons](${absolute('/')}): search by name, tag, or category; copy SVG, React code, or PNG; download one icon or a ZIP.`,
-  `- [Docs](${absolute('/docs')}): styles, SVG, React, Figma, colors, sizes, modifiers, accessibility, licensing, and privacy.`,
+  `- [Browse and export icons](${absolute('/')}): search by name, tag, or category; copy SVG, framework code, or PNG; download one icon or a ZIP.`,
+  `- [Docs](${absolute('/docs')}): styles, SVG, framework setup, Figma, colors, sizes, modifiers, accessibility, licensing, and privacy.`,
   `- [Source library on GitHub](${LIBRARY_URL}): the canonical SVGs, manifest, and metadata.`,
   '- React: `npm install @fos-icons/react` ([npm](https://www.npmjs.com/package/@fos-icons/react))',
   '- Vue 3: `npm install @fos-icons/vue` ([npm](https://www.npmjs.com/package/@fos-icons/vue))',
+  ...frameworkPackages.filter(([id]) => id !== 'react' && id !== 'vue').map(([id, { label, name }]) =>
+    `- ${label}: \`${name}\` ([Setup](${absolute(`/docs#${id}`)}))`),
   ...(FIGMA_URL ? [`- [Figma library](${FIGMA_URL})`] : []),
   `- [React icons](${absolute(FRAMEWORK_PATHS.react)}), [Vue icons](${absolute(FRAMEWORK_PATHS.vue)}), [Figma icons](${absolute(FRAMEWORK_PATHS.figma)}): getting started with each.`,
   `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its SVG at ${absolute('/svg/<style>/<name>.svg')}.`,

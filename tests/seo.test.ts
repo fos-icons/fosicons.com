@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { FRAMEWORK_NAMES } from '../src/lib/links';
 import { describe, expect, it } from 'vitest';
 import catalog from '../src/data/catalog.json';
 import { ICONS_ROUNDED } from '../src/lib/catalog';
@@ -22,6 +24,18 @@ describe('page metadata', () => {
       expect(page.title.length).toBeLessThanOrEqual(60);
       expect(page.description.length).toBeGreaterThan(50);
       expect(page.description.length).toBeLessThanOrEqual(200);
+    }
+  });
+
+  it('lists supported frameworks in both the Vite fallback and generated descriptions', () => {
+    const html = readFileSync('index.html', 'utf8');
+    const fallback = html.match(/<meta name="description" content="([^"]+)"/)![1];
+    for (const framework of FRAMEWORK_NAMES) {
+      expect(fallback).toContain(framework);
+      expect(PAGES.home.description).toContain(framework);
+      expect(PAGES.docs.description).toContain(framework);
+      expect(iconMeta('telescope')!.description).toContain(framework);
+      expect(categoryMeta('food-drink')!.description).toContain(framework);
     }
   });
 

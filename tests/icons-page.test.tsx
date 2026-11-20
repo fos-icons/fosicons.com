@@ -661,6 +661,15 @@ describe('Inspector sections (desktop)', () => {
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
     expect(await navigator.clipboard.readText()).toBe(code());
     expect(localStorage.getItem('fos:code-tab')).toBe('svelte');
+    const solid = within(section).getByRole('tab', { name: 'SolidJS' });
+    await user.click(solid);
+    expect(code()).toContain("import { SearchRegular } from '@fos-icons/solid';");
+    expect(code()).toContain('<SearchRegular size={48} />');
+    expect(solid.getAttribute('aria-selected')).toBe('true');
+    expect(section.querySelector('.code-block')!.getAttribute('data-lang')).toBe('tsx');
+    await user.click(within(section).getByRole('button', { name: 'Copy' }));
+    expect(await navigator.clipboard.readText()).toBe(code());
+    expect(localStorage.getItem('fos:code-tab')).toBe('solid');
     await user.click(within(section).getByRole('tab', { name: 'Angular' }));
     expect(code()).toContain("import { SearchRegular } from '@fos-icons/angular';");
     expect(code()).toContain('<svg fos-search-regular [size]="48"></svg>');
@@ -733,7 +742,7 @@ describe('Icon page header search (desktop)', () => {
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('filled')['triangle-right']);
   });
 
-  it('offers copyable Svelte and Angular code on icon pages and updates it with the style', async () => {
+  it('offers copyable Svelte, SolidJS, and Angular code on icon pages and updates it with the style', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/triangle-right');
     const section = document.getElementById('use')!.closest('section')!;
@@ -749,6 +758,19 @@ describe('Icon page header search (desktop)', () => {
     expect(code()).toContain('TriangleRightFilled');
     expect(code()).not.toContain('TriangleRightRegular');
     expect(tab.getAttribute('aria-selected')).toBe('true');
+
+    const solid = within(section).getByRole('tab', { name: 'SolidJS' });
+    await user.click(solid);
+    const solidCode = () => section.querySelector('.code-block[data-lang="tsx"] code')!.textContent;
+    expect(solidCode()).toContain("import { TriangleRightFilled } from '@fos-icons/solid';");
+    expect(solidCode()).toContain('<TriangleRightFilled />');
+    await user.click(within(section).getAllByRole('button', { name: 'Copy' })[0]);
+    expect(await navigator.clipboard.readText()).toBe(solidCode());
+    await user.click(within(preview).getByRole('radio', { name: 'Duocolor' }));
+    expect(solidCode()).toContain('TriangleRightDuocolor');
+    expect(solidCode()).not.toContain('TriangleRightFilled');
+    expect(solid.getAttribute('aria-selected')).toBe('true');
+    await user.click(within(preview).getByRole('radio', { name: 'Solid' }));
 
     const angular = within(section).getByRole('tab', { name: 'Angular' });
     await user.click(angular);

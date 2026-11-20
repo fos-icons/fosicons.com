@@ -16,6 +16,7 @@ import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyl
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
+import { PLATFORM_NAMES } from '../lib/links';
 import { DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
 import { modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
@@ -379,7 +380,7 @@ export function IconsPage() {
           {rich('icons.headline', { em: (text) => <span className="text-brand">{text}</span> })}
         </h1>
         <p className="mt-2 text-base text-muted">
-          {t('icons.intro', { count: ICONS_ROUNDED, styles: list(catalog.styles.map((s) => t(`style.${s}`))) })}
+          {t('icons.intro', { count: ICONS_ROUNDED, styles: list(catalog.styles.map((s) => t(`style.${s}`))), platforms: list(PLATFORM_NAMES) })}
         </p>
         <HeroActions className="mt-5" />
       </div>

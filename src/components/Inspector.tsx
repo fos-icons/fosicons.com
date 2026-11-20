@@ -10,7 +10,7 @@ import { useLocation } from 'react-router-dom';
 import {
   compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
-import { angularSnippet, reactSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
+import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { BASE_STROKE, buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
@@ -194,6 +194,7 @@ export function Inspector({
       react: reactSnippet(snippetName, style, snippetOptions),
       vue: vueSnippet(snippetName, style, snippetOptions),
       svelte: svelteSnippet(snippetName, style, snippetOptions),
+      solid: solidSnippet(snippetName, style, snippetOptions),
       angular: angularSnippet(snippetName, style, snippetOptions),
     }
     : null;
@@ -430,6 +431,7 @@ export function Inspector({
                 { id: 'react', label: t('iconPage.react'), code: snippets.react, lang: 'tsx' },
                 { id: 'vue', label: t('iconPage.vue'), code: snippets.vue, lang: 'vue' },
                 { id: 'svelte', label: t('iconPage.svelte'), code: snippets.svelte, lang: 'svelte' },
+                { id: 'solid', label: t('iconPage.solid'), code: snippets.solid, lang: 'tsx' },
                 { id: 'angular', label: t('iconPage.angular'), code: snippets.angular, lang: 'ts' },
               ]}
             />
@@ -451,7 +453,6 @@ export function Inspector({
             )}
             <li>
               {rich('inspector.codeInstall', {
-                code: (text) => <code className="font-mono text-ink">{text}</code>,
                 link: (text) => <a className="text-brand underline underline-offset-2" href={path('/docs')}>{text}</a>,
               })}
             </li>
