@@ -9,7 +9,8 @@ export interface BrandEntry {
   owner: string;
   category: string;
   aliases?: string[];
-  officialSource: string;
+  /** A URL, or the Figma component the mark was exported from. */
+  officialSource: string | { fileKey: string; setNodeId: string; componentNodeId: string };
   retrieved: string;
   terms: string;
   /** Paths under public/, per style. Solid (`filled`) is optional. */
