@@ -1,9 +1,9 @@
 {
   "repository": "fos-icons/fos-icons",
-  "revision": "f836a224c4903a5a6799ecabacac5a7a26f56352",
+  "revision": "95fd09908dcec6bb448871b7fad408b18a1b9c05",
   "dirty": false,
   "manifestSha256": "af08e703dd3b984666b63deff365541ddd32f4171f6a9255e869d6253b39ae37",
-  "brandManifestSha256": "312d35a33237dcb26691c5c328dd36a177c37f34c7f3b6d559e965651d24b5f2",
+  "brandManifestSha256": "77c17e186cd2ee00e05fea02a666c3587409be84b7d09d7ca4795c20ef9dafdd",
   "snapshotSha256": {
     "regular": "d88dbdd3b89b229f063694a6c13c670c15a53030755190e4ee941fcd745be6a3",
     "filled": "c4cb3501d7e8ea86dfefe422de04d2a9f6a18c9a34f2ddb79f24086f16c2ecdd",
