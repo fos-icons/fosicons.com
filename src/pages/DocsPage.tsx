@@ -432,7 +432,7 @@ FosIcon(
         <Section id="figma" title="Figma">
           <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size=24</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
           <ul className="list-disc space-y-1 pl-5">
-            <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the twelve duo palettes.</li>
+            <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the duo palettes.</li>
             <li><strong>Fos / Stroke</strong> offers 16px (1px), 24px (1.25px, default), and 32px (1.5px) stroke presets. These change stroke weight only, not icon dimensions.</li>
             <li>Named icon instances expose their nested <strong>Modifier</strong> controls in the properties panel.</li>
           </ul>
@@ -446,7 +446,7 @@ FosIcon(
   --fos-secondary: #5B87B7;
 }`}</Code>
           <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with 16% of the primary color. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
-          <p>The twelve library palettes, each with Light and Dark pairs:</p>
+          <p>The {palettes.palettes.length} library palettes each have Light and Dark pairs.</p>
           <ul className="grid grid-cols-2 gap-2 !pl-0 sm:grid-cols-3" role="list">
             {palettes.palettes.map((p) => (
               <li key={p.name} className="flex list-none items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-sm">
@@ -469,7 +469,7 @@ FosIcon(
         <Section id="modifiers" title="Modifiers">
           <p>Modifiers combine a base icon with a small solid glyph — Add, Delete, Lock, file-type labels, and more — with a designed corner position and a transparent clearance gap so the glyph never touches the base.</p>
           <p>The library currently includes <strong>{compositions.length} authored compositions</strong> across {new Set(compositions.map((c) => c.composition!.base)).size} base icons, using {modifierNames.size} modifiers. In the inspector, open a base icon such as <a href={path('/?icon=user')}>user</a> or <a href={path('/?icon=file')}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
-          <p>The website offers only these authored compositions. It does not generate arbitrary base-and-glyph combinations, because automatic conflict handling has not been designed yet. For other combinations, the library&apos;s Python composer supports the four corners with real clearance:</p>
+          <p>Opening an icon with one modifier starts with the base icon and that modifier selected. You can also choose a modifier and corner in the inspector, or compose the SVG with the Python tool.</p>
           <Code lang="sh">{`python3 scripts/compose_svg.py home-smile --modifier key --position bottom-right --output home-key.svg`}</Code>
         </Section>
 

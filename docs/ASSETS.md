@@ -28,7 +28,7 @@ Commit the regenerated files together with `src/data/source-lock.json`.
 | --- | --- |
 | `public/icons/<style>.json` | `{ name: svg }` per style, fetched on demand |
 | `src/data/catalog.json` | names, categories + counts, tags, aliases, compositions, modifier labels |
-| `src/data/palettes.json` | the twelve Light/Dark duo palettes |
+| `src/data/palettes.json` | the Light/Dark duo palettes |
 | `src/data/ui-icons.json` | Regular glyphs the site chrome uses (`UI_ICONS` in the script) |
 | `public/licenses/fos-icons-LICENSE.txt` | the library's MIT license |
 | `src/data/source-lock.json` | repository, git revision, whether the checkout had local changes, manifest and snapshot SHA-256 |

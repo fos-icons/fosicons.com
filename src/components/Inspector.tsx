@@ -8,7 +8,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
-  compositionLabel, modifierFamily, STYLE_META, type IconEntry, type StyleId,
+  modifierFamily, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
@@ -19,7 +19,7 @@ import { CodeTabs, KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import {
-  authoredModifierPx, autoModifierPx, composeSvg, CORNERS, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
+  authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
 import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
@@ -34,7 +34,6 @@ export interface InspectorProps {
   look: Look;
   onLookChange: (patch: Partial<Look>) => void;
   onStyleChange: (style: StyleId) => void;
-  onSelectIcon: (name: string) => void;
   onClose: () => void;
   /** Brand assets: no React package, no duo controls, no stroke control. */
   kind?: 'core' | 'brand';
@@ -42,7 +41,7 @@ export interface InspectorProps {
   /** The modifier being tried (from the URL), by library name; its corner, or null for the default. */
   badgeRequest?: { name: string; corner: Corner | null } | null;
   /** Called when the user picks or clears a modifier, or moves it. */
-  onBadgeChange?: (choice: { name: string; corner: Corner } | null, base?: string) => void;
+  onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
 }
 
 
@@ -50,7 +49,7 @@ export interface InspectorProps {
 const THUMB_MAX = 48;
 
 export function Inspector({
-  icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onSelectIcon, onClose, kind = 'core', headingId,
+  icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
   badgeRequest = null, onBadgeChange,
 }: InspectorProps) {
   const toast = useToast();
@@ -68,27 +67,18 @@ export function Inspector({
 
   /** Chosen modifier (badge) color, kept with the rest of the look so it carries across icons. */
   const modifier = look.modifierColor;
-  const preset = icon.composition?.modifiers.length === 1 ? icon.composition.modifiers[0] : null;
-  const base = icon.composition?.base ?? icon.name;
-  const canTryModifiers = kind === 'core' && (!icon.composition || !!preset);
+  const canTryModifiers = kind === 'core' && !icon.composition;
   const modifiers = useModifiers(canTryModifiers && !!librarySource);
-  const available = useMemo(() => modifiers.list ? modifiersFor(base, modifiers.list) : [], [base, modifiers.list]);
+  const available = useMemo(() => modifiers.list ? modifiersFor(icon.name, modifiers.list) : [], [icon.name, modifiers.list]);
   const badge = useMemo<ModifierChoice | null>(() => {
-    const request = preset ?? badgeRequest;
-    if (!canTryModifiers || !request) return null;
-    const modifier = available.find((m) => m.name === request.name);
+    if (!badgeRequest) return null;
+    const modifier = available.find((m) => m.name === badgeRequest.name);
     if (!modifier) return null;
-    if (preset) {
-      const corner = CORNERS.find((c) => c === preset.position && modifier.positions[c]);
-      return corner ? { modifier, corner } : null;
-    }
-    const corner = badgeRequest?.corner;
+    const { corner } = badgeRequest;
     return { modifier, corner: corner && modifier.positions[corner] ? corner : initialCorner(modifier) };
-  }, [canTryModifiers, available, badgeRequest, preset]);
-  const trialBadge = preset ? null : badge;
+  }, [available, badgeRequest]);
   const setBadge = (choice: ModifierChoice | null) => {
-    if (preset && choice?.modifier.name === preset.name && choice.corner === preset.position) return;
-    onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner }, preset ? base : undefined);
+    onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
   };
   /**
    * Badge size follows the icon size (20px at 48px, 11px at 24px; see
@@ -103,14 +93,14 @@ export function Inspector({
   const badgeScale = modifierScaleFor(size, badgeSize);
   const pxText = (value: number) => t('customize.pxValue', { value });
   const composed = useMemo(() => {
-    if (!trialBadge || !librarySource) return { svg: librarySource, error: null };
+    if (!badge || !librarySource) return { svg: librarySource, error: null };
     try {
       // modifierRole: the badge gets its own color role in every style, so it can be recolored.
-      return { svg: composeSvg(librarySource, trialBadge.modifier, trialBadge.corner, style, badgeScale, true), error: null };
+      return { svg: composeSvg(librarySource, badge.modifier, badge.corner, style, badgeScale, true), error: null };
     } catch (e) {
       return { svg: librarySource, error: errorText(e, i18n, 'error.compose') };
     }
-  }, [trialBadge, librarySource, style, badgeScale, i18n]);
+  }, [badge, librarySource, style, badgeScale, i18n]);
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
@@ -143,7 +133,7 @@ export function Inspector({
   }, [source, colors, size, uid, strokeWidth]);
 
   const slug = STYLE_META[style].slug;
-  const baseName = trialBadge ? `${icon.name}-${trialBadge.modifier.name}-${trialBadge.corner}-${slug}` : `${icon.name}-${slug}`;
+  const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
   const family = kind === 'core' ? modifierFamily(icon.name) : null;
   /** Modifiers the library authored on this base, by corner (single-modifier compositions). */
   const authored = useMemo(() => {
@@ -178,8 +168,8 @@ export function Inspector({
   // The packaged components draw the badge as authored, so they only match the
   // preview when the modifier size is exactly that.
   const packagedSize = Math.abs(badgeSize - authoredModifierPx(size)) < 1e-9;
-  const packaged = trialBadge && authoredMatch && packagedSize ? authoredMatch : null;
-  const plainFallback = !!trialBadge && !packaged;
+  const packaged = badge && authoredMatch && packagedSize ? authoredMatch : null;
+  const plainFallback = !!badge && !packaged;
   const snippetOptions: SnippetOptions = {
     size,
     // Regular/Solid: name a color only when it isn't simply the site's ink.
@@ -233,7 +223,6 @@ export function Inspector({
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
             {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
-            {icon.composition && <> · {t('inspector.base')} <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>{icon.composition.base}</button></>}
           </p>
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 self-start" />
@@ -251,14 +240,7 @@ export function Inspector({
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
-          {icon.composition && (!canTryModifiers || (modifiers.list && !badge) || modifiers.error) ? (
-            <p className="text-sm leading-relaxed text-muted">
-              {t('inspector.libraryIcon', { composition: compositionLabel(icon.composition) })}{' '}
-              <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(icon.composition!.base)}>
-                {t('inspector.tryOthers', { base: icon.composition.base })}
-              </button>
-            </p>
-          ) : modifiers.error ? (
+          {!canTryModifiers ? null : modifiers.error ? (
             <p className="text-sm text-danger">{modifiers.error}</p>
           ) : !modifiers.list ? (
             <div className="h-24 animate-pulse rounded-xl bg-sunken" />
@@ -287,7 +269,7 @@ export function Inspector({
                 )}
               />
               <TeachingTip tip="modifier" />
-              {trialBadge && (
+              {badge && (
                 <div className="mt-4">
                   <div className="mb-1 flex items-center justify-between text-xs">
                     <span className="text-muted">{t('inspector.modifierSize')}</span>
@@ -314,35 +296,7 @@ export function Inspector({
                   />
                 </div>
               )}
-              <div aria-live="polite" className="text-xs leading-relaxed text-faint [&>p]:mt-3">
-                {composed.error ? (
-                  <p className="text-danger">{composed.error}</p>
-                ) : preset && icon.composition ? (
-                  <p>{t('inspector.libraryIcon', { composition: compositionLabel(icon.composition) })}</p>
-                ) : badge && authoredMatch ? (
-                  <p>
-                    {rich('inspector.authoredMatch', {
-                      link: (text) => <button type="button" className="text-brand underline underline-offset-2" onClick={() => onSelectIcon(authoredMatch)}>{text}</button>,
-                    }, { name: authoredMatch })}
-                  </p>
-                ) : null}
-              </div>
-              {family && (
-                <div className="mt-3">
-                  <label htmlFor={`${uid}-mod`} className="mb-1 block text-xs text-muted">{t('inspector.libraryVersions')}</label>
-                  <select
-                    id={`${uid}-mod`}
-                    value=""
-                    onChange={(e) => e.target.value && onSelectIcon(e.target.value)}
-                    className="h-9 w-full rounded-lg border border-line-strong bg-surface px-2 text-sm"
-                  >
-                    <option value="">{t('inspector.openVersion')}</option>
-                    {family.variants.map((v) => (
-                      <option key={v.name} value={v.name}>{compositionLabel(v.composition!)} — {v.name}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+              {composed.error && <p role="status" className="mt-3 text-xs text-danger">{composed.error}</p>}
             </>
           )}
           {/* Library icons that already carry a modifier have no picker: a full color field instead. */}
@@ -444,11 +398,11 @@ export function Inspector({
               <li>
                 {authoredMatch
                   ? t('inspector.codeModifierSize', {
-                    modifier: label('modifier', trialBadge.modifier.name, trialBadge.modifier.label),
+                    modifier: label('modifier', badge.modifier.name, badge.modifier.label),
                     authored: pxText(Math.round(authoredModifierPx(size) * 10) / 10),
                     size: pxText(badgeSize),
                   })
-                  : t('inspector.codeModifier', { modifier: label('modifier', trialBadge.modifier.name, trialBadge.modifier.label) })}
+                  : t('inspector.codeModifier', { modifier: label('modifier', badge.modifier.name, badge.modifier.label) })}
               </li>
             )}
             <li>

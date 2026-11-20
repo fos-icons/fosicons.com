@@ -23,7 +23,7 @@ import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../l
 import { useSlashToFocus } from './IconsPage';
 import NotFoundPage from './NotFoundPage';
 import { useModifiers } from '../components/ModifierPicker';
-import { composeSvg, CORNERS, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
+import { composeSvg, CORNERS, editablePreset, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
 import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
 
@@ -218,6 +218,8 @@ function PreviewStage({ name, style, svg, onStyleChange }: {
 export default function IconPage() {
   const { name = '' } = useParams();
   const icon = iconsByName.get(name);
+  const preset = editablePreset(icon);
+  const inspected = preset?.base ?? icon;
   const i18n = useI18n();
   const { t, label, n, path } = i18n;
   const toast = useToast();
@@ -234,7 +236,7 @@ export default function IconPage() {
     else q.set('style', STYLE_META[next].slug);
     return q;
   }, { replace: true, preventScrollReset: true, state: location.state });
-  const svg = useArtwork(style, icon ? [icon.name] : [])[name];
+  const svg = useArtwork(style, inspected ? [inspected.name] : [])[inspected?.name ?? name];
   const navigate = useNavigate();
   const desktop = useMediaQuery('(min-width: 1024px)');
   /** The header search slot shows from md up, like the docs page. */
@@ -249,17 +251,17 @@ export default function IconPage() {
   const cornerParam = params.get('corner');
   const badge: InspectorProps['badgeRequest'] = modifierParam
     ? { name: modifierParam, corner: (CORNERS as readonly string[]).includes(cornerParam ?? '') ? cornerParam as Corner : null }
-    : null;
-  const setBadge = (choice: InspectorProps['badgeRequest'], base?: string) => {
+    : preset?.badge ?? null;
+  const setBadge = (choice: InspectorProps['badgeRequest']) => {
     const next = new URLSearchParams(params);
     if (choice) next.set('modifier', choice.name); else next.delete('modifier');
     if (choice?.corner) next.set('corner', choice.corner); else next.delete('corner');
-    if (base) navigate({ pathname: path(iconPath(base)), search: next.toString() });
+    if (preset) navigate({ pathname: path(iconPath(preset.base.name)), search: next.toString() });
     else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
   };
-  const canModify = !!icon && !icon.composition;
+  const canModify = !!inspected && !inspected.composition;
   const modifiers = useModifiers(canModify && (wide || !!badge));
-  const available = useMemo(() => (icon && canModify && modifiers.list ? modifiersFor(icon.name, modifiers.list) : []), [icon, canModify, modifiers.list]);
+  const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
   /** The artwork the page shows, copies, and downloads: the icon, plus any modifier on it. */
   const shown = useMemo(() => {
@@ -273,7 +275,7 @@ export default function IconPage() {
   }, [svg, applied, badge?.corner, style]);
   const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
-  const editSvg = useArtwork(editing ?? catalog.styles[0], icon && editing ? [icon.name] : [])[name];
+  const editSvg = useArtwork(editing ?? catalog.styles[0], inspected && editing ? [inspected.name] : [])[inspected?.name ?? name];
   if (!icon) return <NotFoundPage />;
   const openEditor = (style: StyleId) => setEditing(style);
   const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
@@ -441,7 +443,7 @@ export default function IconPage() {
         )}
       </div>
 
-      {editing && (
+      {editing && inspected && (
         <SidePane
           desktop={desktop}
           host={paneHost}
@@ -454,14 +456,13 @@ export default function IconPage() {
         >
           <Inspector
             key={icon.name}
-            icon={icon}
+            icon={inspected}
             style={editing}
             styles={catalog.styles}
             source={editSvg}
             look={look}
             onLookChange={(patch) => setLook((l) => ({ ...l, ...patch }))}
             onStyleChange={setEditing}
-            onSelectIcon={(next) => navigate(path(iconPath(next)))}
             onClose={closeEditor}
             headingId="pane-heading"
             badgeRequest={badge}

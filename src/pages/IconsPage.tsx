@@ -18,7 +18,7 @@ import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
 import { PLATFORM_NAMES } from '../lib/links';
 import { DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
-import { modifiersFor } from '../lib/modifiers';
+import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
 import { prepareGridSvg } from '../lib/svg';
@@ -282,12 +282,13 @@ export function IconsPage() {
     }, 350);
     return () => window.clearTimeout(timer);
   }, [phrase, phraseTarget, update]);
-  const badgeRequest = useMemo(
-    () => (state.modifier ? { name: state.modifier, corner: state.corner } : null),
-    [state.modifier, state.corner],
-  );
-
   const selected = state.icon ? iconsByName.get(state.icon) ?? brandsByName.get(state.icon) ?? null : null;
+  const selectedPreset = useMemo(() => editablePreset(selected), [selected]);
+  const inspected = selectedPreset?.base ?? selected;
+  const badgeRequest = useMemo(
+    () => (state.modifier ? { name: state.modifier, corner: state.corner } : selectedPreset?.badge ?? null),
+    [state.modifier, state.corner, selectedPreset],
+  );
   const selectedBrand = !!selected && isBrand(selected.name);
 
   // Brand marks load the first time one is on screen or open: their own colors
@@ -305,7 +306,7 @@ export function IconsPage() {
     return () => { cancelled = true; };
   }, [brandsNeeded, brandMarks, brandStyle, svgKey, attempt, reportArtworkError]);
   // The pane and selection need their artwork even when scrolled out of view.
-  useEffect(() => { need([...multi, ...(selected ? [selected.name] : [])]); }, [need, multi, selected]);
+  useEffect(() => { need([...multi, ...(inspected ? [inspected.name] : [])]); }, [need, multi, inspected]);
   const coreSvgs = svgs[svgKey] ?? null;
   /** Artwork by name: this style's icons plus the brand marks, which ship in Regular only. */
   const styleSvgs = useMemo(
@@ -531,26 +532,25 @@ export function IconsPage() {
             onClear={() => setMulti([])}
             headingId="pane-heading"
           />
-        ) : selected ? (
+        ) : selected && inspected ? (
           <Inspector
             key={`${selectedBrand ? 'brand' : 'core'}:${selected.name}`}
             kind={selectedBrand ? 'brand' : 'core'}
-            icon={selected}
+            icon={inspected}
             style={selectedBrand ? (isColorMark(selected.name, brandStyle) ? 'regular' : 'filled') : drawStyle}
             styles={selectedBrand ? (isColorMark(selected.name, 'filled') ? ['regular'] : ['regular', 'filled']) : catalog.styles}
-            source={styleSvgs?.[selected.name]}
+            source={styleSvgs?.[inspected.name]}
             look={look}
             onLookChange={changeLook}
             onStyleChange={(style) => update({ style })}
-            onSelectIcon={(icon) => update({ icon })}
             onClose={close}
             headingId="pane-heading"
             badgeRequest={badgeRequest}
-            onBadgeChange={(choice, base) => update({
-              ...(base ? { icon: base } : {}),
+            onBadgeChange={(choice) => update({
+              ...(selectedPreset ? { icon: selectedPreset.base.name } : {}),
               modifier: choice?.name ?? null,
               corner: choice?.corner ?? null,
-            }, !base)}
+            }, !selectedPreset)}
           />
         ) : (
           <CustomizePanel

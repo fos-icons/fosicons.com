@@ -19,3 +19,11 @@ it('keeps Essentials search and zoom icons adjacent', () => {
     'search', 'search-scan', 'search-selection', 'search-sparkles', 'zoom-in', 'zoom-out',
   ]);
 });
+
+it('groups funnel icons and line-filter icons in separate adjacent runs', () => {
+  const names = orderBrowseIcons(catalog.icons).filter(({ category }) => category === 'Interfaces').map(({ name }) => name);
+  const funnels = ['filter', 'filter-check', 'filter-edit', 'filter-plus', 'filter-search', 'filter-x', 'filter-dollar', 'filter-off'];
+  const lines = ['filter-lines', 'filter-circle', 'filter-lines-edit', 'filter-lines-plus', 'filter-lines-x', 'filter-square'];
+  expect(names.slice(names.indexOf('filter'), names.indexOf('filter') + funnels.length)).toEqual(funnels);
+  expect(names.slice(names.indexOf('filter-lines'), names.indexOf('filter-lines') + lines.length)).toEqual(lines);
+});

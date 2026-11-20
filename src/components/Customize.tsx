@@ -277,7 +277,7 @@ export function CustomizeControls({
       >
         <div className="space-y-3">
           {/* One theme sets every style: a main color for Regular and Solid, primary and secondary for the duo styles. */}
-          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="grid grid-cols-[repeat(7,auto)] items-start justify-start gap-1">
+          <div role="radiogroup" aria-label={t('customize.colorTheme')} className="grid grid-cols-[auto_repeat(8,minmax(0,2rem))] items-start justify-start gap-1">
             {THEME_NAMES.map((name) => {
               const c = themeColors(name, r.mode);
               const checked = !look.custom && !look.mono && name === r.themeName;
@@ -291,7 +291,7 @@ export function CustomizeControls({
                   aria-label={themeLabel}
                   title={themeLabel}
                   onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
-                  className={`theme-swatch squircle flex size-8 items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
+                  className={`theme-swatch squircle flex size-8 max-w-full items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
                 >
                   <span className="squircle flex size-6 overflow-hidden border border-line" aria-hidden="true">
                     <span className="flex-1" style={{ background: c.main }} />

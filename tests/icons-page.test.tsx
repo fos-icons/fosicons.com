@@ -186,7 +186,7 @@ describe('Icons page', () => {
   it('switching style updates the URL and fetches that style', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=user-add');
-    await screen.findByRole('heading', { name: 'user-add', level: 2 });
+    await screen.findByRole('heading', { name: 'user', level: 2 });
     const [toolbarStyle] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
     await user.click(within(toolbarStyle).getByRole('radio', { name: 'Duotone' }));
     expect(location).toContain('style=duotone');
@@ -195,21 +195,9 @@ describe('Icons page', () => {
     expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /duotone\.json$/.test(u))).toBe(true);
   });
 
-  it('links to the library versions of a base icon', async () => {
-    renderAt('/?icon=user');
-    // The grid makes label queries slow; find the select directly once modifiers load.
-    const select = await vi.waitFor(() => {
-      const label = Array.from(document.querySelectorAll('label')).find((l) => l.textContent === 'Library versions');
-      if (!label) throw new Error('Modifiers not loaded yet');
-      return document.getElementById(label.htmlFor) as HTMLSelectElement;
-    }, { timeout: 8000 });
-    const options = Array.from(select.options).map((o) => o.value);
-    const expected = catalog.icons.filter((i) => i.composition?.base === 'user').map((i) => i.name);
-    expect(options).toEqual(['', ...expected]);
-  });
-
   it.each([
     ['calendar-record', 'calendar', 'Record', 'Bottom right', '12.75'],
+    ['filter-plus', 'filter', 'Add', 'Bottom right', '12.75'],
     ['clock-check', 'clock', 'Check', 'Bottom left', '1.25'],
   ])('opens %s with its authored modifier selected and lets the user edit the base', async (preset, base, label, corner, x) => {
     const user = userEvent.setup();
@@ -217,8 +205,10 @@ describe('Icons page', () => {
 
     const chosen = await screen.findByRole('button', { name: new RegExp(`^${label} modifier`) });
     expect(chosen.getAttribute('aria-pressed')).toBe('true');
+    expect(screen.queryByLabelText('Library versions')).toBeNull();
+    expect(screen.queryByText(/^A library icon:/)).toBeNull();
     expect(screen.getByRole('button', { name: corner }).getAttribute('aria-pressed')).toBe('true');
-    const preview = screen.getByRole('img', { name: new RegExp(`${preset}, Regular, preview`) });
+    const preview = screen.getByRole('img', { name: new RegExp(`${base}, Regular, preview`) });
     expect(preview.querySelectorAll(`svg[x="${x}"][y="12.75"]`)).toHaveLength(1);
 
     await user.click(screen.getByRole('button', { name: 'Top left' }));

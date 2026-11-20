@@ -65,14 +65,6 @@ export const ICONS_ROUNDED = Math.floor(catalog.icons.length / 100) * 100;
 
 export const iconsByName = new Map(catalog.icons.map((icon) => [icon.name, icon]));
 
-const formatPosition = (position: string) => position.replace('-', ' ');
-
-export function compositionLabel(composition: Composition) {
-  return composition.modifiers
-    .map((m) => `${catalog.modifiers[m.name]?.label ?? m.name} · ${formatPosition(m.position)}`)
-    .join(' + ');
-}
-
 /**
  * Verified modifier family of an icon: its base plus every authored named
  * composition of that base. Only these combinations are offered.
