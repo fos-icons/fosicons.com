@@ -5,7 +5,7 @@ import { useLocation } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
 import { angularSnippet, solidSnippet } from '../lib/react-snippet';
-import { FRAMEWORK_PACKAGES, packageSource, PLATFORM_NAMES } from '../lib/links';
+import { FLUTTER_PACKAGE, FRAMEWORK_PACKAGES, packageSource, PLATFORM_NAMES } from '../lib/links';
 import { CodeBlock } from '../components/CodeBlock';
 import { useToast } from '../components/ui';
 import { createPortal } from 'react-dom';
@@ -21,6 +21,7 @@ const SECTIONS = [
   ['styles', 'Styles'],
   ['svg', 'SVG'],
   ...Object.entries(FRAMEWORK_PACKAGES).map(([id, { label }]) => [id, label] as const),
+  ['flutter', FLUTTER_PACKAGE.label],
   ['figma', 'Figma'],
   ['colors', 'Colors'],
   ['sizes', 'Sizes'],
@@ -402,6 +403,29 @@ npm pack`}</Code>
             <li>Customize colors with <code>color</code>, <code>primaryColor</code>, <code>secondaryColor</code>, and <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
             <li>Icons are decorative by default. Use <code>title</code> or <code>label</code> for a meaningful standalone icon. Give an icon-only button its own accessible name.</li>
             <li>Use <code>@fos-icons/angular/filled</code> for a style entry point or <code>@fos-icons/angular/regular/camera</code> for an individual default import.</li>
+          </ul>
+        </Section>
+
+        <Section id="flutter" title="Flutter">
+          <p><code>fos_icons</code> brings every icon in all four styles to Flutter as typed constants, drawn with <code>flutter_svg</code>. Release builds keep only the icons your app uses. It needs Flutter 3.44 or later and isn&apos;t on pub.dev yet. Source: <a target="_blank" rel="noreferrer" href={packageSource('flutter')}>packages/flutter</a>.</p>
+          <p>Clone the source, then add the package to your app&apos;s <code>pubspec.yaml</code> as a path dependency.</p>
+          <Code lang="sh">{`git clone https://github.com/fos-icons/fos-icons.git`}</Code>
+          <Code lang="yaml">{`# pubspec.yaml
+dependencies:
+  fos_icons:
+    path: ../fos-icons/packages/flutter`}</Code>
+          <Code lang="dart">{`import 'package:fos_icons/fos_icons.dart';
+
+FosIcon(
+  FosIcons.telescopeDuocolor,
+  size: 32,
+  primaryColor: Color(0xFF245B9E),
+  secondaryColor: Color(0xFF60A5FA),
+)`}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Each constant is the icon name in camelCase plus its style: <code>fuel-pump</code> becomes <code>FosIcons.fuelPumpRegular</code>, <code>fuelPumpFilled</code>, <code>fuelPumpDuocolor</code>, and <code>fuelPumpDuotone</code>. Names that start with a digit get an <code>icon</code> prefix.</li>
+            <li>Regular and Solid icons follow the ambient <code>IconTheme</code> size and color. Duocolor and Duotone keep their palette unless you set <code>primaryColor</code>, <code>secondaryColor</code>, or <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
+            <li>Icons are decorative by default. Pass <code>semanticLabel</code> for a meaningful standalone icon.</li>
           </ul>
         </Section>
 

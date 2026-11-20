@@ -1,6 +1,8 @@
 import hljs from 'highlight.js/lib/core';
 import bash from 'highlight.js/lib/languages/bash';
 import css from 'highlight.js/lib/languages/css';
+import dart from 'highlight.js/lib/languages/dart';
+import yaml from 'highlight.js/lib/languages/yaml';
 import typescript from 'highlight.js/lib/languages/typescript';
 import xml from 'highlight.js/lib/languages/xml';
 
@@ -8,8 +10,10 @@ hljs.registerLanguage('typescript', typescript);
 hljs.registerLanguage('bash', bash);
 hljs.registerLanguage('xml', xml);
 hljs.registerLanguage('css', css);
+hljs.registerLanguage('dart', dart);
+hljs.registerLanguage('yaml', yaml);
 
-const ALIASES: Record<string, string> = { tsx: 'typescript', ts: 'typescript', sh: 'bash', html: 'xml', svg: 'xml', vue: 'xml', svelte: 'xml', css: 'css' };
+const ALIASES: Record<string, string> = { tsx: 'typescript', ts: 'typescript', sh: 'bash', html: 'xml', svg: 'xml', vue: 'xml', svelte: 'xml', css: 'css', dart: 'dart', yaml: 'yaml' };
 
 /** Escaped, highlighted HTML for a snippet, or null for an unknown language. */
 export function highlight(code: string, lang: string): string | null {
