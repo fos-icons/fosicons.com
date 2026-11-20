@@ -75,9 +75,18 @@ const brandByCatalogName = new Map(brands.approved.map((b) => [catalogName(b.nam
 /** Whether a catalog name is a brand mark. */
 export const isBrand = (name: string) => brandByCatalogName.has(name);
 
-/** The approved brand marks (they ship in Regular only), keyed by catalog name. */
-export function loadBrandMarks(): Promise<Record<string, string>> {
-  return loadBrands('regular').then((marks) => Object.fromEntries(
-    brands.approved.filter((b) => marks[b.name]).map((b) => [catalogName(b.name), marks[b.name]]),
-  ));
+/** Whether a mark is drawn in its own colors (true) or as a one-color Solid mark. */
+export const isColorMark = (name: string, style: BrandStyle) => style === 'regular' || !brandByCatalogName.get(name)?.files.filled;
+
+/**
+ * The approved brand marks keyed by catalog name. Solid gives each brand's
+ * one-color mark where its kit has one; marks without one (the Google and
+ * Microsoft product icons) keep their original colors in every style.
+ */
+export async function loadBrandMarks(style: BrandStyle = 'regular'): Promise<Record<string, string>> {
+  const regular = await loadBrands('regular');
+  const solid = style === 'filled' && availableBrandStyles.includes('filled') ? await loadBrands('filled') : {};
+  return Object.fromEntries(brands.approved
+    .filter((b) => solid[b.name] ?? regular[b.name])
+    .map((b) => [catalogName(b.name), solid[b.name] ?? regular[b.name]]));
 }

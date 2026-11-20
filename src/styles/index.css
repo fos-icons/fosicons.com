@@ -145,18 +145,6 @@
     border-radius: 22%;
     box-shadow: 0 0 0 max(3px, 0.15em) #f2f2f2;
   }
-  /* Brands ship in Regular only: on the other style tabs they show as muted
-     monochrome marks, never recolored by the style's colors. */
-  .glyph > svg[data-brand-muted] {
-    filter: grayscale(1);
-    opacity: 0.5;
-  }
-  .dark .glyph[data-artwork]:has(> svg[data-brand-muted]) {
-    opacity: 0.55;
-  }
-  .dark .glyph > svg[data-brand-muted] {
-    opacity: 1;
-  }
   .icon-cell {
     content-visibility: auto;
     contain-intrinsic-size: auto 130px;
