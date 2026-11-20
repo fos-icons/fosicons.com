@@ -159,6 +159,10 @@
       "label": "DOC",
       "group": "file-types"
     },
+    "dot": {
+      "label": "Dot",
+      "group": "status"
+    },
     "download": {
       "label": "Download",
       "group": "actions"

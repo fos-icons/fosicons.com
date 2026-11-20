@@ -1,5 +1,5 @@
 import { LocalizedError } from '../i18n/errors';
-import type { StyleId } from './catalog';
+import { lock, type StyleId } from './catalog';
 import { isDuo } from './svg';
 
 /**
@@ -70,7 +70,8 @@ export function initialCorner(modifier: ModifierAsset): Corner {
 let cache: Promise<ModifierAsset[]> | null = null;
 
 export function loadModifiers(): Promise<ModifierAsset[]> {
-  cache ??= fetch(`${import.meta.env.BASE_URL}modifiers.json`).then((res) => {
+  const revision = lock.revision ?? lock.manifestSha256;
+  cache ??= fetch(`${import.meta.env.BASE_URL}modifiers.json?v=${revision}`).then((res) => {
     if (!res.ok) throw new LocalizedError('error.loadModifiersStatus', { status: String(res.status) });
     return res.json() as Promise<{ modifiers: ModifierAsset[] }>;
   }).then((data) => data.modifiers).catch((error: unknown) => {
