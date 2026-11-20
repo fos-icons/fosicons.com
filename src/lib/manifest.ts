@@ -26,7 +26,7 @@ export function webManifest(description: string) {
       { src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
     ],
     shortcuts: [
-      { name: 'Brand icons', url: '/?style=brands', icons: [{ src: '/app/icon-192.png', sizes: '192x192' }] },
+      { name: 'Brand icons', url: '/brands', icons: [{ src: '/app/icon-192.png', sizes: '192x192' }] },
       { name: 'Docs', url: '/docs', icons: [{ src: '/app/icon-192.png', sizes: '192x192' }] },
     ],
   };

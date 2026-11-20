@@ -3,7 +3,7 @@ import { useId, useState } from 'react';
 import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng } from '../lib/export';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { Section } from './Customize';
-import { Button, IconButton, UiIcon } from './ui';
+import { Button, IconButton, Select, UiIcon } from './ui';
 
 export const EXPORT_SCALES = [0.5, 1, 1.5, 2, 3, 4] as const;
 type Scale = (typeof EXPORT_SCALES)[number];
@@ -128,27 +128,27 @@ export function ExportPanel({
             <li key={r.id}>
               <div className="flex items-center gap-1.5">
                 <label className="sr-only" htmlFor={`${uid}-s${r.id}`}>{t('export.scaleRow', { row: i + 1 })}</label>
-                <select
+                <Select
                   id={`${uid}-s${r.id}`}
                   value={effectiveScale(r)}
                   disabled={svg}
                   title={svg ? t('export.svgFixed') : t('customize.pxValue', { value: pxOf(size, effectiveScale(r)) })}
                   onChange={(e) => patch(r.id, { scale: Number(e.target.value) as Scale })}
-                  className={`${field} w-[76px]`}
+                  className="w-[76px] shrink-0"
                 >
                   {EXPORT_SCALES.map((s) => <option key={s} value={s}>{scaleLabel(s)}</option>)}
-                </select>
+                </Select>
                 <label className="sr-only" htmlFor={`${uid}-f${r.id}`}>{t('export.formatRow', { row: i + 1 })}</label>
-                <select
+                <Select
                   id={`${uid}-f${r.id}`}
                   value={r.format}
                   onChange={(e) => patch(r.id, { format: e.target.value as Format })}
-                  className={`${field} min-w-0 flex-1`}
+                  className="min-w-0 flex-1"
                 >
                   <option value="png">PNG</option>
                   <option value="jpg">JPG</option>
                   <option value="svg">SVG</option>
-                </select>
+                </Select>
                 <button
                   type="button"
                   aria-label={t('export.options', { row: i + 1 })}
@@ -197,24 +197,24 @@ export function ExportPanel({
         <h4 className="mb-2 text-xs text-muted">{t('export.copy')}</h4>
         <div className="flex items-center gap-1.5">
           <label className="sr-only" htmlFor={`${uid}-cs`}>{t('export.copyScale')}</label>
-          <select
+          <Select
             id={`${uid}-cs`}
             value={copy.kind === 'png' ? copy.scale : 1}
             disabled={copy.kind !== 'png'}
             onChange={(e) => setCopy({ ...copy, scale: Number(e.target.value) as Scale })}
-            className={`${field} w-[76px]`}
+            className="w-[76px] shrink-0"
           >
             {EXPORT_SCALES.map((s) => <option key={s} value={s}>{scaleLabel(s)}</option>)}
-          </select>
+          </Select>
           <label className="sr-only" htmlFor={`${uid}-ck`}>{t('export.copyAs')}</label>
-          <select
+          <Select
             id={`${uid}-ck`}
             value={copy.kind}
             onChange={(e) => setCopy({ ...copy, kind: e.target.value as CopyKind })}
-            className={`${field} min-w-0 flex-1`}
+            className="min-w-0 flex-1"
           >
             {COPY_KINDS.map((k) => <option key={k.value} value={k.value}>{t(k.label)}</option>)}
-          </select>
+          </Select>
           <Button icon="copy" className="h-8 px-2.5" disabled={disabled && copy.kind !== 'name'} onClick={doCopy}>
             {t('export.copy')}
           </Button>

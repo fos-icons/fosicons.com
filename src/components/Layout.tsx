@@ -1,15 +1,17 @@
-import { useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
 import { catalog } from '../lib/catalog';
+import { isCatalogEditor } from '../lib/catalog-location';
 import { categoryPath, FRAMEWORK_PATHS } from '../lib/icon-pages';
 import { CONTAINER, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { LIBRARY_URL, NPM_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
 import { LanguageMenu } from './LanguageMenu';
+import { PageBoundary } from './PageBoundary';
 import { UiIcon } from './ui';
 
 const footerLink = 'inline-flex items-center gap-1 rounded text-muted underline-offset-2 transition hover:text-ink hover:underline';
@@ -19,18 +21,25 @@ export function Layout() {
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useDocumentMeta();
   const { t, label } = useI18n();
-  const { pathname, hash } = useLocation();
-  const iconPage = splitLocale(pathname).path.startsWith('/icons/');
+  const location = useLocation();
+  const { pathname, hash } = location;
+  const editor = isCatalogEditor(location);
+  const pageKey = editor ? 'catalog' : pathname;
+  const iconPage = !editor && splitLocale(pathname).path.startsWith('/icons/');
   const navigationType = useNavigationType();
+  const mainRef = useRef<HTMLElement>(null);
   // A link to another page starts at its top (the router keeps the old scroll
   // otherwise). Back/forward, links to a #section, and query-only updates
   // (a style switch) keep the current position.
-  const lastPath = useRef(pathname);
+  const lastPage = useRef(pageKey);
   useEffect(() => {
-    if (lastPath.current === pathname) return;
-    lastPath.current = pathname;
-    if (navigationType !== 'POP' && !hash) window.scrollTo(0, 0);
-  }, [pathname, navigationType, hash]);
+    if (lastPage.current === pageKey) return;
+    lastPage.current = pageKey;
+    if (navigationType !== 'POP' && !hash) {
+      window.scrollTo({ top: 0, behavior: 'instant' });
+      mainRef.current?.focus({ preventScroll: true });
+    }
+  }, [pageKey, navigationType, hash]);
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
@@ -46,16 +55,20 @@ export function Layout() {
                 <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
                 <span className="whitespace-nowrap font-display text-[20px] font-semibold tracking-tight">{t('site.name')}</span>
               </LocalLink>
-              <div ref={setHeaderSlot} className="hidden min-w-0 flex-1 justify-center px-6 empty:hidden md:flex" />
+              <div ref={setHeaderSlot} className="hidden min-w-0 flex-1 justify-center px-2 empty:hidden md:flex lg:px-6" />
               <div className="ml-auto flex items-center gap-2 md:gap-5">
                 <HeaderActions />
               </div>
             </div>
           </header>
-          <main id="main" tabIndex={-1} className="flex-1 outline-none">
+          <main ref={mainRef} id="main" tabIndex={-1} className="flex-1 outline-none">
             {/* Re-keyed per page so moving between pages eases in (see .route-enter). */}
-            <div key={pathname} className="route-enter page-enter">
-              <Outlet />
+            <div key={pageKey} className="route-enter page-enter">
+              <PageBoundary>
+                <Suspense fallback={<p role="status" className={`${CONTAINER} py-8 text-muted`}>{t('site.pageLoading')}</p>}>
+                  <Outlet />
+                </Suspense>
+              </PageBoundary>
             </div>
           </main>
           <footer className="border-t border-line">
@@ -66,6 +79,7 @@ export function Layout() {
                 <ul className="mt-3 space-y-2">
                   <li><LocalLink to={FRAMEWORK_PATHS.react} className={footerLink}>{t('footer.reactIcons')}</LocalLink></li>
                   <li><LocalLink to={FRAMEWORK_PATHS.vue} className={footerLink}>{t('footer.vueIcons')}</LocalLink></li>
+                  <li><LocalLink to="/docs#flutter" className={footerLink}>{t('footer.flutterIcons')}</LocalLink></li>
                   <li><LocalLink to={FRAMEWORK_PATHS.figma} className={footerLink}>{t('footer.figmaIcons')}</LocalLink></li>
                 </ul>
               </nav>

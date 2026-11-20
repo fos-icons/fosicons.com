@@ -8,11 +8,24 @@ import DocsPage from '../src/pages/DocsPage';
 afterEach(cleanup);
 
 describe('Docs page', () => {
+  it('lists the sections in the order they appear in the article', async () => {
+    const user = userEvent.setup();
+    render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
+    const nav = within(screen.getByRole('navigation', { name: 'Documentation' }));
+    await user.click(nav.getByRole('button', { name: 'On this page' }));
+    for (const name of ['Design', 'Code', 'Reference']) {
+      await user.click(nav.getByRole('button', { name }));
+    }
+    const links = nav.getAllByRole('link').map((link) => link.getAttribute('href'));
+    const sections = within(screen.getByRole('article')).getAllByRole('region').map((section) => `#${section.id}`);
+    expect(links).toEqual(sections);
+  });
+
   it('marks the current section in the side nav', async () => {
-    Element.prototype.scrollIntoView ??= () => {};
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
     // jsdom has no layout, so only the click path is testable here.
+    await userEvent.click(within(nav).getByRole('button', { name: 'Design' }));
     await userEvent.click(within(nav).getByRole('link', { name: 'Sizes' }));
     expect(within(nav).getByRole('link', { name: 'Sizes' }).getAttribute('aria-current')).toBe('location');
     expect(nav.querySelectorAll('[aria-current]')).toHaveLength(1);
@@ -22,15 +35,16 @@ describe('Docs page', () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const blocks = document.querySelectorAll('.code-block');
     expect(blocks.length).toBeGreaterThan(0);
-    const shell = document.querySelector('.code-block[data-lang="sh"]')?.textContent;
+    const shell = document.querySelector('#react .code-block[data-lang="sh"]')?.textContent;
     expect(shell).toMatch(/^Terminal/);
     expect(shell).toContain('npm install @fos-icons/react');
     expect(shell).toContain('pnpm add @fos-icons/react');
   });
 
-  it('documents what the site stores in a Privacy section', () => {
+  it('documents what the site stores in a Privacy section', async () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    await userEvent.click(within(nav).getByRole('button', { name: 'Reference' }));
     expect(within(nav).getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('#privacy');
     const section = document.getElementById('privacy')!;
     expect(section.textContent).toMatch(/no cookies/);
@@ -43,7 +57,13 @@ describe('Docs page', () => {
     const user = userEvent.setup();
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    const group = within(nav).getByRole('button', { name: 'Code' });
+    expect(group.getAttribute('aria-expanded')).toBe('false');
+    expect(within(nav).queryByRole('link', { name: 'Svelte' })).toBeNull();
+    await user.click(group);
     expect(within(nav).getByRole('link', { name: 'Svelte' }).getAttribute('href')).toBe('#svelte');
+    await user.click(group);
+    expect(within(nav).queryByRole('link', { name: 'Svelte' })).toBeNull();
     const section = document.getElementById('svelte')!;
     expect(section.textContent).toContain('Svelte 5.20');
     expect(section.textContent).toContain('Not yet published to npm');
@@ -64,6 +84,7 @@ describe('Docs page', () => {
     const user = userEvent.setup();
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    await user.click(within(nav).getByRole('button', { name: 'Code' }));
     expect(within(nav).getByRole('link', { name: 'SolidJS' }).getAttribute('href')).toBe('#solid');
     const section = document.getElementById('solid')!;
     expect(section.textContent).toContain('@solidjs/web@2.0.0-rc.21');
@@ -83,6 +104,7 @@ describe('Docs page', () => {
     const user = userEvent.setup();
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
+    await user.click(within(nav).getByRole('button', { name: 'Code' }));
     expect(within(nav).getByRole('link', { name: 'Angular' }).getAttribute('href')).toBe('#angular');
     const section = document.getElementById('angular')!;
     expect(section.textContent).toContain('npm pack');

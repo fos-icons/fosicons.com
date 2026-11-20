@@ -1,4 +1,4 @@
-import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode } from 'react';
+import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
 import type { LinkProps } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import uiIcons from '../data/ui-icons.json';
@@ -8,6 +8,22 @@ export type UiIconName = keyof typeof uiIcons;
 /** Interface glyphs are the library's own Regular icons from the synced library. */
 export function UiIcon({ name, className = 'size-5' }: { name: UiIconName; className?: string }) {
   return <span aria-hidden="true" className={`glyph inline-block shrink-0 ${className}`} dangerouslySetInnerHTML={{ __html: uiIcons[name] }} />;
+}
+
+/** Native select with the same border and arrow across the catalog and inspectors. */
+export function Select({ className = '', disabled, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return (
+    <div className={`relative ${className}`}>
+      <select
+        className="block h-9 w-full appearance-none truncate rounded-lg border border-line-strong bg-surface ps-3 pe-8 text-sm font-medium text-ink transition-colors enabled:hover:bg-sunken disabled:cursor-not-allowed disabled:text-faint forced-colors:appearance-auto"
+        disabled={disabled}
+        {...props}
+      >
+        {children}
+      </select>
+      <UiIcon name="chevron-down" className={`pointer-events-none absolute end-2.5 top-1/2 size-4 -translate-y-1/2 forced-colors:hidden ${disabled ? 'text-faint' : 'text-muted'}`} />
+    </div>
+  );
 }
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'quiet';

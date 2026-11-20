@@ -16,8 +16,10 @@ const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
   PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands,
-  SITE_NAME, LIBRARY_URL, FIGMA_URL, FRAMEWORK_PACKAGES, LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
-  primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath, FRAMEWORK_PATHS, displayName,
+  SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
+  LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
+  primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
+  defaultGridSvg, gridPreviewPath, FRAMEWORK_PATHS, displayName,
 } = server;
 
 // Every style's artwork, for prerendering the landing pages and publishing
@@ -29,12 +31,14 @@ renameSync(join(dist, 'icons'), versionedArtwork);
 const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(versionedArtwork, `${style}.json`), 'utf8'))]));
 primeArtwork(artwork);
 let svgFiles = 0;
+mkdirSync(join(dist, 'svg', 'preview'), { recursive: true });
 for (const style of catalog.styles) {
   mkdirSync(join(dist, 'svg', style), { recursive: true });
   for (const icon of catalog.icons) {
     const svg = artwork[style][icon.name];
     if (!svg) throw new Error(`Missing ${style} artwork for ${icon.name}`);
     writeFileSync(join(dist, svgFilePath(style, icon.name)), `${svg}\n`);
+    if (style === 'regular') writeFileSync(join(dist, gridPreviewPath(icon.name)), `${defaultGridSvg(svg)}\n`);
     svgFiles += 1;
   }
 }
@@ -85,7 +89,7 @@ const pageFile = (path) => (path === '/' ? 'index.html' : `${path.slice(1)}/inde
 const ROUTES = [
   ['/', homePreloads],
   ['/docs'],
-  ['/?style=brands', [], 'brands/index.html'],
+  ['/brands'],
   ...Object.values(FRAMEWORK_PATHS).map((path) => [path]),
   ...catalog.categories.map((c) => [categoryPath(c.name)]),
   ...catalog.icons.map((icon) => [iconPath(icon.name)]),
@@ -155,7 +159,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   `- ${facts.license} licensed, free for personal and commercial use; keep the license notice when you redistribute the files.`,
   `- ${facts.modifiers} reusable modifiers (badges such as add, check, or lock) that can sit in a corner of any icon.`,
   `- ${nf.format(facts.brands)} brand logos (social networks, Google, Microsoft) are offered separately; they belong to their owners and are not covered by the ${facts.license} license.`,
-  `- Available as SVG files, a Figma library, and components for ${list([...frameworkPackages.map(([, { label }]) => label), 'Flutter'])}.`,
+  `- Available as SVG files, a Figma library, and components for ${list(FRAMEWORK_NAMES)}.`,
   '',
   '## Use the icons',
   '',
@@ -166,6 +170,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   '- Vue 3: `npm install @fos-icons/vue` ([npm](https://www.npmjs.com/package/@fos-icons/vue))',
   ...frameworkPackages.filter(([id]) => id !== 'react' && id !== 'vue').map(([id, { label, name }]) =>
     `- ${label}: \`${name}\` ([Setup](${absolute(`/docs#${id}`)}))`),
+  `- Flutter: \`${FLUTTER_PACKAGE.name}\` ([Setup](${absolute('/docs#flutter')}), [Dart package source](${packageSource('flutter')}))`,
   ...(FIGMA_URL ? [`- [Figma library](${FIGMA_URL})`] : []),
   `- [React icons](${absolute(FRAMEWORK_PATHS.react)}), [Vue icons](${absolute(FRAMEWORK_PATHS.vue)}), [Figma icons](${absolute(FRAMEWORK_PATHS.figma)}): getting started with each.`,
   `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its SVG at ${absolute('/svg/<style>/<name>.svg')}.`,
