@@ -49,7 +49,7 @@ function useDesktop() {
 }
 
 const fetchMock = vi.fn(async (url: string) => {
-  if (url.endsWith('modifiers.json')) {
+  if (url === `/modifiers.json?v=${lock.revision ?? lock.manifestSha256}`) {
     return new Response(readFileSync(join(__dirname, '../public/modifiers.json'), 'utf8'), { status: 200 });
   }
   if (url.includes('brands/')) {
@@ -303,13 +303,24 @@ describe('Icons page', () => {
   it('lets a real icon win over a modifier reading', async () => {
     renderAt('/?q=check%20user');
     await waitFor(() => expect(document.querySelector('button[data-icon="user-check"]')).toBeTruthy(), { timeout: 8000 });
-    expect(fetchMock.mock.calls.some((c) => String(c[0]).endsWith('modifiers.json'))).toBe(false);
+    expect(fetchMock.mock.calls.some((c) => /modifiers\.json(?:\?|$)/.test(String(c[0])))).toBe(false);
   });
 
   it('restores a modifier and corner from a shared link', async () => {
     renderAt('/?icon=clock&modifier=sparkle&corner=top-right');
     await waitFor(() => expect(screen.getByRole('button', { name: /^Sparkle modifier/ }).getAttribute('aria-pressed')).toBe('true'), { timeout: 8000 });
     expect(screen.getByRole('button', { name: 'Top right' }).getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('offers the authored Dot in Status and applies its selected corner', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=bell');
+    await user.click(await screen.findByRole('tab', { name: 'Status' }, { timeout: 8000 }));
+    await user.click(screen.getByRole('button', { name: /^Dot modifier/ }));
+    await user.click(screen.getByRole('button', { name: 'Top right' }));
+    expect(screen.getByRole('button', { name: 'Top right' }).getAttribute('aria-pressed')).toBe('true');
+    const preview = screen.getByRole('img', { name: /bell, Regular, preview/ });
+    expect(preview.querySelector('svg[viewBox="0 0 10 10"] circle[r="3"]')).toBeTruthy();
   });
 
   it('offers file-type labels on files, only in the corners they support', async () => {

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { AppShell } from '../src/App';
 
 const fetchMock = vi.fn(async (url: string) => {
-  if (url.endsWith('modifiers.json')) return new Response(readFileSync(join(__dirname, '../public/modifiers.json'), 'utf8'));
+  if (/modifiers\.json(?:\?|$)/.test(url)) return new Response(readFileSync(join(__dirname, '../public/modifiers.json'), 'utf8'));
   if (url.includes('brands/')) return new Response(readFileSync(join(__dirname, '../public', url.slice(url.indexOf('brands/'))), 'utf8'));
   const style = /icons\/(\w+)\.json/.exec(url)?.[1] ?? 'regular';
   return new Response(readFileSync(join(__dirname, '../public/icons', `${style}.json`), 'utf8'));
