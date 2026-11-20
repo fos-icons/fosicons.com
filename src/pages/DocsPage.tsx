@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
-import { angularSnippet } from '../lib/react-snippet';
+import { angularSnippet, solidSnippet } from '../lib/react-snippet';
+import { FRAMEWORK_PACKAGES, packageSource, PLATFORM_NAMES } from '../lib/links';
 import { CodeBlock } from '../components/CodeBlock';
 import { useToast } from '../components/ui';
 import { createPortal } from 'react-dom';
@@ -19,10 +20,7 @@ const modifierNames = new Set(compositions.flatMap((i) => i.composition!.modifie
 const SECTIONS = [
   ['styles', 'Styles'],
   ['svg', 'SVG'],
-  ['react', 'React'],
-  ['vue', 'Vue'],
-  ['svelte', 'Svelte'],
-  ['angular', 'Angular'],
+  ...Object.entries(FRAMEWORK_PACKAGES).map(([id, { label }]) => [id, label] as const),
   ['figma', 'Figma'],
   ['colors', 'Colors'],
   ['sizes', 'Sizes'],
@@ -273,7 +271,7 @@ export default function DocsPage() {
         <header>
           <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
           <p className="mt-3 text-base text-muted">
-            Use Fos Icons as plain SVG, in React, Vue, Svelte, Angular, or Figma. {nf.format(ICONS_ROUNDED)}+ icons,
+            Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format(PLATFORM_NAMES)}. {nf.format(ICONS_ROUNDED)}+ icons,
             each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
           </p>
         </header>
@@ -309,7 +307,7 @@ export default function DocsPage() {
         </Section>
 
         <Section id="react" title="React">
-          <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/react"><code>@fos-icons/react</code></a> is on npm. It supports React 18 and 19, ships TypeScript types, and tree-shakes to the icons you import. Source: <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/react-fos">fos-icons/react-fos</a>.</p>
+          <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/react"><code>@fos-icons/react</code></a> is on npm. It supports React 18 and 19, ships TypeScript types, and tree-shakes to the icons you import. Source: <a target="_blank" rel="noreferrer" href={packageSource('react')}>packages/react</a>.</p>
           <Code lang="sh">{`npm install @fos-icons/react\n# or\npnpm add @fos-icons/react`}</Code>
           <p>Each style is a separate component: the canonical name in PascalCase plus a style suffix. <code>fuel-pump</code> becomes <code>FuelPumpRegular</code>, <code>FuelPumpFilled</code>, <code>FuelPumpDuocolor</code>, and <code>FuelPumpDuotone</code>. Solid icons use the <code>Filled</code> suffix. Names starting with a digit get an <code>Icon</code> prefix.</p>
           <Code lang="tsx">{`import { CameraRegular, CameraDuocolor } from '@fos-icons/react';
@@ -323,11 +321,11 @@ export default function DocsPage() {
             <li>Icons are decorative by default (<code>aria-hidden</code>). Pass <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>
             <li>Root imports are tree-shakeable; <code>@fos-icons/react/filled</code> and <code>@fos-icons/react/regular/camera</code> entry points also exist.</li>
           </ul>
-          <p>The inspector&apos;s React, Vue, and Svelte examples use these exact props.</p>
+          <p>The icon page and inspector provide copyable examples for each supported framework.</p>
         </Section>
 
         <Section id="vue" title="Vue">
-          <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/vue"><code>@fos-icons/vue</code></a> is on npm. It supports Vue 3.3 and later, ships TypeScript types (including SFC template checking), tree-shakes to the icons you import, and renders on the server (Nuxt included). Source: <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/vue-fos">fos-icons/vue-fos</a>.</p>
+          <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/vue"><code>@fos-icons/vue</code></a> is on npm. It supports Vue 3.3 and later, ships TypeScript types (including SFC template checking), tree-shakes to the icons you import, and renders on the server (Nuxt included). Source: <a target="_blank" rel="noreferrer" href={packageSource('vue')}>packages/vue</a>.</p>
           <Code lang="sh">{`npm install @fos-icons/vue\n# or\npnpm add @fos-icons/vue`}</Code>
           <p>Component names are the same as in the React package: <code>fuel-pump</code> becomes <code>FuelPumpRegular</code>, <code>FuelPumpFilled</code>, <code>FuelPumpDuocolor</code>, and <code>FuelPumpDuotone</code>.</p>
           <Code lang="vue">{`<script setup lang="ts">
@@ -346,14 +344,14 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
         </Section>
 
         <Section id="svelte" title="Svelte">
-          <p><code>@fos-icons/svelte</code> supports Svelte 5.20 and later, including SvelteKit, with TypeScript props, tree-shakeable imports, and server rendering. Source: <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/svelte-fos">fos-icons/svelte-fos</a>.</p>
+          <p><code>@fos-icons/svelte</code> supports Svelte 5.20 and later, including SvelteKit, with TypeScript props, tree-shakeable imports, and server rendering. Source: <a target="_blank" rel="noreferrer" href={packageSource('svelte')}>packages/svelte</a>.</p>
           <p><strong>Not yet published to npm.</strong> Build the package from source and create a local tarball:</p>
-          <Code lang="sh">{`git clone https://github.com/fos-icons/svelte-fos.git
-cd svelte-fos
+          <Code lang="sh">{`git clone https://github.com/fos-icons/fos-icons.git
+cd fos-icons/packages/svelte
 npm ci
 npm pack`}</Code>
           <p>Then, from your Svelte app, install the generated tarball using its local path:</p>
-          <Code lang="sh">{`npm install /path/to/svelte-fos/fos-icons-svelte-0.1.0.tgz`}</Code>
+          <Code lang="sh">{`npm install /path/to/fos-icons/packages/svelte/fos-icons-svelte-0.1.0.tgz`}</Code>
           <Code lang="svelte">{`<script lang="ts">
 import { CameraRegular, CameraDuocolor } from '@fos-icons/svelte';
 </script>
@@ -369,15 +367,35 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/svelte';
           </ul>
         </Section>
 
+        <Section id="solid" title="SolidJS">
+          <p><code>@fos-icons/solid</code> targets Solid 2 and includes TypeScript types, tree-shakeable imports, and browser and server rendering. It is tested with <code>2.0.0-rc.21</code> of <code>solid-js</code> and <code>@solidjs/web</code>. Source: <a target="_blank" rel="noreferrer" href={packageSource('solid')}>packages/solid</a>.</p>
+          <p>Use an application configured for Solid 2; Solid 1.x is not supported. The SolidJS framework is separate from the icon style labeled Solid, whose components use the <code>Filled</code> suffix.</p>
+          <p>Build a local tarball from a monorepo checkout that includes <code>packages/solid</code>. Use Node.js 22.12 or later.</p>
+          <Code lang="sh">{`cd fos-icons/packages/solid
+npm ci
+npm pack`}</Code>
+          <p>From your Solid application, install the tarball and its peer dependencies.</p>
+          <Code lang="sh">{`npm install /path/to/fos-icons/packages/solid/fos-icons-solid-0.1.0.tgz solid-js@2.0.0-rc.21 @solidjs/web@2.0.0-rc.21`}</Code>
+          <Code lang="tsx">{solidSnippet('telescope', 'duocolor', { size: 32, color: null, primary: '#245B9E', secondary: '#60A5FA' })}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li>Set <code>size</code>, <code>strokeWidth</code>, and color props directly in JSX. The same component works with reactive props and server hydration.</li>
+            <li>Icons are decorative by default. Add <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>
+            <li>Import named components by style from <code>@fos-icons/solid/filled</code>, or use the default export for an individual icon:</li>
+          </ul>
+          <Code lang="tsx">{`import TelescopeRegular from '@fos-icons/solid/regular/telescope';
+
+<TelescopeRegular />`}</Code>
+        </Section>
+
         <Section id="angular" title="Angular">
-          <p><code>@fos-icons/angular</code> supports Angular 20 through 22. The package provides standalone components with typed inputs and tree-shakeable imports. Get the source from <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/angular-fos">fos-icons/angular-fos</a>.</p>
+          <p><code>@fos-icons/angular</code> supports Angular 20 through 22. The package provides standalone components with typed inputs and tree-shakeable imports. Get the source from <a target="_blank" rel="noreferrer" href={packageSource('angular')}>packages/angular</a>.</p>
           <p>To install a local build, clone the source and create a tarball.</p>
-          <Code lang="sh">{`git clone https://github.com/fos-icons/angular-fos.git
-cd angular-fos
+          <Code lang="sh">{`git clone https://github.com/fos-icons/fos-icons.git
+cd fos-icons/packages/angular
 npm ci
 npm pack`}</Code>
           <p>From your Angular application, install the tarball and add the icon component to your component&apos;s <code>imports</code>.</p>
-          <Code lang="sh">{`npm install /path/to/angular-fos/fos-icons-angular-0.1.0.tgz`}</Code>
+          <Code lang="sh">{`npm install /path/to/fos-icons/packages/angular/fos-icons-angular-0.1.0.tgz`}</Code>
           <Code lang="ts">{angularSnippet('camera', 'duocolor', { size: 32, color: null, primary: '#245B9E', secondary: '#60A5FA' })}</Code>
           <ul className="list-disc space-y-1 pl-5">
             <li>Put the icon selector on a native <code>svg</code> element. Use bindings such as <code>[size]="32"</code> for numbers, or pass a CSS size such as <code>size="2em"</code>.</li>

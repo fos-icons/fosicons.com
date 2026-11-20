@@ -6,10 +6,7 @@ Production domain: **fosicons.com**.
 | Repository | Owns |
 | --- | --- |
 | `fos-icons/fosicons.com` (this repo) | Website code, synchronized data snapshot |
-| [`fos-icons/fos-icons`](https://github.com/fos-icons/fos-icons) | Canonical SVG artwork, manifest, metadata |
-| [`fos-icons/react-fos`](https://github.com/fos-icons/react-fos) | `@fos-icons/react` package |
-| [`fos-icons/vue-fos`](https://github.com/fos-icons/vue-fos) | `@fos-icons/vue` package |
-| [`fos-icons/svelte-fos`](https://github.com/fos-icons/svelte-fos) | `@fos-icons/svelte` package |
+| [`fos-icons/fos-icons`](https://github.com/fos-icons/fos-icons) | Canonical SVGs and packages for React, Vue, Svelte, SolidJS, and Angular |
 
 This repo never edits artwork. It consumes a verified, revision-pinned snapshot
 of the library (see [docs/ASSETS.md](docs/ASSETS.md)).
@@ -55,7 +52,7 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   remembered per browser). With no icon selected it is **Customize**: size,
   stroke width, and color (duo palettes for Duocolor/Duotone) applied to the
   whole grid and carried into exports. Selecting an icon shows its inspector:
-  previews, style, modifiers, the same controls, exports, and React, Vue, and Svelte usage. On
+  previews, style, modifiers, the same controls, exports, and framework usage examples. On
   mobile both open as a modal bottom sheet (native `<dialog>`).
 - **Appearance**: the Light/Dark selector in Color switches the whole site
   and remembers the choice. There is no separate theme-cycling icon in the
@@ -113,12 +110,11 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   surface in light mode and warm charcoal in dark mode. Other code blocks
   remain dark in both themes, with syntax colors (highlight.js core with
   TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
-  shown as a terminal. Icon pages and the inspector offer React, Vue, and
-  Svelte tabs with copyable examples. Svelte uses a `<script lang="ts">` import
-  and camelCase props; the docs explain its source/tarball setup until npm publication.
+  shown as a terminal. Icon pages and the inspector offer copyable React, Vue,
+  Svelte, SolidJS, and Angular examples. See the setup docs for each framework.
   Icon pages keep Copy SVG beside Download PNG rather than displaying a raw
   SVG code block; copying uses the selected style and any applied modifier.
-- **Docs** (in the header; the footer links Privacy and License, then GitHub | npm): SVG, React, Vue, Svelte, Figma, colors, sizes, modifiers, accessibility,
+- **Docs** (in the header; the footer links Privacy and License, then GitHub | npm): SVG, React, Vue, Svelte, SolidJS, Angular, Figma, colors, sizes, modifiers, accessibility,
   licensing, privacy (no cookies or tracking; the three local-storage
   preferences, named), and source revision. The side nav marks the section being read,
   and in-page links scroll smoothly (instantly with reduced motion).

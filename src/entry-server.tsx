@@ -16,7 +16,7 @@ export async function i18nFor(locale: string) {
 }
 export { artworkDirectory, catalog } from './lib/catalog';
 export { brands } from './lib/brands';
-export { LIBRARY_URL, FIGMA_URL } from './lib/links';
+export { LIBRARY_URL, FIGMA_URL, FRAMEWORK_PACKAGES } from './lib/links';
 
 /** Render a route to static HTML at build time, so crawlers that don't run JavaScript still read the page. */
 export async function render(url: string, locale: string = DEFAULT_LOCALE): Promise<string> {

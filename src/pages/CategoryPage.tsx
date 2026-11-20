@@ -5,6 +5,7 @@ import { useI18n } from '../i18n';
 import { catalog } from '../lib/catalog';
 import { categoryBySlug, categoryPath, iconsInCategory } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
+import { FRAMEWORK_NAMES } from '../lib/links';
 import NotFoundPage from './NotFoundPage';
 
 export default function CategoryPage() {
@@ -22,7 +23,7 @@ export default function CategoryPage() {
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: name }]} />
       <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl">{t('categoryPage.heading', { category: name })}</h1>
       <p className="mt-4 max-w-2xl text-base text-muted sm:text-lg">
-        {t('categoryPage.intro', { count: n(category.count), category: name.toLowerCase(), styles })}
+        {t('categoryPage.intro', { count: n(category.count), category: name.toLowerCase(), styles, frameworks: list(FRAMEWORK_NAMES) })}
       </p>
       <div className="mt-6">
         <ButtonLink to={`/?${new URLSearchParams({ category: category.name })}`} variant="primary" size="lg" icon="palette">

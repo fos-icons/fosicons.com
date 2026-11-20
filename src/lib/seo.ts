@@ -4,7 +4,7 @@ import { catalog, ICONS_ROUNDED, iconsByName, STYLE_META, type IconEntry } from 
 import {
   categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, iconsInCategory, svgFilePath,
 } from './icon-pages';
-import { FIGMA_URL, LIBRARY_URL } from './links';
+import { FIGMA_URL, FRAMEWORK_NAMES, LIBRARY_URL, PLATFORM_NAMES } from './links';
 
 /**
  * Search, AI-answer, and social-share metadata for every page. The build
@@ -79,6 +79,8 @@ export function pageMeta(id: StaticPageId, i18n: I18n = createI18n(DEFAULT_LOCAL
   const vars = {
     icons: facts.icons,
     styles: styleList(i18n),
+    frameworks: FRAMEWORK_NAMES.join(', '),
+    platforms: i18n.list(PLATFORM_NAMES),
     license: facts.license,
     modifiers: facts.modifiers,
     brands: facts.brands,
@@ -91,7 +93,7 @@ export function pageMeta(id: StaticPageId, i18n: I18n = createI18n(DEFAULT_LOCAL
 export function iconMeta(name: string, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta | null {
   const icon = iconsByName.get(name);
   if (!icon) return null;
-  const vars = { name: displayName(name), styles: styleList(i18n), license: facts.license };
+  const vars = { name: displayName(name), platforms: i18n.list(PLATFORM_NAMES) };
   return {
     id: 'icon',
     path: iconPath(name),
@@ -109,7 +111,7 @@ export function categoryMeta(slug: string, i18n: I18n = createI18n(DEFAULT_LOCAL
   const examples = i18n.list(iconsInCategory(category.name).filter((i) => !i.composition).slice(0, 3).map((i) => displayName(i.name).toLowerCase()));
   // Title case for the title ("Food & Drink Icons"); sentence case reads better in the description.
   const titled = name.replace(/(^|\s)(\p{Ll})/gu, (_, space: string, letter: string) => space + letter.toLocaleUpperCase(i18n.config.code));
-  const vars = { category: name, count: category.count, styles: styleList(i18n), examples };
+  const vars = { category: name, count: category.count, platforms: i18n.list(PLATFORM_NAMES), examples };
   const titleVars = { ...vars, category: titled };
   return {
     id: 'category',
@@ -204,7 +206,7 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
       license: 'https://opensource.org/licenses/MIT',
       isAccessibleForFree: true,
       author: { '@id': `${SITE_URL}/#organization` },
-      keywords: ['icons', 'SVG icons', 'icon library', 'React icons', 'Vue icons', 'Figma icons', ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
+      keywords: ['icons', 'SVG icons', 'icon library', ...PLATFORM_NAMES.map((name) => `${name} icons`), ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
     });
   } else if (!page.noindex) {
     const crumbs: [string, string][] = [[SITE_NAME, pageUrl(home, lang)]];
