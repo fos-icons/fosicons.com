@@ -367,6 +367,7 @@ const en = {
   'iconPage.react': 'React',
   'iconPage.vue': 'Vue',
   'iconPage.svelte': 'Svelte',
+  'iconPage.solid': 'SolidJS',
   'iconPage.angular': 'Angular',
   'iconPage.framework': 'Framework',
   'iconPage.figma': 'Figma',

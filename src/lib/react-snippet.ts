@@ -1,7 +1,7 @@
 import type { StyleId } from './catalog';
 import { isDuo } from './svg';
 
-/** Mirrors the naming rule in fos-icons/react-fos scripts/build.mjs. */
+/** Mirrors the Fos Icons package naming rule. */
 export function componentName(name: string, style: StyleId): string {
   const pascal = name.split('-').map((part) => part[0].toUpperCase() + part.slice(1)).join('');
   return `${/^\d/.test(pascal) ? 'Icon' : ''}${pascal}${style[0].toUpperCase()}${style.slice(1)}`;
@@ -41,6 +41,12 @@ export function reactSnippet(name: string, style: StyleId, options: SnippetOptio
   const component = componentName(name, style);
   const attrs = componentAttributes(style, options);
   return `import { ${component} } from '@fos-icons/react';\n\n<${component}${attrs} />`;
+}
+
+/** Solid 2 usage example (@fos-icons/solid). */
+export function solidSnippet(name: string, style: StyleId, options: SnippetOptions): string {
+  const component = componentName(name, style);
+  return `import { ${component} } from '@fos-icons/solid';\n\n<${component}${componentAttributes(style, options)} />`;
 }
 
 /** Svelte usage example (@fos-icons/svelte), using the same camelCase props. */

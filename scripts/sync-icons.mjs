@@ -203,6 +203,9 @@ export function buildOutputs(source) {
       brandNames.add(name);
       const publicPath = `brands/${name}-regular.svg`;
       outputs[`public/${publicPath}`] = readVerified(join(source, 'brand-assets'), asset.path, asset.sha256) + '\n';
+      // A one-color Solid mark, where the brand's kit provides one.
+      const solidPath = asset.solid ? `brands/${name}-filled.svg` : null;
+      if (asset.solid) outputs[`public/${solidPath}`] = readVerified(join(source, 'brand-assets'), asset.solid.path, asset.solid.sha256) + '\n';
       brandEntries.push({
         name,
         owner: asset.owner,
@@ -211,7 +214,7 @@ export function buildOutputs(source) {
         officialSource: asset.source,
         retrieved: bm.retrievedAt,
         terms: bm.rights.license,
-        files: { regular: publicPath },
+        files: { regular: publicPath, ...(solidPath ? { filled: solidPath } : {}) },
       });
     }
     brandEntries.sort((a, b) => a.name.localeCompare(b.name));

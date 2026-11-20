@@ -148,7 +148,7 @@ export function CodeTabs({ tabs, label }: {
         lang={active.lang}
         what={active.label}
         label={(
-          <span role="tablist" aria-label={label} onKeyDown={onKeyDown} className="-ml-1.5 flex gap-1">
+          <span role="tablist" aria-label={label} onKeyDown={onKeyDown} className="-ml-1.5 flex min-w-0 gap-1 overflow-x-auto">
             {tabs.map((tab, i) => (
               <button
                 key={tab.id}
@@ -160,7 +160,7 @@ export function CodeTabs({ tabs, label }: {
                 aria-controls={`${uid}-panel`}
                 tabIndex={i === index ? 0 : -1}
                 onClick={() => choose(i)}
-                className={`rounded-md px-2 py-1 text-xs font-medium transition ${
+                className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium transition ${
                   i === index ? 'bg-[var(--code-hover)] text-[var(--code-ink)]' : 'text-[var(--code-muted)] hover:text-[var(--code-ink)]'
                 }`}
               >

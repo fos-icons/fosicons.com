@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { angularSnippet, componentName, reactSnippet, svelteSnippet, vueSnippet } from '../src/lib/react-snippet';
+import { angularSnippet, componentName, reactSnippet, solidSnippet, svelteSnippet, vueSnippet } from '../src/lib/react-snippet';
 
 describe('React snippet', () => {
   it('follows the package naming rule', () => {
@@ -45,6 +45,20 @@ describe('React snippet', () => {
     expect(code).toContain(`<${component} />`);
     expect(code).not.toContain('<template>');
     expect(code).not.toContain('setup');
+  });
+});
+
+describe('SolidJS snippet', () => {
+  it('uses named Solid exports and carries the selected icon settings', () => {
+    expect(solidSnippet('binoculars', 'regular', { size: 24, color: null })).toBe(
+      "import { BinocularsRegular } from '@fos-icons/solid';\n\n<BinocularsRegular />",
+    );
+    expect(solidSnippet('telescope', 'duocolor', {
+      size: 32, color: null, primary: '#111111', secondary: '#222222', modifier: '#333333',
+    })).toContain('<TelescopeDuocolor size={32} primaryColor="#111111" secondaryColor="#222222" modifierColor="#333333" />');
+    expect(solidSnippet('saxophone', 'duotone', {
+      size: 24, color: null, primary: '#111111', secondary: '#222222',
+    })).not.toContain('secondaryColor');
   });
 });
 

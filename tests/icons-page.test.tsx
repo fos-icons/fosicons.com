@@ -403,6 +403,17 @@ describe('Icons page', () => {
     expect(footer.textContent).not.toMatch(/Library [0-9a-f]{7}|licensed separately|MIT licensed/);
   });
 
+  it('shows one-color Solid brand marks off Regular, and keeps product marks in color', async () => {
+    renderAt('/?category=Brands&style=solid');
+    const spotify = await screen.findByRole('button', { name: 'spotify' });
+    await waitFor(() => expect(spotify.querySelector('svg')).toBeTruthy());
+    const mark = spotify.querySelector('svg')!;
+    expect(mark.hasAttribute('data-brand')).toBe(false);
+    expect(mark.innerHTML).toContain('currentColor');
+    const chrome = screen.getByRole('button', { name: 'google-chrome' });
+    await waitFor(() => expect(chrome.querySelector('svg[data-brand]')).toBeTruthy());
+  });
+
   it('lists Brands as the last category, not a style, and opens old Brands links there', async () => {
     renderAt('/?style=brands');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
