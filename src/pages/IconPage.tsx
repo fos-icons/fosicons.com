@@ -20,7 +20,7 @@ import { buildSvg } from '../lib/svg';
 import { useMediaQuery } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
-import { useSlashToFocus } from './IconsPage';
+import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import NotFoundPage from './NotFoundPage';
 import { useModifiers } from '../components/ModifierPicker';
 import { composeSvg, CORNERS, editablePreset, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
@@ -123,7 +123,7 @@ function HeaderIconSearch({
             </button>
           </span>
           {modifier && (
-            <span className="inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-modifier-soft pl-2 pr-0.5 text-xs font-medium text-modifier">
+            <span className="inline-flex h-6 min-w-0 max-w-[38%] shrink-0 items-center gap-0.5 rounded-md bg-modifier-soft pl-2 pr-0.5 text-xs font-medium text-modifier">
               <span className="truncate">{modLabel(modifier)}</span>
               <button type="button" onClick={() => onModifier(null)} aria-label={t('iconPage.removeModifier', { modifier: modLabel(modifier) })} className="inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-modifier/15">
                 <UiIcon name="x" className="size-3" />
@@ -226,7 +226,8 @@ export default function IconPage() {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   /** The icon list this page was opened from (the grid's Open icon page button), if any. */
-  const from: unknown = (location.state as { from?: unknown } | null)?.from;
+  const previous = location.state as { from?: unknown; catalogBackTo?: unknown } | null;
+  const from = previous?.from;
   const backTo = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : null;
   /** The style shown in the preview, the actions, and the code below; ?style= keeps it in shared links. */
   const style = styleFromSlug(params.get('style')) ?? catalog.styles[0];
@@ -314,12 +315,14 @@ export default function IconPage() {
   // Removing the icon from the header search returns to the list it came from
   // (keeping that search and style, without the selection), or to all icons.
   const listWithoutIcon = (() => {
+    const browse = previous?.catalogBackTo;
+    if (typeof browse === 'string' && browse.startsWith('/') && !browse.startsWith('//')) return browse;
     if (!backTo) return null;
     const url = new URL(backTo, 'https://fosicons.com');
     for (const key of ['icon', 'modifier', 'corner']) url.searchParams.delete(key);
     return `${url.pathname}${url.search}`;
   })();
-  const leave = () => (listWithoutIcon ? navigate(listWithoutIcon) : navigate(path('/')));
+  const leave = () => navigate(listWithoutIcon ?? path('/'), { state: { catalogEditor: true } });
   const inHeader = headerSlot && wide;
 
   return (
@@ -427,6 +430,7 @@ export default function IconPage() {
                 <span className="sr-only">{t('site.newTab')}</span>
               </a>
             )}
+            <LocalLink to="/docs#flutter" className="text-brand underline-offset-2 hover:underline">{t('iconPage.flutterDocs')}</LocalLink>
             <LocalLink to="/docs" className="text-brand underline-offset-2 hover:underline">{t('iconPage.docs')}</LocalLink>
           </div>
         </LandingSection>

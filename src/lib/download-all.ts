@@ -1,6 +1,6 @@
 import type { SiteTheme } from './theme';
 import { LocalizedError } from '../i18n/errors';
-import { catalog, loadStyle, lock, STYLE_META, type StyleId } from './catalog';
+import { catalog, loadStyle, lock, STYLE_META, type IconEntry, type StyleId } from './catalog';
 import { DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
 import { buildSvg } from './svg';
 import { buildZip, type ZipEntry } from './zip';
@@ -15,6 +15,8 @@ export const fullSetName = (styles: readonly StyleId[] = catalog.styles) => {
   return all ? `${base}.zip` : `${base}-${catalog.styles.filter((s) => styles.includes(s)).map((s) => STYLE_META[s].slug).join('-')}.zip`;
 };
 
+export const categorySetName = (slug: string) => `fos-icons-${slug}-${lock.revision?.slice(0, 7) ?? 'snapshot'}.zip`;
+
 /**
  * Every core icon in the chosen styles (all four by default) with the chosen
  * look, plus the license:
@@ -24,12 +26,23 @@ export const fullSetName = (styles: readonly StyleId[] = catalog.styles) => {
  * so they still restyle in code. Folders use the public style names:
  * regular/, solid/, duocolor/, duotone/.
  */
-export async function buildFullSet(
+export function buildFullSet(
   look: Look = DEFAULT_LOOK,
   theme: SiteTheme = 'light',
   only: readonly StyleId[] = catalog.styles,
 ): Promise<Blob> {
-  const styles = catalog.styles.filter((s) => only.includes(s));
+  return buildIconSet(catalog.icons, catalog.styles.filter((s) => only.includes(s)), look, theme);
+}
+
+/** One category in every style at the library's native size and colors. */
+export function buildCategorySet(category: string): Promise<Blob> {
+  const icons = catalog.icons.filter((icon) => icon.category === category);
+  return buildIconSet(icons, catalog.styles, { ...DEFAULT_LOOK, size: catalog.grid }, 'light', category);
+}
+
+async function buildIconSet(
+  icons: readonly IconEntry[], styles: readonly StyleId[], look: Look, theme: SiteTheme, category?: string,
+): Promise<Blob> {
   const [maps, license] = await Promise.all([
     Promise.all(styles.map(loadStyle)),
     fetch(`${import.meta.env.BASE_URL}licenses/fos-icons-LICENSE.txt`).then((res) => {
@@ -43,7 +56,7 @@ export async function buildFullSet(
   const stroke = strokeOf(look);
   styles.forEach((style, i) => {
     const slug = STYLE_META[style].slug;
-    for (const icon of catalog.icons) {
+    for (const icon of icons) {
       const source = maps[i][icon.name];
       if (!source) throw new LocalizedError('error.missingArtwork', { style: STYLE_META[style].label, icon: icon.name });
       const svg = buildSvg(source, {
@@ -57,9 +70,9 @@ export async function buildFullSet(
   entries.push({
     name: 'README.txt',
     data: [
-      'Fos Icons',
+      category ? `Fos Icons — ${category}` : 'Fos Icons',
       '',
-      `${catalog.icons.length} core icons in ${styles.map((s) => STYLE_META[s].label).join(', ')}.`,
+      `${icons.length} core icons in ${styles.map((s) => STYLE_META[s].label).join(', ')}.`,
       `Source: https://github.com/${lock.repository}${lock.revision ? ` at ${lock.revision}` : ''}`,
       `License: ${catalog.license} (see LICENSE.txt). Brand icons are not included.`,
       '',

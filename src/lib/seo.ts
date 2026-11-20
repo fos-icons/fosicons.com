@@ -1,10 +1,11 @@
 import { createI18n, DEFAULT_LOCALE, LOCALES, localizePath, splitLocale, type I18n, type MessageKey } from '../i18n';
 import { brands } from './brands';
 import { catalog, ICONS_ROUNDED, iconsByName, STYLE_META, type IconEntry } from './catalog';
+import { legacyCatalogDestination } from './catalog-location';
 import {
-  categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, iconsInCategory, svgFilePath,
+  categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, svgFilePath,
 } from './icon-pages';
-import { FIGMA_URL, FRAMEWORK_NAMES, LIBRARY_URL, PLATFORM_NAMES } from './links';
+import { FIGMA_URL, FLUTTER_PACKAGE, LIBRARY_URL, PLATFORM_NAMES } from './links';
 
 /**
  * Search, AI-answer, and social-share metadata for every page. The build
@@ -79,7 +80,6 @@ export function pageMeta(id: StaticPageId, i18n: I18n = createI18n(DEFAULT_LOCAL
   const vars = {
     icons: facts.icons,
     styles: styleList(i18n),
-    frameworks: FRAMEWORK_NAMES.join(', '),
     platforms: i18n.list(PLATFORM_NAMES),
     license: facts.license,
     modifiers: facts.modifiers,
@@ -108,10 +108,9 @@ export function categoryMeta(slug: string, i18n: I18n = createI18n(DEFAULT_LOCAL
   const category = categoryBySlug(slug);
   if (!category) return null;
   const name = i18n.label('category', category.name, category.name);
-  const examples = i18n.list(iconsInCategory(category.name).filter((i) => !i.composition).slice(0, 3).map((i) => displayName(i.name).toLowerCase()));
   // Title case for the title ("Food & Drink Icons"); sentence case reads better in the description.
   const titled = name.replace(/(^|\s)(\p{Ll})/gu, (_, space: string, letter: string) => space + letter.toLocaleUpperCase(i18n.config.code));
-  const vars = { category: name, count: category.count, platforms: i18n.list(PLATFORM_NAMES), examples };
+  const vars = { category: name, count: category.count, platforms: i18n.list(PLATFORM_NAMES) };
   const titleVars = { ...vars, category: titled };
   return {
     id: 'category',
@@ -128,7 +127,10 @@ export const PAGES = Object.fromEntries(PAGE_IDS.map((id) => [id, pageMeta(id)])
 /** The metadata for a location in the app, in a language (the path may include a language prefix). */
 export function pageFor(pathname: string, search = '', i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
   const path = splitLocale(pathname).path.replace(/\/+$/, '') || '/';
-  if (path === '/') return pageMeta((new URLSearchParams(search).get('style') === 'brands' || new URLSearchParams(search).get('category') === 'Brands') ? 'brands' : 'home', i18n);
+  if (path === '/') {
+    const legacy = legacyCatalogDestination(search);
+    return legacy ? pageFor(legacy.split('?')[0], '', i18n) : pageMeta('home', i18n);
+  }
   const fixed = PAGE_IDS.find((id) => id !== 'home' && id !== 'not-found' && PATHS[id] === path);
   if (fixed) return pageMeta(fixed, i18n);
   const icon = /^\/icons\/([a-z0-9-]+)$/.exec(path);
@@ -152,6 +154,8 @@ const ORGANIZATION = {
   sameAs: [GITHUB_ORG_URL, NPM_REACT_URL, NPM_VUE_URL, ...(FIGMA_URL ? [FIGMA_URL] : [])],
 };
 
+const platformKeywords = [...PLATFORM_NAMES.map((name) => `${name} icons`), FLUTTER_PACKAGE.name, 'Dart icons'];
+
 /** A page's URL in a language. */
 export const pageUrl = (page: Pick<PageMeta, 'path'>, locale: string) => absolute(localizePath(page.path, locale));
 
@@ -168,6 +172,9 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
     name: page.title,
     ...(['docs', 'react', 'vue'].includes(page.id) ? { headline: page.title } : {}),
     description: page.description,
+    ...(['docs', 'icon', 'category'].includes(page.id) ? {
+      keywords: [...(page.icon ? [page.icon.name, ...page.icon.tags] : []), ...platformKeywords].join(', '),
+    } : {}),
     isPartOf: { '@id': `${SITE_URL}/#website` },
     publisher: { '@id': `${SITE_URL}/#organization` },
     primaryImageOfPage: imageUrl ? { '@id': `${url}#image` } : absolute(SHARE_IMAGE.path),
@@ -200,13 +207,14 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
         icons: facts.icons,
         styles: i18n.list(catalog.styles.map((s) => i18n.t(`style.${s}`))),
         modifiers: facts.modifiers,
+        flutterPackage: FLUTTER_PACKAGE.name,
       }),
       codeRepository: LIBRARY_URL,
-      programmingLanguage: ['SVG', 'TypeScript'],
+      programmingLanguage: ['SVG', 'TypeScript', 'Dart'],
       license: 'https://opensource.org/licenses/MIT',
       isAccessibleForFree: true,
       author: { '@id': `${SITE_URL}/#organization` },
-      keywords: ['icons', 'SVG icons', 'icon library', ...PLATFORM_NAMES.map((name) => `${name} icons`), ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
+      keywords: ['icons', 'SVG icons', 'icon library', ...platformKeywords, ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
     });
   } else if (!page.noindex) {
     const crumbs: [string, string][] = [[SITE_NAME, pageUrl(home, lang)]];

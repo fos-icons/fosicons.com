@@ -12,6 +12,8 @@ describe('page metadata', () => {
   it('maps every route to its page, with Brands and unknown paths handled', () => {
     expect(pageFor('/').id).toBe('home');
     expect(pageFor('/', '?style=brands').id).toBe('brands');
+    expect(pageFor('/', '?category=Essentials').path).toBe('/categories/essentials');
+    expect(pageFor('/', '?icon=copy').path).toBe('/icons/copy');
     expect(pageFor('/docs/').id).toBe('docs');
     expect(pageFor('/pricing').id).toBe('not-found');
     expect(pageFor('/brands').id).toBe('brands');
@@ -30,7 +32,8 @@ describe('page metadata', () => {
   it('lists supported frameworks in both the Vite fallback and generated descriptions', () => {
     const html = readFileSync('index.html', 'utf8');
     const fallback = html.match(/<meta name="description" content="([^"]+)"/)![1];
-    for (const framework of [...FRAMEWORK_NAMES, 'Flutter']) {
+    expect(FRAMEWORK_NAMES).toContain('Flutter');
+    for (const framework of FRAMEWORK_NAMES) {
       expect(fallback).toContain(framework);
       expect(PAGES.home.description).toContain(framework);
       expect(PAGES.docs.description).toContain(framework);
@@ -41,13 +44,14 @@ describe('page metadata', () => {
 
   it('writes canonical, Open Graph, Twitter, and JSON-LD tags', () => {
     const tags = headTags(PAGES.docs);
-    expect(PAGES.docs.title).toContain('Svelte');
+    expect(PAGES.docs.title).toContain('Flutter');
     expect(PAGES.docs.description).toContain('Svelte');
     expect(tags).toContain('<link rel="canonical" href="https://www.fosicons.com/docs" />');
     expect(tags).toContain('<meta property="og:image" content="https://www.fosicons.com/og-image.png" />');
     expect(tags).toContain('<meta name="twitter:card" content="summary_large_image" />');
     const json = JSON.parse(tags.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1]);
     expect(json['@graph'].map((n: { '@type': string }) => n['@type'])).toEqual(['WebSite', 'Organization', 'TechArticle', 'BreadcrumbList']);
+    expect(json['@graph'][2].keywords).toContain('fos_icons');
   });
 
   it('keeps the 404 page out of search results', () => {

@@ -7,6 +7,10 @@ if (!window.matchMedia) {
   }) as MediaQueryList;
 }
 
+// jsdom does not lay out or scroll the page.
+window.scrollTo = () => {};
+Element.prototype.scrollIntoView ??= () => {};
+
 // Node 25+ has its own Web Storage globals. Without --localstorage-file they
 // are undefined, and they hide jsdom's. Point tests back at jsdom's storage.
 const dom = (globalThis as { jsdom?: { window: Window } }).jsdom?.window;

@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { HeroActions } from '../components/HeaderActions';
@@ -10,9 +10,11 @@ import { Inspector, SidePane } from '../components/Inspector';
 import { useModifiers } from '../components/ModifierPicker';
 import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
-import { Button, Segmented, UiIcon } from '../components/ui';
+import { Button, Segmented, Select, UiIcon } from '../components/ui';
+import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
@@ -24,7 +26,7 @@ import { createIndex, search, suggest } from '../lib/search';
 import { prepareGridSvg } from '../lib/svg';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
-  parseState, serializeState, type CatalogState, type UrlStateConfig, type View,
+  parseState, type CatalogState, type UrlStateConfig, type View,
 } from '../lib/url-state';
 
 /** Core icons and brand marks share one catalog; marks are the Brands category. */
@@ -45,23 +47,6 @@ const COLLAPSE_KEY = 'fos-pane-collapsed';
 /** Search ghost text: the prompt first, then rotating tips for every trick. */
 const DESKTOP_TIPS = ['icons.tip.modifier', 'icons.tip.multi', 'icons.tip.slash', 'icons.tip.arrows', 'icons.tip.pane', 'icons.tip.esc', 'icons.tip.share'] as const;
 const MOBILE_TIPS = ['icons.tip.customize', 'icons.tip.category', 'icons.tip.shareShort'] as const;
-
-/** Focus the search box with "/" unless the user is typing somewhere. */
-export function useSlashToFocus(ref: React.RefObject<HTMLInputElement | null>) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey) return;
-      const target = event.target instanceof Element ? event.target : null;
-      if (target?.closest('input, textarea, select, [contenteditable="true"], dialog[open]')) return;
-      if (document.querySelector('dialog[open]')) return;
-      event.preventDefault();
-      ref.current?.focus();
-      ref.current?.select();
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [ref]);
-}
 
 const TIP_INTERVAL_MS = 4500;
 
@@ -101,14 +86,14 @@ export function SearchField({
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
         onKeyDown={(e) => { if (e.key === 'Escape' && value) { e.preventDefault(); onChange(''); } }}
-        className="h-12 w-full rounded-2xl border border-line-strong bg-surface pl-12 pr-24 text-base text-ink shadow-[0_1px_2px_rgb(0_0_0/0.04)] outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15 [&::-webkit-search-cancel-button]:hidden"
+        className="h-12 w-full rounded-2xl border border-line-strong bg-surface pl-12 pr-12 text-base text-ink shadow-[0_1px_2px_rgb(0_0_0/0.04)] outline-none transition focus:border-brand focus:ring-4 focus:ring-brand/15 [&::-webkit-search-cancel-button]:hidden"
       />
       {!value && (
         <span
           key={index}
           aria-hidden="true"
           data-testid="search-tip"
-          className="search-tip pointer-events-none absolute inset-y-0 left-12 right-24 flex items-center truncate text-base text-faint"
+          className="search-tip pointer-events-none absolute inset-y-0 left-12 right-4 flex items-center truncate text-base text-muted sm:right-12"
         >
           <span className="truncate">{tip}</span>
         </span>
@@ -151,9 +136,10 @@ function BrandsEmpty() {
 
 export function IconsPage() {
   const i18n = useI18n();
-  const { t, rich, label, list } = i18n;
-  const [params, setParams] = useSearchParams();
-  const state = useMemo(() => parseState(params.toString(), config), [params]);
+  const { t, rich, label, list, path } = i18n;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const state = useMemo(() => parseState(location.search, config, catalogRouteFilters(location)), [location]);
   const [svgs, setSvgs] = useState<Record<string, Record<string, string>>>({});
   const [artworkErrors, setArtworkErrors] = useState<Record<string, string | undefined>>({});
   const [attempt, setAttempt] = useState(0);
@@ -186,8 +172,9 @@ export function IconsPage() {
   const update = useCallback((patch: Partial<CatalogState>, replace = false) => {
     // A modifier belongs to the icon it was tried on: opening another icon drops it.
     const reset = 'icon' in patch && !('modifier' in patch) ? { modifier: null, corner: null } : {};
-    setParams(serializeState({ ...state, ...reset, ...patch }, config), { replace, preventScrollReset: true });
-  }, [setParams, state]);
+    const next = catalogEditorLocation({ ...state, ...reset, ...patch });
+    navigate(path(next.href), { replace, preventScrollReset: true, state: next.state });
+  }, [navigate, path, state]);
 
   const setCollapsed = useCallback((next: boolean) => {
     setCollapsedState(next);
@@ -421,30 +408,29 @@ export function IconsPage() {
         {(!brandsView || brandEntries.length > 0) && (
           <p className="sr-only" aria-live="polite" aria-atomic="true">{summary}</p>
         )}
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex w-full min-w-0 items-center gap-2 sm:ml-auto sm:w-auto sm:gap-3">
           {!desktop && (
             <Button icon="settings-sliders" onClick={() => setCustomizeOpen(true)}>{t('icons.customize')}</Button>
           )}
           {(!brandsView || brandEntries.length > 0) && (
-            <div className="relative">
+            <>
               <label htmlFor="category" className="sr-only">{t('icons.category')}</label>
-              <select
+              <Select
                 id="category"
                 value={state.category ?? ''}
                 onChange={(e) => {
                   const category = e.target.value || null;
                   // Brands have no duo styles: picking Brands from a duo tab shows Solid.
-                  update(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { category, style: 'filled' } : { category });
+                  update({ category, icon: null, ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}) });
                 }}
-                className="h-9 appearance-none rounded-lg border border-line-strong bg-surface pl-3 pr-9 text-sm font-medium text-ink"
+                className="min-w-0 flex-1"
               >
                 <option value="">{t('icons.allCategories')}</option>
                 {categories.map((c) => (
                   <option key={c.name} value={c.name}>{t('icons.categoryOption', { name: label('category', c.name, c.name), count: c.count })}</option>
                 ))}
-              </select>
-              <UiIcon name="chevron-down" className="pointer-events-none absolute right-2.5 top-1/2 size-4 -translate-y-1/2 text-muted" />
-            </div>
+              </Select>
+            </>
           )}
         </div>
       </div>
@@ -519,6 +505,7 @@ export function IconsPage() {
         expandTo={selected && !selectedBrand && !multiActive
           ? `${iconPath(selected.name)}${drawStyle === catalog.styles[0] ? '' : `?style=${STYLE_META[drawStyle].slug}`}`
           : undefined}
+        expandBackTo={path(catalogEditorLocation({ ...state, icon: null, modifier: null, corner: null }).href)}
       >
         {multiActive ? (
           <SelectionPanel

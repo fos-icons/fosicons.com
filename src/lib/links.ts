@@ -14,10 +14,10 @@ export const FRAMEWORK_PACKAGES = {
 /** The Flutter package, from the same monorepo (not on npm). */
 export const FLUTTER_PACKAGE = { label: 'Flutter', name: 'fos_icons' } as const;
 
-/** The npm frameworks, which have code examples on every icon page. */
-export const FRAMEWORK_NAMES = Object.values(FRAMEWORK_PACKAGES).map(({ label }) => label);
+/** Frameworks with a Fos Icons package. */
+export const FRAMEWORK_NAMES = [...Object.values(FRAMEWORK_PACKAGES).map(({ label }) => label), FLUTTER_PACKAGE.label];
 /** Everywhere the icons can be used, for page descriptions. */
-export const PLATFORM_NAMES = [...FRAMEWORK_NAMES, FLUTTER_PACKAGE.label, 'Figma'];
+export const PLATFORM_NAMES = [...FRAMEWORK_NAMES, 'Figma'];
 export const packageSource = (id: keyof typeof FRAMEWORK_PACKAGES | 'flutter') => `${LIBRARY_URL}/tree/main/packages/${id}`;
 
 /** The Figma file behind the header's Figma link. Set to '' to hide the button. */

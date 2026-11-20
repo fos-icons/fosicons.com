@@ -30,7 +30,17 @@ export function useDocumentMeta() {
     setMeta('meta[property="og:url"]', url);
     setMeta('meta[name="twitter:title"]', page.title);
     setMeta('meta[name="twitter:description"]', page.description);
-    const canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
-    if (canonical && !page.noindex) canonical.href = url;
+    setMeta('meta[name="robots"]', page.noindex ? 'noindex, follow' : 'index, follow, max-image-preview:large, max-snippet:-1');
+    let canonical = document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (page.noindex) {
+      canonical?.remove();
+    } else {
+      if (!canonical) {
+        canonical = document.createElement('link');
+        canonical.rel = 'canonical';
+        document.head.append(canonical);
+      }
+      canonical.href = url;
+    }
   }, [pathname, search, i18n]);
 }

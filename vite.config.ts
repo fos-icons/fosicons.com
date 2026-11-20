@@ -27,15 +27,21 @@ function svgFiles(): Plugin {
     name: 'fos-svg-files',
     apply: 'serve',
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        const match = /^\/svg\/(regular|filled|duocolor|duotone)\/([a-z0-9-]+)\.svg$/.exec(req.url?.split('?')[0] ?? '');
+      server.middlewares.use(async (req, res, next) => {
+        const match = /^\/svg\/(regular|filled|duocolor|duotone|preview)\/([a-z0-9-]+)\.svg$/.exec(req.url?.split('?')[0] ?? '');
         if (!match) return next();
-        const [, style, name] = match;
+        const [, variant, name] = match;
+        const style = variant === 'preview' ? 'regular' : variant;
         cache[style] ??= JSON.parse(readFileSync(new URL(`./public/icons/${style}.json`, import.meta.url), 'utf8'));
         const svg = cache[style][name];
         if (!svg) return next();
-        res.setHeader('Content-Type', 'image/svg+xml');
-        res.end(svg);
+        try {
+          const preview = variant === 'preview' ? (await server.ssrLoadModule('/src/lib/look.ts')).defaultGridSvg(svg) : svg;
+          res.setHeader('Content-Type', 'image/svg+xml');
+          res.end(preview);
+        } catch (error) {
+          next(error);
+        }
       });
     },
   };

@@ -1,16 +1,26 @@
-import { Suspense } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { lazy } from 'react';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
-import { DEFAULT_LOCALE, I18nProvider, localizePath, type Translation } from './i18n';
+import { DEFAULT_LOCALE, I18nProvider, localizePath, useI18n, type Translation } from './i18n';
 import { docsPageFor } from './i18n/content';
 import { ThemeProvider } from './lib/theme';
+import { isCatalogEditor, legacyCatalogDestination } from './lib/catalog-location';
 import { IconsPage } from './pages/IconsPage';
-import CategoryPage from './pages/CategoryPage';
-import FrameworkPage from './pages/FrameworkPage';
-import IconPage from './pages/IconPage';
 import NotFoundPage from './pages/NotFoundPage';
 
+const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const FrameworkPage = lazy(() => import('./pages/FrameworkPage'));
+const IconPage = lazy(() => import('./pages/IconPage'));
+
+function CatalogRoute({ page }: { page: 'home' | 'brands' | 'category' | 'icon' }) {
+  const location = useLocation();
+  const { path } = useI18n();
+  const legacy = page === 'home' ? legacyCatalogDestination(location.search) : null;
+  if (legacy) return <Navigate to={`${path(legacy)}${location.hash}`} replace />;
+  if (page === 'home' || page === 'brands' || isCatalogEditor(location)) return <IconsPage />;
+  return page === 'category' ? <CategoryPage /> : <IconPage />;
+}
 
 export interface AppProps {
   /** The page's language; its routes live under /<locale> (none for the default). */
@@ -27,28 +37,25 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
     <I18nProvider locale={locale} messages={messages}>
       <ThemeProvider>
         <ToastProvider>
-          <Suspense fallback={<div className="p-8 text-muted">…</div>}>
-            <Routes>
-              <Route path={base} element={<Layout />}>
-                <Route index element={<IconsPage />} />
-                {/* Brands moved into the style switcher; keep old links working. */}
-                <Route path="brands" element={<Navigate to={localizePath('/?category=Brands', locale)} replace />} />
-                <Route path="docs" element={<DocsPage />} />
-                {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
-                <Route path="icons/:name" element={<IconPage />} />
-                <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />
-                <Route path="categories/:slug" element={<CategoryPage />} />
-                <Route path="react-icons" element={<FrameworkPage framework="react" />} />
-                <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
-                <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-              {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}
-              <Route path="*" element={<Layout />}>
-                <Route path="*" element={<NotFoundPage />} />
-              </Route>
-            </Routes>
-          </Suspense>
+          <Routes>
+            <Route path={base} element={<Layout />}>
+              <Route index element={<CatalogRoute page="home" />} />
+              <Route path="brands" element={<CatalogRoute page="brands" />} />
+              <Route path="docs" element={<DocsPage />} />
+              {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
+              <Route path="icons/:name" element={<CatalogRoute page="icon" />} />
+              <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />
+              <Route path="categories/:slug" element={<CatalogRoute page="category" />} />
+              <Route path="react-icons" element={<FrameworkPage framework="react" />} />
+              <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
+              <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+            {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}
+            <Route path="*" element={<Layout />}>
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Routes>
         </ToastProvider>
       </ThemeProvider>
     </I18nProvider>

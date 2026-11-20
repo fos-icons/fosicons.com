@@ -7,7 +7,8 @@ import { createI18n, DEFAULT_LOCALE, loadMessages } from './i18n';
 export { headTags, pageFor, pageMeta, iconMeta, categoryMeta, pageUrl, PAGES, PAGE_IDS, facts, SITE_URL, SITE_NAME, absolute } from './lib/seo';
 export { webManifest } from './lib/manifest';
 export { primeArtwork, trackArtwork, takeTrackedArtwork } from './lib/artwork';
-export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, iconPath, svgFilePath } from './lib/icon-pages';
+export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, gridPreviewPath, iconPath, svgFilePath } from './lib/icon-pages';
+export { defaultGridSvg } from './lib/look';
 export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 
 /** A language's translator, with its messages loaded (for the build). */
@@ -16,7 +17,7 @@ export async function i18nFor(locale: string) {
 }
 export { artworkDirectory, catalog } from './lib/catalog';
 export { brands } from './lib/brands';
-export { LIBRARY_URL, FIGMA_URL, FRAMEWORK_PACKAGES } from './lib/links';
+export { LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource } from './lib/links';
 
 /** Render a route to static HTML at build time, so crawlers that don't run JavaScript still read the page. */
 export async function render(url: string, locale: string = DEFAULT_LOCALE): Promise<string> {

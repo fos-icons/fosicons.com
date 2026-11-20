@@ -222,7 +222,7 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
-            {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
+            {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
           </p>
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 self-start" />
@@ -423,7 +423,7 @@ export function Inspector({
  * pane slot (full height, beside the page). Mobile: a modal bottom sheet.
  */
 export function SidePane({
-  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, quickControls, children,
+  desktop, host, collapsed, onCollapsedChange, sheetOpen, onDismiss, headingId, focusKey, expandTo, expandBackTo, quickControls, children,
 }: {
   desktop: boolean;
   host: HTMLElement | null;
@@ -438,6 +438,7 @@ export function SidePane({
   focusKey: string | null;
   /** Desktop only: a page that shows the pane's subject in full (the selected icon's page). */
   expandTo?: string;
+  expandBackTo?: string;
   quickControls?: ReactNode;
   children: ReactNode;
 }) {
@@ -531,8 +532,9 @@ export function SidePane({
           {!collapsed && expandTo && (
             <LocalLink
               to={expandTo}
+              replace={false}
               // The page's back link returns here, with the search and selection intact.
-              state={{ from: `${pathname}${search}` }}
+              state={{ from: `${pathname}${search}`, catalogBackTo: expandBackTo }}
               aria-label={t('pane.openPage')}
               title={t('pane.openPage')}
               className="ml-auto inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken"

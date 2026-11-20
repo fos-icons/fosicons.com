@@ -63,12 +63,14 @@ describe('Header actions', () => {
     expect(within(nav).queryByRole('link', { name: /Pricing/ })).toBeNull();
   });
 
-  it('opens Documentation from the home page, not the header', async () => {
+  it('links to Docs from the header and marks it current', async () => {
     const user = userEvent.setup();
     renderAt('/');
-    expect(within(screen.getAllByRole('navigation', { name: 'Main' })[0]).queryByRole('link', { name: /Doc/ })).toBeNull();
-    await user.click(within(screen.getByRole('main')).getByRole('link', { name: 'Documentation' }));
+    const docs = within(screen.getByRole('navigation', { name: 'Main' })).getByRole('link', { name: 'Docs' });
+    expect(docs.getAttribute('href')).toBe('/docs');
+    await user.click(docs);
     expect(await screen.findByRole('heading', { name: 'Documentation' })).toBeTruthy();
+    expect(docs.getAttribute('aria-current')).toBe('page');
   });
 
   it('rejects a full-set download when a cached snapshot is missing a catalog icon', async () => {

@@ -9,7 +9,7 @@ import { useTheme } from '../lib/theme';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { RailActions } from './QuickTools';
 import { CustomizeControls, Section } from './Customize';
-import { Button, IconButton, Segmented, UiIcon, useToast } from './ui';
+import { Button, IconButton, Segmented, Select, UiIcon, useToast } from './ui';
 
 const PNG_SCALES = [1, 2, 4] as const;
 type Format = 'svg' | 'png';
@@ -137,14 +137,14 @@ export function SelectionPanel({
             {format === 'png' && (
               <>
                 <label className="sr-only" htmlFor="zip-scale">{t('selection.pngScale')}</label>
-                <select
+                <Select
                   id="zip-scale"
                   value={scale}
                   onChange={(e) => setScale(Number(e.target.value) as (typeof PNG_SCALES)[number])}
-                  className="h-8 rounded-lg border border-line-strong bg-surface px-2 text-sm"
+                  className="w-[76px] shrink-0"
                 >
                   {PNG_SCALES.map((s) => <option key={s} value={s}>{s}× · {t('customize.pxValue', { value: look.size * s })}</option>)}
-                </select>
+                </Select>
               </>
             )}
           </div>

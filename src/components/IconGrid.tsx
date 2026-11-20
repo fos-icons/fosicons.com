@@ -1,5 +1,6 @@
 import { useI18n } from '../i18n';
 import { Fragment, memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { IconCardContent, iconCardClass, iconCardGlyphClass, iconGridClass } from './IconCard';
 
 export interface GridItem {
   name: string;
@@ -67,26 +68,19 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={`group relative flex aspect-square min-h-[min(var(--cell-min-h,0px),88px)] w-full items-center justify-center pb-9 sm:min-h-[var(--cell-min-h,0px)] rounded-xl text-ink transition-colors focus-visible:outline-offset-[-2px] ${
-          selected ? 'bg-brand-soft ring-1 ring-inset ring-brand' : 'hover:bg-sunken'
-        }`}
+        className={iconCardClass(selected)}
       >
-        {svg ? (
-          <span
-            data-artwork className={`glyph shrink-0 text-[color:var(--glyph-color)] size-[min(var(--glyph-size,24px),40px)] sm:size-[var(--glyph-size,24px)]`}
-            dangerouslySetInnerHTML={{ __html: svg }}
-          />
-        ) : (
-          <span className="size-[min(var(--glyph-size,24px),40px)] shrink-0 animate-pulse rounded-md bg-sunken sm:size-[var(--glyph-size,24px)]" />
-        )}
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-x-1 bottom-2.5 line-clamp-2 text-center text-[11px] leading-[14px] text-muted [overflow-wrap:anywhere] transition-opacity ${
-            selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100'
-          }`}
-        >
-          {name}
-        </span>
+        <IconCardContent name={name} selected={selected}>
+          {svg ? (
+            <span
+              aria-hidden="true"
+              data-artwork className={`glyph text-[color:var(--glyph-color)] ${iconCardGlyphClass}`}
+              dangerouslySetInnerHTML={{ __html: svg }}
+            />
+          ) : (
+            <span aria-hidden="true" className={`animate-pulse rounded-md bg-sunken ${iconCardGlyphClass}`} />
+          )}
+        </IconCardContent>
       </button>
     </li>
   );
@@ -232,12 +226,12 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onN
       aria-label={label}
       aria-describedby="grid-help"
       onKeyDown={onKeyDown}
-      className="grid grid-cols-[repeat(auto-fill,minmax(64px,1fr))] gap-1 sm:grid-cols-[repeat(auto-fill,minmax(max(96px,calc((100%-28px)/8)),1fr))]"
+      className={iconGridClass}
     >
       {shown.map((item, index) => (
         <Fragment key={item.name}>
           {categoryTitle && item.category && item.category !== shown[index - 1]?.category && (
-            <li role="presentation" className="col-span-full px-1 pb-2 pt-5 first:pt-0">
+            <li className="col-span-full px-1 pb-2 pt-5 first:pt-0">
               <h2 className="text-base font-semibold text-ink">{categoryTitle(item.category)}</h2>
             </li>
           )}

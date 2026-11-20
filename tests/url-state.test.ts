@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { catalog, iconsByName } from '../src/lib/catalog';
+import { catalogEditorLocation, catalogRouteFilters, isCatalogEditor, legacyCatalogDestination } from '../src/lib/catalog-location';
 import { parseState, serializeState, type UrlStateConfig } from '../src/lib/url-state';
 
 const config: UrlStateConfig = {
@@ -9,6 +10,29 @@ const config: UrlStateConfig = {
 };
 
 describe('URL state', () => {
+  it('uses clean paths for catalog navigation without losing editor state', () => {
+    const original = parseState('?category=Essentials&icon=copy&style=solid&modifier=dot&corner=top-right', config);
+    const editor = catalogEditorLocation(original);
+    expect(editor.href).toBe('/icons/copy?style=solid&modifier=dot&corner=top-right');
+    const { pathname, search } = new URL(editor.href, 'http://localhost');
+    const location = { pathname, search, state: editor.state };
+    expect(isCatalogEditor(location)).toBe(true);
+    expect(isCatalogEditor({ pathname, search: '' })).toBe(false);
+    expect(parseState(search, config, catalogRouteFilters(location))).toEqual(original);
+    expect(catalogEditorLocation({ ...original, icon: null, style: 'regular' }).href).toBe('/categories/essentials');
+  });
+
+  it('migrates old share URLs and preserves search and modifier options', () => {
+    expect(legacyCatalogDestination('?category=Music+%26+instruments')).toBe('/categories/music-instruments');
+    expect(legacyCatalogDestination('?icon=copy')).toBe('/icons/copy');
+    expect(legacyCatalogDestination('?category=Essentials&icon=copy&modifier=dot&corner=top-right')).toBe(
+      '/icons/copy?modifier=dot&corner=top-right&view=editor&from=essentials',
+    );
+    expect(legacyCatalogDestination('?category=Essentials&q=copy')).toBe('/categories/essentials?q=copy');
+    expect(legacyCatalogDestination('?style=brands')).toBe('/brands');
+    expect(legacyCatalogDestination('?icon=missing&q=copy')).toBeNull();
+  });
+
   it('round-trips search, category, style, and icon', () => {
     const state = { q: 'arrow up', category: 'Navigation', style: 'filled' as const, brandStyle: 'regular' as const, icon: 'arrow-up', modifier: null, corner: null };
     const url = serializeState(state, config);

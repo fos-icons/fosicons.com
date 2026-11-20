@@ -158,9 +158,9 @@ export function scopeSvg(source: string, idPrefix: string): string {
  * reweight every stroke live, without re-rendering each SVG. Exports never
  * use this; they go through `buildSvg`.
  */
-export function prepareGridSvg(source: string): string {
+export function prepareGridSvg(source: string, fallbackScale = '1'): string {
   return source.replace(
     /stroke-width="([\d.]+)"/g,
-    (_, w: string) => `stroke-width="${w}" style="stroke-width:calc(${w}px * var(--stroke-scale, 1))"`,
+    (_, w: string) => `stroke-width="${w}" style="stroke-width:calc(${w}px * var(--stroke-scale, ${fallbackScale}))"`,
   );
 }

@@ -31,15 +31,15 @@ export interface UrlStateConfig {
 }
 
 /** Parse shareable state, discarding values the catalog cannot honor. */
-export function parseState(search: string, config: UrlStateConfig): CatalogState {
+export function parseState(search: string, config: UrlStateConfig, route: Partial<Pick<CatalogState, 'category' | 'icon'>> = {}): CatalogState {
   const params = new URLSearchParams(search);
   const slug = params.get('style');
   // Brands used to be a style tab; old links now open the Brands category.
   const legacyBrands = slug === 'brands';
   const style: View = legacyBrands ? config.styles[0] : styleFromSlug(slug, config.styles) ?? config.styles[0];
   const collection = config.core;
-  const category = legacyBrands ? params.get('category') ?? 'Brands' : params.get('category');
-  const icon = params.get('icon');
+  const category = route.category !== undefined ? route.category : legacyBrands ? params.get('category') ?? 'Brands' : params.get('category');
+  const icon = route.icon !== undefined ? route.icon : params.get('icon');
   const iconOk = !!icon && collection.icons.has(icon);
   const modifier = params.get('modifier');
   // Brand marks never take modifiers.

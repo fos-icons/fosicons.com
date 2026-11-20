@@ -3,10 +3,11 @@ import { LocalLink, useI18n } from '../i18n';
 import { scopeIds } from '../lib/artwork';
 import type { IconEntry, StyleId } from '../lib/catalog';
 import { copyText } from '../lib/export';
-import { iconKeywords, iconPath, svgFilePath } from '../lib/icon-pages';
+import { gridPreviewPath, iconKeywords, iconPath } from '../lib/icon-pages';
 import { DEFAULT_LOOK, gridVars } from '../lib/look';
 import { useTheme } from '../lib/theme';
 import { CodeBlock } from './CodeBlock';
+import { IconCardContent, iconCardClass, iconCardGlyphClass, iconGridClass } from './IconCard';
 import { Tag, useToast } from './ui';
 
 /** Shared pieces of the crawlable landing pages (icon, category, React/Vue/Figma). */
@@ -29,29 +30,31 @@ export function Glyph({ svg, idPrefix, className = 'size-6', label }: { svg?: st
 }
 
 /**
- * A grid of links to icon pages, each with its Regular artwork and name. The
- * artwork is the published SVG file as a lazy <img> (light pages, indexable
- * by image search); in the dark theme it is inverted, keeping accent hues.
+ * The catalog cards as links to individual icon pages, with standalone
+ * previews that use the catalog's default stroke and load lazily.
  */
 export function IconLinkGrid({ icons }: { icons: IconEntry[] }) {
   return (
-    <ul className="grid grid-cols-[repeat(auto-fill,minmax(7.5rem,1fr))] gap-2">
+    <ul className={iconGridClass}>
       {icons.map((icon) => (
         <li key={icon.name}>
           <LocalLink
             to={iconPath(icon.name)}
-            className="flex h-full flex-col items-center gap-2.5 rounded-xl border border-line bg-surface px-2 pb-3 pt-4 text-center text-ink transition hover:border-brand hover:bg-brand-soft"
+            aria-label={icon.name}
+            title={icon.name.length > 22 ? icon.name : undefined}
+            className={iconCardClass()}
           >
-            <img
-              src={svgFilePath('regular', icon.name)}
-              alt=""
-              width={28}
-              height={28}
-              loading="lazy"
-              decoding="async"
-              className="size-7 opacity-90 dark:[filter:invert(1)_hue-rotate(180deg)]"
-            />
-            <span className="w-full break-words text-xs leading-snug text-muted">{icon.name}</span>
+            <IconCardContent name={icon.name}>
+              <img
+                src={gridPreviewPath(icon.name)}
+                alt=""
+                width={DEFAULT_LOOK.size}
+                height={DEFAULT_LOOK.size}
+                loading="lazy"
+                decoding="async"
+                className={`${iconCardGlyphClass} dark:[filter:invert(1)_hue-rotate(180deg)]`}
+              />
+            </IconCardContent>
           </LocalLink>
         </li>
       ))}

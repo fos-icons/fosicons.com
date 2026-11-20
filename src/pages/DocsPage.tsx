@@ -1,9 +1,10 @@
 import { UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, useI18n } from '../i18n';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
+import { editorPath } from '../lib/icon-pages';
 import { angularSnippet, solidSnippet } from '../lib/react-snippet';
 import { FLUTTER_PACKAGE, FRAMEWORK_PACKAGES, packageSource, PLATFORM_NAMES } from '../lib/links';
 import { CodeBlock } from '../components/CodeBlock';
@@ -11,26 +12,46 @@ import { useToast } from '../components/ui';
 import { createPortal } from 'react-dom';
 import { CONTAINER, useHeaderSlot } from '../lib/layout';
 import { useMediaQuery } from '../lib/theme';
-import { useSlashToFocus } from './IconsPage';
+import { useSlashToFocus } from '../hooks/useSlashToFocus';
 
 const nf = new Intl.NumberFormat('en-US');
 const compositions = catalog.icons.filter((i) => i.composition);
 const modifierNames = new Set(compositions.flatMap((i) => i.composition!.modifiers.map((m) => m.name)));
 
-const SECTIONS = [
-  ['styles', 'Styles'],
-  ['svg', 'SVG'],
-  ...Object.entries(FRAMEWORK_PACKAGES).map(([id, { label }]) => [id, label] as const),
-  ['flutter', FLUTTER_PACKAGE.label],
-  ['figma', 'Figma'],
-  ['colors', 'Colors'],
-  ['sizes', 'Sizes'],
-  ['modifiers', 'Modifiers'],
-  ['accessibility', 'Accessibility'],
-  ['licensing', 'Licensing'],
-  ['privacy', 'Privacy'],
-  ['source', 'Source data'],
-] as const;
+const CONTENTS: { id: string; title: string; sections: readonly (readonly [string, string])[] }[] = [
+  {
+    id: 'design',
+    title: 'Design',
+    sections: [
+      ['styles', 'Styles'],
+      ['figma', 'Figma'],
+      ['colors', 'Colors'],
+      ['sizes', 'Sizes'],
+      ['modifiers', 'Modifiers'],
+    ],
+  },
+  {
+    id: 'code',
+    title: 'Code',
+    sections: [
+      ['svg', 'SVG'],
+      ...Object.entries(FRAMEWORK_PACKAGES).map(([id, { label }]) => [id, label] as const),
+      ['flutter', FLUTTER_PACKAGE.label],
+    ],
+  },
+  {
+    id: 'reference',
+    title: 'Reference',
+    sections: [
+      ['accessibility', 'Accessibility'],
+      ['licensing', 'Licensing'],
+      ['privacy', 'Privacy'],
+      ['source', 'Source data'],
+    ],
+  },
+];
+
+const ALL_IDS = CONTENTS.flatMap(({ sections }) => sections.map(([id]) => id));
 
 function Code({ children, lang }: { children: string; lang: string }) {
   const toast = useToast();
@@ -43,7 +64,7 @@ function Code({ children, lang }: { children: string; lang: string }) {
         <button
           type="button"
           onClick={() => copyText(children).then(() => toast('success', 'Copied'), (e: Error) => toast('error', e.message))}
-          className="rounded-md px-2 py-1 text-xs font-medium text-[#c9c9cf] transition hover:bg-white/10 hover:text-white"
+          className="min-h-8 rounded-md px-2 text-xs font-medium text-[#c9c9cf] transition hover:bg-white/10 hover:text-white"
         >
           Copy
         </button>
@@ -54,8 +75,8 @@ function Code({ children, lang }: { children: string; lang: string }) {
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-20 border-t border-line pt-10 first:border-t-0 first:pt-0">
-      <h2 id={`${id}-title`} className="text-2xl font-semibold">{title}</h2>
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6 border-t border-line pt-10">
+      <h2 id={`${id}-title`} tabIndex={-1} className="rounded text-2xl font-semibold">{title}</h2>
       <div className="prose-docs mt-4 space-y-4">{children}</div>
     </section>
   );
@@ -70,7 +91,7 @@ const SPY_OFFSET = 120;
  * its scroll settles, so short final sections can still be selected.
  */
 function useActiveSection(ids: readonly string[]) {
-  const [active, setActive] = useState<string>(SECTIONS[0][0]);
+  const [active, setActive] = useState(ALL_IDS[0]);
   const pinned = useRef<{ id: string; timer: number } | null>(null);
   const key = ids.join(' ');
 
@@ -106,16 +127,20 @@ function useActiveSection(ids: readonly string[]) {
     };
   }, [key]);
 
-  const choose = (id: string) => {
+  useEffect(() => () => {
+    if (pinned.current) window.clearTimeout(pinned.current.timer);
+    pinned.current = null;
+  }, []);
+
+  const choose = useCallback((id: string) => {
     if (pinned.current) window.clearTimeout(pinned.current.timer);
     // If no scroll follows (already in place), release shortly after.
     pinned.current = { id, timer: window.setTimeout(() => { pinned.current = null; }, 600) };
     setActive(id);
-  };
+  }, []);
   return [active, choose] as const;
 }
 
-const ALL_IDS = SECTIONS.map(([id]) => id);
 const HIGHLIGHT = 'docs-search';
 
 /** Lowercased words of a query; a section matches when it contains all of them. */
@@ -147,7 +172,7 @@ function useSectionFilter(query: string) {
     for (const id of ALL_IDS) {
       const section = document.getElementById(id);
       if (!section) continue;
-      const nodes = contentTextNodes(section);
+      const nodes = terms.length ? contentTextNodes(section) : [];
       const text = nodes.map((n) => n.data).join('').toLowerCase();
       const match = terms.every((w) => text.includes(w));
       section.hidden = !match;
@@ -196,11 +221,11 @@ function DocsSearch({ value, onChange }: { value: string; onChange: (v: string) 
         spellCheck={false}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => { if (e.key === 'Escape' && value) { e.preventDefault(); onChange(''); } }}
-        className="h-9 w-full rounded-lg border border-line-strong bg-surface pl-9 pr-9 text-sm text-ink outline-none transition placeholder:text-faint focus:border-brand focus:ring-4 focus:ring-brand/15 [&::-webkit-search-cancel-button]:hidden"
+        className="h-11 w-full rounded-lg border border-line-strong bg-surface pl-9 pr-9 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/15 md:h-9 md:text-sm [&::-webkit-search-cancel-button]:hidden"
       />
       <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
         {value ? (
-          <button type="button" aria-label="Clear search" onClick={() => { onChange(''); ref.current?.focus(); }} className="inline-flex size-6 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink">
+          <button type="button" aria-label="Clear search" onClick={() => { onChange(''); ref.current?.focus(); }} className="inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink md:size-6">
             <UiIcon name="x" className="size-4" />
           </button>
         ) : (
@@ -211,19 +236,116 @@ function DocsSearch({ value, onChange }: { value: string; onChange: (v: string) 
   );
 }
 
+function DocsContents({ shown, active, section, searching, desktop, onChoose }: {
+  shown: readonly string[];
+  active: string;
+  section: string;
+  searching: boolean;
+  desktop: boolean;
+  onChoose: (id: string) => void;
+}) {
+  const contentsId = useId();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [groups, setGroups] = useState<Record<string, boolean>>({});
+
+  useEffect(() => { setGroups({}); }, [searching, section]);
+
+  return (
+    <aside className="min-w-0 self-start md:sticky md:top-8 md:col-start-1 md:row-span-2 md:row-start-1 md:max-h-[calc(100dvh-4rem)] md:overflow-y-auto md:p-1">
+      <nav aria-label="Documentation">
+        <button
+          type="button"
+          aria-expanded={mobileOpen}
+          aria-controls={contentsId}
+          onClick={() => setMobileOpen(!mobileOpen)}
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink md:hidden"
+        >
+          On this page
+          <UiIcon name="chevron-down" className={`size-4 ${mobileOpen ? 'rotate-180' : ''}`} />
+        </button>
+        <div id={contentsId} className={`${mobileOpen ? 'block' : 'hidden'} pt-2 md:block md:pt-0`}>
+          <p aria-hidden="true" className="mb-2 hidden pl-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted md:block">On this page</p>
+          {shown.length === 0 && <p className="px-2 py-2 text-sm text-muted">No matches</p>}
+          {CONTENTS.map((group) => {
+            const links = group.sections.filter(([id]) => shown.includes(id));
+            if (!links.length) return null;
+            const expanded = groups[group.id] ?? (searching || (section ? group.sections.some(([id]) => id === section) : desktop && group.id === 'design'));
+            const groupId = `${contentsId}-${group.id}`;
+            return (
+              <div key={group.id} className="border-b border-line last:border-0">
+                <button
+                  type="button"
+                  aria-expanded={expanded}
+                  aria-controls={groupId}
+                  onClick={() => setGroups((previous) => ({ ...previous, [group.id]: !expanded }))}
+                  className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg px-2 text-left text-sm font-medium text-ink hover:bg-sunken md:min-h-9"
+                >
+                  {group.title}
+                  <UiIcon name="chevron-down" className={`size-4 text-muted ${expanded ? 'rotate-180' : ''}`} />
+                </button>
+                <ul id={groupId} hidden={!expanded} className="space-y-0.5 pb-2 pl-3">
+                  {links.map(([id, label]) => (
+                    <li key={id}>
+                      <a
+                        href={`#${id}`}
+                        aria-current={active === id ? 'location' : undefined}
+                        onClick={(event) => {
+                          if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+                          event.preventDefault();
+                          onChoose(id);
+                          setMobileOpen(false);
+                        }}
+                        className={`flex min-h-11 items-center rounded-md px-2 text-sm md:min-h-8 ${active === id ? 'bg-brand-soft font-medium text-brand' : 'text-muted hover:bg-sunken hover:text-ink'}`}
+                      >
+                        {label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+      </nav>
+    </aside>
+  );
+}
+
+function goToSection(id: string, initial = false) {
+  document.getElementById(`${id}-title`)?.focus({ preventScroll: true });
+  document.getElementById(id)?.scrollIntoView(initial ? { behavior: 'instant' } : undefined);
+}
+
 export default function DocsPage() {
   const { hash } = useLocation();
-  const arrived = useRef(false);
-  useEffect(() => {
-    // Arriving from another page jumps straight to the section; links within
-    // the page glide there (CSS `scroll-behavior` on .docs-page, off for reduced motion).
-    if (hash) document.getElementById(hash.slice(1))?.scrollIntoView(arrived.current ? undefined : { behavior: 'instant' });
-    arrived.current = true;
-  }, [hash]);
+  const navigate = useNavigate();
+  const handledSection = useRef<string | null>(null);
   const [query, setQuery] = useState('');
   const shown = useSectionFilter(query);
   const [active, setActive] = useActiveSection(shown);
   const searching = queryWords(query).length > 0;
+  const section = hash.slice(1);
+  useEffect(() => {
+    if (handledSection.current === section) return;
+    const target = ALL_IDS.includes(section) ? document.getElementById(section) : null;
+    if (target?.hidden) {
+      setQuery('');
+      return;
+    }
+    if (target) {
+      setActive(section);
+      goToSection(section, handledSection.current === null);
+    }
+    handledSection.current = section;
+  }, [section, shown, setActive]);
+  const chooseSection = (id: string) => {
+    if (id !== section) {
+      navigate({ hash: `#${id}` }, { preventScrollReset: true });
+    } else {
+      setActive(id);
+      goToSection(id);
+    }
+  };
   // Other languages show this English page until a translation exists (see src/i18n/content.ts).
   const { t, config, path } = useI18n();
   const english = config.code !== DEFAULT_LOCALE;
@@ -234,49 +356,27 @@ export default function DocsPage() {
   const inHeader = headerSlot && desktop;
 
   return (
-    <div className={`docs-page ${CONTAINER} flex gap-12 pb-20 pt-8 sm:pt-12`}>
+    <div className={`docs-page ${CONTAINER} grid gap-y-6 pb-20 pt-8 sm:pt-12 md:grid-cols-[11rem_minmax(0,720px)] md:gap-x-12 md:gap-y-10`}>
       {inHeader && createPortal(<div className="w-full max-w-md">{search}</div>, headerSlot)}
       <p role="status" className="sr-only">
         {searching ? `${shown.length} ${shown.length === 1 ? 'section matches' : 'sections match'}` : ''}
       </p>
-      <aside className="sticky top-8 hidden h-fit w-44 shrink-0 md:block">
-        <nav aria-label="Documentation">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-[0.08em] text-muted">On this page</p>
-          {shown.length === 0 && <p className="text-sm text-muted">No matches</p>}
-          <ul className="border-l border-line text-sm empty:hidden">
-            {SECTIONS.filter(([id]) => shown.includes(id)).map(([id, label]) => (
-              <li key={id}>
-                <a
-                  href={`#${id}`}
-                  aria-current={active === id ? 'location' : undefined}
-                  onClick={() => setActive(id)}
-                  className={`-ml-px block border-l-2 py-1.5 pl-3 pr-2 transition-colors ${
-                    active === id ? 'border-brand font-medium text-ink' : 'border-transparent text-muted hover:border-line-strong hover:text-ink'
-                  }`}
-                >
-                  {label}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
-
-      <article lang={english ? 'en' : undefined} className="min-w-0 max-w-[720px] flex-1 space-y-10">
-        {!inHeader && search}
+      <header lang={english ? 'en' : undefined} className="min-w-0 md:col-start-2 md:row-start-1">
         {english && (
           <p lang={config.code} className="inline-flex items-center gap-2 rounded-lg bg-sunken px-3 py-1.5 text-sm text-muted">
             <UiIcon name="globe" className="size-4" /> {t('docs.englishOnly')}
           </p>
         )}
-        <header>
-          <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
-          <p className="mt-3 text-base text-muted">
-            Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format(PLATFORM_NAMES)}. {nf.format(ICONS_ROUNDED)}+ icons,
-            each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
-          </p>
-        </header>
+        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
+        <p className="mt-3 text-base text-muted">
+          Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format(PLATFORM_NAMES)}. {nf.format(ICONS_ROUNDED)}+ icons,
+          each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
+        </p>
+        {!inHeader && <div className="mt-5 md:mt-4">{search}</div>}
+      </header>
+      <DocsContents shown={shown} active={active} section={section} searching={searching} desktop={desktop} onChoose={chooseSection} />
 
+      <article lang={english ? 'en' : undefined} className="min-w-0 space-y-10 md:col-start-2 md:row-start-2">
         {shown.length === 0 && (
           <div className="rounded-xl border border-line p-6 text-center">
             <p className="font-medium text-ink">Nothing in the docs matches “{query.trim()}”</p>
@@ -298,6 +398,50 @@ export default function DocsPage() {
             use {catalog.strokeWidth}px strokes. Negative space and modifier clearances are genuinely
             transparent, not painted with a background color.
           </p>
+        </Section>
+
+        <Section id="figma" title="Figma">
+          <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size=24</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the duo palettes.</li>
+            <li><strong>Fos / Stroke</strong> offers 16px (1px), 24px (1.25px, default), and 32px (1.5px) stroke presets. These change stroke weight only, not icon dimensions.</li>
+            <li>Named icon instances expose their nested <strong>Modifier</strong> controls in the properties panel.</li>
+          </ul>
+          <p>SVGs downloaded here can also be pasted or dropped into Figma; their colors are already resolved.</p>
+        </Section>
+
+        <Section id="colors" title="Colors">
+          <p>Regular and Solid are single-color icons. Duocolor and Duotone use two CSS custom properties with blue defaults:</p>
+          <Code lang="css">{`.toolbar svg {
+  --fos-primary: #245B9E;
+  --fos-secondary: #5B87B7;
+}`}</Code>
+          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with 16% of the primary color. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
+          <p>The {palettes.palettes.length} library palettes each have Light and Dark pairs.</p>
+          <ul className="grid grid-cols-2 gap-2 !pl-0 sm:grid-cols-3" role="list">
+            {palettes.palettes.map((p) => (
+              <li key={p.name} className="flex list-none items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-sm">
+                <span className="flex h-5 w-10 overflow-hidden rounded" aria-hidden="true">
+                  <span className="flex-1" style={{ background: p.light.primary }} />
+                  <span className="flex-1" style={{ background: p.light.secondary }} />
+                  <span className="flex-1" style={{ background: p.dark.primary }} />
+                  <span className="flex-1" style={{ background: p.dark.secondary }} />
+                </span>
+                <span className="text-ink">{p.name}</span>
+              </li>
+            ))}
+          </ul>
+        </Section>
+
+        <Section id="sizes" title="Sizes">
+          <p>Every icon is authored at <strong>24px</strong>. Other sizes are scaled from that master — Fos Icons does not yet have separately authored optical sizes. Check icons at their final size, especially below 20px.</p>
+        </Section>
+
+        <Section id="modifiers" title="Modifiers">
+          <p>Modifiers combine a base icon with a small solid glyph — Add, Delete, Lock, file-type labels, and more — with a designed corner position and a transparent clearance gap so the glyph never touches the base.</p>
+          <p>The library currently includes <strong>{compositions.length} authored compositions</strong> across {new Set(compositions.map((c) => c.composition!.base)).size} base icons, using {modifierNames.size} modifiers. In the inspector, open a base icon such as <a href={path(editorPath('user'))}>user</a> or <a href={path(editorPath('file'))}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
+          <p>Opening an icon with one modifier starts with the base icon and that modifier selected. You can also choose a modifier and corner in the inspector, or compose the SVG with the Python tool.</p>
+          <Code lang="sh">{`python3 scripts/compose_svg.py home-smile --modifier key --position bottom-right --output home-key.svg`}</Code>
         </Section>
 
         <Section id="svg" title="SVG">
@@ -406,8 +550,8 @@ npm pack`}</Code>
           </ul>
         </Section>
 
-        <Section id="flutter" title="Flutter">
-          <p><code>fos_icons</code> brings every icon in all four styles to Flutter as typed constants, drawn with <code>flutter_svg</code>. Release builds keep only the icons your app uses. It needs Flutter 3.44 or later and isn&apos;t on pub.dev yet. Source: <a target="_blank" rel="noreferrer" href={packageSource('flutter')}>packages/flutter</a>.</p>
+        <Section id="flutter" title={FLUTTER_PACKAGE.label}>
+          <p><code>{FLUTTER_PACKAGE.name}</code> brings every icon in all four styles to Flutter as typed constants, drawn with <code>flutter_svg</code>. Release builds keep only the icons your app uses. It needs Flutter 3.44 or later and isn&apos;t on pub.dev yet. Source: <a target="_blank" rel="noreferrer" href={packageSource('flutter')}>packages/flutter</a>.</p>
           <p>Clone the source, then add the package to your app&apos;s <code>pubspec.yaml</code> as a path dependency.</p>
           <Code lang="sh">{`git clone https://github.com/fos-icons/fos-icons.git`}</Code>
           <Code lang="yaml">{`# pubspec.yaml
@@ -427,50 +571,6 @@ FosIcon(
             <li>Regular and Solid icons follow the ambient <code>IconTheme</code> size and color. Duocolor and Duotone keep their palette unless you set <code>primaryColor</code>, <code>secondaryColor</code>, or <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
             <li>Icons are decorative by default. Pass <code>semanticLabel</code> for a meaningful standalone icon.</li>
           </ul>
-        </Section>
-
-        <Section id="figma" title="Figma">
-          <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size=24</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
-          <ul className="list-disc space-y-1 pl-5">
-            <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the duo palettes.</li>
-            <li><strong>Fos / Stroke</strong> offers 16px (1px), 24px (1.25px, default), and 32px (1.5px) stroke presets. These change stroke weight only, not icon dimensions.</li>
-            <li>Named icon instances expose their nested <strong>Modifier</strong> controls in the properties panel.</li>
-          </ul>
-          <p>SVGs downloaded here can also be pasted or dropped into Figma; their colors are already resolved.</p>
-        </Section>
-
-        <Section id="colors" title="Colors">
-          <p>Regular and Solid are single-color icons. Duocolor and Duotone use two CSS custom properties with blue defaults:</p>
-          <Code lang="css">{`.toolbar svg {
-  --fos-primary: #245B9E;
-  --fos-secondary: #5B87B7;
-}`}</Code>
-          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with 16% of the primary color. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
-          <p>The {palettes.palettes.length} library palettes each have Light and Dark pairs.</p>
-          <ul className="grid grid-cols-2 gap-2 !pl-0 sm:grid-cols-3" role="list">
-            {palettes.palettes.map((p) => (
-              <li key={p.name} className="flex list-none items-center gap-2 rounded-lg border border-line px-2.5 py-2 text-sm">
-                <span className="flex h-5 w-10 overflow-hidden rounded" aria-hidden="true">
-                  <span className="flex-1" style={{ background: p.light.primary }} />
-                  <span className="flex-1" style={{ background: p.light.secondary }} />
-                  <span className="flex-1" style={{ background: p.dark.primary }} />
-                  <span className="flex-1" style={{ background: p.dark.secondary }} />
-                </span>
-                <span className="text-ink">{p.name}</span>
-              </li>
-            ))}
-          </ul>
-        </Section>
-
-        <Section id="sizes" title="Sizes">
-          <p>Every icon is authored at <strong>24px</strong>. Other sizes are scaled from that master — Fos Icons does not yet have separately authored optical sizes. Check icons at their final size, especially below 20px.</p>
-        </Section>
-
-        <Section id="modifiers" title="Modifiers">
-          <p>Modifiers combine a base icon with a small solid glyph — Add, Delete, Lock, file-type labels, and more — with a designed corner position and a transparent clearance gap so the glyph never touches the base.</p>
-          <p>The library currently includes <strong>{compositions.length} authored compositions</strong> across {new Set(compositions.map((c) => c.composition!.base)).size} base icons, using {modifierNames.size} modifiers. In the inspector, open a base icon such as <a href={path('/?icon=user')}>user</a> or <a href={path('/?icon=file')}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
-          <p>Opening an icon with one modifier starts with the base icon and that modifier selected. You can also choose a modifier and corner in the inspector, or compose the SVG with the Python tool.</p>
-          <Code lang="sh">{`python3 scripts/compose_svg.py home-smile --modifier key --position bottom-right --output home-key.svg`}</Code>
         </Section>
 
         <Section id="accessibility" title="Accessibility">

@@ -17,9 +17,11 @@ import { styleSvgs } from './helpers';
 import { brands } from '../src/lib/brands';
 
 let location = '';
+let pathname = '';
 function Spy() {
   const l = useLocation();
   location = l.search;
+  pathname = l.pathname;
   return null;
 }
 
@@ -30,7 +32,7 @@ function renderAt(url: string) {
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<><IconsPage /><Spy /></>} />
+              <Route path="*" element={<><IconsPage /><Spy /></>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -190,7 +192,7 @@ describe('Icons page', () => {
     const [toolbarStyle] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
     await user.click(within(toolbarStyle).getByRole('radio', { name: 'Duotone' }));
     expect(location).toContain('style=duotone');
-    expect(location).toContain('icon=user-add');
+    expect(pathname).toBe('/icons/user-add');
     await act(async () => {});
     expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /duotone\.json$/.test(u))).toBe(true);
   });
@@ -212,12 +214,14 @@ describe('Icons page', () => {
     expect(preview.querySelectorAll(`svg[x="${x}"][y="12.75"]`)).toHaveLength(1);
 
     await user.click(screen.getByRole('button', { name: 'Top left' }));
-    expect(location).toBe(`?q=${preset}&icon=${base}&modifier=${label.toLowerCase()}&corner=top-left`);
+    expect(pathname).toBe(`/icons/${base}`);
+    expect(location).toBe(`?q=${preset}&modifier=${label.toLowerCase()}&corner=top-left`);
     const edited = await screen.findByRole('img', { name: new RegExp(`${base}, Regular, preview`) });
     await waitFor(() => expect(edited.querySelectorAll('svg[x="1.25"][y="1.25"]')).toHaveLength(1));
 
     await user.click(screen.getByRole('button', { name: 'None' }));
-    expect(location).toBe(`?q=${preset}&icon=${base}`);
+    expect(pathname).toBe(`/icons/${base}`);
+    expect(location).toBe(`?q=${preset}`);
     expect(edited.querySelector('svg[x][y]')).toBeNull();
   });
 
@@ -589,7 +593,8 @@ describe('Multi-select and ZIP export (desktop)', () => {
     expect(within(pane).getByRole('slider', { name: 'Stroke width' })).toBeTruthy();
 
     await user.click(within(pane).getByRole('button', { name: 'Remove user from selection' }));
-    expect(location).toBe('?icon=search');
+    expect(pathname).toBe('/icons/search');
+    expect(location).toBe('');
     expect(within(pane).getByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
   });
 

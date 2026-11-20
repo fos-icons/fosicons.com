@@ -1,8 +1,12 @@
+import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Breadcrumbs, IconLinkGrid, LandingSection } from '../components/LandingParts';
-import { ButtonLink, Chip } from '../components/ui';
+import { Button, ButtonLink, Chip, useToast } from '../components/ui';
 import { useI18n } from '../i18n';
+import { errorText } from '../i18n/errors';
 import { catalog } from '../lib/catalog';
+import { buildCategorySet, categorySetName } from '../lib/download-all';
+import { downloadBlob } from '../lib/export';
 import { categoryBySlug, categoryPath, iconsInCategory } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
 import { FRAMEWORK_NAMES } from '../lib/links';
@@ -10,13 +14,29 @@ import NotFoundPage from './NotFoundPage';
 
 export default function CategoryPage() {
   const { slug = '' } = useParams();
+  const i18n = useI18n();
+  const { t, label, list, n } = i18n;
+  const toast = useToast();
+  const [downloading, setDownloading] = useState(false);
   const category = categoryBySlug(slug);
-  const { t, label, list, n } = useI18n();
   if (!category) return <NotFoundPage />;
 
   const name = label('category', category.name, category.name);
   const icons = iconsInCategory(category.name);
   const styles = list(catalog.styles.map((s) => t(`style.${s}`)));
+
+  const download = async () => {
+    setDownloading(true);
+    try {
+      const name = categorySetName(slug);
+      downloadBlob(await buildCategorySet(category.name), name);
+      toast('success', t('download.done', { file: name }));
+    } catch (error) {
+      toast('error', errorText(error, i18n, 'error.download'));
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className={`${CONTAINER} pb-24 pt-8 sm:pt-10`}>
@@ -25,11 +45,17 @@ export default function CategoryPage() {
       <p className="mt-4 max-w-2xl text-base text-muted sm:text-lg">
         {t('categoryPage.intro', { count: n(category.count), category: name.toLowerCase(), styles, frameworks: list(FRAMEWORK_NAMES) })}
       </p>
-      <div className="mt-6">
-        <ButtonLink to={`/?${new URLSearchParams({ category: category.name })}`} variant="primary" size="lg" icon="palette">
+      <div className="mt-6 flex flex-wrap gap-2">
+        <ButtonLink to={`${categoryPath(category.name)}?view=editor`} variant="primary" size="lg" icon="palette" className="min-h-11">
           {t('categoryPage.customize')}
         </ButtonLink>
+        <Button size="lg" icon="download" onClick={download} disabled={downloading} aria-busy={downloading} aria-describedby="category-download-format" className="min-h-11">
+          {downloading ? t('download.preparing') : t('categoryPage.download', { count: icons.length })}
+        </Button>
       </div>
+      <p id="category-download-format" className="mt-2 text-sm text-muted">
+        {t('categoryPage.downloadFormat', { count: catalog.styles.length })}
+      </p>
 
       <div className="mt-10">
         <IconLinkGrid icons={icons} />

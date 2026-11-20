@@ -4,6 +4,7 @@ import { useI18n } from '../i18n';
 import { ButtonLink, Chip, UiIcon, type UiIconName } from '../components/ui';
 import { catalog, ICONS_ROUNDED } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
+import { categoryPath } from '../lib/icon-pages';
 
 
 /** The tiles around the gap: real library glyphs, one slot left empty. */
@@ -44,7 +45,7 @@ export default function NotFoundPage() {
 
           <form role="search" onSubmit={submit} className="mt-8 flex max-w-lg gap-2">
             <label htmlFor="not-found-search" className="sr-only">{t('notFound.searchLabel')}</label>
-            <div className="relative flex-1">
+            <div className="relative min-w-0 flex-1">
               <UiIcon name="search" className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted" />
               <input
                 id="not-found-search"
@@ -63,7 +64,7 @@ export default function NotFoundPage() {
           <nav aria-label={t('notFound.places')} className="mt-6 flex flex-wrap gap-2">
             <ButtonLink to="/" icon="home">{t('notFound.browse')}</ButtonLink>
             <ButtonLink to="/docs" icon="book-open">{t('notFound.docs')}</ButtonLink>
-            <ButtonLink to="/?style=brands" icon="sparkles">{t('notFound.brands')}</ButtonLink>
+            <ButtonLink to="/brands" icon="sparkles">{t('notFound.brands')}</ButtonLink>
           </nav>
         </div>
 
@@ -89,7 +90,7 @@ export default function NotFoundPage() {
         <ul className="mt-4 flex flex-wrap gap-2">
           {POPULAR.map((c) => (
             <li key={c.name}>
-              <Chip to={`/?${new URLSearchParams({ category: c.name })}`} count={n(c.count)}>{label('category', c.name, c.name)}</Chip>
+              <Chip to={categoryPath(c.name)} count={n(c.count)}>{label('category', c.name, c.name)}</Chip>
             </li>
           ))}
         </ul>

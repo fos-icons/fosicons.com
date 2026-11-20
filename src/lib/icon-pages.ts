@@ -21,10 +21,11 @@ export const categoryBySlug = (slug: string) => categoriesBySlug.get(slug) ?? nu
 
 export const iconPath = (name: string) => `/icons/${name}`;
 export const categoryPath = (category: string) => `/categories/${categorySlug(category)}`;
-/** The editor on the home page, with this icon open. */
-export const editorPath = (name: string) => `/?${new URLSearchParams({ icon: name })}`;
+/** Open the catalog editor with this icon selected. */
+export const editorPath = (name: string) => `${iconPath(name)}?view=editor`;
 /** The library's own SVG file, published at build time (scripts/postbuild.mjs). */
 export const svgFilePath = (style: string, name: string) => `/svg/${style}/${name}.svg`;
+export const gridPreviewPath = (name: string) => `/svg/preview/${name}.svg`;
 
 /**
  * Words people search for this icon by: its aliases, then its tags, lowercased

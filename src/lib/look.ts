@@ -1,7 +1,7 @@
 import ivory from '../data/ivory.json';
 import type { SiteTheme } from './theme';
 import { palettes, type StyleId } from './catalog';
-import { BASE_STROKE, hasModifierRole, hasSecondaryRole, isDuo, type SvgColorOptions } from './svg';
+import { BASE_STROKE, hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
 
 /**
  * How icons are drawn across the grid, the side pane previews, and exports.
@@ -82,6 +82,11 @@ export function autoStroke(size: number): number {
 /** The stroke actually drawn and exported for this look. */
 export const strokeOf = (look: Look) => look.strokeWidth ?? autoStroke(look.size);
 
+const gridStrokeScale = (look: Look) => String(Math.round((strokeOf(look) / BASE_STROKE) * 10000) / 10000);
+
+/** Standalone thumbnails use the same regular stroke as the default interactive grid. */
+export const defaultGridSvg = (source: string) => prepareGridSvg(source, gridStrokeScale(DEFAULT_LOOK));
+
 export const INK = { light: '#212121', dark: '#F2F2F2' } as const;
 
 /** Solid silhouettes and brand marks are drawn as authored: no stroke control. */
@@ -117,7 +122,7 @@ export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'co
     '--glyph-size': `${Math.min(look.size, GRID_MAX_SIZE)}px`,
     // Tall enough for the glyph plus a two-line name (only matters on desktop).
     '--cell-min-h': `${Math.max(0, Math.min(look.size, GRID_MAX_SIZE) + 48)}px`,
-    '--stroke-scale': String(strokeAdjustable(style, kind) ? Math.round((strokeOf(look) / BASE_STROKE) * 10000) / 10000 : 1),
+    '--stroke-scale': strokeAdjustable(style, kind) ? gridStrokeScale(look) : '1',
   };
   if (isDuo(style)) {
     vars['--fos-primary'] = r.duo.primary;

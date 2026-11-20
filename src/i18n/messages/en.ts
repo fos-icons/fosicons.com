@@ -14,24 +14,25 @@ const en = {
   'site.skipToContent': 'Skip to content',
   'site.home': 'Fos Icons home',
   'site.newTab': ' (opens in a new tab)',
+  'site.pageLoading': 'Loading page…',
 
   // Page metadata (titles ≤ 60 characters, descriptions ~150)
   'meta.home.title': 'Fos Icons — Find the right icon, then ship it',
   'meta.home.description': '{icons}+ free, {license}-licensed SVG icons. Customize and export SVG or PNG, or use Fos Icons with {platforms}.',
-  'meta.docs.title': 'Fos Icons Docs — {frameworks}',
-  'meta.docs.description': 'Set up Fos Icons with {platforms}. Learn how to use SVGs, icons in four styles, modifiers, and accessible labels.',
+  'meta.docs.title': 'Fos Icons Docs — SVG, React, Vue, Svelte & Flutter',
+  'meta.docs.description': 'Set up Fos Icons with {platforms}. Learn how to use SVGs, modifiers, and accessible labels.',
   'meta.brands.title': 'Brand icons — Fos Icons',
   'meta.brands.description': '{brands} brand logos, including social networks, Google Chrome, and Microsoft Edge, Teams, and Windows, shown as their owners provide them. Not covered by the {license} license.',
   'meta.notFound.title': 'Page not found — Fos Icons',
   'meta.notFound.description': 'That page does not exist. Browse Fos Icons instead.',
-  'meta.library.description': '{icons}+ open-source SVG icons on a 24px grid in {styles}, with {modifiers} reusable modifiers.',
+  'meta.library.description': '{icons}+ open-source SVG icons on a 24px grid in {styles}, with {modifiers} reusable modifiers and the {flutterPackage} package for Flutter.',
   'meta.icon.title': '{name} Icon — Free SVG Downloads | Fos Icons',
   'meta.icon.titleShort': '{name} Icon — Free SVG | Fos Icons',
   'meta.icon.titleShortest': '{name} Icon | Fos Icons',
   'meta.icon.description': 'Free {name} icon for {platforms}. Copy SVG or download PNG in four styles.',
   'meta.category.title': '{category} Icons — {count} Free SVG Icons | Fos Icons',
   'meta.category.titleShort': '{category} Icons | Fos Icons',
-  'meta.category.description': '{count} free {category} icons for {platforms}. Download SVG or PNG, including {examples}.',
+  'meta.category.description': '{count} free {category} icons for {platforms}. Download SVGs individually or as a ZIP.',
   'meta.react.title': 'React Icons — {icons}+ Free SVG Icon Components | Fos Icons',
   'meta.react.description': '@fos-icons/react: {icons}+ free, tree-shakeable React icon components in {styles}. TypeScript types, React 18 and 19, {license} licensed.',
   'meta.vue.title': 'Vue Icons — {icons}+ Free SVG Icon Components | Fos Icons',
@@ -44,6 +45,8 @@ const en = {
   'header.main': 'Main',
   'header.getStarted': 'Get started',
   'header.documentation': 'Documentation',
+  'header.docs': 'Docs',
+  'header.browse': 'Browse icons',
   'header.figma': 'Figma',
   'header.feedback': 'Feedback',
   'header.menu': 'Menu',
@@ -54,6 +57,7 @@ const en = {
   'footer.github': 'GitHub',
   'footer.license': 'License',
   'footer.npm': 'npm',
+  'footer.flutterIcons': 'Flutter icons',
   'footer.elsewhere': 'Fos Icons elsewhere',
   'footer.language': 'Language',
 
@@ -317,6 +321,9 @@ const en = {
 
   // Errors (shown in toasts)
   'error.generic': 'Something went wrong.',
+  'error.pageTitle': 'This page couldn’t load',
+  'error.pageBody': 'Reload the page to try again, or return to the icon catalog.',
+  'error.pageReload': 'Reload page',
   'error.copy': 'Could not copy.',
   'error.zip': 'Could not build the ZIP.',
   'error.download': 'Could not build the download.',
@@ -371,6 +378,7 @@ const en = {
   'iconPage.figmaBody': 'In the Fos Icons Figma library, insert the {name} component and pick its Style variant.',
   'iconPage.openFigma': 'Open the Figma library',
   'iconPage.docs': 'Read the docs',
+  'iconPage.flutterDocs': 'Flutter setup',
   'iconPage.details': 'Details',
   'iconPage.category': 'Category',
   'iconPage.license': 'License',
@@ -381,8 +389,10 @@ const en = {
 
   // Category pages (/categories/<slug>)
   'categoryPage.heading': '{category} icons',
-  'categoryPage.intro': '{count} free {category} icons in {styles}. Open an icon for its SVG or examples for {frameworks}, or customize the whole set at once.',
+  'categoryPage.intro': '{count} free {category} icons in {styles}. Download individual SVGs, customize the set, or use Fos Icons with {frameworks}.',
   'categoryPage.customize': 'Customize these icons',
+  'categoryPage.download': { one: 'Download {count} icon', other: 'Download {count} icons' },
+  'categoryPage.downloadFormat': 'One ZIP with SVGs in all {count} styles.',
   'categoryPage.others': 'Other categories',
 
   // Footer browse links
