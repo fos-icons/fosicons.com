@@ -154,7 +154,8 @@
       "officialSource": {
         "fileKey": "5zcUV9E4Bu8FSssDfhyOWw",
         "setNodeId": "71:151402",
-        "componentNodeId": "71:151410"
+        "componentNodeId": "181:162422",
+        "derivedFromComponentNodeId": "71:151410"
       },
       "retrieved": "2026-11-12",
       "terms": "Third-party artwork is not covered by the Fos Icons MIT license. Copyright and trademark rights remain with their respective owners; use remains subject to each owner's terms and brand guidelines.",
