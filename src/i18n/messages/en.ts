@@ -243,6 +243,8 @@ const en = {
   'modifiers.group.status.tab': 'Status',
   'modifiers.group.access-identity': 'Access & identity',
   'modifiers.group.access-identity.tab': 'Access',
+  'modifiers.group.commerce': 'Commerce',
+  'modifiers.group.commerce.tab': 'Commerce',
   'modifiers.group.image-quality': 'Image quality',
   'modifiers.group.image-quality.tab': 'Quality',
   'modifiers.group.file-types': 'File types',
