@@ -231,7 +231,14 @@ describe('Icons page', () => {
     const preview = await screen.findByRole('img', { name: /agent, Regular, preview/ });
     expect(preview.innerHTML).not.toContain('clip-path');
 
-    await user.click(await screen.findByRole('tab', { name: 'Access' }, { timeout: 8000 }));
+    const tablist = within(await screen.findByRole('tablist', { name: 'Modifier categories' }, { timeout: 8000 }));
+    expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General']);
+    await user.click(tablist.getByRole('tab', { name: 'General' }));
+    const general = within(screen.getByRole('tabpanel', { name: 'General' }));
+    for (const label of ['Dot', 'Lock', 'Coins', '24']) {
+      expect(general.getByRole('button', { name: new RegExp(`^${label} modifier`) })).toBeTruthy();
+    }
+    expect(general.queryByRole('button', { name: /^(PDF|4K) modifier/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: /^Lock modifier/ }));
     expect(screen.getByRole('button', { name: /^Lock modifier/ }).getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Bottom right' }).getAttribute('aria-pressed')).toBe('true');
@@ -244,10 +251,6 @@ describe('Icons page', () => {
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
-
-    // File-type and image-quality modifiers only apply to files, folders, and images.
-    expect(screen.queryByRole('tab', { name: 'Files' })).toBeNull();
-    expect(screen.queryByRole('tab', { name: 'Quality' })).toBeNull();
 
     await user.click(screen.getByRole('button', { name: 'None' }));
     expect(preview.innerHTML).not.toContain('clip-path');
@@ -306,10 +309,10 @@ describe('Icons page', () => {
     expect(screen.getByRole('button', { name: 'Top right' }).getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('offers the authored Dot in Status and applies its selected corner', async () => {
+  it('offers the authored Dot in General and applies its selected corner', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=bell');
-    await user.click(await screen.findByRole('tab', { name: 'Status' }, { timeout: 8000 }));
+    await user.click(await screen.findByRole('tab', { name: 'General' }, { timeout: 8000 }));
     await user.click(screen.getByRole('button', { name: /^Dot modifier/ }));
     await user.click(screen.getByRole('button', { name: 'Top right' }));
     expect(screen.getByRole('button', { name: 'Top right' }).getAttribute('aria-pressed')).toBe('true');
@@ -320,7 +323,7 @@ describe('Icons page', () => {
   it('offers file-type labels on files, only in the corners they support', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=file');
-    await user.click(await screen.findByRole('tab', { name: 'Files' }, { timeout: 8000 }));
+    await user.click(await screen.findByRole('tab', { name: 'General' }, { timeout: 8000 }));
     await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
     const enabled = ['Top left', 'Top right', 'Bottom left', 'Bottom right']
       .filter((c) => !(screen.getByRole('button', { name: c }) as HTMLButtonElement).disabled);
@@ -333,7 +336,7 @@ describe('Icons page', () => {
     await user.click(await screen.findByRole('tab', { name: 'Actions' }, { timeout: 8000 }));
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     await user.click(screen.getByRole('button', { name: 'Top right' }));
-    await user.click(screen.getByRole('tab', { name: 'Files' }));
+    await user.click(screen.getByRole('tab', { name: 'General' }));
     await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
     expect(screen.getByRole('button', { name: 'Bottom left' }).getAttribute('aria-pressed')).toBe('true');
     // The chosen corner comes back for the next modifier that fits there.

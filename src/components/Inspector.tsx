@@ -46,7 +46,7 @@ export interface InspectorProps {
 
 
 /** Largest size the panel's square preview draws at 1:1; bigger sizes are shown at this size. */
-const THUMB_MAX = 48;
+const THUMB_MAX = 64;
 
 export function Inspector({
   icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
@@ -61,7 +61,6 @@ export function Inspector({
   const r = resolveLook(look, theme);
   const size = look.size;
   const desktop = useMediaQuery('(min-width: 1024px)');
-  /** The preview draws the icon at its real size, up to THUMB_MAX (it fits a 56px square). */
   const thumbSize = Math.min(size, THUMB_MAX);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
 
@@ -125,12 +124,12 @@ export function Inspector({
     if (!source) return null;
     try {
       return {
-        actual: buildSvg(source, { ...colors, size: Math.min(size, THUMB_MAX), idPrefix: `${uid}-a`, strokeWidth }),
+        actual: buildSvg(source, { ...colors, size: thumbSize, idPrefix: `${uid}-a`, strokeWidth }),
       };
     } catch {
       return null;
     }
-  }, [source, colors, size, uid, strokeWidth]);
+  }, [source, colors, thumbSize, uid, strokeWidth]);
 
   const slug = STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
@@ -192,12 +191,11 @@ export function Inspector({
   return (
     <div className="flex min-h-full flex-col">
       {/*
-        Pinned while the controls scroll: a square preview (the height of the
-        name and category) beside them. The preview draws the icon at the chosen
-        size up to THUMB_MAX, so the size slider visibly changes it.
+        The preview and icon name stay pinned while the controls scroll.
+        The 72px square draws the icon at actual size up to THUMB_MAX.
       */}
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-surface px-5 py-4 [dialog_&]:top-4">
-        <figure className="group checkerboard relative flex size-14 shrink-0 items-center justify-center rounded-xl border border-line">
+        <figure className="group checkerboard relative flex size-18 shrink-0 items-center justify-center rounded-xl border border-line">
           {preview ? (
             <span
               role="img"

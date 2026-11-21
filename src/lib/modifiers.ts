@@ -40,17 +40,6 @@ export interface ModifierAsset {
   svg: string;
 }
 
-/** Library modifier groups, in tab order. Labels are messages: modifiers.group.<id>(.tab). */
-export const MODIFIER_GROUPS = [
-  { id: 'actions' },
-  { id: 'status' },
-  { id: 'access-identity' },
-  { id: 'commerce' },
-  { id: 'time' },
-  { id: 'image-quality' },
-  { id: 'file-types' },
-] as const;
-
 /**
  * Some modifier groups only make sense on certain icons: file-type labels on
  * files and folders, image-quality marks on images.

@@ -124,12 +124,12 @@ export function Chip({ to, count, children, className = '' }: { to: string; coun
   );
 }
 
-/** A small brand-tinted label that links to a search for its word. */
+/** A small tinted label that links to a search for its word. */
 export function Tag({ to, size = 'md', children }: { to: string; size?: 'sm' | 'md'; children: ReactNode }) {
   return (
     <LocalLink
       to={to}
-      className={`inline-flex items-center rounded-lg bg-brand-soft font-medium text-brand transition-colors hover:bg-brand-soft/55 ${
+      className={`inline-flex items-center rounded-lg bg-tag-soft font-medium text-tag transition-colors hover:bg-tag-soft/55 ${
         size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3 text-sm'
       }`}
     >

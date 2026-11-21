@@ -95,8 +95,8 @@ function HeaderIconSearch({
     navigate(path(`/?${new URLSearchParams({ q })}`));
   };
   const step = (to: string | null) => to && navigate(path(iconPath(to)), { state: { trail: true } });
-  const tag = 'inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-brand-soft pl-2 pr-0.5 text-xs font-medium text-brand';
-  const tagX = 'inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-brand/10';
+  const tag = 'inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-tag-soft pl-2 pr-0.5 text-xs font-medium text-tag';
+  const tagX = 'inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-tag/10';
   return (
     <div className="flex w-full max-w-lg items-center gap-1">
       {/* < and >: the chevron turned to point back and forward. */}
