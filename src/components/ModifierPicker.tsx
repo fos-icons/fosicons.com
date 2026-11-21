@@ -2,7 +2,7 @@ import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  CORNERS, initialCorner, loadModifiers, MODIFIER_GROUPS, modifierTileSvg,
+  CORNERS, initialCorner, loadModifiers, modifierTileSvg,
   type Corner, type ModifierAsset,
 } from '../lib/modifiers';
 
@@ -28,6 +28,7 @@ export function useModifiers(enabled: boolean) {
 }
 
 const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
+const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality', 'file-types'];
 
 export function ModifierPicker({
   modifiers, value, onChange, authored, accessory,
@@ -44,11 +45,16 @@ export function ModifierPicker({
   const { t, label } = useI18n();
   const baseId = useId();
   const tiles = useMemo(() => new Map(modifiers.map((m) => [m.name, modifierTileSvg(m)])), [modifiers]);
-  const groups: { id: string; label: string; tab: string; items: ModifierAsset[] }[] = MODIFIER_GROUPS
-    .map((g) => ({ ...g, label: t(`modifiers.group.${g.id}`), tab: t(`modifiers.group.${g.id}.tab`), items: modifiers.filter((m) => m.group === g.id) }))
-    .filter((g) => g.items.length);
-  const ungrouped = modifiers.filter((m) => !MODIFIER_GROUPS.some((g) => g.id === m.group));
-  if (ungrouped.length) groups.push({ id: 'other', label: t('modifiers.group.other'), tab: t('modifiers.group.other.tab'), items: ungrouped });
+  const groups = [
+    { id: 'actions', items: modifiers.filter((m) => m.group === 'actions') },
+    {
+      id: 'general',
+      items: [
+        ...GENERAL_GROUPS.flatMap((group) => modifiers.filter((m) => m.group === group)),
+        ...modifiers.filter((m) => m.group !== 'actions' && !GENERAL_GROUPS.includes(m.group)),
+      ],
+    },
+  ] as const;
   const [tab, setTab] = useState(() => groups.find((g) => g.items.some((m) => m.name === value?.modifier.name))?.id ?? groups[0]?.id);
   const current = groups.find((g) => g.id === tab) ?? groups[0];
   const tabRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -141,14 +147,13 @@ export function ModifierPicker({
                 aria-selected={selected}
                 aria-controls={`${baseId}-panel`}
                 tabIndex={selected ? 0 : -1}
-                title={group.label}
                 onClick={() => setTab(group.id)}
                 onKeyDown={(e) => onTabKey(e, i)}
                 className={`-mb-px inline-flex items-center gap-1 border-b-2 px-2 pb-2 pt-1 text-xs font-medium transition-colors ${
                   selected ? 'border-ink text-ink' : 'border-transparent text-muted hover:text-ink'
                 }`}
               >
-                {group.tab}
+                {t(`modifiers.group.${group.id}`)}
                 {holdsChoice && <span aria-hidden="true" className="size-1.5 rounded-full bg-brand" />}
               </button>
             );
