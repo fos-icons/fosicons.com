@@ -273,7 +273,7 @@ export function Segmented<T extends string>({
     refs.current[target]?.focus();
   };
   return (
-    <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative rounded-lg border border-line bg-sunken p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
+    <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative isolate rounded-lg border border-line bg-sunken p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
       {pill && (
         <span
           aria-hidden="true"
