@@ -245,6 +245,8 @@ const en = {
   'modifiers.group.access-identity.tab': 'Access',
   'modifiers.group.commerce': 'Commerce',
   'modifiers.group.commerce.tab': 'Commerce',
+  'modifiers.group.time': 'Time',
+  'modifiers.group.time.tab': 'Time',
   'modifiers.group.image-quality': 'Image quality',
   'modifiers.group.image-quality.tab': 'Quality',
   'modifiers.group.file-types': 'File types',

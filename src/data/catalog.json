@@ -95,6 +95,10 @@
     }
   ],
   "modifiers": {
+    "24": {
+      "label": "24",
+      "group": "time"
+    },
     "4k": {
       "label": "4K",
       "group": "image-quality"
@@ -165,6 +169,10 @@
     },
     "money": {
       "label": "Money",
+      "group": "commerce"
+    },
+    "coins": {
+      "label": "Coins",
       "group": "commerce"
     },
     "download": {
