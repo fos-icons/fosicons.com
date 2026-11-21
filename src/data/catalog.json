@@ -19,7 +19,7 @@
     },
     {
       "name": "Data & commerce",
-      "count": 106
+      "count": 105
     },
     {
       "name": "Essentials",
@@ -59,7 +59,7 @@
     },
     {
       "name": "Professions",
-      "count": 4
+      "count": 27
     },
     {
       "name": "Religion & spirituality",
@@ -83,7 +83,7 @@
     },
     {
       "name": "Transport & space",
-      "count": 41
+      "count": 42
     },
     {
       "name": "Weather",
@@ -91,7 +91,7 @@
     },
     {
       "name": "Workspace",
-      "count": 158
+      "count": 157
     }
   ],
   "modifiers": {
@@ -2745,6 +2745,19 @@
       "aliases": []
     },
     {
+      "name": "blueprint",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "plan",
+        "architecture",
+        "floor plan",
+        "design",
+        "drawing"
+      ],
+      "aliases": []
+    },
+    {
       "name": "bluetooth-connect",
       "category": "Media & devices",
       "tags": [
@@ -3228,6 +3241,19 @@
         "slice",
         "baking",
         "sandwich"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "brick-wall",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "masonry",
+        "bricks",
+        "mason",
+        "build",
+        "blocks"
       ],
       "aliases": []
     },
@@ -4313,6 +4339,19 @@
         "monitoring",
         "video",
         "watch"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "cement-mixer",
+      "category": "Transport & space",
+      "tags": [
+        "construction",
+        "concrete",
+        "truck",
+        "mixer truck",
+        "heavy vehicle",
+        "building"
       ],
       "aliases": []
     },
@@ -6215,6 +6254,20 @@
       "aliases": []
     },
     {
+      "name": "copyright",
+      "category": "Professions",
+      "tags": [
+        "c symbol",
+        "rights",
+        "intellectual property",
+        "legal",
+        "license",
+        "protected",
+        "squircle"
+      ],
+      "aliases": []
+    },
+    {
       "name": "cpu-chip",
       "category": "Media & devices",
       "tags": [
@@ -6239,6 +6292,19 @@
         "ocean",
         "sea animal",
         "rust"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "crane",
+      "category": "Professions",
+      "tags": [
+        "tower crane",
+        "construction",
+        "lifting",
+        "building site",
+        "hoist",
+        "heavy machinery"
       ],
       "aliases": []
     },
@@ -7910,6 +7976,19 @@
       "aliases": []
     },
     {
+      "name": "drill",
+      "category": "Professions",
+      "tags": [
+        "power tool",
+        "construction",
+        "screw",
+        "diy",
+        "cordless",
+        "bore"
+      ],
+      "aliases": []
+    },
+    {
       "name": "drone",
       "category": "Transport & space",
       "tags": [
@@ -8190,6 +8269,19 @@
         "clear",
         "undo",
         "wipe"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "excavator",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "digger",
+        "heavy machinery",
+        "earthmover",
+        "backhoe",
+        "dig"
       ],
       "aliases": []
     },
@@ -10450,7 +10542,7 @@
     },
     {
       "name": "gavel",
-      "category": "Workspace",
+      "category": "Professions",
       "tags": [
         "judge",
         "court",
@@ -10821,6 +10913,19 @@
       "aliases": []
     },
     {
+      "name": "hammer",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "tool",
+        "carpentry",
+        "nail",
+        "build",
+        "diy"
+      ],
+      "aliases": []
+    },
+    {
       "name": "hand",
       "category": "Health & medical",
       "tags": [
@@ -10884,6 +10989,19 @@
       "aliases": []
     },
     {
+      "name": "handcuffs",
+      "category": "Professions",
+      "tags": [
+        "arrest",
+        "police",
+        "crime",
+        "restraint",
+        "law enforcement",
+        "detain"
+      ],
+      "aliases": []
+    },
+    {
       "name": "handshake",
       "category": "Data & commerce",
       "tags": [
@@ -10905,6 +11023,19 @@
         "memory",
         "backup",
         "server"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hard-hat",
+      "category": "Professions",
+      "tags": [
+        "helmet",
+        "safety",
+        "construction",
+        "builder",
+        "worker",
+        "site"
       ],
       "aliases": []
     },
@@ -13278,6 +13409,19 @@
         "lower body",
         "orthopedic",
         "human"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "legal-document",
+      "category": "Professions",
+      "tags": [
+        "contract",
+        "agreement",
+        "seal",
+        "certificate",
+        "paperwork",
+        "notarized"
       ],
       "aliases": []
     },
@@ -16321,6 +16465,19 @@
       "aliases": []
     },
     {
+      "name": "person-judge",
+      "category": "Professions",
+      "tags": [
+        "court",
+        "wig",
+        "magistrate",
+        "justice",
+        "legal",
+        "bench"
+      ],
+      "aliases": []
+    },
+    {
       "name": "person-lawyer",
       "category": "Professions",
       "tags": [
@@ -16642,6 +16799,19 @@
       "aliases": []
     },
     {
+      "name": "pickaxe",
+      "category": "Professions",
+      "tags": [
+        "mining",
+        "construction",
+        "dig",
+        "pick",
+        "tool",
+        "excavate"
+      ],
+      "aliases": []
+    },
+    {
       "name": "pie-clock",
       "category": "Time & calendar",
       "tags": [
@@ -16937,6 +17107,32 @@
       "aliases": []
     },
     {
+      "name": "police-badge",
+      "category": "Professions",
+      "tags": [
+        "law enforcement",
+        "officer",
+        "shield",
+        "star",
+        "security",
+        "cop"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "police-cap",
+      "category": "Professions",
+      "tags": [
+        "officer",
+        "hat",
+        "law enforcement",
+        "uniform",
+        "cop",
+        "security"
+      ],
+      "aliases": []
+    },
+    {
       "name": "power",
       "category": "Media & devices",
       "tags": [
@@ -17005,6 +17201,19 @@
       "aliases": [
         "interface/printer"
       ]
+    },
+    {
+      "name": "prison",
+      "category": "Professions",
+      "tags": [
+        "jail",
+        "cell",
+        "bars",
+        "incarceration",
+        "crime",
+        "detention"
+      ],
+      "aliases": []
     },
     {
       "name": "prompt",
@@ -17309,6 +17518,20 @@
       ]
     },
     {
+      "name": "registered",
+      "category": "Professions",
+      "tags": [
+        "r symbol",
+        "trademark",
+        "brand",
+        "legal",
+        "intellectual property",
+        "mark",
+        "squircle"
+      ],
+      "aliases": []
+    },
+    {
       "name": "repeat",
       "category": "Navigation",
       "tags": [
@@ -17399,6 +17622,19 @@
         "donut",
         "hoop",
         "loop"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "road-barrier",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "roadblock",
+        "detour",
+        "closed",
+        "warning",
+        "barricade"
       ],
       "aliases": []
     },
@@ -17684,7 +17920,7 @@
     },
     {
       "name": "scales",
-      "category": "Data & commerce",
+      "category": "Professions",
       "tags": [
         "justice",
         "law",
@@ -18404,6 +18640,19 @@
         "jaws",
         "fin",
         "marine"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "sheriff-star",
+      "category": "Professions",
+      "tags": [
+        "badge",
+        "law",
+        "marshal",
+        "deputy",
+        "western",
+        "lawman"
       ],
       "aliases": []
     },
@@ -20365,6 +20614,33 @@
       "aliases": []
     },
     {
+      "name": "trademark",
+      "category": "Professions",
+      "tags": [
+        "tm symbol",
+        "brand",
+        "legal",
+        "intellectual property",
+        "mark",
+        "unregistered",
+        "squircle"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "traffic-cone",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "roadwork",
+        "safety",
+        "warning",
+        "pylon",
+        "detour"
+      ],
+      "aliases": []
+    },
+    {
       "name": "train",
       "category": "Transport & space",
       "tags": [
@@ -20672,6 +20948,19 @@
         "cup",
         "prize",
         "first place"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "trowel",
+      "category": "Professions",
+      "tags": [
+        "construction",
+        "masonry",
+        "plaster",
+        "cement",
+        "bricklaying",
+        "tool"
       ],
       "aliases": []
     },
