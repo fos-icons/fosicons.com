@@ -15,15 +15,15 @@
     },
     {
       "name": "Communication",
-      "count": 107
+      "count": 111
     },
     {
       "name": "Data & commerce",
-      "count": 105
+      "count": 108
     },
     {
       "name": "Essentials",
-      "count": 91
+      "count": 93
     },
     {
       "name": "Files",
@@ -31,19 +31,19 @@
     },
     {
       "name": "Food & drink",
-      "count": 34
+      "count": 36
     },
     {
       "name": "Health & medical",
-      "count": 43
+      "count": 47
     },
     {
       "name": "Interfaces",
-      "count": 128
+      "count": 148
     },
     {
       "name": "Media & devices",
-      "count": 122
+      "count": 124
     },
     {
       "name": "Music & instruments",
@@ -55,7 +55,7 @@
     },
     {
       "name": "Navigation",
-      "count": 158
+      "count": 176
     },
     {
       "name": "Professions",
@@ -79,7 +79,7 @@
     },
     {
       "name": "Time & calendar",
-      "count": 63
+      "count": 64
     },
     {
       "name": "Transport & space",
@@ -91,7 +91,7 @@
     },
     {
       "name": "Workspace",
-      "count": 157
+      "count": 158
     }
   ],
   "modifiers": {
@@ -173,6 +173,10 @@
     },
     "coins": {
       "label": "Coins",
+      "group": "commerce"
+    },
+    "tag": {
+      "label": "Tag",
       "group": "commerce"
     },
     "download": {
@@ -301,6 +305,10 @@
     },
     "reply": {
       "label": "Reply",
+      "group": "actions"
+    },
+    "chat": {
+      "label": "Chat",
       "group": "actions"
     },
     "search": {
@@ -1022,6 +1030,121 @@
         "snack",
         "diet",
         "orchard"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps",
+      "category": "Interfaces",
+      "tags": [
+        "app grid",
+        "launcher",
+        "menu",
+        "modules",
+        "widgets",
+        "dashboard"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-add",
+      "category": "Interfaces",
+      "tags": [
+        "app grid",
+        "launcher",
+        "new app",
+        "plus",
+        "modules",
+        "install"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-edit",
+      "category": "Interfaces",
+      "tags": [
+        "app grid",
+        "customize",
+        "pencil",
+        "modules",
+        "arrange",
+        "modify"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-remove",
+      "category": "Interfaces",
+      "tags": [
+        "app grid",
+        "uninstall",
+        "minus",
+        "modules",
+        "delete"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-settings",
+      "category": "Interfaces",
+      "tags": [
+        "app grid",
+        "configure",
+        "gear",
+        "modules",
+        "preferences"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-square-add",
+      "category": "Interfaces",
+      "tags": [
+        "tiles",
+        "dashboard",
+        "new widget",
+        "plus",
+        "modules",
+        "grid"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-square-edit",
+      "category": "Interfaces",
+      "tags": [
+        "tiles",
+        "dashboard",
+        "customize",
+        "pencil",
+        "modules",
+        "grid"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-square-remove",
+      "category": "Interfaces",
+      "tags": [
+        "tiles",
+        "dashboard",
+        "remove widget",
+        "minus",
+        "modules",
+        "grid"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "apps-square-settings",
+      "category": "Interfaces",
+      "tags": [
+        "tiles",
+        "dashboard",
+        "configure",
+        "gear",
+        "modules",
+        "grid"
       ],
       "aliases": []
     },
@@ -1862,6 +1985,18 @@
       "aliases": []
     },
     {
+      "name": "arrows-diagonal-square",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "resize",
+        "fullscreen",
+        "enlarge",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
       "name": "arrows-down",
       "category": "Navigation",
       "tags": [
@@ -1969,6 +2104,43 @@
       "aliases": []
     },
     {
+      "name": "arrows-swap-vertical-circle",
+      "category": "Navigation",
+      "tags": [
+        "sort",
+        "reorder",
+        "exchange",
+        "up down",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-swap-vertical-square",
+      "category": "Navigation",
+      "tags": [
+        "sort",
+        "reorder",
+        "exchange",
+        "up down",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-to-circle",
+      "category": "Navigation",
+      "tags": [
+        "focus",
+        "converge",
+        "center",
+        "gather",
+        "merge",
+        "inward"
+      ],
+      "aliases": []
+    },
+    {
       "name": "arrows-triangle",
       "category": "Navigation",
       "tags": [
@@ -2006,6 +2178,30 @@
         "bidirectional",
         "two way",
         "height"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-vertical-circle",
+      "category": "Navigation",
+      "tags": [
+        "resize",
+        "height",
+        "up down",
+        "stretch",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "arrows-vertical-square",
+      "category": "Navigation",
+      "tags": [
+        "resize",
+        "height",
+        "up down",
+        "stretch",
+        "box"
       ],
       "aliases": []
     },
@@ -2141,6 +2337,19 @@
         "travel",
         "knapsack",
         "camping"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "badge-minus",
+      "category": "Essentials",
+      "tags": [
+        "remove",
+        "unverified",
+        "revoke",
+        "subtract",
+        "seal",
+        "delete"
       ],
       "aliases": []
     },
@@ -5164,6 +5373,30 @@
       "aliases": []
     },
     {
+      "name": "chevrons-circle-down",
+      "category": "Navigation",
+      "tags": [
+        "scroll down",
+        "expand",
+        "more",
+        "double",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevrons-collapse-horizontal",
+      "category": "Navigation",
+      "tags": [
+        "shrink",
+        "narrow",
+        "compress",
+        "inward",
+        "width"
+      ],
+      "aliases": []
+    },
+    {
       "name": "chevrons-collapse-vertical",
       "category": "Navigation",
       "tags": [
@@ -5214,6 +5447,30 @@
         "skip",
         "next",
         "arrow head"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevrons-square-down",
+      "category": "Navigation",
+      "tags": [
+        "scroll down",
+        "expand",
+        "more",
+        "double",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "chevrons-square-left",
+      "category": "Navigation",
+      "tags": [
+        "rewind",
+        "previous",
+        "back",
+        "double",
+        "box"
       ],
       "aliases": []
     },
@@ -5575,6 +5832,19 @@
       "aliases": [
         "interface/clock"
       ]
+    },
+    {
+      "name": "clock-24",
+      "category": "Time & calendar",
+      "tags": [
+        "all day",
+        "round the clock",
+        "open hours",
+        "nonstop",
+        "availability",
+        "hours"
+      ],
+      "aliases": []
     },
     {
       "name": "clock-check",
@@ -5984,6 +6254,19 @@
       "aliases": []
     },
     {
+      "name": "code-dots",
+      "category": "Workspace",
+      "tags": [
+        "snippet",
+        "placeholder",
+        "developer",
+        "markup",
+        "programming",
+        "embed"
+      ],
+      "aliases": []
+    },
+    {
       "name": "code-snippet",
       "category": "Workspace",
       "tags": [
@@ -6047,6 +6330,32 @@
         "espresso",
         "tea",
         "break"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "coffee-beans",
+      "category": "Food & drink",
+      "tags": [
+        "roast",
+        "cafe",
+        "espresso",
+        "arabica",
+        "barista",
+        "grind"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "coffee-takeaway",
+      "category": "Food & drink",
+      "tags": [
+        "to go",
+        "cafe",
+        "latte",
+        "paper cup",
+        "takeout",
+        "espresso"
       ],
       "aliases": []
     },
@@ -6120,6 +6429,91 @@
       "aliases": []
     },
     {
+      "name": "collapse-circle",
+      "category": "Navigation",
+      "tags": [
+        "minimize",
+        "shrink",
+        "exit fullscreen",
+        "compress",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-circle-reverse",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "fullscreen",
+        "enlarge",
+        "maximize",
+        "round"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-dot",
+      "category": "Navigation",
+      "tags": [
+        "focus",
+        "center",
+        "shrink",
+        "converge",
+        "target",
+        "inward"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-four",
+      "category": "Navigation",
+      "tags": [
+        "minimize",
+        "shrink",
+        "exit fullscreen",
+        "compress",
+        "inward"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-reverse",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "fullscreen",
+        "enlarge",
+        "maximize",
+        "outward"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-square",
+      "category": "Navigation",
+      "tags": [
+        "minimize",
+        "shrink",
+        "exit fullscreen",
+        "compress",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "collapse-square-reverse",
+      "category": "Navigation",
+      "tags": [
+        "expand",
+        "fullscreen",
+        "enlarge",
+        "maximize",
+        "box"
+      ],
+      "aliases": []
+    },
+    {
       "name": "colors",
       "category": "Media & devices",
       "tags": [
@@ -6159,6 +6553,19 @@
         "map",
         "heading",
         "orientation"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "compass-square",
+      "category": "Navigation",
+      "tags": [
+        "explore",
+        "direction",
+        "discover",
+        "browse",
+        "north",
+        "bearing"
       ],
       "aliases": []
     },
@@ -10549,6 +10956,45 @@
       "aliases": []
     },
     {
+      "name": "gauge-circle-low",
+      "category": "Data & commerce",
+      "tags": [
+        "speedometer",
+        "empty",
+        "meter",
+        "performance",
+        "dashboard",
+        "minimum"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "gauge-square",
+      "category": "Data & commerce",
+      "tags": [
+        "speedometer",
+        "dashboard",
+        "performance",
+        "meter",
+        "metrics",
+        "speed"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "gauge-window",
+      "category": "Data & commerce",
+      "tags": [
+        "dashboard",
+        "analytics",
+        "performance",
+        "meter",
+        "app window",
+        "metrics"
+      ],
+      "aliases": []
+    },
+    {
       "name": "gavel",
       "category": "Professions",
       "tags": [
@@ -10982,6 +11428,19 @@
         "stop",
         "no",
         "touch"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "hand-pinch",
+      "category": "Health & medical",
+      "tags": [
+        "zoom",
+        "gesture",
+        "touch",
+        "pinch to zoom",
+        "fingers",
+        "scale"
       ],
       "aliases": []
     },
@@ -12949,6 +13408,32 @@
       ]
     },
     {
+      "name": "layout-bento",
+      "category": "Interfaces",
+      "tags": [
+        "dashboard",
+        "tiles",
+        "masonry",
+        "widgets",
+        "cards",
+        "grid"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-bento-alt",
+      "category": "Interfaces",
+      "tags": [
+        "dashboard",
+        "tiles",
+        "masonry",
+        "widgets",
+        "cards",
+        "grid"
+      ],
+      "aliases": []
+    },
+    {
       "name": "layout-bottom",
       "category": "Interfaces",
       "tags": [
@@ -12959,6 +13444,18 @@
         "split",
         "console",
         "pane"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-bottom-dots",
+      "category": "Interfaces",
+      "tags": [
+        "footer",
+        "tab bar",
+        "status bar",
+        "drawer",
+        "panel"
       ],
       "aliases": []
     },
@@ -13274,6 +13771,30 @@
       ]
     },
     {
+      "name": "layout-panel-bottom-open",
+      "category": "Interfaces",
+      "tags": [
+        "expand footer",
+        "show panel",
+        "console",
+        "drawer",
+        "toggle"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-panel-top-close",
+      "category": "Interfaces",
+      "tags": [
+        "collapse header",
+        "hide panel",
+        "toolbar",
+        "drawer",
+        "toggle"
+      ],
+      "aliases": []
+    },
+    {
       "name": "layout-rows-two",
       "category": "Interfaces",
       "tags": [
@@ -13301,6 +13822,42 @@
       "aliases": [
         "interface/layout-sidebar-left"
       ]
+    },
+    {
+      "name": "layout-sidebar-left-close-dashed",
+      "category": "Interfaces",
+      "tags": [
+        "collapse panel",
+        "hide sidebar",
+        "navigation",
+        "drawer",
+        "toggle"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-sidebar-left-dots",
+      "category": "Interfaces",
+      "tags": [
+        "navigation",
+        "panel",
+        "menu",
+        "drawer",
+        "side rail"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-sidebar-left-open",
+      "category": "Interfaces",
+      "tags": [
+        "expand panel",
+        "show sidebar",
+        "navigation",
+        "drawer",
+        "toggle"
+      ],
+      "aliases": []
     },
     {
       "name": "layout-sidebar-narrow-left",
@@ -13346,6 +13903,30 @@
       "aliases": [
         "interface/layout-sidebar-right"
       ]
+    },
+    {
+      "name": "layout-sidebar-right-close",
+      "category": "Interfaces",
+      "tags": [
+        "collapse panel",
+        "hide sidebar",
+        "inspector",
+        "drawer",
+        "toggle"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "layout-sidebar-right-dots",
+      "category": "Interfaces",
+      "tags": [
+        "inspector",
+        "panel",
+        "details",
+        "drawer",
+        "side rail"
+      ],
+      "aliases": []
     },
     {
       "name": "layout-sidebar-rows",
@@ -14919,6 +15500,50 @@
       "aliases": []
     },
     {
+      "name": "mobile-phone-chat",
+      "category": "Media & devices",
+      "tags": [
+        "message",
+        "sms",
+        "text",
+        "conversation",
+        "smartphone",
+        "messaging"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "mobile-phone",
+        "modifiers": [
+          {
+            "name": "chat",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "mobile-phone-edit",
+      "category": "Media & devices",
+      "tags": [
+        "write",
+        "compose",
+        "notes",
+        "smartphone",
+        "pencil",
+        "modify"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "mobile-phone",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "top-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "modem",
       "category": "Media & devices",
       "tags": [
@@ -16404,6 +17029,19 @@
       "aliases": []
     },
     {
+      "name": "person-burst",
+      "category": "Communication",
+      "tags": [
+        "verified",
+        "profile",
+        "member",
+        "account",
+        "featured",
+        "badge"
+      ],
+      "aliases": []
+    },
+    {
       "name": "person-cycling",
       "category": "Sports & fitness",
       "tags": [
@@ -17089,6 +17727,18 @@
       ]
     },
     {
+      "name": "pocket",
+      "category": "Interfaces",
+      "tags": [
+        "save for later",
+        "read later",
+        "bookmark",
+        "stash",
+        "collection"
+      ],
+      "aliases": []
+    },
+    {
       "name": "podcast",
       "category": "Media & devices",
       "tags": [
@@ -17233,6 +17883,44 @@
         "input",
         "console",
         "cli"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "pulse",
+      "category": "Health & medical",
+      "tags": [
+        "signal",
+        "waveform",
+        "oscillation",
+        "frequency",
+        "sine",
+        "heartbeat"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "pulse-sharp",
+      "category": "Health & medical",
+      "tags": [
+        "signal",
+        "waveform",
+        "spike",
+        "frequency",
+        "heartbeat",
+        "ecg"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "pulse-square-wave",
+      "category": "Health & medical",
+      "tags": [
+        "signal",
+        "waveform",
+        "digital",
+        "frequency",
+        "clock signal"
       ],
       "aliases": []
     },
@@ -18634,6 +19322,19 @@
         "send to",
         "link",
         "graph"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "share-square",
+      "category": "Essentials",
+      "tags": [
+        "export",
+        "forward",
+        "send",
+        "open in",
+        "external",
+        "redirect"
       ],
       "aliases": []
     },
@@ -21495,6 +22196,19 @@
       ]
     },
     {
+      "name": "user-headset",
+      "category": "Communication",
+      "tags": [
+        "support",
+        "customer service",
+        "call center",
+        "agent",
+        "helpdesk",
+        "operator"
+      ],
+      "aliases": []
+    },
+    {
       "name": "user-identity",
       "category": "Communication",
       "tags": [
@@ -21650,6 +22364,28 @@
       ]
     },
     {
+      "name": "user-tag",
+      "category": "Communication",
+      "tags": [
+        "label",
+        "tagged",
+        "mention",
+        "identify",
+        "profile",
+        "account"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "user",
+        "modifiers": [
+          {
+            "name": "tag",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "user-up",
       "category": "Communication",
       "tags": [
@@ -21671,6 +22407,19 @@
           }
         ]
       }
+    },
+    {
+      "name": "user-voice",
+      "category": "Communication",
+      "tags": [
+        "speaking",
+        "talk",
+        "announcement",
+        "voice chat",
+        "speaker",
+        "audio"
+      ],
+      "aliases": []
     },
     {
       "name": "users",
