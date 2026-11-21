@@ -45,6 +45,7 @@ export const MODIFIER_GROUPS = [
   { id: 'actions' },
   { id: 'status' },
   { id: 'access-identity' },
+  { id: 'commerce' },
   { id: 'image-quality' },
   { id: 'file-types' },
 ] as const;
