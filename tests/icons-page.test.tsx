@@ -187,6 +187,51 @@ describe('Icons page', () => {
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/48\/filled\/0\.json$/);
   });
 
+  it('closes the mobile sheet with its handle or a swipe down, not an X', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=search');
+    await screen.findByRole('heading', { name: 'search', level: 2 });
+    const sheet = document.querySelector('dialog.sheet') as HTMLDialogElement;
+    expect(sheet.open).toBe(true);
+    // The X stays in the markup (desktop uses it) but the sheet hides it.
+    expect(within(sheet).getByRole('button', { name: 'Clear selection' }).classList.contains('sheet-close')).toBe(true);
+    // The page behind stays still while the sheet is open.
+    expect(document.body.style.position).toBe('fixed');
+    await user.click(within(sheet).getByRole('button', { name: 'Close panel' }));
+    await waitFor(() => expect(sheet.open).toBe(false));
+    expect(location).toBe('');
+    expect(document.body.style.position).toBe('');
+  });
+
+  it('closes the mobile sheet when it is swiped down past the threshold', async () => {
+    renderAt('/?icon=user');
+    await screen.findByRole('heading', { name: 'user', level: 2 });
+    const sheet = document.querySelector('dialog.sheet') as HTMLDialogElement;
+    const handle = within(sheet).getByRole('button', { name: 'Close panel' });
+    const touch = (type: string, y: number, timeStamp: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        touches: { value: type === 'touchend' ? [] : [{ clientX: 100, clientY: y }] },
+        timeStamp: { value: timeStamp },
+      });
+      handle.dispatchEvent(event);
+    };
+    // A short pull springs back.
+    touch('touchstart', 10, 0);
+    touch('touchmove', 40, 200);
+    expect(sheet.style.transform).toBe('translateY(30px)');
+    touch('touchend', 40, 400);
+    expect(sheet.style.transform).toBe('');
+    expect(sheet.open).toBe(true);
+    // A long one closes the sheet.
+    touch('touchstart', 10, 1000);
+    touch('touchmove', 60, 1100);
+    touch('touchmove', 200, 1300);
+    expect(sheet.style.transform).toBe('translateY(190px)');
+    touch('touchend', 200, 1320);
+    await waitFor(() => expect(sheet.open).toBe(false));
+  });
+
   it('switching style updates the URL and fetches that style', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=user-add');
@@ -568,7 +613,12 @@ describe('Side pane (desktop)', () => {
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
+    // Strokes read in real pixels at the icon size: Auto at 48px is 2px.
+    expect(slider.getAttribute('aria-valuetext')).toBe('2px, automatic for this size');
+    expect(within(pane).getByText(/1px at 16px, 1\.25px at 24px, 1\.5px at 32px, 2px at 48px, 2\.5px at 64px/)).toBeTruthy();
     fireEvent.change(slider, { target: { value: '2' } });
+    expect(slider.getAttribute('aria-valuetext')).toBe('4px');
+    expect(within(pane).getByText('Your stroke scales with the icon: 2px at 24px.')).toBeTruthy();
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     // 2 grid units on the 48px artwork's own grid.

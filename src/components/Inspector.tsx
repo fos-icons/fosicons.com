@@ -240,7 +240,7 @@ export function Inspector({
             {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
           </p>
         </div>
-        <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="-mr-2 self-start" />
+        <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="sheet-close -mr-2 self-start" />
       </div>
       {kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
@@ -469,6 +469,9 @@ export function SidePane({
     if (!sheetOpen && dialog.open) dialog.close();
   }, [sheetOpen, desktop]);
 
+  useSheetSwipe(dialogRef, !desktop && sheetOpen, onDismiss);
+  usePageScrollLock(!desktop && sheetOpen);
+
   useEffect(() => {
     if (focusKey === null) return;
     requestAnimationFrame(() => document.getElementById(headingId)?.focus({ preventScroll: true }));
@@ -583,12 +586,124 @@ export function SidePane({
       aria-labelledby={headingId}
       onCancel={(e) => { e.preventDefault(); onDismiss(); }}
       onClick={(e) => { if (e.target === dialogRef.current) onDismiss(); }}
-      className="sheet m-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-y-auto rounded-t-3xl border-t border-line bg-surface p-0 text-ink"
+      className="sheet m-0 mt-auto max-h-[88dvh] w-full max-w-none overflow-y-auto overscroll-contain rounded-t-3xl border-t border-line bg-surface p-0 text-ink"
     >
-      <div className="sticky top-0 z-10 flex justify-center bg-surface pb-1 pt-2" aria-hidden="true">
+      {/* The handle: swipe the sheet down (or tap here) to close it. */}
+      <button
+        type="button"
+        aria-label={t('pane.sheetClose')}
+        onClick={onDismiss}
+        className="sticky top-0 z-10 flex h-6 w-full touch-none items-center justify-center bg-surface outline-none focus-visible:[&>span]:bg-brand"
+      >
         <span className="h-1 w-10 rounded-full bg-line-strong" />
-      </div>
+      </button>
       {sheetOpen && children}
     </dialog>
   );
+}
+
+/** How far (px) or how fast (px/ms) a downward swipe must go to close the sheet. */
+const SWIPE_CLOSE = { distance: 96, velocity: 0.5 };
+
+/**
+ * Swipe-down-to-close for the mobile sheet. A drag starts on the handle, or
+ * anywhere once the sheet is scrolled to the top and the finger moves down
+ * (not on sliders or text fields, and not a sideways gesture). The sheet
+ * follows the finger, then either slides away and closes or springs back.
+ */
+function useSheetSwipe(ref: React.RefObject<HTMLDialogElement | null>, active: boolean, onDismiss: () => void) {
+  const dismiss = useRef(onDismiss);
+  useEffect(() => { dismiss.current = onDismiss; }, [onDismiss]);
+
+  useEffect(() => {
+    const sheet = ref.current;
+    if (!active || !sheet) return;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let start: { x: number; y: number; t: number } | null = null;
+    let dragging = false;
+    let last = { y: 0, t: 0, v: 0 };
+
+    const setOffset = (y: number, animate: boolean) => {
+      sheet.style.transition = animate && !reduced ? 'transform 220ms cubic-bezier(0.22, 1, 0.36, 1)' : 'none';
+      sheet.style.transform = y > 0 ? `translateY(${y}px)` : '';
+    };
+    const onStart = (e: TouchEvent) => {
+      const target = e.target as Element;
+      if (e.touches.length !== 1 || target.closest('input, textarea, select, [role="slider"]')) return;
+      const onHandle = !!target.closest('dialog.sheet > button:first-child');
+      if (!onHandle && sheet.scrollTop > 0) return;
+      const touch = e.touches[0];
+      start = { x: touch.clientX, y: touch.clientY, t: e.timeStamp };
+      last = { y: 0, t: e.timeStamp, v: 0 };
+      dragging = false;
+    };
+    const onMove = (e: TouchEvent) => {
+      if (!start) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - start.x;
+      const dy = touch.clientY - start.y;
+      if (!dragging) {
+        // iOS commits to scrolling on the first unprevented move, so claim a
+        // downward pull at the top straight away (it would only rubber-band).
+        if (e.cancelable && dy > 0 && dy >= Math.abs(dx) && sheet.scrollTop <= 0) e.preventDefault();
+        if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+        // Sideways, or up (scrolling the sheet): not a dismiss.
+        if (dy <= 0 || Math.abs(dx) > Math.abs(dy) || sheet.scrollTop > 0) { start = null; return; }
+        dragging = true;
+      }
+      if (e.cancelable) e.preventDefault();
+      const y = Math.max(0, dy);
+      const dt = Math.max(1, e.timeStamp - last.t);
+      last = { y, t: e.timeStamp, v: (y - last.y) / dt };
+      setOffset(y, false);
+    };
+    const onEnd = () => {
+      if (!start) return;
+      start = null;
+      if (!dragging) return;
+      dragging = false;
+      if (last.y > SWIPE_CLOSE.distance || last.v > SWIPE_CLOSE.velocity) {
+        setOffset(sheet.offsetHeight, true);
+        // Close the dialog itself before clearing the offset: waiting for React's
+        // re-render let a frame paint the open sheet back at the top.
+        const close = () => { sheet.close(); setOffset(0, false); dismiss.current(); };
+        if (reduced) close(); else window.setTimeout(close, 200);
+      } else {
+        setOffset(0, true);
+      }
+    };
+    sheet.addEventListener('touchstart', onStart, { passive: true });
+    // Not passive: a drag stops the sheet's own scroll and rubber-banding.
+    sheet.addEventListener('touchmove', onMove, { passive: false });
+    sheet.addEventListener('touchend', onEnd);
+    sheet.addEventListener('touchcancel', onEnd);
+    return () => {
+      sheet.removeEventListener('touchstart', onStart);
+      sheet.removeEventListener('touchmove', onMove);
+      sheet.removeEventListener('touchend', onEnd);
+      sheet.removeEventListener('touchcancel', onEnd);
+      setOffset(0, false);
+    };
+  }, [ref, active]);
+}
+
+/**
+ * Keep the page still while the mobile sheet is open. A modal dialog doesn't
+ * stop iOS from scrolling the page behind it, so pin the body in place
+ * (position: fixed at the current offset) and restore the scroll on close.
+ */
+function usePageScrollLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const { body, documentElement: root } = document;
+    const y = window.scrollY;
+    const saved = { body: body.style.cssText, root: root.style.overflow };
+    root.style.overflow = 'hidden';
+    Object.assign(body.style, { position: 'fixed', top: `${-y}px`, left: '0', right: '0', overflow: 'hidden' });
+    return () => {
+      body.style.cssText = saved.body;
+      root.style.overflow = saved.root;
+      window.scrollTo({ top: y, behavior: 'instant' });
+    };
+  }, [active]);
 }

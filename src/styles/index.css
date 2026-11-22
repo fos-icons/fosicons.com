@@ -305,6 +305,10 @@
 dialog.sheet::backdrop {
   background: rgb(0 0 0 / 0.45);
 }
+/* The sheet closes with a swipe down or a tap on its handle, not an X. */
+dialog.sheet .sheet-close {
+  display: none;
+}
 
 /*
  * Frosted glass header (icon pages): sticky, translucent canvas with a
