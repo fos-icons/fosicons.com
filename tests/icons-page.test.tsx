@@ -576,7 +576,7 @@ describe('Side pane (desktop)', () => {
     await user.click(within(pane).getByRole('button', { name: 'Code' }));
     // Real pixels at 48px: the packages scale the 24px design (1.25 → 2.5px).
     expect(within(pane).getByText(
-      'The packages scale the 24px design to 48px, with 2.5px lines. Download the SVG to keep the 48px design with 4px lines.',
+      'These examples scale the 24px design to 48px, with 2.5px lines. Download the SVG to keep the 48px design with 4px lines.',
     )).toBeTruthy();
   });
 });

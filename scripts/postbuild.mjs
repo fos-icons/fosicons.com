@@ -19,7 +19,7 @@ const {
   SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
   LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
-  DEFAULT_ARTWORK_SIZE, defaultGridSvg, gridPreviewPath, FRAMEWORK_PATHS, displayName,
+  DEFAULT_ARTWORK_SIZE, defaultGridSvg, artworkKey, gridPreviewPath, FRAMEWORK_PATHS, displayName,
 } = server;
 
 // Every style's artwork, for prerendering the landing pages and publishing
@@ -29,15 +29,20 @@ const versionedArtwork = join(dist, artworkDirectory);
 mkdirSync(dirname(versionedArtwork), { recursive: true });
 renameSync(join(dist, 'icons'), versionedArtwork);
 const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(versionedArtwork, `${style}.json`), 'utf8'))]));
-primeArtwork(artwork);
+// Each optical size ships as chunks (<size>/<style>/<n>.json); the icon page
+// draws its actual-size row, large preview, and PNG from them.
+const sizedArtwork = {};
+for (const size of catalog.sizes.filter((s) => s !== catalog.grid)) {
+  for (const style of catalog.styles) {
+    const folder = join(versionedArtwork, String(size), style);
+    sizedArtwork[artworkKey(style, size)] = Object.assign({}, ...readdirSync(folder).filter((f) => f.endsWith('.json'))
+      .map((f) => JSON.parse(readFileSync(join(folder, f), 'utf8'))));
+  }
+}
+primeArtwork({ ...artwork, ...sizedArtwork });
 // Grid previews use the artwork the default interactive grid shows (its
 // optical size), so landing-page thumbnails match the home grid exactly.
-const previewArtwork = (() => {
-  if (DEFAULT_ARTWORK_SIZE === catalog.grid) return artwork.regular;
-  const folder = join(versionedArtwork, String(DEFAULT_ARTWORK_SIZE), 'regular');
-  return Object.assign({}, ...readdirSync(folder).filter((f) => f.endsWith('.json'))
-    .map((f) => JSON.parse(readFileSync(join(folder, f), 'utf8'))));
-})();
+const previewArtwork = DEFAULT_ARTWORK_SIZE === catalog.grid ? artwork.regular : sizedArtwork[artworkKey('regular', DEFAULT_ARTWORK_SIZE)];
 let svgFiles = 0;
 mkdirSync(join(dist, 'svg', 'preview'), { recursive: true });
 for (const style of catalog.styles) {

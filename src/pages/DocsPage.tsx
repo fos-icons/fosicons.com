@@ -370,7 +370,7 @@ export default function DocsPage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
         <p className="mt-3 text-base text-muted">
           Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format(PLATFORM_NAMES)}. {nf.format(ICONS_ROUNDED)}+ icons,
-          each in {catalog.styles.length} styles, on a {catalog.grid}px grid.
+          each in {catalog.styles.length} styles and {catalog.sizes.length} optical sizes from {catalog.sizes[0]} to {catalog.sizes[catalog.sizes.length - 1]}px.
         </p>
         {!inHeader && <div className="mt-5 md:mt-4">{search}</div>}
       </header>
@@ -395,16 +395,17 @@ export default function DocsPage() {
           </ul>
           <p>
             Every icon ships in all four styles under the same canonical kebab-case name. Line styles
-            use {catalog.strokeWidth}px strokes. Negative space and modifier clearances are genuinely
+            use {catalog.strokeWidth}px strokes at {catalog.grid}px; each optical size has its own weight
+            (see <a href="#sizes">Sizes</a>). Negative space and modifier clearances are genuinely
             transparent, not painted with a background color.
           </p>
         </Section>
 
         <Section id="figma" title="Figma">
-          <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size=24</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
+          <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size={catalog.sizes.join('/')}</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
           <ul className="list-disc space-y-1 pl-5">
             <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the duo palettes.</li>
-            <li><strong>Fos / Stroke</strong> offers 16px (1px), 24px (1.25px, default), and 32px (1.5px) stroke presets. These change stroke weight only, not icon dimensions.</li>
+            <li>Each <strong>Size</strong> variant is drawn for its size and binds its stroke to the matching <strong>Fos / Stroke</strong> mode: {catalog.sizes.map((size) => `${size}px (${catalog.strokeWidths[String(size)]}px)`).join(', ')}. To draw an icon at another size, pick the nearest Size variant and scale the instance.</li>
             <li>Named icon instances expose their nested <strong>Modifier</strong> controls in the properties panel.</li>
           </ul>
           <p>SVGs downloaded here can also be pasted or dropped into Figma; their colors are already resolved.</p>
@@ -434,7 +435,21 @@ export default function DocsPage() {
         </Section>
 
         <Section id="sizes" title="Sizes">
-          <p>Every icon is authored at <strong>24px</strong>. Other sizes are scaled from that master — Fos Icons does not yet have separately authored optical sizes. Check icons at their final size, especially below 20px.</p>
+          <p>Every icon is drawn separately at {catalog.sizes.length} optical sizes. Each size has its own grid, padding, and stroke weight, so small icons stay open and large ones don&apos;t look heavy:</p>
+          <table className="w-full text-left text-sm">
+            <thead><tr className="text-muted"><th className="py-1 font-medium">Size</th><th className="py-1 font-medium">Stroke</th><th className="py-1 font-medium">Files</th></tr></thead>
+            <tbody>
+              {catalog.sizes.map((size) => (
+                <tr key={size} className="border-t border-line">
+                  <td className="py-1.5">{size}px{size === catalog.grid && ' (canonical)'}</td>
+                  <td className="py-1.5">{catalog.strokeWidths[String(size)]}px</td>
+                  <td className="py-1.5"><code>{size === catalog.grid ? 'icons/<style>/' : `icons/${size}/<style>/`}</code></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          <p>Solid icons have no stroke: at every size they are the 24px design scaled. For other sizes, use the nearest optical size and scale it. The site does this for you: the grid, the inspector, and every download draw from the nearest size, and <strong>Auto</strong> stroke follows each size&apos;s weight.</p>
+          <p>The framework packages ship the 24px design only; their <code>size</code> prop scales it. For a crisp 16px or a lighter 48px, use the matching SVG.</p>
         </Section>
 
         <Section id="modifiers" title="Modifiers">
@@ -445,7 +460,7 @@ export default function DocsPage() {
         </Section>
 
         <Section id="svg" title="SVG">
-          <p>Download an icon from the inspector, or copy files from <code>icons/regular/</code>, <code>icons/filled/</code>, <code>icons/duocolor/</code>, or <code>icons/duotone/</code> in the <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/fos-icons">library repository</a>. There is no runtime dependency or icon font.</p>
+          <p>Download an icon from the inspector, or copy files from <code>icons/regular/</code>, <code>icons/filled/</code>, <code>icons/duocolor/</code>, or <code>icons/duotone/</code> (24px; other sizes in <code>icons/&lt;size&gt;/&lt;style&gt;/</code>) in the <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/fos-icons">library repository</a>. There is no runtime dependency or icon font.</p>
           <Code lang="html">{`<img src="./icons/regular/text-align-left.svg" width="24" height="24" alt="Align text left">`}</Code>
           <p>To theme with CSS, inline the markup instead: the library&apos;s <code>currentColor</code> follows the parent element&apos;s <code>color</code>. Don&apos;t globally override <code>fill</code> on paths — Solid icons rely on real transparent cutouts.</p>
           <p><strong>Website downloads are standalone.</strong> Files exported here have every color resolved to a concrete value, so they render the same in any viewer or design tool. Masks, clip paths, and the Duotone tint are kept intact. If you want live theming, use the library SVGs.</p>
@@ -460,7 +475,7 @@ export default function DocsPage() {
 <CameraRegular size={24} />
 <CameraDuocolor size={32} primaryColor="#245B9E" secondaryColor="#60A5FA" />`}</Code>
           <ul className="list-disc space-y-1 pl-5">
-            <li><code>size</code> defaults to 24 and sets width and height. It scales the artwork; it does not select a different optical size.</li>
+            <li><code>size</code> defaults to 24 and sets width and height. It scales the 24px artwork; it does not select a different optical size (see <a href="#sizes">Sizes</a>).</li>
             <li>Regular and Filled inherit <code>currentColor</code>. Duo styles default to blue; set <code>color</code> or <code>primaryColor</code>, and <code>secondaryColor</code> for accents.</li>
             <li>Named presets with an independent glyph color accept <code>modifierColor</code>.</li>
             <li>Icons are decorative by default (<code>aria-hidden</code>). Pass <code>title</code>, <code>aria-label</code>, or <code>aria-labelledby</code> for meaningful icons.</li>

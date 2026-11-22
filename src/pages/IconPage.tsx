@@ -8,8 +8,8 @@ import {
 import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
-import { useArtwork } from '../lib/artwork';
-import { catalog, iconsByName, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
+import { useArtwork, useSizedArtwork } from '../lib/artwork';
+import { catalog, iconsByName, opticalSize, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
   categoryPath, displayName, editorPath, iconPath, relatedIcons, svgFilePath,
@@ -170,14 +170,23 @@ const ACTUAL_SIZES = [
   { px: 24, className: 'size-6' },
   { px: 32, className: 'size-8' },
 ] as const;
+/** The large preview's edge on wide screens (size-36); it draws from this size's optical artwork. */
+const STAGE_PIXELS = 144;
 /** Edge length of the PNG download: large enough for slides and docs, small enough to stay crisp-looking. */
 const PNG_PIXELS = 256;
+/**
+ * The optical sizes the page draws from: each view uses the artwork drawn for
+ * the size nearest its own, as the grid and downloads do. 24 comes first: it
+ * is the library file that Copy SVG, Download SVG, and the code use.
+ */
+const PAGE_SIZES = [...new Set([catalog.grid, ...[...ACTUAL_SIZES.map((s) => s.px), STAGE_PIXELS, PNG_PIXELS].map(opticalSize)])];
 
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, svg, onStyleChange }: {
+function PreviewStage({ name, style, svgAt, onStyleChange }: {
   name: string;
   style: StyleId;
-  svg: string | undefined;
+  /** The icon drawn from the optical size nearest `px`. */
+  svgAt: (px: number) => string | undefined;
   onStyleChange: (style: StyleId) => void;
 }) {
   const { t } = useI18n();
@@ -198,14 +207,14 @@ function PreviewStage({ name, style, svg, onStyleChange }: {
         </div>
       </div>
       <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-        <Glyph svg={svg} idPrefix="stage-" className="size-28 sm:size-36" label={t('iconPage.preview', { name: title, style: t(`style.${style}`) })} />
+        <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={t('iconPage.preview', { name: title, style: t(`style.${style}`) })} />
       </div>
       <div className="flex items-center justify-between gap-4 border-t border-line px-4 py-3">
         <span className="text-xs text-muted">{t('iconPage.actualSize')}</span>
         <ul className="flex items-end gap-5 sm:gap-7">
           {ACTUAL_SIZES.map(({ px, className }) => (
             <li key={px} className="flex flex-col items-center gap-1.5">
-              <Glyph svg={svg} idPrefix={`a${px}-`} className={className} />
+              <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} />
               <span className="text-[11px] tabular-nums text-faint">{px}</span>
             </li>
           ))}
@@ -237,7 +246,8 @@ export default function IconPage() {
     else q.set('style', STYLE_META[next].slug);
     return q;
   }, { replace: true, preventScrollReset: true, state: location.state });
-  const svg = useArtwork(style, inspected ? [inspected.name] : [])[inspected?.name ?? name];
+  const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES);
+  const svg = sized[0][inspected?.name ?? name];
   const navigate = useNavigate();
   const desktop = useMediaQuery('(min-width: 1024px)');
   /** The header search slot shows from md up, like the docs page. */
@@ -265,15 +275,21 @@ export default function IconPage() {
   const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
   /** The artwork the page shows, copies, and downloads: the icon, plus any modifier on it. */
-  const shown = useMemo(() => {
-    if (!svg || !applied) return svg;
+  const iconName = inspected?.name ?? name;
+  /** The same, at each optical size in PAGE_SIZES (24 first). */
+  const shownBySize = useMemo(() => sized.map((svgs) => {
+    const source = svgs[iconName];
+    if (!source || !applied) return source;
     try {
       const corner = badge?.corner && applied.positions[badge.corner] ? badge.corner : initialCorner(applied);
-      return composeSvg(svg, applied, corner, style);
+      return composeSvg(source, applied, corner, style);
     } catch {
-      return svg;
+      return source;
     }
-  }, [svg, applied, badge?.corner, style]);
+  }), [sized, iconName, applied, badge?.corner, style]);
+  const shown = shownBySize[0];
+  /** Drawn from the optical size nearest `px`; the 24px artwork until that size loads. */
+  const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
   const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
   const editSvg = useArtwork(editing ?? catalog.styles[0], inspected && editing ? [inspected.name] : [])[inspected?.name ?? name];
@@ -298,9 +314,11 @@ export default function IconPage() {
     copyText(shown).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
   };
   const downloadPng = () => {
-    if (!shown) return;
+    const source = shownAt(PNG_PIXELS);
+    if (!source) return;
     // Light-theme ink: a PNG usually lands on a white slide or doc, whatever theme the site is in.
-    const file = buildSvg(shown, { ...exportColors(shown, style, DEFAULT_LOOK, 'light'), size: PNG_PIXELS });
+    // Drawn from the nearest optical size (64px), at that size's own stroke.
+    const file = buildSvg(source, { ...exportColors(source, style, DEFAULT_LOOK, 'light'), size: PNG_PIXELS });
     svgToPng(file, PNG_PIXELS).then(
       (png) => downloadBlob(png, `${fileBase}.png`),
       (e) => toast('error', errorText(e, i18n, 'error.png')),
@@ -369,7 +387,7 @@ export default function IconPage() {
         </div>
 
         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <PreviewStage name={icon.name} style={style} svg={shown} onStyleChange={setStyle} />
+          <PreviewStage name={icon.name} style={style} svgAt={shownAt} onStyleChange={setStyle} />
         </div>
 
         <div className="lg:col-start-1 lg:row-start-2">
