@@ -198,11 +198,13 @@ describe('Icons page', () => {
     await user.click(within(sheet).getByRole('button', { name: 'Close panel' }));
     await waitFor(() => expect(sheet.open).toBe(false));
     expect(location).toBe('');
+  });
 
+  it('closes the mobile sheet when it is swiped down past the threshold', async () => {
     renderAt('/?icon=user');
     await screen.findByRole('heading', { name: 'user', level: 2 });
-    const next = [...document.querySelectorAll('dialog.sheet')].pop() as HTMLDialogElement;
-    const handle = within(next).getByRole('button', { name: 'Close panel' });
+    const sheet = document.querySelector('dialog.sheet') as HTMLDialogElement;
+    const handle = within(sheet).getByRole('button', { name: 'Close panel' });
     const touch = (type: string, y: number, timeStamp: number) => {
       const event = new Event(type, { bubbles: true, cancelable: true });
       Object.defineProperties(event, {
@@ -211,15 +213,20 @@ describe('Icons page', () => {
       });
       handle.dispatchEvent(event);
     };
-    vi.useFakeTimers({ toFake: ['setTimeout', 'requestAnimationFrame'] });
+    // A short pull springs back.
     touch('touchstart', 10, 0);
-    touch('touchmove', 60, 100);
-    touch('touchmove', 200, 300);
-    expect(next.style.transform).toBe('translateY(190px)');
-    touch('touchend', 200, 320);
-    vi.advanceTimersByTime(300);
-    vi.useRealTimers();
-    await waitFor(() => expect(next.open).toBe(false));
+    touch('touchmove', 40, 200);
+    expect(sheet.style.transform).toBe('translateY(30px)');
+    touch('touchend', 40, 400);
+    expect(sheet.style.transform).toBe('');
+    expect(sheet.open).toBe(true);
+    // A long one closes the sheet.
+    touch('touchstart', 10, 1000);
+    touch('touchmove', 60, 1100);
+    touch('touchmove', 200, 1300);
+    expect(sheet.style.transform).toBe('translateY(190px)');
+    touch('touchend', 200, 1320);
+    await waitFor(() => expect(sheet.open).toBe(false));
   });
 
   it('switching style updates the URL and fetches that style', async () => {
