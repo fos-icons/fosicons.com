@@ -470,6 +470,7 @@ export function SidePane({
   }, [sheetOpen, desktop]);
 
   useSheetSwipe(dialogRef, !desktop && sheetOpen, onDismiss);
+  usePageScrollLock(!desktop && sheetOpen);
 
   useEffect(() => {
     if (focusKey === null) return;
@@ -683,4 +684,25 @@ function useSheetSwipe(ref: React.RefObject<HTMLDialogElement | null>, active: b
       setOffset(0, false);
     };
   }, [ref, active]);
+}
+
+/**
+ * Keep the page still while the mobile sheet is open. A modal dialog doesn't
+ * stop iOS from scrolling the page behind it, so pin the body in place
+ * (position: fixed at the current offset) and restore the scroll on close.
+ */
+function usePageScrollLock(active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const { body, documentElement: root } = document;
+    const y = window.scrollY;
+    const saved = { body: body.style.cssText, root: root.style.overflow };
+    root.style.overflow = 'hidden';
+    Object.assign(body.style, { position: 'fixed', top: `${-y}px`, left: '0', right: '0', overflow: 'hidden' });
+    return () => {
+      body.style.cssText = saved.body;
+      root.style.overflow = saved.root;
+      window.scrollTo({ top: y, behavior: 'instant' });
+    };
+  }, [active]);
 }

@@ -109,7 +109,11 @@ export function Section({
   );
 }
 
-const fmtStroke = (w: number) => `${Number(w.toFixed(2))}px`;
+/**
+ * Strokes are stored in 24px-grid units, so they scale with the icon; show
+ * them in real pixels at the icon's size (1.25 at 48px is 2.5px).
+ */
+const fmtStroke = (w: number, size: number) => `${Number(((w * size) / catalog.grid).toFixed(2))}px`;
 
 /** The Size section: a slider for common sizes plus a field for any size. */
 export function SizeControl({ look, onChange, compact = false }: { look: Look; onChange: (patch: Partial<Look>) => void; compact?: boolean }) {
@@ -196,7 +200,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
               {t('customize.strokeUseAuto')}
             </button>
           )}
-          <span className="font-mono tabular-nums text-ink">{fmtStroke(stroke)}</span>
+          <span className="font-mono tabular-nums text-ink">{fmtStroke(stroke, look.size)}</span>
         </span>
       )}
     >
@@ -209,15 +213,15 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
             max={STROKE_MAX}
             step={STROKE_STEP}
             value={stroke}
-            valueText={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke) }) : fmtStroke(stroke)}
+            valueText={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke, look.size) }) : fmtStroke(stroke, look.size)}
             onChange={(v) => onChange({ strokeWidth: v })}
             marks={STROKE_MARKS}
-            format={fmtStroke}
+            format={(v) => fmtStroke(v, look.size)}
           />
           <p className="mt-2 text-xs leading-relaxed text-faint">
             {look.strokeWidth === null
-              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke), size: a.size })).join(', ') })
-              : t('customize.strokeFixedHelp')}
+              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
+              : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) })}
           </p>
           {footnote}
         </>

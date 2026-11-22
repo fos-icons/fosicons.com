@@ -195,9 +195,12 @@ describe('Icons page', () => {
     expect(sheet.open).toBe(true);
     // The X stays in the markup (desktop uses it) but the sheet hides it.
     expect(within(sheet).getByRole('button', { name: 'Clear selection' }).classList.contains('sheet-close')).toBe(true);
+    // The page behind stays still while the sheet is open.
+    expect(document.body.style.position).toBe('fixed');
     await user.click(within(sheet).getByRole('button', { name: 'Close panel' }));
     await waitFor(() => expect(sheet.open).toBe(false));
     expect(location).toBe('');
+    expect(document.body.style.position).toBe('');
   });
 
   it('closes the mobile sheet when it is swiped down past the threshold', async () => {
@@ -610,7 +613,12 @@ describe('Side pane (desktop)', () => {
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
+    // Strokes read in real pixels at the icon size: Auto at 48px is 2px.
+    expect(slider.getAttribute('aria-valuetext')).toBe('2px, automatic for this size');
+    expect(within(pane).getByText(/1px at 16px, 1\.25px at 24px, 1\.5px at 32px, 2px at 48px, 2\.5px at 64px/)).toBeTruthy();
     fireEvent.change(slider, { target: { value: '2' } });
+    expect(slider.getAttribute('aria-valuetext')).toBe('4px');
+    expect(within(pane).getByText('Your stroke scales with the icon: 2px at 24px.')).toBeTruthy();
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
     // 2 grid units on the 48px artwork's own grid.
