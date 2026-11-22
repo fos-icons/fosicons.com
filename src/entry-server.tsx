@@ -8,7 +8,7 @@ export { headTags, pageFor, pageMeta, iconMeta, categoryMeta, pageUrl, PAGES, PA
 export { webManifest } from './lib/manifest';
 export { primeArtwork, trackArtwork, takeTrackedArtwork } from './lib/artwork';
 export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, gridPreviewPath, iconPath, svgFilePath } from './lib/icon-pages';
-export { defaultGridSvg } from './lib/look';
+export { DEFAULT_ARTWORK_SIZE, defaultGridSvg } from './lib/look';
 export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 
 /** A language's translator, with its messages loaded (for the build). */
