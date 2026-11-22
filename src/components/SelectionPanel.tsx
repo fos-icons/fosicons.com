@@ -3,7 +3,8 @@ import { errorText } from '../i18n/errors';
 import { useMemo, useState } from 'react';
 import { STYLE_META, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
-import { exportColors, strokeAdjustable, strokeOf, type Look } from '../lib/look';
+import { artworkSize, exportColors, strokeAdjustable, strokeOf, type Look } from '../lib/look';
+import { opticalStroke } from '../lib/catalog';
 import { buildSvg } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { buildZip, type ZipEntry } from '../lib/zip';
@@ -37,24 +38,25 @@ export function SelectionPanel({
   const [scale, setScale] = useState<(typeof PNG_SCALES)[number]>(2);
   const [busy, setBusy] = useState(false);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
+  const sourceStroke = opticalStroke(artworkSize(look));
   const slug = STYLE_META[style].slug;
   const ready = !!svgs && names.every((n) => svgs[n]);
 
   const build = (name: string, px: number, idPrefix?: string) => {
     const source = svgs?.[name];
     if (!source) throw new Error(`${name} is still loading.`);
-    return buildSvg(source, { ...exportColors(source, style, look, theme), size: px, strokeWidth, idPrefix });
+    return buildSvg(source, { ...exportColors(source, style, look, theme), size: px, strokeWidth, sourceStroke, idPrefix });
   };
 
   const thumbs = useMemo(() => names.map((name, i) => {
     const source = svgs?.[name];
     if (!source) return null;
     try {
-      return buildSvg(source, { ...exportColors(source, style, look, theme), size: 24, strokeWidth, idPrefix: `sel${i}` });
+      return buildSvg(source, { ...exportColors(source, style, look, theme), size: 24, strokeWidth, sourceStroke, idPrefix: `sel${i}` });
     } catch {
       return null;
     }
-  }), [names, svgs, look, theme, style, strokeWidth]);
+  }), [names, svgs, look, theme, style, strokeWidth, sourceStroke]);
 
   const download = async () => {
     setBusy(true);

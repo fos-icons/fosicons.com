@@ -1,6 +1,6 @@
 import ivory from '../data/ivory.json';
 import type { SiteTheme } from './theme';
-import { palettes, type StyleId } from './catalog';
+import { catalog, opticalSize, opticalStroke, palettes, type StyleId } from './catalog';
 import { BASE_STROKE, hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
 
 /**
@@ -65,27 +65,46 @@ export const GRID_MAX_SIZE = 64;
 export const SIZE_SLIDER_MAX = GRID_MAX_SIZE;
 
 /**
- * Size-linked stroke, in 24px grid units: 1.25 at 24px (the library's
- * standard) easing to 0.85 at 48px (the default size), so larger icons don't
- * read heavy. Linear between the two anchors, held at 0.85 above 48px, and
- * rounded to the slider's 0.05 steps.
+ * Size-linked stroke, in 24px grid units: each optical size's designed
+ * stroke (1px at 16, 1.25px at 24, 1.5px at 32, 2px at 48, 2.5px at 64; that
+ * is 1.5, 1.25, 1.125, 1 and 0.9375 grid units), linear in between and held
+ * beyond the smallest and largest. At an optical size the artwork is drawn
+ * exactly as designed.
  */
-export const STROKE_ANCHORS = [{ size: 24, stroke: BASE_STROKE }, { size: 48, stroke: 0.85 }] as const;
+export const STROKE_ANCHORS: readonly { size: number; stroke: number }[] =
+  [...catalog.sizes].sort((a, b) => a - b).map((size) => ({ size, stroke: opticalStroke(size) }));
+export function exactAutoStroke(size: number): number {
+  const first = STROKE_ANCHORS[0];
+  const last = STROKE_ANCHORS[STROKE_ANCHORS.length - 1];
+  if (size <= first.size) return first.stroke;
+  if (size >= last.size) return last.stroke;
+  const i = STROKE_ANCHORS.findIndex((a) => a.size >= size);
+  const a = STROKE_ANCHORS[i - 1];
+  const b = STROKE_ANCHORS[i];
+  return a.stroke + ((size - a.size) * (b.stroke - a.stroke)) / (b.size - a.size);
+}
+
+/** The auto stroke on the slider's 0.05 steps, for a stroke chosen by hand from it. */
 export function autoStroke(size: number): number {
-  const [a, b] = STROKE_ANCHORS;
-  const t = (Math.min(size, b.size) - a.size) / (b.size - a.size);
-  const value = a.stroke + t * (b.stroke - a.stroke);
-  const stepped = Math.round(Math.round(value / STROKE_STEP) * STROKE_STEP * 100) / 100;
+  const stepped = Math.round(Math.round(exactAutoStroke(size) / STROKE_STEP) * STROKE_STEP * 100) / 100;
   return Math.min(STROKE_MAX, Math.max(STROKE_MIN, stepped));
 }
 
 /** The stroke actually drawn and exported for this look. */
-export const strokeOf = (look: Look) => look.strokeWidth ?? autoStroke(look.size);
+export const strokeOf = (look: Look) => look.strokeWidth ?? exactAutoStroke(look.size);
 
-const gridStrokeScale = (look: Look) => String(Math.round((strokeOf(look) / BASE_STROKE) * 10000) / 10000);
+/** The optical size whose artwork draws this look. */
+export const artworkSize = (look: Look) => opticalSize(look.size);
 
-/** Standalone thumbnails use the same regular stroke as the default interactive grid. */
-export const defaultGridSvg = (source: string) => prepareGridSvg(source, gridStrokeScale(DEFAULT_LOOK));
+const scaleText = (value: number) => String(Math.round(value * 10000) / 10000);
+/** Grid stroke scale for the artwork drawing this look (its own optical size). */
+const gridStrokeScale = (look: Look) => scaleText(strokeOf(look) / opticalStroke(artworkSize(look)));
+
+/**
+ * Standalone thumbnails (landing pages) draw the 24px artwork with the same
+ * stroke as the default interactive grid.
+ */
+export const defaultGridSvg = (source: string) => prepareGridSvg(source, scaleText(strokeOf(DEFAULT_LOOK) / BASE_STROKE));
 
 export const INK = { light: '#212121', dark: '#F2F2F2' } as const;
 

@@ -16,6 +16,8 @@ import { styleSvgs } from './helpers';
 const license = readFileSync(join(__dirname, '../public/licenses/fos-icons-LICENSE.txt'), 'utf8');
 const fetchMock = vi.fn(async (url: string) => {
   if (url.endsWith('fos-icons-LICENSE.txt')) return new Response(license, { status: 200 });
+  const chunk = /icons\/(\d+\/\w+\/\d+\.json)$/.exec(url);
+  if (chunk) return new Response(readFileSync(join(__dirname, '../public/icons', chunk[1]), 'utf8'), { status: 200 });
   const style = /icons\/(\w+)\.json/.exec(url)![1] as 'regular';
   return new Response(JSON.stringify(styleSvgs(style)), { status: 200 });
 });
@@ -111,14 +113,16 @@ describe('Header actions', () => {
     for (const folder of ['regular', 'solid', 'duocolor', 'duotone']) {
       expect(names).toContain(`${folder}/search.svg`);
     }
-    // Files carry the chosen size, stroke (0.75 of the drawn 1.25), and color.
+    // Files carry the chosen size, stroke, and color. 56px is drawn from the
+    // 64px optical size: 0.75 grid units is 2 units on its 64px grid.
     const regular = strFromU8(files['regular/search.svg']);
     expect(regular).toContain('width="56"');
-    expect(regular).toContain('stroke-width="0.75"');
+    expect(regular).toContain('viewBox="0 0 64 64"');
+    expect(regular).toContain('stroke-width="2"');
     expect(regular).toContain('#D93025');
     expect(regular).not.toContain('currentColor');
     expect(strFromU8(files['LICENSE.txt'])).toBe(license);
-    expect(strFromU8(files['README.txt'])).toMatch(/Size: 56px\. Stroke: 0\.75px/);
+    expect(strFromU8(files['README.txt'])).toMatch(/Size: 56px, drawn from the 64px optical size\. Stroke: 0\.75px/);
   });
 
   it('downloads only the styles left switched on', async () => {

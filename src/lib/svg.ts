@@ -19,10 +19,15 @@ export interface SvgBuildOptions extends SvgColorOptions {
   idPrefix?: string;
   /**
    * Stroke weight in 24px grid units. Every authored stroke is scaled by
-   * `strokeWidth / BASE_STROKE`, so icons with intentionally heavier strokes
+   * `strokeWidth / sourceStroke`, so icons with intentionally heavier strokes
    * keep their proportions. Omit to keep the artwork's own strokes.
    */
   strokeWidth?: number;
+  /**
+   * The artwork's own stroke in 24px grid units: 1.25 for the 24px library
+   * (the default), or an optical size's designed stroke (see `opticalStroke`).
+   */
+  sourceStroke?: number;
   /**
    * Leave colors as authored (`currentColor` and the `--fos-*` variables), so
    * the file still restyles in code; only size and stroke change.
@@ -39,6 +44,11 @@ const scaleStroke = (value: string, factor: number) => {
 };
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const SHAPES = new Set(['path', 'circle', 'ellipse', 'rect', 'line', 'polyline', 'polygon']);
+/** A stroked shape with no width of its own (Figma omits stroke-width="1" in 16px artwork). */
+const usesDefaultWidth = (node: Element) =>
+  SHAPES.has(node.localName) && !!node.getAttribute('stroke') && node.getAttribute('stroke') !== 'none' && !node.getAttribute('stroke-width');
+const DEFAULT_WIDTH_RE = /<(?:path|circle|ellipse|rect|line|polyline|polygon)\b(?![^>]*\sstroke-width=)[^>]*\sstroke="(?!none")/;
 const PAINT_ATTRS = ['fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color'];
 const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,\s*(.+?)\s*)?\)$/;
 const COLOR_RE = /^(#[0-9a-f]{3,4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/i;
@@ -130,12 +140,14 @@ export function buildSvg(source: string, options: SvgBuildOptions): string {
     walk(root, options.primary);
   }
 
-  if (options.strokeWidth !== undefined && options.strokeWidth !== BASE_STROKE) {
-    const factor = options.strokeWidth / BASE_STROKE;
+  const factor = options.strokeWidth === undefined ? 1 : options.strokeWidth / (options.sourceStroke ?? BASE_STROKE);
+  if (Math.abs(factor - 1) > 1e-9) {
     for (const node of all) {
       const value = node.getAttribute('stroke-width');
       if (value) node.setAttribute('stroke-width', scaleStroke(value, factor));
     }
+    // Strokes with no width of their own use SVG's 1-unit default (16px artwork).
+    if (!root.getAttribute('stroke-width') && all.some(usesDefaultWidth)) root.setAttribute('stroke-width', scaleStroke('1', factor));
   }
 
   const size = String(Math.round(options.size * 100) / 100);
@@ -159,8 +171,12 @@ export function scopeSvg(source: string, idPrefix: string): string {
  * use this; they go through `buildSvg`.
  */
 export function prepareGridSvg(source: string, fallbackScale = '1'): string {
-  return source.replace(
+  const weighted = source.replace(
     /stroke-width="([\d.]+)"/g,
     (_, w: string) => `stroke-width="${w}" style="stroke-width:calc(${w}px * var(--stroke-scale, ${fallbackScale}))"`,
   );
+  // Strokes with no width of their own inherit SVG's 1-unit default (16px artwork).
+  return /^<svg[^>]*\sstroke-width=/.test(weighted) || !DEFAULT_WIDTH_RE.test(weighted)
+    ? weighted
+    : weighted.replace(/^<svg\b/, `<svg style="stroke-width:calc(1px * var(--stroke-scale, ${fallbackScale}))"`);
 }

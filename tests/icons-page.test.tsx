@@ -7,7 +7,7 @@ import { Layout } from '../src/components/Layout';
 import { resetSectionState } from '../src/components/Customize';
 import { resetExportRows } from '../src/components/ExportPanel';
 import { ToastProvider } from '../src/components/ui';
-import { artworkDirectory, catalog, lock, resetStyleCache } from '../src/lib/catalog';
+import { artworkDirectory, catalog, ICON_CHUNK, lock, resetStyleCache } from '../src/lib/catalog';
 import { ThemeProvider } from '../src/lib/theme';
 import { IconsPage } from '../src/pages/IconsPage';
 import IconPage from '../src/pages/IconPage';
@@ -57,7 +57,7 @@ const fetchMock = vi.fn(async (url: string) => {
   if (url.includes('brands/')) {
     return new Response(readFileSync(join(__dirname, '../public', url.slice(url.indexOf('brands/'))), 'utf8'), { status: 200 });
   }
-  const chunk = /icons\/(\w+\/\d+\.json)$/.exec(url);
+  const chunk = /icons\/((?:\d+\/)?\w+\/\d+\.json)$/.exec(url);
   if (chunk) {
     return new Response(readFileSync(join(__dirname, '../public/icons', chunk[1]), 'utf8'), { status: 200 });
   }
@@ -83,7 +83,9 @@ describe('Icons page', () => {
     expect(headings.slice(0, 4).map((heading) => heading.textContent)).toEqual(['Essentials', 'AI & agents', 'Time & calendar', 'Interfaces']);
     await screen.findAllByRole('button', { name: 'search' });
     const artwork = fetchMock.mock.calls.map(([url]) => String(url)).filter((url) => !url.includes('brands/'));
-    expect(artwork).toEqual([`/${artworkDirectory}/regular.json`]);
+    // The default 48px grid draws the 48px artwork, which ships as chunks only.
+    const chunks = Math.ceil(catalog.icons.length / ICON_CHUNK);
+    expect(artwork).toEqual(Array.from({ length: chunks }, (_, n) => `/${artworkDirectory}/48/regular/${n}.json`));
   });
 
   it('keeps the active grid available when another style’s artwork request fails', async () => {
@@ -182,7 +184,7 @@ describe('Icons page', () => {
     expect(await screen.findByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
     expect(screen.getAllByRole('radio', { name: 'Solid', checked: true })).toHaveLength(2);
     expect((screen.getByLabelText('Category') as HTMLSelectElement).value).toBe('Essentials');
-    expect(fetchMock.mock.calls[0][0]).toMatch(/filled\.json$/);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/48\/filled\/0\.json$/);
   });
 
   it('switching style updates the URL and fetches that style', async () => {
@@ -194,7 +196,7 @@ describe('Icons page', () => {
     expect(location).toContain('style=duotone');
     expect(pathname).toBe('/icons/user-add');
     await act(async () => {});
-    expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /duotone\.json$/.test(u))).toBe(true);
+    expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /\/48\/duotone\/\d+\.json$/.test(u))).toBe(true);
   });
 
   it.each([
@@ -271,7 +273,8 @@ describe('Icons page', () => {
     fireEvent.change(iconSize(), { target: { value: '24' } });
     expect(modifierSize().getAttribute('aria-valuetext')).toBe('11px on a 24px icon');
     expect([modifierSize().getAttribute('min'), modifierSize().getAttribute('max')]).toEqual(['8', '12']);
-    expect(preview.innerHTML).toContain('scale(1.1');
+    // 24px draws from the 24px artwork, which loads on demand.
+    await waitFor(() => expect(screen.getByRole('img', { name: /agent, Regular, preview/ }).innerHTML).toContain('scale(1.1'));
 
     // An adjustment carries across sizes in proportion, until reset.
     fireEvent.change(modifierSize(), { target: { value: '12' } });
@@ -464,9 +467,9 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
     await screen.findAllByRole('button', { name: 'search' });
     const grid = screen.getByRole('list', { name: 'Regular icons' }).parentElement!;
-    // Default: 48px with the automatic 0.85px stroke (0.85 / 1.25 = 0.68).
+    // Default: 48px, drawn from the 48px artwork at its own 2px stroke.
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
     expect(within(pane).getByText('Auto')).toBeTruthy();
     expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
 
@@ -482,16 +485,17 @@ describe('Side pane (desktop)', () => {
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
     fireEvent.change(slider, { target: { value: '2.5' } });
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('2');
+    // At 32px the 32px artwork draws it: 2.5 grid units over its own 1.125.
     fireEvent.change(within(pane).getByRole('slider', { name: 'Size' }), { target: { value: '32' } });
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('2');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('2.2222');
     await user.click(within(pane).getByRole('button', { name: 'Use auto' }));
-    // Auto at 32px is 1.1px (1.1 / 1.25 = 0.88).
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.88');
+    // Auto at an optical size is its designed stroke.
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
 
     await user.click(within(pane).getByRole('button', { name: /Reset to defaults/ }));
     expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
     expect(document.activeElement).toBe(within(pane).getByRole('heading', { name: 'Customize' }));
-    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('0.68');
+    expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
     expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
   });
 
@@ -567,7 +571,8 @@ describe('Side pane (desktop)', () => {
     fireEvent.change(slider, { target: { value: '2' } });
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
-    expect(preview.innerHTML).toContain('stroke-width="2"');
+    // 2 grid units on the 48px artwork's own grid.
+    expect(preview.innerHTML).toContain('stroke-width="4"');
     await user.click(within(pane).getByRole('button', { name: 'Code' }));
     expect(within(pane).getByText(/examples use the standard 1.25px stroke/)).toBeTruthy();
   });
@@ -643,8 +648,10 @@ describe('Multi-select and ZIP export (desktop)', () => {
     expect(Object.keys(files).sort()).toEqual(['search-regular.svg', 'user-regular.svg']);
     for (const bytes of Object.values(files)) {
       const svg = strFromU8(bytes);
+      // 32px is drawn from the 32px artwork: 2 grid units is 2.667 on its grid.
       expect(svg).toContain('width="32"');
-      expect(svg).toContain('stroke-width="2"');
+      expect(svg).toContain('viewBox="0 0 32 32"');
+      expect(svg).toContain('stroke-width="2.667"');
       expect(svg).not.toContain('currentColor');
     }
   });

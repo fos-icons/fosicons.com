@@ -13,13 +13,13 @@ import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, Select, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
-import { catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { artworkKey, catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
 import { PLATFORM_NAMES } from '../lib/links';
-import { DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
+import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
 import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
@@ -162,7 +162,9 @@ export function IconsPage() {
   const isDuo = (style: string) => style === 'duocolor' || style === 'duotone';
   const requested: StyleId = state.style === 'brands' ? catalog.styles[0] : state.style;
   const drawStyle: StyleId = brandsOnly && isDuo(requested) ? 'filled' : requested;
-  const svgKey = drawStyle;
+  /** Artwork comes from the optical size nearest the chosen size (16, 24, 32, 48 or 64). */
+  const opticalPx = artworkSize(look);
+  const svgKey = artworkKey(drawStyle, opticalPx);
 
   const error = artworkErrors[svgKey];
   const reportArtworkError = useCallback((key: string, cause: unknown) => {
@@ -194,26 +196,26 @@ export function IconsPage() {
     const list = [...names];
     if (list.some(isBrand)) setBrandsInView(true);
     for (const chunk of chunksFor(list)) {
-      const key = `${drawStyle}/${chunk}`;
+      const key = `${svgKey}/${chunk}`;
       if (mergedChunks.current.has(key)) continue;
-      loadIconChunk(drawStyle, chunk)
+      loadIconChunk(drawStyle, chunk, opticalPx)
         .then((data) => {
           if (mergedChunks.current.has(key)) return;
           mergedChunks.current.add(key);
-          setSvgs((s) => ({ ...s, [drawStyle]: { ...s[drawStyle], ...data } }));
+          setSvgs((s) => ({ ...s, [svgKey]: { ...s[svgKey], ...data } }));
         })
-        .catch((e: unknown) => reportArtworkError(drawStyle, e));
+        .catch((e: unknown) => reportArtworkError(svgKey, e));
     }
-  }, [lazyArtwork, drawStyle, attempt, reportArtworkError]); // eslint-disable-line react-hooks/exhaustive-deps -- a retry re-asks for what's in view
+  }, [lazyArtwork, drawStyle, opticalPx, svgKey, attempt, reportArtworkError]); // eslint-disable-line react-hooks/exhaustive-deps -- a retry re-asks for what's in view
 
   useEffect(() => {
     if (lazyArtwork) return;
     let cancelled = false;
-    loadStyle(drawStyle)
+    loadStyle(drawStyle, opticalPx)
       .then((data) => { if (!cancelled) setSvgs((s) => ({ ...s, [svgKey]: data })); })
       .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
     return () => { cancelled = true; };
-  }, [lazyArtwork, drawStyle, svgKey, attempt, reportArtworkError]);
+  }, [lazyArtwork, drawStyle, opticalPx, svgKey, attempt, reportArtworkError]);
 
   /** A new deploy replaced this page's artwork: only a reload can fetch it. */
   const artworkUpdated = error === t('error.artworkUpdated');
