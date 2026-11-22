@@ -1,7 +1,7 @@
 import ivory from '../data/ivory.json';
 import type { SiteTheme } from './theme';
 import { catalog, opticalSize, opticalStroke, palettes, type StyleId } from './catalog';
-import { BASE_STROKE, hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
+import { hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
 
 /**
  * How icons are drawn across the grid, the side pane previews, and exports.
@@ -100,11 +100,15 @@ const scaleText = (value: number) => String(Math.round(value * 10000) / 10000);
 /** Grid stroke scale for the artwork drawing this look (its own optical size). */
 const gridStrokeScale = (look: Look) => scaleText(strokeOf(look) / opticalStroke(artworkSize(look)));
 
+/** The optical size the default grid draws from (48px artwork at 48px). */
+export const DEFAULT_ARTWORK_SIZE = artworkSize(DEFAULT_LOOK);
+
 /**
- * Standalone thumbnails (landing pages) draw the 24px artwork with the same
- * stroke as the default interactive grid.
+ * Standalone thumbnails (landing pages) draw the same artwork, at the same
+ * stroke, as the default interactive grid. `source` is the
+ * DEFAULT_ARTWORK_SIZE artwork.
  */
-export const defaultGridSvg = (source: string) => prepareGridSvg(source, scaleText(strokeOf(DEFAULT_LOOK) / BASE_STROKE));
+export const defaultGridSvg = (source: string) => prepareGridSvg(source, gridStrokeScale(DEFAULT_LOOK));
 
 export const INK = { light: '#212121', dark: '#F2F2F2' } as const;
 

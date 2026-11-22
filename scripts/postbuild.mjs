@@ -19,7 +19,7 @@ const {
   SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
   LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
-  defaultGridSvg, gridPreviewPath, FRAMEWORK_PATHS, displayName,
+  DEFAULT_ARTWORK_SIZE, defaultGridSvg, gridPreviewPath, FRAMEWORK_PATHS, displayName,
 } = server;
 
 // Every style's artwork, for prerendering the landing pages and publishing
@@ -30,6 +30,14 @@ mkdirSync(dirname(versionedArtwork), { recursive: true });
 renameSync(join(dist, 'icons'), versionedArtwork);
 const artwork = Object.fromEntries(catalog.styles.map((style) => [style, JSON.parse(readFileSync(join(versionedArtwork, `${style}.json`), 'utf8'))]));
 primeArtwork(artwork);
+// Grid previews use the artwork the default interactive grid shows (its
+// optical size), so landing-page thumbnails match the home grid exactly.
+const previewArtwork = (() => {
+  if (DEFAULT_ARTWORK_SIZE === catalog.grid) return artwork.regular;
+  const folder = join(versionedArtwork, String(DEFAULT_ARTWORK_SIZE), 'regular');
+  return Object.assign({}, ...readdirSync(folder).filter((f) => f.endsWith('.json'))
+    .map((f) => JSON.parse(readFileSync(join(folder, f), 'utf8'))));
+})();
 let svgFiles = 0;
 mkdirSync(join(dist, 'svg', 'preview'), { recursive: true });
 for (const style of catalog.styles) {
@@ -38,7 +46,11 @@ for (const style of catalog.styles) {
     const svg = artwork[style][icon.name];
     if (!svg) throw new Error(`Missing ${style} artwork for ${icon.name}`);
     writeFileSync(join(dist, svgFilePath(style, icon.name)), `${svg}\n`);
-    if (style === 'regular') writeFileSync(join(dist, gridPreviewPath(icon.name)), `${defaultGridSvg(svg)}\n`);
+    if (style === 'regular') {
+      const preview = previewArtwork[icon.name];
+      if (!preview) throw new Error(`Missing ${DEFAULT_ARTWORK_SIZE}px regular artwork for ${icon.name}`);
+      writeFileSync(join(dist, gridPreviewPath(icon.name)), `${defaultGridSvg(preview)}\n`);
+    }
     svgFiles += 1;
   }
 }
