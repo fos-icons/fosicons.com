@@ -96,7 +96,7 @@ export function SelectionPanel({
             {t('selection.intro', { style: t(`style.${style}`) })}
           </p>
         </div>
-        <IconButton icon="x" label={t('inspector.clear')} onClick={onClear} className="-mr-2 -mt-1" />
+        <IconButton icon="x" label={t('inspector.clear')} onClick={onClear} className="sheet-close -mr-2 -mt-1" />
       </div>
 
       <div className="px-5 pb-4">

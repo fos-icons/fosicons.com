@@ -362,7 +362,7 @@ export function CustomizePanel({
               {t('customize.resetShort')}
             </Button>
           )}
-          {onClose && <IconButton icon="x" label={t('customize.close')} onClick={onClose} className="-mr-2" />}
+          {onClose && <IconButton icon="x" label={t('customize.close')} onClick={onClose} className="sheet-close -mr-2" />}
         </div>
         <p className="mt-1 text-sm text-muted">{t('customize.intro')}</p>
       </div>

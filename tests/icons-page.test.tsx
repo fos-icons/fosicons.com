@@ -187,6 +187,41 @@ describe('Icons page', () => {
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/48\/filled\/0\.json$/);
   });
 
+  it('closes the mobile sheet with its handle or a swipe down, not an X', async () => {
+    const user = userEvent.setup();
+    renderAt('/?icon=search');
+    await screen.findByRole('heading', { name: 'search', level: 2 });
+    const sheet = document.querySelector('dialog.sheet') as HTMLDialogElement;
+    expect(sheet.open).toBe(true);
+    // The X stays in the markup (desktop uses it) but the sheet hides it.
+    expect(within(sheet).getByRole('button', { name: 'Clear selection' }).classList.contains('sheet-close')).toBe(true);
+    await user.click(within(sheet).getByRole('button', { name: 'Close panel' }));
+    await waitFor(() => expect(sheet.open).toBe(false));
+    expect(location).toBe('');
+
+    renderAt('/?icon=user');
+    await screen.findByRole('heading', { name: 'user', level: 2 });
+    const next = [...document.querySelectorAll('dialog.sheet')].pop() as HTMLDialogElement;
+    const handle = within(next).getByRole('button', { name: 'Close panel' });
+    const touch = (type: string, y: number, timeStamp: number) => {
+      const event = new Event(type, { bubbles: true, cancelable: true });
+      Object.defineProperties(event, {
+        touches: { value: type === 'touchend' ? [] : [{ clientX: 100, clientY: y }] },
+        timeStamp: { value: timeStamp },
+      });
+      handle.dispatchEvent(event);
+    };
+    vi.useFakeTimers({ toFake: ['setTimeout', 'requestAnimationFrame'] });
+    touch('touchstart', 10, 0);
+    touch('touchmove', 60, 100);
+    touch('touchmove', 200, 300);
+    expect(next.style.transform).toBe('translateY(190px)');
+    touch('touchend', 200, 320);
+    vi.advanceTimersByTime(300);
+    vi.useRealTimers();
+    await waitFor(() => expect(next.open).toBe(false));
+  });
+
   it('switching style updates the URL and fetches that style', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=user-add');

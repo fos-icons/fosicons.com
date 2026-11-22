@@ -159,6 +159,7 @@ const en = {
 
   // Side pane
   'pane.label': 'Icon panel',
+  'pane.sheetClose': 'Close panel',
   'pane.expand': 'Expand panel',
   'pane.collapse': 'Collapse panel',
   'pane.downloadSvg': 'Download SVG',
