@@ -664,8 +664,9 @@ function useSheetSwipe(ref: React.RefObject<HTMLDialogElement | null>, active: b
       dragging = false;
       if (last.y > SWIPE_CLOSE.distance || last.v > SWIPE_CLOSE.velocity) {
         setOffset(sheet.offsetHeight, true);
-        // Close first, then clear the offset, so the sheet never flashes back into view.
-        const close = () => { dismiss.current(); requestAnimationFrame(() => setOffset(0, false)); };
+        // Close the dialog itself before clearing the offset: waiting for React's
+        // re-render let a frame paint the open sheet back at the top.
+        const close = () => { sheet.close(); setOffset(0, false); dismiss.current(); };
         if (reduced) close(); else window.setTimeout(close, 200);
       } else {
         setOffset(0, true);
