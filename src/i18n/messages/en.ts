@@ -342,7 +342,7 @@ const en = {
   'iconPage.breadcrumb': 'Breadcrumb',
   'iconPage.allIcons': 'Icons',
   'iconPage.heading': '{name} icon',
-  'iconPage.intro': 'A free {name} icon in four styles, drawn at five optical sizes from 16 to 64px.',
+  'iconPage.intro': 'A free {name} icon in four styles.',
   'iconPage.keywords': 'Keywords',
   'iconPage.back': 'Back to icons',
   'iconPage.removeIcon': 'Remove {name} and go back to the icons',
