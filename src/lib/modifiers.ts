@@ -229,6 +229,9 @@ export function composeSvg(base: string, modifier: ModifierAsset, corner: Corner
 
   const baseRoot = doc.importNode(parse(base), true) as Element;
   baseRoot.removeAttribute('xmlns');
+  // The base may come from any optical size (its own viewBox): fit it to the 24px grid.
+  baseRoot.setAttribute('width', '24');
+  baseRoot.setAttribute('height', '24');
   prefixIds(baseRoot, `${prefix}-base`);
   const duo = isDuo(style);
   result.setAttribute('color', (duo && baseRoot.getAttribute('color')) || 'currentColor');

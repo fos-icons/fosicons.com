@@ -2,6 +2,20 @@
   "license": "MIT",
   "grid": 24,
   "strokeWidth": 1.25,
+  "sizes": [
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "strokeWidths": {
+    "16": 1,
+    "24": 1.25,
+    "32": 1.5,
+    "48": 2,
+    "64": 2.5
+  },
   "styles": [
     "regular",
     "filled",

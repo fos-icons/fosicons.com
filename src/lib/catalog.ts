@@ -28,6 +28,10 @@ export const catalog = catalogData as {
   license: string;
   grid: number;
   strokeWidth: number;
+  /** Optical sizes, each drawn on its own grid; `grid` (24) is the canonical one. */
+  sizes: number[];
+  /** Designed stroke per optical size, in px at that size. */
+  strokeWidths: Record<string, number>;
   styles: StyleId[];
   categories: { name: string; count: number }[];
   modifiers: Record<string, { label: string; group: string }>;
@@ -78,7 +82,30 @@ export function modifierFamily(name: string): { base: IconEntry; variants: IconE
   return variants.length ? { base, variants } : null;
 }
 
-let cache: Partial<Record<StyleId, Promise<Record<string, string>>>> = {};
+/**
+ * The optical size whose artwork draws an icon at `px`: the nearest one by
+ * ratio (40px is drawn from 48, 20px from 24), so a size is never scaled by
+ * more than it must be. Halfway between two sizes, the larger one wins.
+ */
+export function opticalSize(px: number): number {
+  let best = catalog.grid;
+  for (const size of catalog.sizes) {
+    const distance = Math.abs(Math.log(px / size));
+    const current = Math.abs(Math.log(px / best));
+    if (distance < current - 1e-9 || (Math.abs(distance - current) <= 1e-9 && size > best)) best = size;
+  }
+  return best;
+}
+
+/** An optical size's designed stroke in 24px grid units (1.25 at 24, 1 at 48). */
+export const opticalStroke = (size: number) =>
+  ((catalog.strokeWidths[String(size)] ?? catalog.strokeWidth) * catalog.grid) / size;
+
+/** Artwork cache key: the style, plus the optical size when it isn't the canonical 24. */
+export const artworkKey = (style: StyleId, size: number = catalog.grid) =>
+  size === catalog.grid ? style : `${style}@${size}`;
+
+let cache: Record<string, Promise<Record<string, string>>> = {};
 
 const RELOAD_KEY = 'fos-artwork-reload';
 
@@ -111,13 +138,21 @@ async function fetchArtwork(file: string, style: StyleId): Promise<Record<string
   return res.json() as Promise<Record<string, string>>;
 }
 
-/** Fetch one style's SVG snapshot. Only requested styles are downloaded. */
-export function loadStyle(style: StyleId): Promise<Record<string, string>> {
-  cache[style] ??= fetchArtwork(`${style}.json`, style).catch((error: unknown) => {
-    delete cache[style];
+/**
+ * Fetch one style's SVG snapshot at an optical size. Only requested styles
+ * are downloaded. Sizes other than 24 ship as chunks only, merged here.
+ */
+export function loadStyle(style: StyleId, size: number = catalog.grid): Promise<Record<string, string>> {
+  const key = artworkKey(style, size);
+  cache[key] ??= (size === catalog.grid
+    ? fetchArtwork(`${style}.json`, style)
+    : Promise.all(Array.from({ length: Math.ceil(catalog.icons.length / ICON_CHUNK) }, (_, n) => loadIconChunk(style, n, size)))
+      .then((chunks) => Object.assign({}, ...chunks) as Record<string, string>)
+  ).catch((error: unknown) => {
+    delete cache[key];
     throw error;
   });
-  return cache[style];
+  return cache[key];
 }
 
 /** Icons per artwork chunk; matches ICON_CHUNK in scripts/sync-icons.mjs. */
@@ -135,9 +170,9 @@ export function chunksFor(names: Iterable<string>): number[] {
   return [...chunks];
 }
 
-/** One chunk of a style's artwork, fetched once. */
-export function loadIconChunk(style: StyleId, chunk: number): Promise<Record<string, string>> {
-  const key = `${style}/${chunk}`;
+/** One chunk of a style's artwork at an optical size, fetched once. */
+export function loadIconChunk(style: StyleId, chunk: number, size: number = catalog.grid): Promise<Record<string, string>> {
+  const key = `${size === catalog.grid ? '' : `${size}/`}${style}/${chunk}`;
   chunkCache[key] ??= fetchArtwork(`${key}.json`, style).catch((error: unknown) => {
     delete chunkCache[key];
     throw error;

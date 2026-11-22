@@ -5,10 +5,10 @@ import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
 import { errorText } from '../i18n/errors';
 import {
-  autoStroke, DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
+  DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
   strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
 } from '../lib/look';
-import { BASE_STROKE, isDuo, isHexColor } from '../lib/svg';
+import { isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { TeachingTip } from './TeachingTip';
 import { RailActions } from './QuickTools';
@@ -216,7 +216,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
           />
           <p className="mt-2 text-xs leading-relaxed text-faint">
             {look.strokeWidth === null
-              ? t('customize.strokeAutoHelp', { base: fmtStroke(BASE_STROKE), large: fmtStroke(autoStroke(STROKE_ANCHORS[1].size)), largeSize: STROKE_ANCHORS[1].size })
+              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke), size: a.size })).join(', ') })
               : t('customize.strokeFixedHelp')}
           </p>
           {footnote}

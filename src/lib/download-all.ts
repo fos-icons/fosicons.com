@@ -1,7 +1,7 @@
 import type { SiteTheme } from './theme';
 import { LocalizedError } from '../i18n/errors';
-import { catalog, loadStyle, lock, STYLE_META, type IconEntry, type StyleId } from './catalog';
-import { DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
+import { catalog, loadStyle, lock, opticalStroke, STYLE_META, type IconEntry, type StyleId } from './catalog';
+import { artworkSize, DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
 import { buildSvg } from './svg';
 import { buildZip, type ZipEntry } from './zip';
 
@@ -44,7 +44,8 @@ async function buildIconSet(
   icons: readonly IconEntry[], styles: readonly StyleId[], look: Look, theme: SiteTheme, category?: string,
 ): Promise<Blob> {
   const [maps, license] = await Promise.all([
-    Promise.all(styles.map(loadStyle)),
+    // Each icon is drawn from the optical size nearest the export size.
+    Promise.all(styles.map((style) => loadStyle(style, artworkSize(look)))),
     fetch(`${import.meta.env.BASE_URL}licenses/fos-icons-LICENSE.txt`).then((res) => {
       if (!res.ok) throw new LocalizedError('error.loadLicense', { status: String(res.status) });
       return res.text();
@@ -63,6 +64,7 @@ async function buildIconSet(
         ...(keepColors ? { primary: 'currentColor', keepColors: true } : exportColors(source, style, look, theme)),
         size: look.size,
         strokeWidth: strokeAdjustable(style) ? stroke : undefined,
+        sourceStroke: opticalStroke(artworkSize(look)),
       });
       entries.push({ name: `${slug}/${icon.name}.svg`, data: svg });
     }
@@ -76,7 +78,7 @@ async function buildIconSet(
       `Source: https://github.com/${lock.repository}${lock.revision ? ` at ${lock.revision}` : ''}`,
       `License: ${catalog.license} (see LICENSE.txt). Brand icons are not included.`,
       '',
-      `Size: ${look.size}px. Stroke: ${stroke}px on the 24px grid (Regular, Duocolor, Duotone; Solid has none).`,
+      `Size: ${look.size}px, drawn from the ${artworkSize(look)}px optical size. Stroke: ${Number(stroke.toFixed(3))}px on the 24px grid (Regular, Duocolor, Duotone; Solid has none).`,
       keepColors
         ? 'Colors: as authored. Regular and Solid use currentColor; Duocolor and Duotone use --fos-primary and --fos-secondary.'
         : `Colors: ${look.paletteName === INK_THEME ? 'Ink' : look.paletteName} theme${look.mono || look.custom ? ' with your own colors' : ''} (${theme}).`,

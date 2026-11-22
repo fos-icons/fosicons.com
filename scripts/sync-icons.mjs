@@ -118,6 +118,28 @@ export function buildOutputs(source) {
     }
   }
 
+  // Optical sizes: each size is drawn on its own grid (16/32/48/64 beside
+  // the canonical 24). They are published as chunks only; the grid and the
+  // exports pick the size nearest the one being drawn.
+  const sizes = manifest.sizes ?? [manifest.grid];
+  const strokeWidths = manifest.strokeWidths ?? { [manifest.grid]: manifest.regularStrokeWidth };
+  for (const size of sizes) {
+    if (size === manifest.grid) continue;
+    for (const style of styles) {
+      const map = {};
+      for (const icon of sorted) {
+        const file = manifest.sizePath.replace('{size}', size).replace('{style}', style).replace('{name}', icon.name);
+        map[icon.name] = readVerified(source, file, icon.sizes?.[size]?.[style]);
+      }
+      snapshotDigests[`${size}/${style}`] = sha256(JSON.stringify(map));
+      const names = Object.keys(map);
+      for (let n = 0; n * ICON_CHUNK < names.length; n += 1) {
+        const chunk = Object.fromEntries(names.slice(n * ICON_CHUNK, (n + 1) * ICON_CHUNK).map((name) => [name, map[name]]));
+        outputs[`public/icons/${size}/${style}/${n}.json`] = JSON.stringify(chunk);
+      }
+    }
+  }
+
   // Normalize the two composition shapes found in the manifest into a list.
   const compositionOf = (icon) => {
     const c = icon.composition;
@@ -236,6 +258,8 @@ export function buildOutputs(source) {
     license: manifest.license,
     grid: manifest.grid,
     strokeWidth: manifest.regularStrokeWidth,
+    sizes,
+    strokeWidths,
     styles,
     categories: [...categoryCounts].map(([name, count]) => ({ name, count }))
       .sort((a, b) => a.name.localeCompare(b.name)),

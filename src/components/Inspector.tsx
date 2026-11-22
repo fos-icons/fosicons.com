@@ -8,10 +8,10 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
-  modifierFamily, STYLE_META, type IconEntry, type StyleId,
+  modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
-import { resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
+import { artworkSize, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { BASE_STROKE, buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
@@ -63,6 +63,8 @@ export function Inspector({
   const desktop = useMediaQuery('(min-width: 1024px)');
   const thumbSize = Math.min(size, THUMB_MAX);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
+  /** `source` is drawn from the optical size nearest `size`: its own stroke is the reference. */
+  const sourceStroke = opticalStroke(artworkSize(look));
 
   /** Chosen modifier (badge) color, kept with the rest of the look so it carries across icons. */
   const modifier = look.modifierColor;
@@ -117,19 +119,19 @@ export function Inspector({
 
   const build = (px: number, idPrefix?: string) => {
     if (!source) throw new LocalizedError('error.loadingArtwork');
-    return buildSvg(source, { ...colors, size: px, idPrefix, strokeWidth });
+    return buildSvg(source, { ...colors, size: px, idPrefix, strokeWidth, sourceStroke });
   };
 
   const preview = useMemo(() => {
     if (!source) return null;
     try {
       return {
-        actual: buildSvg(source, { ...colors, size: thumbSize, idPrefix: `${uid}-a`, strokeWidth }),
+        actual: buildSvg(source, { ...colors, size: thumbSize, idPrefix: `${uid}-a`, strokeWidth, sourceStroke }),
       };
     } catch {
       return null;
     }
-  }, [source, colors, thumbSize, uid, strokeWidth]);
+  }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke]);
 
   const slug = STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;

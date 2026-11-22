@@ -80,6 +80,15 @@ describe('buildSvg', () => {
     expect(paths(out)).toEqual(paths(source));
     // Default weight leaves the artwork's strokes untouched.
     expect(widths(buildSvg(source, { primary: '#000000', size: 24, strokeWidth: BASE_STROKE }))).toEqual(widths(source));
+    // Optical-size artwork is weighed against its own stroke (48px: 2px, which is 1 grid unit).
+    const at48 = '<svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 48 48"><path d="M4 4H44" stroke="currentColor" stroke-width="2"/></svg>';
+    expect(widths(buildSvg(at48, { primary: '#000000', size: 48, strokeWidth: 1, sourceStroke: 1 }))).toEqual([2]);
+    expect(widths(buildSvg(at48, { primary: '#000000', size: 48, strokeWidth: 1.25, sourceStroke: 1 }))).toEqual([2.5]);
+    // 16px artwork relies on the 1-unit default width: it is scaled from the root.
+    const at16 = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16"><path d="M2 2H14" stroke="currentColor"/></svg>';
+    expect(buildSvg(at16, { primary: '#000000', size: 16, strokeWidth: 1.25, sourceStroke: 1.5 })).toMatch(/^<svg[^>]* stroke-width="0.833"/);
+    expect(prepareGridSvg(at16)).toMatch(/^<svg style="stroke-width:calc\(1px \* var\(--stroke-scale, 1\)\)"/);
+    expect(prepareGridSvg(at48)).not.toMatch(/^<svg style=/);
     // Heavier authored strokes keep their ratio to the standard weight.
     const heavy = Object.values(styleSvgs('regular')).find((svg) => svg.includes('stroke-width="1.5"'))!;
     expect(widths(buildSvg(heavy, { primary: '#000000', size: 24, strokeWidth: 2.5 }))).toContain(3);
@@ -93,15 +102,23 @@ describe('buildSvg', () => {
 });
 
 describe('autoStroke', () => {
-  it('is 1.25 at 24px, 0.85 at 48px, linear in 0.05 steps between, and held above 48px', async () => {
-    const { autoStroke } = await import('../src/lib/look');
+  it('matches each optical size exactly, is linear between, and holds beyond 16px and 64px', async () => {
+    const { autoStroke, exactAutoStroke } = await import('../src/lib/look');
+    // Grid units: 1px at 16, 1.25px at 24, 1.5px at 32, 2px at 48, 2.5px at 64.
+    expect([16, 24, 32, 48, 64].map(exactAutoStroke)).toEqual([1.5, 1.25, 1.125, 1, 0.9375]);
+    expect(exactAutoStroke(40)).toBe(1.0625);
+    expect(exactAutoStroke(8)).toBe(1.5);
+    expect(exactAutoStroke(512)).toBe(0.9375);
+    // On the slider's 0.05 steps.
     expect(autoStroke(24)).toBe(1.25);
-    expect(autoStroke(48)).toBe(0.85);
-    expect(autoStroke(36)).toBe(1.05);
-    expect(autoStroke(40)).toBe(1);
-    expect(autoStroke(64)).toBe(0.85);
-    expect(autoStroke(512)).toBe(0.85);
-    expect(autoStroke(16)).toBeGreaterThan(1.25);
+    expect(autoStroke(48)).toBe(1);
+    expect(autoStroke(64)).toBe(0.95);
+  });
+
+  it('draws each size from the nearest optical size', async () => {
+    const { opticalSize, opticalStroke } = await import('../src/lib/catalog');
+    expect([12, 16, 20, 24, 26, 28, 32, 40, 44, 56, 64, 512].map(opticalSize)).toEqual([16, 16, 24, 24, 24, 32, 32, 48, 48, 64, 64, 64]);
+    expect(opticalStroke(48)).toBe(1);
   });
 });
 
