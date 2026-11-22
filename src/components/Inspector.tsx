@@ -8,7 +8,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
-  modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
+  catalog, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { artworkSize, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
@@ -180,6 +180,21 @@ export function Inspector({
     modifier: showModifier && modifier ? modifier : undefined,
   };
   const snippetName = packaged ?? icon.name;
+  /**
+   * The packages ship the 24px design only, scaled to `size` with its 1.25px
+   * (24px grid) stroke. Say how that differs from what the SVG download draws,
+   * in real pixels at this size. Filled artwork at every size is the 24px
+   * design scaled, so only stroked styles can differ.
+   */
+  const codeNote = (() => {
+    if (strokeWidth === undefined) return null;
+    const px = (gridUnits: number) => pxText(Math.round(((gridUnits * size) / catalog.grid) * 100) / 100);
+    const artwork = artworkSize(look);
+    const sameStroke = Math.abs(strokeWidth - BASE_STROKE) < 1e-6;
+    const values = { size: pxText(size), artwork: pxText(artwork), packageStroke: px(BASE_STROKE), stroke: px(strokeWidth) };
+    if (artwork !== catalog.grid) return t(sameStroke ? 'inspector.codeArtworkSameStroke' : 'inspector.codeArtwork', values);
+    return sameStroke ? null : t('inspector.codeStroke', values);
+  })();
   const snippets = kind === 'core'
     ? {
       react: reactSnippet(snippetName, style, snippetOptions),
@@ -391,9 +406,7 @@ export function Inspector({
             />
           </div>
           <ul className="mt-2 space-y-1.5 text-xs leading-relaxed text-faint">
-            {strokeWidth !== undefined && strokeWidth !== BASE_STROKE && (
-              <li>{t('inspector.codeStroke', { base: BASE_STROKE, value: strokeWidth })}</li>
-            )}
+            {codeNote && <li>{codeNote}</li>}
             {plainFallback && (
               <li>
                 {authoredMatch

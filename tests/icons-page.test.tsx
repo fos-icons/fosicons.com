@@ -574,7 +574,10 @@ describe('Side pane (desktop)', () => {
     // 2 grid units on the 48px artwork's own grid.
     expect(preview.innerHTML).toContain('stroke-width="4"');
     await user.click(within(pane).getByRole('button', { name: 'Code' }));
-    expect(within(pane).getByText(/examples use the standard 1.25px stroke/)).toBeTruthy();
+    // Real pixels at 48px: the packages scale the 24px design (1.25 → 2.5px).
+    expect(within(pane).getByText(
+      'The packages scale the 24px design to 48px, with 2.5px lines. Download the SVG to keep the 48px design with 4px lines.',
+    )).toBeTruthy();
   });
 });
 
