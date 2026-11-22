@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { chunksFor, loadIconChunk, type StyleId } from './catalog';
+import { artworkKey, catalog, chunksFor, loadIconChunk, type StyleId } from './catalog';
 
 /**
  * Icon artwork for the landing pages (icon, category, framework).
@@ -8,15 +8,18 @@ import { chunksFor, loadIconChunk, type StyleId } from './catalog';
  * same SVGs as JSON (#fos-artwork), which main.tsx primes before the first
  * render, so the app's first paint matches the static HTML exactly. Anything
  * not primed (client-side navigation) is fetched by chunk.
+ *
+ * The store is keyed by artworkKey(): the style, plus the optical size when
+ * it isn't the canonical 24 (`regular`, `regular@48`).
  */
-type Store = Partial<Record<StyleId, Record<string, string>>>;
+type Store = Record<string, Record<string, string>>;
 const primed: Store = {};
-/** Every (style, name) a render asked for; the build embeds these. */
-let used: Map<StyleId, Set<string>> | null = null;
+/** Every (artwork key, name) a render asked for; the build embeds these. */
+let used: Map<string, Set<string>> | null = null;
 
 export function primeArtwork(store: Store) {
-  for (const [style, svgs] of Object.entries(store) as [StyleId, Record<string, string>][]) {
-    primed[style] = { ...primed[style], ...svgs };
+  for (const [key, svgs] of Object.entries(store)) {
+    primed[key] = { ...primed[key], ...svgs };
   }
 }
 
@@ -28,55 +31,76 @@ export function trackArtwork() {
 /** The artwork recorded since trackArtwork(), taken from the primed store. */
 export function takeTrackedArtwork(): Store {
   const out: Store = {};
-  for (const [style, names] of used ?? []) {
+  for (const [key, names] of used ?? []) {
     const svgs: Record<string, string> = {};
     for (const name of names) {
-      const svg = primed[style]?.[name];
+      const svg = primed[key]?.[name];
       if (svg) svgs[name] = svg;
     }
-    out[style] = svgs;
+    out[key] = svgs;
   }
   used = null;
   return out;
 }
 
-const pick = (style: StyleId, names: readonly string[]) => {
+const pick = (keys: readonly string[], names: readonly string[]) => keys.map((key) => {
   const out: Record<string, string> = {};
   for (const name of names) {
-    const svg = primed[style]?.[name];
+    const svg = primed[key]?.[name];
     if (svg) out[name] = svg;
   }
   return out;
-};
+});
 
-/** SVG source for these icons in one style; missing entries fill in as chunks load. */
-export function useArtwork(style: StyleId, names: readonly string[]): Record<string, string> {
-  const key = names.join(',');
+/**
+ * SVG source for these icons in one style at each optical size (the same
+ * order as `sizes`); missing entries fill in as chunks load.
+ */
+export function useSizedArtwork(style: StyleId, names: readonly string[], sizes: readonly number[]): Record<string, string>[] {
+  const nameKey = names.join(',');
+  const sizeKey = sizes.join(',');
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const list = useMemo(() => names, [key]);
+  const list = useMemo(() => names, [nameKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const keys = useMemo(() => sizes.map((size) => artworkKey(style, size)), [style, sizeKey]);
   if (used) {
-    const set = used.get(style) ?? new Set<string>();
-    for (const name of list) set.add(name);
-    used.set(style, set);
+    for (const key of keys) {
+      const set = used.get(key) ?? new Set<string>();
+      for (const name of list) set.add(name);
+      used.set(key, set);
+    }
   }
-  const [loaded, setLoaded] = useState<{ key: string; svgs: Record<string, string> }>(() => ({ key: `${style}:${key}`, svgs: pick(style, list) }));
-  const current = loaded.key === `${style}:${key}` ? loaded.svgs : pick(style, list);
+  const id = `${keys.join(',')}:${nameKey}`;
+  const [loaded, setLoaded] = useState<{ id: string; svgs: Record<string, string>[] }>(() => ({ id, svgs: pick(keys, list) }));
+  const current = loaded.id === id ? loaded.svgs : pick(keys, list);
 
   useEffect(() => {
-    const missing = list.filter((name) => !primed[style]?.[name]);
     let live = true;
-    setLoaded({ key: `${style}:${key}`, svgs: pick(style, list) });
-    if (!missing.length) return;
-    Promise.all(chunksFor(missing).map((chunk) => loadIconChunk(style, chunk))).then((chunks) => {
-      if (!live) return;
-      primeArtwork({ [style]: Object.assign({}, ...chunks) });
-      setLoaded({ key: `${style}:${key}`, svgs: pick(style, list) });
+    setLoaded({ id, svgs: pick(keys, list) });
+    const loads = keys.flatMap((key, i) => {
+      const missing = list.filter((name) => !primed[key]?.[name]);
+      return missing.length
+        ? [Promise.all(chunksFor(missing).map((chunk) => loadIconChunk(style, chunk, sizes[i])))
+          .then((chunks) => primeArtwork({ [key]: Object.assign({}, ...chunks) }))]
+        : [];
+    });
+    if (!loads.length) return;
+    Promise.all(loads).then(() => {
+      if (live) setLoaded({ id, svgs: pick(keys, list) });
     }, () => { /* the page still works without previews */ });
     return () => { live = false; };
-  }, [style, key, list]);
+    // `sizes` is captured through `keys`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [style, id, keys, list]);
 
   return current;
 }
+
+/** SVG source for these icons in one style (24px artwork). */
+export function useArtwork(style: StyleId, names: readonly string[]): Record<string, string> {
+  return useSizedArtwork(style, names, CANONICAL)[0];
+}
+const CANONICAL = [catalog.grid] as const;
 
 /**
  * Prefix every id (and reference to it) so several icons can share one
