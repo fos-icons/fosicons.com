@@ -1,8 +1,10 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { useI18n } from '../i18n';
-import { FEEDBACK_URL, FIGMA_URL, ORG_URL } from '../lib/links';
-import { ButtonAnchor, ButtonLink, UiIcon } from './ui';
+import { LocalLink, useI18n } from '../i18n';
+import { FIGMA_URL, ORG_URL } from '../lib/links';
+import { Button, ButtonAnchor, ButtonLink, UiIcon } from './ui';
+
+const FeedbackDialog = lazy(() => import('./FeedbackDialog'));
 
 /** Phone menu rows: full-width ghost buttons, icon and label aligned left. */
 const menuItem = 'min-h-11 w-full justify-start';
@@ -24,15 +26,22 @@ export function HeroActions({ className = '' }: { className?: string }) {
   );
 }
 
-export function HeaderActions() {
+export function HeaderActions({ docsPage = false }: { docsPage?: boolean }) {
   const { t, path } = useI18n();
   const { pathname } = useLocation();
   const NEW_TAB = <span className="sr-only">{t('site.newTab')}</span>;
   const [menuOpen, setOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const menuId = useId();
   const wrapRef = useRef<HTMLDivElement>(null);
   const toggleRef = useRef<HTMLButtonElement>(null);
+  const feedbackTrigger = useRef<HTMLButtonElement | null>(null);
   const close = () => setOpen(false);
+  const openFeedback = (trigger: HTMLButtonElement | null) => {
+    feedbackTrigger.current = trigger;
+    close();
+    setFeedbackOpen(true);
+  };
 
   useEffect(() => { setOpen(false); }, [pathname]);
 
@@ -54,18 +63,19 @@ export function HeaderActions() {
 
   return (
     <nav aria-label={t('header.main')} className="flex items-center gap-1 md:gap-5">
+      {docsPage && <LocalLink to="/" className={`${textLink} hidden md:inline-flex`}>{t('header.browse')}</LocalLink>}
       <NavLink to={path('/docs')} onClick={close} className={`${textLink} inline-flex min-h-11 items-center px-2 aria-[current=page]:text-ink aria-[current=page]:underline md:px-0`}>
         {t('header.docs')}
       </NavLink>
       <div className="hidden items-center gap-5 md:flex">
-        {FIGMA_URL && (
+        {!docsPage && FIGMA_URL && (
           <a href={FIGMA_URL} target="_blank" rel="noreferrer" className={textLink}>
             {t('header.figma')}{NEW_TAB}
           </a>
         )}
-        <a href={FEEDBACK_URL} target="_blank" rel="noreferrer" className={textLink}>
-          {t('header.feedback')}{NEW_TAB}
-        </a>
+        <button type="button" aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className={textLink}>
+          {t('header.feedback')}
+        </button>
       </div>
 
       <div ref={wrapRef} className="relative md:hidden"
@@ -88,14 +98,19 @@ export function HeaderActions() {
           className="absolute end-0 top-full z-40 w-60 max-w-[calc(100vw-2rem)] space-y-1 rounded-xl border border-line bg-surface p-2 shadow-md"
         >
           <ButtonLink to="/" onClick={close} variant="ghost" icon="search" className={menuItem}>{t('header.browse')}</ButtonLink>
-          {FIGMA_URL && (
+          {!docsPage && FIGMA_URL && (
             <ButtonAnchor href={FIGMA_URL} external onClick={() => { close(); toggleRef.current?.focus(); }} variant="ghost" iconEnd="link-external" className={menuItem}>{t('header.figma')}</ButtonAnchor>
           )}
-          <ButtonAnchor href={FEEDBACK_URL} external onClick={() => { close(); toggleRef.current?.focus(); }} variant="ghost" iconEnd="link-external" className={menuItem}>
+          <Button aria-haspopup="dialog" onClick={() => openFeedback(toggleRef.current)} variant="ghost" className={menuItem}>
             {t('header.feedback')}
-          </ButtonAnchor>
+          </Button>
         </div>
       </div>
+      {feedbackOpen && (
+        <Suspense fallback={null}>
+          <FeedbackDialog onClose={() => { setFeedbackOpen(false); feedbackTrigger.current?.focus(); }} />
+        </Suspense>
+      )}
     </nav>
   );
 }

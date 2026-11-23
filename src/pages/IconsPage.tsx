@@ -13,7 +13,7 @@ import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, Select, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
-import { artworkKey, catalog, chunksFor, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
@@ -361,9 +361,9 @@ export function IconsPage() {
     : query ? t('icons.summaryFor', { results: counted, query })
       : categoryName ? t('icons.summaryIn', { results: counted, category: categoryName })
         : counted;
-  const viewOptions: { value: View; label: string; title?: string }[] = catalog.styles
+  const viewOptions = catalog.styles
     .filter((s) => !brandsOnly || !isDuo(s))
-    .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`) }));
+    .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
   const tips = brandsView
     ? [t('icons.searchBrands')]
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
@@ -457,6 +457,7 @@ export function IconsPage() {
           <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>
             <IconGrid
               label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(`style.${drawStyle}`) })}
+              premiumLabel={drawStyle === FREE_ICON_STYLE ? undefined : t('icons.premium')}
               items={results}
               categoryTitle={browsingCore && !state.category ? (category) => label('category', category, category) : undefined}
               svgs={gridSvgs}

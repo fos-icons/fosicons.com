@@ -13,12 +13,18 @@ describe('Docs page', () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = within(screen.getByRole('navigation', { name: 'Documentation' }));
     await user.click(nav.getByRole('button', { name: 'On this page' }));
-    for (const name of ['Design', 'Code', 'Reference']) {
+    for (const name of ['Design', 'Code', 'Plugins', 'Reference']) {
       await user.click(nav.getByRole('button', { name }));
     }
     const links = nav.getAllByRole('link').map((link) => link.getAttribute('href'));
     const sections = within(screen.getByRole('article')).getAllByRole('region').map((section) => `#${section.id}`);
     expect(links).toEqual(sections);
+    const pluginsId = nav.getByRole('button', { name: 'Plugins' }).getAttribute('aria-controls');
+    expect(nav.getByRole('link', { name: 'Framer' }).closest('ul')?.id).toBe(pluginsId);
+    expect(nav.getByRole('link', { name: 'Framer' }).getAttribute('href')).toBe('#framer');
+    const framer = screen.getByRole('region', { name: 'Framer' });
+    expect(within(framer).getByRole('link', { name: 'Framer plugin setup guide' }).getAttribute('href'))
+      .toBe('https://github.com/fos-icons/fos-icons/tree/main/plugins/framer#development');
   });
 
   it('marks the current section in the side nav', async () => {
@@ -31,10 +37,11 @@ describe('Docs page', () => {
     expect(nav.querySelectorAll('[aria-current]')).toHaveLength(1);
   });
 
-  it('renders code samples in dark, labeled blocks', () => {
+  it('renders labeled code samples in the shared stone palette', () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const blocks = document.querySelectorAll('.code-block');
     expect(blocks.length).toBeGreaterThan(0);
+    expect([...blocks].every((block) => block.closest('.code-stone'))).toBe(true);
     const shell = document.querySelector('#react .code-block[data-lang="sh"]')?.textContent;
     expect(shell).toMatch(/^Terminal/);
     expect(shell).toContain('npm install @fos-icons/react');

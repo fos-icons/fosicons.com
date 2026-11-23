@@ -3,7 +3,10 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
+import { Readable } from 'node:stream';
 import type { Plugin } from 'vite';
+import { POST as submitFeedback } from './api/feedback';
+import { FEEDBACK_PATH } from './src/lib/feedback';
 import sourceLock from './src/data/source-lock.json';
 
 function versionedArtwork(): Plugin {
@@ -28,7 +31,7 @@ function svgFiles(): Plugin {
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
-        const match = /^\/svg\/(regular|filled|duocolor|duotone|preview)\/([a-z0-9-]+)\.svg$/.exec(req.url?.split('?')[0] ?? '');
+        const match = /^\/svg\/(regular|preview)\/([a-z0-9-]+)\.svg$/.exec(req.url?.split('?')[0] ?? '');
         if (!match) return next();
         const [, variant, name] = match;
         const style = variant === 'preview' ? 'regular' : variant;
@@ -67,8 +70,39 @@ function webManifest(): Plugin {
   };
 }
 
+function feedbackEndpoint(): Plugin {
+  return {
+    name: 'fos-feedback',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url?.split('?')[0] !== FEEDBACK_PATH) return next();
+        if (req.method !== 'POST') {
+          res.writeHead(405, { Allow: 'POST' }).end();
+          return;
+        }
+        try {
+          const request = new Request(`http://${req.headers.host}${FEEDBACK_PATH}`, {
+            method: 'POST',
+            headers: {
+              Origin: req.headers.origin ?? '',
+              'Content-Type': req.headers['content-type'] ?? '',
+            },
+            body: Readable.toWeb(req) as ReadableStream<Uint8Array>,
+            duplex: 'half',
+          });
+          const response = await submitFeedback(request);
+          res.writeHead(response.status, Object.fromEntries(response.headers)).end(await response.text());
+        } catch (error) {
+          next(error);
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest()],
+  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint()],
   build: { target: 'es2022', chunkSizeWarningLimit: 700 },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },

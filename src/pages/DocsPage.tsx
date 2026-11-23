@@ -6,11 +6,11 @@ import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catal
 import { copyText } from '../lib/export';
 import { editorPath } from '../lib/icon-pages';
 import { angularSnippet, solidSnippet } from '../lib/react-snippet';
-import { FLUTTER_PACKAGE, FRAMEWORK_PACKAGES, packageSource, PLATFORM_NAMES } from '../lib/links';
+import { FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_PACKAGES, LIBRARY_URL, packageSource, PLATFORM_NAMES } from '../lib/links';
 import { CodeBlock } from '../components/CodeBlock';
 import { useToast } from '../components/ui';
 import { createPortal } from 'react-dom';
-import { CONTAINER, useHeaderSlot } from '../lib/layout';
+import { CONTAINER, DOCS_GRID, useHeaderSlot } from '../lib/layout';
 import { useMediaQuery } from '../lib/theme';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 
@@ -40,6 +40,11 @@ const CONTENTS: { id: string; title: string; sections: readonly (readonly [strin
     ],
   },
   {
+    id: 'plugins',
+    title: 'Plugins',
+    sections: [['framer', 'Framer']],
+  },
+  {
     id: 'reference',
     title: 'Reference',
     sections: [
@@ -64,7 +69,7 @@ function Code({ children, lang }: { children: string; lang: string }) {
         <button
           type="button"
           onClick={() => copyText(children).then(() => toast('success', 'Copied'), (e: Error) => toast('error', e.message))}
-          className="min-h-8 rounded-md px-2 text-xs font-medium text-[#c9c9cf] transition hover:bg-white/10 hover:text-white"
+          className="min-h-8 rounded-md px-2 text-xs font-medium text-[var(--code-muted)] transition hover:bg-[var(--code-hover)] hover:text-[var(--code-ink)]"
         >
           Copy
         </button>
@@ -247,8 +252,15 @@ function DocsContents({ shown, active, section, searching, desktop, onChoose }: 
   const contentsId = useId();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [groups, setGroups] = useState<Record<string, boolean>>({});
+  const readingGroup = desktop
+    ? CONTENTS.find((group) => group.id !== 'design' && group.sections.some(([id]) => id === active))?.id
+    : undefined;
 
   useEffect(() => { setGroups({}); }, [searching, section]);
+  // Reopen a group on entry while leaving manual toggles available within it.
+  useEffect(() => {
+    if (readingGroup) setGroups((previous) => ({ ...previous, [readingGroup]: true }));
+  }, [readingGroup, searching, section]);
 
   return (
     <aside className="min-w-0 self-start md:sticky md:top-8 md:col-start-1 md:row-span-2 md:row-start-1 md:max-h-[calc(100dvh-4rem)] md:overflow-y-auto md:p-1">
@@ -356,7 +368,7 @@ export default function DocsPage() {
   const inHeader = headerSlot && desktop;
 
   return (
-    <div className={`docs-page ${CONTAINER} grid gap-y-6 pb-20 pt-8 sm:pt-12 md:grid-cols-[11rem_minmax(0,720px)] md:gap-x-12 md:gap-y-10`}>
+    <div className={`docs-page ${CONTAINER} ${DOCS_GRID} grid gap-y-6 pb-20 pt-8 sm:pt-12 md:grid-cols-[var(--docs-nav-width)_minmax(0,720px)] md:gap-y-10`}>
       {inHeader && createPortal(<div className="w-full max-w-md">{search}</div>, headerSlot)}
       <p role="status" className="sr-only">
         {searching ? `${shown.length} ${shown.length === 1 ? 'section matches' : 'sections match'}` : ''}
@@ -369,14 +381,14 @@ export default function DocsPage() {
         )}
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
         <p className="mt-3 text-base text-muted">
-          Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format(PLATFORM_NAMES)}. {nf.format(ICONS_ROUNDED)}+ icons,
+          Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format([...PLATFORM_NAMES, 'Framer'])}. {nf.format(ICONS_ROUNDED)}+ icons,
           each in {catalog.styles.length} styles and {catalog.sizes.length} optical sizes from {catalog.sizes[0]} to {catalog.sizes[catalog.sizes.length - 1]}px.
         </p>
         {!inHeader && <div className="mt-5 md:mt-4">{search}</div>}
       </header>
       <DocsContents shown={shown} active={active} section={section} searching={searching} desktop={desktop} onChoose={chooseSection} />
 
-      <article lang={english ? 'en' : undefined} className="min-w-0 space-y-10 md:col-start-2 md:row-start-2">
+      <article lang={english ? 'en' : undefined} className="code-stone min-w-0 space-y-10 md:col-start-2 md:row-start-2">
         {shown.length === 0 && (
           <div className="rounded-xl border border-line p-6 text-center">
             <p className="font-medium text-ink">Nothing in the docs matches “{query.trim()}”</p>
@@ -402,7 +414,7 @@ export default function DocsPage() {
         </Section>
 
         <Section id="figma" title="Figma">
-          <p>The Fos Icons Figma library holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size={catalog.sizes.join('/')}</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
+          <p>The {FIGMA_URL ? <a href={FIGMA_URL} target="_blank" rel="noreferrer">Fos Icons Figma library</a> : 'Fos Icons Figma library'} holds every core icon as a component set with <code>Style=Regular/Filled/Duocolor/Duotone</code> and <code>Size={catalog.sizes.join('/')}</code>. Its <strong>Get Started</strong> page covers styles, instances, themes, modifiers, and exports.</p>
           <ul className="list-disc space-y-1 pl-5">
             <li><strong>Fos / Theme</strong> switches Light and Dark, and holds the duo palettes.</li>
             <li>Each <strong>Size</strong> variant is drawn for its size and binds its stroke to the matching <strong>Fos / Stroke</strong> mode: {catalog.sizes.map((size) => `${size}px (${catalog.strokeWidths[String(size)]}px)`).join(', ')}. To draw an icon at another size, pick the nearest Size variant and scale the instance.</li>
@@ -460,7 +472,7 @@ export default function DocsPage() {
         </Section>
 
         <Section id="svg" title="SVG">
-          <p>Download an icon from the inspector, or copy files from <code>icons/regular/</code>, <code>icons/filled/</code>, <code>icons/duocolor/</code>, or <code>icons/duotone/</code> (24px; other sizes in <code>icons/&lt;size&gt;/&lt;style&gt;/</code>) in the <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/fos-icons">library repository</a>. There is no runtime dependency or icon font.</p>
+          <p>Download a Regular icon from the inspector or find SVG files in the <a target="_blank" rel="noreferrer" href={LIBRARY_URL}>library repository</a>. The 24px files are organized by style under <code>icons/</code>, and other sizes are in <code>icons/&lt;size&gt;/&lt;style&gt;/</code>. There is no runtime dependency or icon font.</p>
           <Code lang="html">{`<img src="./icons/regular/text-align-left.svg" width="24" height="24" alt="Align text left">`}</Code>
           <p>To theme with CSS, inline the markup instead: the library&apos;s <code>currentColor</code> follows the parent element&apos;s <code>color</code>. Don&apos;t globally override <code>fill</code> on paths — Solid icons rely on real transparent cutouts.</p>
           <p><strong>Website downloads are standalone.</strong> Files exported here have every color resolved to a concrete value, so they render the same in any viewer or design tool. Masks, clip paths, and the Duotone tint are kept intact. If you want live theming, use the library SVGs.</p>
@@ -588,6 +600,12 @@ FosIcon(
           </ul>
         </Section>
 
+        <Section id="framer" title="Framer">
+          <p>The Fos Icons plugin lets you search the library in the Framer editor. Pick Regular, Solid, Duocolor, or Duotone, then adjust the size, colors, and stroke weight where supported.</p>
+          <p>Select an icon and choose <strong>Insert icon</strong> to add it to the canvas as an SVG. With one SVG selected on the canvas, <strong>Replace selected SVG</strong> swaps in the new icon.</p>
+          <p>To run the plugin locally, follow the <a target="_blank" rel="noreferrer" href={`${LIBRARY_URL}/tree/main/plugins/framer#development`}>Framer plugin setup guide</a>.</p>
+        </Section>
+
         <Section id="accessibility" title="Accessibility">
           <ul className="list-disc space-y-1 pl-5">
             <li>Decorative inline icons: add <code>aria-hidden=&quot;true&quot;</code>.</li>
@@ -605,6 +623,8 @@ FosIcon(
 
         <Section id="privacy" title="Privacy">
           <p>This site sets no cookies. We use Vercel Web Analytics on the public site to count visitors and page views. The page URLs we report omit search terms, inspector settings, and fragments. See <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">Vercel Web Analytics privacy</a> for details.</p>
+          <p>When you submit feedback, new icon requests are posted publicly to GitHub. Site, package, and icon issue reports are sent by email to the Fos Icons maintainers.</p>
+          <p>Unsubmitted feedback stays in the current tab so you can resume it after dismissing the form or reloading the page.</p>
           <p>Your browser&apos;s local storage keeps preferences on your device:</p>
           <ul className="list-disc space-y-1 pl-5">
             <li><code>fos-theme</code>: light, warm (Ivory), or dark, when you pick one instead of following your system.</li>

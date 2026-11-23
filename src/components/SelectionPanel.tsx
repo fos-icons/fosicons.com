@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useMemo, useState } from 'react';
-import { STYLE_META, type StyleId } from '../lib/catalog';
+import { FREE_ICON_STYLE, STYLE_META, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import { artworkSize, exportColors, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { opticalStroke } from '../lib/catalog';
@@ -41,6 +41,8 @@ export function SelectionPanel({
   const sourceStroke = opticalStroke(artworkSize(look));
   const slug = STYLE_META[style].slug;
   const ready = !!svgs && names.every((n) => svgs[n]);
+  const premium = style !== FREE_ICON_STYLE;
+  const downloadDisabled = premium || !ready || busy;
 
   const build = (name: string, px: number, idPrefix?: string) => {
     const source = svgs?.[name];
@@ -59,6 +61,7 @@ export function SelectionPanel({
   }), [names, svgs, look, theme, style, strokeWidth, sourceStroke]);
 
   const download = async () => {
+    if (downloadDisabled) return;
     setBusy(true);
     try {
       const px = format === 'png' ? look.size * scale : look.size;
@@ -85,7 +88,7 @@ export function SelectionPanel({
   return (
     <div className="flex min-h-full flex-col">
       <RailActions>{() => (
-        <IconButton icon="download" label={t('pane.downloadSelection')} onClick={download} disabled={!ready || busy} />
+        <IconButton icon="download" label={t('pane.downloadSelection')} onClick={download} disabled={downloadDisabled} className="disabled:opacity-50" />
       )}</RailActions>
       <div className="flex items-start gap-3 px-5 pb-4 pt-5">
         <div className="min-w-0 flex-1">
@@ -150,7 +153,7 @@ export function SelectionPanel({
               </>
             )}
           </div>
-          <Button variant="primary" icon="download" className="h-10 w-full" disabled={!ready || busy} onClick={download}>
+          <Button variant="primary" icon="download" className="h-10 w-full" disabled={downloadDisabled} onClick={download}>
             {busy ? t('selection.building') : t('selection.download', { count: names.length })}
           </Button>
           <Button
@@ -165,7 +168,7 @@ export function SelectionPanel({
             {t('selection.copyNames')}
           </Button>
           <p className="text-xs leading-relaxed text-faint">
-            {format === 'png' ? t('selection.notePng') : t('selection.noteSvg')}
+            {premium ? t('download.premiumSoon') : format === 'png' ? t('selection.notePng') : t('selection.noteSvg')}
           </p>
         </div>
       </Section>

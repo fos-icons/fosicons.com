@@ -1,6 +1,7 @@
 import { useI18n } from '../i18n';
 import { Fragment, memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { IconCardContent, iconCardClass, iconCardGlyphClass, iconGridClass } from './IconCard';
+import { UiIcon } from './ui';
 
 export interface GridItem {
   name: string;
@@ -15,6 +16,7 @@ interface Props {
   /** `additive`: Shift/⌘/Ctrl was held, so toggle this icon in the set. */
   onSelect: (name: string, additive: boolean) => void;
   label: string;
+  premiumLabel?: string;
   /** Called with icons near the viewport, so their artwork can load lazily. */
   onNeed?: (names: string[]) => void;
   categoryTitle?: (category: string) => string;
@@ -38,7 +40,7 @@ const GROW_MARGIN = '1200px 0px';
 const NEED_MARGIN = '900px 0px';
 
 const Cell = memo(function Cell({
-  name, svg, selected, tabbable, onSelect, onFocusIndex, index,
+  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel,
 }: {
   name: string;
   svg: string | undefined;
@@ -47,6 +49,7 @@ const Cell = memo(function Cell({
   onSelect: (name: string, additive: boolean) => void;
   onFocusIndex: (index: number) => void;
   index: number;
+  premiumLabel?: string;
 }) {
   return (
     <li className="icon-cell" data-name={name} style={{ '--i': Math.min(index, 40) } as CSSProperties}>
@@ -56,6 +59,7 @@ const Cell = memo(function Cell({
         data-index={index}
         tabIndex={tabbable ? 0 : -1}
         aria-label={name}
+        aria-description={premiumLabel}
         title={name.length > 22 ? name : undefined}
         aria-pressed={selected}
         onClick={(e) => onSelect(name, e.shiftKey || e.metaKey || e.ctrlKey)}
@@ -68,8 +72,13 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={iconCardClass(selected)}
+        className={`${iconCardClass(selected)} pt-5 max-sm:min-h-[100px] sm:pt-3`}
       >
+        {premiumLabel && (
+          <span aria-hidden="true" title={premiumLabel} className="absolute start-1 top-1 flex size-[18px] items-center justify-center rounded-full bg-sunken text-muted sm:start-1.5 sm:top-1.5">
+            <UiIcon name="crown-simple" className="size-3.5 [&_path]:[stroke-width:1.75]" />
+          </span>
+        )}
         <IconCardContent name={name} selected={selected}>
           {svg ? (
             <span
@@ -90,7 +99,7 @@ const Cell = memo(function Cell({
  * Dense, keyboard-navigable icon grid. The grid is one tab stop; arrow keys,
  * Home/End, and PageUp/PageDown move between icons; Enter/Space opens one.
  */
-export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onNeed, categoryTitle }: Props) {
+export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle }: Props) {
   const items = allItems;
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -243,6 +252,7 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, onN
             tabbable={index === activeIndex}
             onSelect={onSelect}
             onFocusIndex={onFocusIndex}
+            premiumLabel={premiumLabel}
           />
         </Fragment>
       ))}

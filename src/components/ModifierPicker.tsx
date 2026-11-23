@@ -29,6 +29,8 @@ export function useModifiers(enabled: boolean) {
 
 const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
 const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality', 'file-types'];
+const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield']);
+const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_ACTIONS.has(modifier.name);
 
 export function ModifierPicker({
   modifiers, value, onChange, authored, accessory,
@@ -46,12 +48,12 @@ export function ModifierPicker({
   const baseId = useId();
   const tiles = useMemo(() => new Map(modifiers.map((m) => [m.name, modifierTileSvg(m)])), [modifiers]);
   const groups = [
-    { id: 'actions', items: modifiers.filter((m) => m.group === 'actions') },
+    { id: 'actions', items: modifiers.filter(inActions) },
     {
       id: 'general',
       items: [
         ...GENERAL_GROUPS.flatMap((group) => modifiers.filter((m) => m.group === group)),
-        ...modifiers.filter((m) => m.group !== 'actions' && !GENERAL_GROUPS.includes(m.group)),
+        ...modifiers.filter((m) => !inActions(m) && !GENERAL_GROUPS.includes(m.group)),
       ],
     },
   ] as const;

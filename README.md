@@ -41,6 +41,18 @@ pnpm run dev          # http://localhost:5173
 `sync:check` and `pnpm run check` look for the library at `../fos-icons`
 by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
 
+### Feedback delivery
+
+The form posts to `POST /api/feedback`. Configure the following server-only environment variables in Vercel, or export them before starting Vite for local delivery tests.
+
+| Variable | Purpose |
+| --- | --- |
+| `FEEDBACK_GITHUB_TOKEN` | Fine-grained GitHub token scoped to `fos-icons/fos-icons` with Issues write permission. |
+| `FEEDBACK_RESEND_API_KEY` | Resend key with permission to send email. |
+| `FEEDBACK_FROM_EMAIL` | Sender address on a domain verified in Resend. Reports go to `icon@fosicons.com`. |
+
+Apply a per-IP [Vercel Firewall rate limit](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) to `POST /api/feedback` before enabling live delivery. Requests are anonymous and new icon submissions are published directly as GitHub issues.
+
 ## What the site does
 
 - **Catalog**: searches icon names, library paths, tags, and categories; filters
@@ -69,7 +81,7 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   change stroke weight, and the React panel says so.
 - **Icon sets**: Shift-click (or ⌘/Ctrl-click, or Shift+Enter) adds or removes
   icons from a set. The pane then applies one size, stroke, and color to the
-  whole set and downloads it as a ZIP of SVGs or transparent PNGs (fflate,
+  whole set and downloads Regular icons as a ZIP of SVGs or transparent PNGs (fflate,
   loaded only when a ZIP is built). Esc or ✕ clears the set.
 - **Search tips**: the search field's ghost text rotates through these tricks
   while it is empty and unfocused.
@@ -78,7 +90,8 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   SVG), with an optional file-name suffix under "…". "+" adds a row, "−"
   removes one, and the rows carry over between icons. Export downloads one
   file, or a ZIP when there are several. Copy works the same way: copy SVG
-  code, a PNG image at a chosen scale, or the name. A React example is below.
+  code, a PNG image at a chosen scale, or the name. Artwork exports and copy
+  are available for Regular. A React example is below.
   Exports resolve every CSS variable and `currentColor` to concrete colors
   and preserve masks, clip paths, IDs, and the Duotone 16% tint. PNGs are
   transparent. No XAML export exists: its target dialect is undefined.
@@ -101,19 +114,17 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
   `/brands` URL redirects). The 32 approved third-party marks (social, Google,
   Microsoft) synced from the library's `brand-assets/`, shown unmodified in
   Regular; the Solid switch appears once a brand ships a Solid source.
-- **Header**: Get started (the library on GitHub, new tab), Docs, Download (one ZIP
-  of every core icon in every style, untouched library SVGs in `regular/`,
-  `solid/`, `duocolor/`, `duotone/`, plus LICENSE and README, built in the
-  browser from the pinned snapshot), Figma (the Figma file,
-  new tab; `FIGMA_URL` in `src/lib/links.ts`). Phones get a menu.
-- **Code samples**: icon-page and inspector examples share a light stone
-  surface in light mode and warm charcoal in dark mode. Other code blocks
-  remain dark in both themes, with syntax colors (highlight.js core with
+- **Header**: Docs, the Feedback popup, and a link to the Figma library.
+  The Docs header links back to Browse icons and puts the Figma library link in its Figma section.
+- **Bulk downloads**: The customize panel builds a ZIP of Regular icons with the selected look,
+  plus LICENSE and README. Solid, Duocolor, and Duotone are available for preview.
+- **Code samples**: docs, icon-page, and inspector examples share a light stone
+  surface in light mode and warm charcoal in dark mode, with syntax colors (highlight.js core with
   TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
   shown as a terminal. Icon pages and the inspector offer copyable React, Vue,
   Svelte, SolidJS, and Angular examples. See the setup docs for each framework.
   Icon pages keep Copy SVG beside Download PNG rather than displaying a raw
-  SVG code block; copying uses the selected style and any applied modifier.
+  SVG code block. Regular exports include any applied modifier.
 - **Docs** (in the header; the footer links Privacy and License, then GitHub | npm): SVG, React, Vue, Svelte, SolidJS, Angular, Figma, colors, sizes, modifiers, accessibility,
   licensing, privacy (no cookies or tracking; the three local-storage
   preferences, named), and source revision. The side nav marks the section being read,

@@ -85,7 +85,7 @@ describe('Header actions', () => {
     await expect(buildFullSet(DEFAULT_LOOK, 'light', ['regular'])).rejects.toThrow(/Regular artwork for tornado is missing/);
   });
 
-  it('Download all builds a ZIP of every core icon in every style with the chosen look, plus the license', async () => {
+  it('Download all builds a Regular-only ZIP with the chosen look, plus the license', async () => {
     const user = userEvent.setup();
     let blob: Blob | null = null;
     let filename = '';
@@ -99,7 +99,7 @@ describe('Header actions', () => {
     await user.click(within(screen.getByRole('main')).getByRole('button', { name: 'Download all icons' }));
     await screen.findByText(/^Downloaded fos-icons-/);
     downloadLook = DEFAULT_LOOK;
-    expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}.zip`);
+    expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}-regular.zip`);
 
     const { unzipSync, strFromU8 } = await import('fflate');
     const bytes = await new Promise<ArrayBuffer>((resolve) => {
@@ -109,10 +109,8 @@ describe('Header actions', () => {
     });
     const files = unzipSync(new Uint8Array(bytes));
     const names = Object.keys(files);
-    expect(names.filter((n) => n.endsWith('.svg'))).toHaveLength(catalog.icons.length * catalog.styles.length);
-    for (const folder of ['regular', 'solid', 'duocolor', 'duotone']) {
-      expect(names).toContain(`${folder}/search.svg`);
-    }
+    expect(names.filter((n) => n.endsWith('.svg'))).toHaveLength(catalog.icons.length);
+    expect(names.filter((n) => n.endsWith('.svg')).every((name) => name.startsWith('regular/'))).toBe(true);
     // Files carry the chosen size, stroke, and color. 56px is drawn from the
     // 64px optical size: 0.75 grid units is 2 units on its 64px grid.
     const regular = strFromU8(files['regular/search.svg']);
@@ -125,18 +123,19 @@ describe('Header actions', () => {
     expect(strFromU8(files['README.txt'])).toMatch(/Size: 56px, drawn from the 64px optical size\. Stroke: 0\.75px/);
   });
 
-  it('downloads only the styles left switched on', async () => {
+  it('shows the Free badge on Regular and disables Premium style options', async () => {
     const user = userEvent.setup();
-    let filename = '';
-    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: () => 'blob:test', revokeObjectURL: () => {} }));
-    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) { filename = this.download; });
     renderAt('/');
     const main = within(screen.getByRole('main'));
-    for (const style of ['Regular', 'Solid', 'Duocolor']) await user.click(main.getByRole('checkbox', { name: style }));
-    await user.click(main.getByRole('button', { name: 'Download Duotone' }));
-    await screen.findByText(/^Downloaded fos-icons-/);
-    expect(filename).toBe(`fos-icons-${lock.revision!.slice(0, 7)}-duotone.zip`);
-    await user.click(main.getByRole('checkbox', { name: 'Duotone' }));
+    const regular = main.getByRole<HTMLInputElement>('checkbox', { name: 'Regular' });
+    expect(regular.getAttribute('aria-description')).toBe('Free');
+    expect(regular.checked).toBe(true);
+    for (const style of ['Solid', 'Duocolor', 'Duotone']) {
+      const option = main.getByRole<HTMLInputElement>('checkbox', { name: style });
+      expect(option.disabled).toBe(true);
+      expect(option.checked).toBe(false);
+    }
+    await user.click(regular);
     expect((main.getByRole('button', { name: 'Choose at least one style' }) as HTMLButtonElement).disabled).toBe(true);
   });
 

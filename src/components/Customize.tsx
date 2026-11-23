@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
-import { catalog, type StyleId } from '../lib/catalog';
+import { catalog, FREE_ICON_STYLE, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
 import { errorText } from '../i18n/errors';
@@ -12,7 +12,7 @@ import { isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { TeachingTip } from './TeachingTip';
 import { RailActions } from './QuickTools';
-import { Button, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
+import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 /** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
 const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
@@ -377,8 +377,7 @@ export function CustomizePanel({
 }
 
 /**
- * Download the set as one ZIP with the look set above: every style by
- * default, or only the styles the user keeps switched on.
+ * Download every icon in the free style with the look set above.
  */
 export function DownloadSection({ look }: { look: Look }) {
   const { t, n } = useI18n();
@@ -386,16 +385,13 @@ export function DownloadSection({ look }: { look: Look }) {
   const toast = useToast();
   const { resolved: theme } = useTheme();
   const uid = useId();
-  const [styles, setStyles] = useState<StyleId[]>([...catalog.styles]);
+  const [includeRegular, setIncludeRegular] = useState(true);
   const [busy, setBusy] = useState(false);
-  const all = styles.length === catalog.styles.length;
-  const toggle = (style: StyleId) => setStyles((current) => (
-    current.includes(style) ? current.filter((s) => s !== style) : catalog.styles.filter((s) => s === style || current.includes(s))
-  ));
   const download = async () => {
-    if (busy || !styles.length) return;
+    if (busy || !includeRegular) return;
     setBusy(true);
     try {
+      const styles = [FREE_ICON_STYLE] as const;
       const name = fullSetName(styles);
       downloadBlob(await buildFullSet(look, theme, styles), name);
       toast('success', t('download.done', { file: name }));
@@ -405,36 +401,30 @@ export function DownloadSection({ look }: { look: Look }) {
       setBusy(false);
     }
   };
-  const label = busy
-    ? t('download.preparing')
-    : !styles.length
-      ? t('download.none')
-      : all
-        ? t('download.all')
-        : styles.length === 1
-          ? t('download.one', { style: t(`style.${styles[0]}`) })
-          : t('download.some', { count: styles.length });
+  const label = busy ? t('download.preparing') : includeRegular ? t('download.all') : t('download.none');
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
       <RailActions>{() => (
-        <IconButton icon="download" label={label} onClick={download} disabled={busy || !styles.length} />
+        <IconButton icon="download" label={label} onClick={download} disabled={busy || !includeRegular} />
       )}</RailActions>
       <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
-      <fieldset className="mt-3">
+      <fieldset className="mt-4">
         <legend className="sr-only">{t('download.styles')}</legend>
         <div className="flex flex-wrap gap-1">
-          {catalog.styles.map((style) => (
-            // The keyword-tag shape: brand tint with a tick when included, neutral with a plus when not.
-            <label
-              key={style}
-              // Share the row at the default panel width; in a wider panel, stop at 6rem and sit left.
-              className="inline-flex h-7 min-w-0 max-w-24 flex-1 cursor-pointer select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted transition-colors hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40"
-            >
-              <input type="checkbox" className="sr-only" checked={styles.includes(style)} onChange={() => toggle(style)} />
-              <UiIcon name={styles.includes(style) ? 'check' : 'plus'} className="size-3" />
-              {t(`style.${style}`)}
-            </label>
-          ))}
+          {catalog.styles.map((style) => {
+            const free = style === FREE_ICON_STYLE;
+            return (
+              <label key={style} className={`relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted ${
+                free ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
+              }`}>
+                <input type="checkbox" className="sr-only" disabled={!free} checked={free && includeRegular}
+                  aria-description={t(free ? 'icons.free' : 'download.premiumSoon')} onChange={(event) => setIncludeRegular(event.target.checked)} />
+                <UiIcon name={free ? (includeRegular ? 'check' : 'plus') : 'crown-simple'} className="size-3" />
+                {t(`style.${style}`)}
+                {free && <span aria-hidden="true" className={freeBadgeClass}>{t('icons.free')}</span>}
+              </label>
+            );
+          })}
         </div>
       </fieldset>
       <div className="mt-3 flex gap-2">
@@ -442,7 +432,7 @@ export function DownloadSection({ look }: { look: Look }) {
           variant="primary"
           icon="download"
           onClick={download}
-          disabled={busy || !styles.length}
+          disabled={busy || !includeRegular}
           aria-describedby={`${uid}-note`}
           className="min-w-0 flex-1 disabled:cursor-wait"
         >
@@ -450,7 +440,7 @@ export function DownloadSection({ look }: { look: Look }) {
         </Button>
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
-        {t('download.note', { count: n(catalog.icons.length * styles.length) })}
+        {t('download.note', { count: n(includeRegular ? catalog.icons.length : 0) })} {t('download.premiumSoon')}
       </p>
     </section>
   );
