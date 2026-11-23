@@ -1,4 +1,6 @@
-import { FEEDBACK_MAX_LENGTH, FEEDBACK_TYPES, isFeedbackType } from '../src/lib/feedback';
+import type { IncomingMessage, ServerResponse } from 'node:http';
+import { Readable } from 'node:stream';
+import { FEEDBACK_MAX_LENGTH, FEEDBACK_PATH, FEEDBACK_TYPES, isFeedbackType } from '../src/lib/feedback.js';
 
 const MAX_BODY_BYTES = 16 * 1024;
 
@@ -6,7 +8,7 @@ function reply(status: number) {
   return Response.json({ ok: status === 200 }, { status, headers: { 'Cache-Control': 'no-store' } });
 }
 
-export async function POST(request: Request) {
+export async function submitFeedback(request: Request) {
   if (request.headers.get('origin') !== new URL(request.url).origin) return reply(403);
   if (request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') return reply(415);
 
@@ -72,4 +74,27 @@ export async function POST(request: Request) {
     console.error('Feedback delivery failed', type);
   }
   return reply(502);
+}
+
+/** Node entry point shared by the Vercel function and the Vite dev server. */
+export default async function handleFeedback(req: IncomingMessage, res: ServerResponse) {
+  if (req.method !== 'POST') {
+    res.writeHead(405, { Allow: 'POST', 'Cache-Control': 'no-store' }).end();
+    return;
+  }
+
+  // Vercel terminates TLS before handing the request to the Node function.
+  const scheme = req.headers['x-forwarded-proto'] === 'https' ? 'https' : 'http';
+  const options = {
+    method: 'POST',
+    headers: {
+      Origin: req.headers.origin ?? '',
+      'Content-Type': req.headers['content-type'] ?? '',
+    },
+    body: Readable.toWeb(req) as ReadableStream<Uint8Array>,
+    duplex: 'half' as const, // Node requires duplex when Request receives a stream.
+  };
+  const request = new Request(`${scheme}://${req.headers.host}${FEEDBACK_PATH}`, options);
+  const response = await submitFeedback(request);
+  res.writeHead(response.status, Object.fromEntries(response.headers)).end(await response.text());
 }
