@@ -18,7 +18,7 @@ const en = {
 
   // Page metadata (titles ≤ 60 characters, descriptions ~150)
   'meta.home.title': 'Fos Icons — Find the right icon, then ship it',
-  'meta.home.description': '{icons}+ free, {license}-licensed SVG icons. Customize and export SVG or PNG, or use Fos Icons with {platforms}.',
+  'meta.home.description': '{variants}+ SVG icon variants in four styles and {combinations}+ modifier and placement combinations. Use with {platforms}.',
   'meta.docs.title': 'Fos Icons Docs — SVG, React, Vue, Svelte & Flutter',
   'meta.docs.description': 'Set up Fos Icons with {platforms}. Learn how to use SVGs, modifiers, and accessible labels.',
   'meta.brands.title': 'Brand icons — Fos Icons',

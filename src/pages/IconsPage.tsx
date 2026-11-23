@@ -13,7 +13,7 @@ import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, Select, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
-import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, iconsByName, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
+import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
@@ -376,8 +376,8 @@ export function IconsPage() {
         </h1>
         <p className="mt-2 text-base text-muted">
           {t('icons.intro', {
-            variants: Math.floor(catalog.icons.length * catalog.styles.length / 100) * 100,
-            combinations: 860_000,
+            variants: ICON_VARIANTS_ROUNDED,
+            combinations: MODIFIER_COMBINATIONS_ROUNDED,
             styles: list(catalog.styles.map((s) => t(`style.${s}`))),
             platforms: list(PLATFORM_NAMES),
           })}
