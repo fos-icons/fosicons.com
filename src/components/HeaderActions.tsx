@@ -11,6 +11,7 @@ const menuItem = 'min-h-11 w-full justify-start';
 /** Plain text links for the header bar. */
 const linkBase = 'whitespace-nowrap rounded text-sm font-medium underline-offset-4 transition hover:underline disabled:cursor-wait disabled:opacity-60';
 const textLink = `${linkBase} text-muted hover:text-ink`;
+const currentLink = 'aria-[current=page]:text-ink aria-[current=page]:underline';
 
 /**
  * The home page's two calls to action under its intro: get started on the
@@ -64,10 +65,13 @@ export function HeaderActions({ docsPage = false }: { docsPage?: boolean }) {
   return (
     <nav aria-label={t('header.main')} className="flex items-center gap-1 md:gap-5">
       {docsPage && <LocalLink to="/" className={`${textLink} hidden md:inline-flex`}>{t('header.browse')}</LocalLink>}
-      <NavLink to={path('/docs')} onClick={close} className={`${textLink} inline-flex min-h-11 items-center px-2 aria-[current=page]:text-ink aria-[current=page]:underline md:px-0`}>
+      <NavLink to={path('/docs')} onClick={close} className={`${textLink} ${currentLink} inline-flex min-h-11 items-center px-2 md:px-0`}>
         {t('header.docs')}
       </NavLink>
       <div className="hidden items-center gap-5 md:flex">
+        <NavLink to={path('/pricing')} className={`${textLink} ${currentLink} inline-flex min-h-11 items-center`}>
+          {t('header.pricing')}
+        </NavLink>
         {!docsPage && FIGMA_URL && (
           <a href={FIGMA_URL} target="_blank" rel="noreferrer" className={textLink}>
             {t('header.figma')}{NEW_TAB}
@@ -98,6 +102,10 @@ export function HeaderActions({ docsPage = false }: { docsPage?: boolean }) {
           className="absolute end-0 top-full z-40 w-60 max-w-[calc(100vw-2rem)] space-y-1 rounded-xl border border-line bg-surface p-2 shadow-md"
         >
           <ButtonLink to="/" onClick={close} variant="ghost" icon="search" className={menuItem}>{t('header.browse')}</ButtonLink>
+          <NavLink to={path('/pricing')} onClick={close} className={`flex items-center gap-2 rounded-lg px-3 text-sm font-medium text-ink underline-offset-4 hover:bg-sunken ${menuItem} ${currentLink}`}>
+            <UiIcon name="book-open" className="size-[18px]" />
+            {t('header.pricing')}
+          </NavLink>
           {!docsPage && FIGMA_URL && (
             <ButtonAnchor href={FIGMA_URL} external onClick={() => { close(); toggleRef.current?.focus(); }} variant="ghost" iconEnd="link-external" className={menuItem}>{t('header.figma')}</ButtonAnchor>
           )}

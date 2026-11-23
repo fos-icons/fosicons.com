@@ -1,0 +1,305 @@
+.pricing {
+  --pricing-gutter: clamp(1.25rem, 2.6vw, 2rem);
+  --pricing-section: clamp(4rem, 9vw, 7.5rem);
+  /* Advanced is the complete tier: a faint brand wash runs down its whole column. */
+  --pricing-wash: color-mix(in oklab, var(--c-brand) 6%, var(--c-surface));
+  --pricing-board-radius: 1.5rem;
+  --pricing-label: 36%;
+  padding-block: 2rem var(--pricing-section);
+}
+
+/* Intro: the same scale as the home page headline. */
+
+.pricing-intro {
+  display: grid;
+  gap: 0.5rem;
+  max-inline-size: 42rem;
+  margin-block-end: clamp(1.75rem, 4vw, 2.5rem);
+}
+
+.pricing-intro h1 {
+  font-size: 1.875rem;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 2.25rem;
+  text-wrap: balance;
+}
+
+.pricing-intro p {
+  color: var(--c-muted);
+  font-size: 1rem;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+@media (min-width: 40rem) {
+  .pricing { padding-block-start: 3rem; }
+  .pricing-intro h1 { font-size: 2.25rem; line-height: 2.5rem; }
+}
+
+/* Board: plans on top, the matrix beneath, one frame */
+
+.pricing-board {
+  border: 1px solid var(--c-line-strong);
+  border-radius: var(--pricing-board-radius);
+  overflow: clip;
+  background: var(--c-surface);
+}
+
+.pricing-board-head { display: grid; grid-template-columns: minmax(0, 1fr); }
+
+.pricing-lede {
+  display: grid;
+  align-content: start;
+  gap: 0.6rem;
+  order: 1;
+  padding: 2rem var(--pricing-gutter) 1.5rem;
+  border-block-start: 1px solid var(--c-line-strong);
+}
+
+.pricing-lede h2 {
+  font-family: var(--font-display);
+  font-size: 1.375rem;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.pricing-lede p { max-inline-size: 30ch; color: var(--c-muted); text-wrap: pretty; }
+
+.pricing-launch {
+  margin-block-start: 0.4rem;
+  color: var(--c-faint);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.pricing-plan {
+  display: grid;
+  align-content: start;
+  min-inline-size: 0;
+  padding: var(--pricing-gutter);
+}
+
+.pricing-plan + .pricing-plan { border-block-start: 1px solid var(--c-line); }
+.pricing-plan--advanced { background: var(--pricing-wash); }
+
+/* Name row: the plan's calendar (one style, four styles, or with a modifier) beside its name */
+
+.pricing-plan-name {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-block-size: 1.75rem;
+}
+
+.pricing-specimen { display: flex; align-items: center; }
+.pricing-specimen-one { inline-size: 1.75rem; block-size: 1.75rem; }
+.pricing-specimen-styles { display: flex; align-items: center; gap: 0.25rem; }
+.pricing-specimen-styles .glyph { inline-size: 1.25rem; block-size: 1.25rem; }
+
+.pricing-plan h3 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+/* The price leads each column. */
+
+.pricing-price {
+  display: grid;
+  gap: 0.25rem;
+  margin-block: clamp(1.25rem, 2.5vw, 2rem) 0.75rem;
+}
+
+.pricing-price-amount {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.625rem;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.pricing-price strong {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 3.6vw, 3.25rem);
+  font-weight: 650;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.pricing-price del { color: var(--c-muted); font-size: 1rem; text-decoration: line-through; }
+.pricing-price-term { color: var(--c-muted); font-size: 0.8125rem; }
+.pricing-summary { color: var(--c-muted); font-size: 0.9375rem; text-wrap: pretty; }
+
+.pricing-action {
+  display: flex;
+  align-items: center;
+  min-block-size: 2.75rem;
+  margin-block-start: 1.25rem;
+}
+
+.pricing-action a { min-block-size: 2.75rem; }
+
+.pricing-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-block-size: 2.75rem;
+  padding-inline: 1rem;
+  border: 1px dashed var(--c-line-strong);
+  border-radius: 999px;
+  color: var(--c-muted);
+  font-size: 0.875rem;
+  font-weight: 550;
+}
+
+.pricing-status span {
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  border-radius: 50%;
+  background: var(--c-brand);
+}
+
+.pricing-highlights {
+  display: grid;
+  gap: 0.5rem;
+  margin-block-start: 1.5rem;
+  padding-block-start: 1.25rem;
+  border-block-start: 1px solid var(--c-line);
+  font-size: 0.9375rem;
+}
+
+.pricing-highlights li { display: flex; align-items: baseline; gap: 0.55rem; }
+.pricing-highlights .glyph { align-self: start; margin-block-start: 0.2rem; color: var(--c-brand); }
+
+/* Matrix */
+
+.pricing-matrix {
+  inline-size: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border-block-start: 1px solid var(--c-line-strong);
+  font-size: clamp(0.75rem, 1.6vw, 0.9375rem);
+}
+
+.pricing-matrix-label { inline-size: 46%; }
+
+.pricing-matrix :is(th, td) {
+  padding: 0.85rem clamp(0.25rem, 1vw, 0.75rem);
+  border-block-end: 1px solid var(--c-line);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.pricing-matrix :is(thead, tbody) th:first-child { padding-inline-start: var(--pricing-gutter); text-align: start; }
+.pricing-matrix thead th { background: var(--c-sunken); font-size: 0.8125rem; font-weight: 650; }
+.pricing-matrix tbody th { font-weight: 500; }
+.pricing-matrix .pricing-matrix-group th {
+  padding-block: 0.65rem;
+  background: var(--c-sunken);
+  font-weight: 650;
+}
+.pricing-matrix .pricing-cell--advanced { background: var(--pricing-wash); }
+.pricing-matrix td .glyph { vertical-align: middle; color: var(--c-faint); }
+.pricing-matrix td[data-included] .glyph { color: var(--c-brand); }
+
+@media (hover: hover) {
+  .pricing-matrix tbody tr:not(.pricing-matrix-group):hover > * { background: var(--c-sunken); }
+  .pricing-matrix tbody tr:hover > .pricing-cell--advanced { background: color-mix(in oklab, var(--c-brand) 10%, var(--c-surface)); }
+}
+
+.pricing-library-note {
+  padding: 1rem var(--pricing-gutter);
+  color: var(--c-muted);
+  font-size: 0.875rem;
+  text-wrap: pretty;
+}
+
+.pricing-library-note a,
+.pricing-faq details a { color: var(--c-brand); text-decoration: underline; text-underline-offset: 0.15em; }
+
+/* FAQ */
+
+.pricing-faq { display: grid; gap: 1.5rem; margin-block-start: var(--pricing-section); }
+
+.pricing-faq > h2 {
+  font-size: clamp(1.5rem, 2.4vw, 1.75rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.pricing-faq details { border-block-start: 1px solid var(--c-line); }
+.pricing-faq details:last-child { border-block-end: 1px solid var(--c-line); }
+
+.pricing-faq summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-block-size: 4rem;
+  padding-block: 1rem;
+  cursor: pointer;
+  font-size: 1.0625rem;
+  font-weight: 600;
+  list-style: none;
+  transition: color 160ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pricing-faq summary::-webkit-details-marker { display: none; }
+.pricing-faq summary .glyph { color: var(--c-muted); transition: rotate 240ms cubic-bezier(0.16, 1, 0.3, 1); }
+.pricing-faq summary:hover { color: var(--c-brand); }
+.pricing-faq details[open] summary .glyph { rotate: 180deg; }
+.pricing-faq details p { max-inline-size: 62ch; padding-block-end: 1.25rem; color: var(--c-muted); line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pricing-faq summary,
+  .pricing-faq summary .glyph { transition: none; }
+}
+
+@media (min-width: 48rem) {
+  .pricing-faq { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--pricing-gutter); }
+
+  /* Medium: the lede heads the board, the plans share a row, the matrix keeps its headings. */
+  .pricing-board-head { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+  .pricing-lede {
+    grid-column: 1 / -1;
+    order: 0;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: end;
+    column-gap: var(--pricing-gutter);
+    padding-block-end: var(--pricing-gutter);
+    border-block: 0 1px solid var(--c-line);
+  }
+
+  .pricing-lede h2 { grid-column: 1 / -1; }
+  .pricing-launch { margin-block-start: 0; }
+
+  .pricing-plan,
+  .pricing-plan + .pricing-plan { border-block-start: 0; }
+  .pricing-plan + .pricing-plan { border-inline-start: 1px solid var(--c-line); }
+
+}
+
+/* Wide: the lede and three plans share the matrix's columns. */
+@media (min-width: 72rem) {
+  .pricing-board-head { grid-template-columns: var(--pricing-label) repeat(3, minmax(0, 1fr)); }
+
+  .pricing-lede {
+    grid-column: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto 1fr;
+    align-items: start;
+    padding-block: var(--pricing-gutter);
+    border-block-end: 0;
+  }
+
+  .pricing-lede h2 { grid-column: auto; }
+  .pricing-launch { align-self: end; padding-block-start: 1.5rem; }
+  .pricing-lede + .pricing-plan { border-inline-start: 1px solid var(--c-line); }
+  .pricing-matrix-label { inline-size: var(--pricing-label); }
+
+  .pricing-matrix :is(td, thead th:not(:first-child)) { border-inline-start: 1px solid var(--c-line); }
+}

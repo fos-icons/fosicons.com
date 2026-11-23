@@ -1,0 +1,62 @@
+import { cleanup, render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { afterEach, beforeEach, expect, it } from 'vitest';
+import { primeArtwork } from '../src/lib/artwork';
+import PricingPage from '../src/pages/PricingPage';
+
+afterEach(cleanup);
+
+beforeEach(() => {
+  const sample = '<svg viewBox="0 0 64 64"></svg>';
+  primeArtwork({
+    'regular@64': { calendar: sample },
+    'filled@64': { calendar: sample },
+    'duocolor@64': { calendar: sample },
+    'duotone@64': { calendar: sample, 'calendar-add': sample },
+  });
+});
+
+it('shows the annual launch plans without offering checkout', () => {
+  render(<MemoryRouter><PricingPage /></MemoryRouter>);
+  const free = within(screen.getByRole('article', { name: 'Free' }));
+  const pro = within(screen.getByRole('article', { name: 'Pro' }));
+  const advanced = within(screen.getByRole('article', { name: 'Advanced' }));
+  expect(free.getByText('$0')).toBeTruthy();
+  expect(free.getByRole('link', { name: 'Browse Regular icons' }).getAttribute('href')).toBe('/?style=regular');
+  expect(free.queryByText('Standard annual price:', { exact: false })).toBeNull();
+  expect(pro.getByText('$49')).toBeTruthy();
+  expect(pro.getByText('$69').tagName).toBe('DEL');
+  expect(pro.getByText('Standard annual price: $69 USD.')).toBeTruthy();
+  expect(advanced.getByText('$99')).toBeTruthy();
+  expect(advanced.getByText('$129').tagName).toBe('DEL');
+  expect(advanced.getByText('Standard annual price: $129 USD.')).toBeTruthy();
+  for (const paid of [pro, advanced]) {
+    expect(paid.getByText('USD / year')).toBeTruthy();
+    expect(paid.getByText('Coming soon')).toBeTruthy();
+    expect(paid.queryByRole('link')).toBeNull();
+    expect(paid.queryByRole('button')).toBeNull();
+  }
+});
+
+it('compares styles, exports, modifiers, and planned integrations by tier', () => {
+  render(<MemoryRouter><PricingPage /></MemoryRouter>);
+  const table = within(screen.getByRole('table', { name: 'Compare plans' }));
+  const statuses = (name: string) => within(table.getByRole('row', { name: new RegExp(`^${name}`) }))
+    .getAllByRole('cell').map((cell) => cell.textContent);
+  const all = ['Included', 'Included', 'Included'];
+  const paid = ['Not included', 'Included', 'Included'];
+  const advanced = ['Not included', 'Not included', 'Included'];
+  expect(table.getAllByRole('rowgroup')).toHaveLength(6);
+  expect(statuses('Regular icons')).toEqual(all);
+  expect(statuses('Individual transparent PNG downloads')).toEqual(all);
+  expect(statuses('Solid icons')).toEqual(paid);
+  expect(statuses('Duocolor icons')).toEqual(paid);
+  expect(statuses('Duotone icons')).toEqual(paid);
+  expect(statuses('Bulk ZIP exports for SVG')).toEqual(paid);
+  expect(statuses('Bulk ZIP exports for PNG')).toEqual(paid);
+  expect(statuses('Look up base icons in Claude Code and Codex')).toEqual(paid);
+  expect(statuses('Export individual icons with modifiers')).toEqual(advanced);
+  expect(statuses('Export icons with modifiers in bulk')).toEqual(advanced);
+  expect(statuses('Look up icons with modifiers in Claude Code and Codex')).toEqual(advanced);
+  expect(screen.getByRole('link', { name: 'Figma library' }).getAttribute('href')).toBe('/docs#figma');
+});

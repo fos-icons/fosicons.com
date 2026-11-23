@@ -118,10 +118,13 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   `/brands` URL redirects). The 32 approved third-party marks (social, Google,
   Microsoft) synced from the library's `brand-assets/`, shown unmodified in
   Regular; the Solid switch appears once a brand ships a Solid source.
-- **Header**: Docs, the Feedback popup, and a link to the Figma library.
+- **Header**: Docs, Pricing, the Feedback popup, and a link to the Figma library.
   The Docs header links back to Browse icons and puts the Figma library link in its Figma section.
 - **Bulk downloads**: The customize panel builds a ZIP of Regular icons with the selected look,
   plus LICENSE and README. Solid, Duocolor, and Duotone are available for preview.
+- **Pricing** (`/pricing`): Free, Pro ($49 USD/year against a $69 standard price), and Advanced ($99 USD/year against a $129 standard price).
+  Plan highlights and a grouped comparison cover icon styles, customization, exports, modifiers, and planned AI integrations.
+  The page previews the paid plans; checkout and plan-based access are not enabled.
 - **Code samples**: docs, icon-page, and inspector examples share a light stone
   surface in light mode and warm charcoal in dark mode, with syntax colors (highlight.js core with
   TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
