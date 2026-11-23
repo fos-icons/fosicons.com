@@ -452,11 +452,12 @@ describe('Icons page', () => {
     expect(copyScale.disabled).toBe(false);
   });
 
-  it('links Documentation from the intro and keeps GitHub and Privacy in the footer', () => {
+  it('links Pricing from the header, Documentation from the intro, and GitHub and Privacy from the footer', () => {
     renderAt('/');
     const header = screen.getByRole('banner');
     expect(within(screen.getByRole('main')).getByRole('link', { name: 'Documentation' }).getAttribute('href')).toBe('/docs');
-    expect(within(header).queryByRole('link', { name: /GitHub|Pricing/ })).toBeNull();
+    expect(within(header).getByRole('link', { name: 'Pricing' }).getAttribute('href')).toBe('/pricing');
+    expect(within(header).queryByRole('link', { name: /GitHub/ })).toBeNull();
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).queryByRole('link', { name: 'Docs' })).toBeNull();
     expect(within(footer).getByRole('link', { name: /GitHub/ })).toBeTruthy();
