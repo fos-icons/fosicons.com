@@ -1,6 +1,6 @@
 import type { SiteTheme } from './theme';
 import { LocalizedError } from '../i18n/errors';
-import { catalog, loadStyle, lock, opticalStroke, STYLE_META, type IconEntry, type StyleId } from './catalog';
+import { catalog, FREE_ICON_STYLE, loadStyle, lock, opticalStroke, STYLE_META, type IconEntry, type StyleId } from './catalog';
 import { artworkSize, DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
 import { buildSvg } from './svg';
 import { buildZip, type ZipEntry } from './zip';
@@ -34,10 +34,10 @@ export function buildFullSet(
   return buildIconSet(catalog.icons, catalog.styles.filter((s) => only.includes(s)), look, theme);
 }
 
-/** One category in every style at the library's native size and colors. */
+/** The free style for one category at the library's native size and colors. */
 export function buildCategorySet(category: string): Promise<Blob> {
   const icons = catalog.icons.filter((icon) => icon.category === category);
-  return buildIconSet(icons, catalog.styles, { ...DEFAULT_LOOK, size: catalog.grid }, 'light', category);
+  return buildIconSet(icons, [FREE_ICON_STYLE], { ...DEFAULT_LOOK, size: catalog.grid }, 'light', category);
 }
 
 async function buildIconSet(

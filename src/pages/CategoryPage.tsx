@@ -54,7 +54,7 @@ export default function CategoryPage() {
         </Button>
       </div>
       <p id="category-download-format" className="mt-2 text-sm text-muted">
-        {t('categoryPage.downloadFormat', { count: catalog.styles.length })}
+        {t('categoryPage.downloadFormat')}
       </p>
 
       <div className="mt-10">

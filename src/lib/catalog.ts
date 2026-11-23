@@ -4,6 +4,7 @@ import paletteData from '../data/palettes.json';
 import sourceLock from '../data/source-lock.json';
 
 export type StyleId = 'regular' | 'filled' | 'duocolor' | 'duotone';
+export const FREE_ICON_STYLE = 'regular' satisfies StyleId;
 
 export interface Composition {
   base: string;

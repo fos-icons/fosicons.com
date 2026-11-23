@@ -214,13 +214,15 @@ export function RangeSlider({
   );
 }
 
+export const freeBadgeClass = 'pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-100 px-1.5 text-[10px] leading-4 font-semibold text-green-900 ring-2 ring-canvas dark:bg-green-950 dark:text-green-200';
+
 /** Accessible single-choice segmented control (radio group semantics). */
 export function Segmented<T extends string>({
   label, value, options, onChange, size = 'md', fill = false,
 }: {
   label: string;
   value: T;
-  options: { value: T; label: string; title?: string }[];
+  options: { value: T; label: string; title?: string; badge?: string }[];
   onChange: (value: T) => void;
   size?: 'sm' | 'md';
   /** Below the sm breakpoint, span the full width with equal options. */
@@ -273,7 +275,7 @@ export function Segmented<T extends string>({
     refs.current[target]?.focus();
   };
   return (
-    <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative isolate rounded-lg border border-line bg-sunken p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
+    <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative isolate rounded-lg border border-line bg-segmented-track p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
       {pill && (
         <span
           aria-hidden="true"
@@ -292,6 +294,7 @@ export function Segmented<T extends string>({
             type="button"
             role="radio"
             aria-checked={checked}
+            aria-description={option.badge}
             title={option.title}
             tabIndex={checked || (index < 0 && i === 0) ? 0 : -1}
             onClick={() => select(option.value)}
@@ -304,6 +307,11 @@ export function Segmented<T extends string>({
             }`}
           >
             {option.label}
+            {option.badge && (
+              <span aria-hidden="true" className={freeBadgeClass}>
+                {option.badge}
+              </span>
+            )}
           </button>
         );
       })}

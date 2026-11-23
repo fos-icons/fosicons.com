@@ -101,6 +101,7 @@ describe('Icons page', () => {
     renderAt('/?q=cloud&icon=cloud');
     await waitFor(() => expect(fetchMock.mock.calls[0]?.[0]).toMatch(/regular\/\d+\.json$/));
     const [toolbarStyle] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
+    expect(within(toolbarStyle).getByRole('radio', { name: 'Regular' }).getAttribute('aria-description')).toBe('Free');
     await user.click(within(toolbarStyle).getByRole('radio', { name: 'Duocolor' }));
     await screen.findByRole('img', { name: /cloud, Duocolor, preview/ });
     await act(async () => { finishRegular(new Response(null, { status: 503 })); });
@@ -242,6 +243,9 @@ describe('Icons page', () => {
     expect(pathname).toBe('/icons/user-add');
     await act(async () => {});
     expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /\/48\/duotone\/\d+\.json$/.test(u))).toBe(true);
+    expect(screen.getByRole('button', { name: 'Download user' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Copy' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'arrow-up' }).getAttribute('aria-description')).toBe('Premium');
   });
 
   it.each([
@@ -282,7 +286,7 @@ describe('Icons page', () => {
     expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General']);
     await user.click(tablist.getByRole('tab', { name: 'General' }));
     const general = within(screen.getByRole('tabpanel', { name: 'General' }));
-    for (const label of ['Dot', 'Lock', 'Coins', '24']) {
+    for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield']) {
       expect(general.getByRole('button', { name: new RegExp(`^${label} modifier`) })).toBeTruthy();
     }
     expect(general.queryByRole('button', { name: /^(PDF|4K) modifier/ })).toBeNull();
@@ -295,6 +299,7 @@ describe('Icons page', () => {
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
     // Switching modifiers keeps the chosen corner.
     await user.click(screen.getByRole('tab', { name: 'Actions' }));
+    expect(within(screen.getByRole('tabpanel', { name: 'Actions' })).queryByRole('button', { name: /^(Search|Phone|Shield) modifier/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
@@ -477,7 +482,7 @@ describe('Icons page', () => {
   it('offers only Regular and Solid in the Brands category, and moves duo links to Solid', async () => {
     renderAt('/?category=Brands&style=duotone');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
-    expect(within(switcher).getAllByRole('radio').map((radio) => radio.textContent)).toEqual(['Regular', 'Solid']);
+    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Solid'].map((name) => within(switcher).getByRole('radio', { name })));
     expect(within(switcher).getByRole('radio', { name: 'Solid' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('list', { name: /Solid icons/ })).toBeTruthy();
   });
@@ -485,9 +490,8 @@ describe('Icons page', () => {
   it('lists Brands as the last category, not a style, and opens old Brands links there', async () => {
     renderAt('/?style=brands');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
-    const labels = within(switcher).getAllByRole('radio').map((radio) => radio.textContent);
     // Brands come in Regular and Solid only.
-    expect(labels).toEqual(['Regular', 'Solid']);
+    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Solid'].map((name) => within(switcher).getByRole('radio', { name })));
     const category = screen.getByRole('combobox', { name: 'Category' }) as HTMLSelectElement;
     expect(category.value).toBe('Brands');
     expect([...category.options].at(-1)?.value).toBe('Brands');
@@ -574,9 +578,9 @@ describe('Side pane (desktop)', () => {
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     // Feedback lives in the site header; the pane bar has no page link until an icon is selected.
-    const feedback = within(screen.getByRole('banner')).getAllByRole('link', { name: /Feedback/ })[0];
-    expect(feedback.getAttribute('href')).toBe('https://github.com/fos-icons/fosicons.com/issues/new');
-    expect(within(pane).queryByRole('link', { name: /Feedback/ })).toBeNull();
+    const feedback = within(screen.getByRole('banner')).getByRole('button', { name: 'Feedback' });
+    expect(feedback.getAttribute('aria-haspopup')).toBe('dialog');
+    expect(within(pane).queryByRole('button', { name: 'Feedback' })).toBeNull();
     expect(within(pane).queryByRole('link', { name: 'Open icon page' })).toBeNull();
     expect(screen.queryByRole('button', { name: /^Theme:/ })).toBeNull();
     await user.click(within(pane).getByRole('button', { name: 'Collapse panel' }));
@@ -818,7 +822,7 @@ describe('Icon page header search (desktop)', () => {
     </ThemeProvider>,
   );
 
-  it('puts Copy SVG beside Download PNG without showing raw SVG code', async () => {
+  it('keeps SVG copy and file downloads available for Regular only', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/triangle-right');
     const copy = screen.getByRole('button', { name: 'Copy SVG' });
@@ -831,9 +835,11 @@ describe('Icon page header search (desktop)', () => {
     await user.click(copy);
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
     await user.click(within(screen.getByRole('radiogroup', { name: 'Icon style' })).getByRole('radio', { name: 'Solid' }));
-    await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(false));
+    await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(true));
+    expect(png.hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Download Solid SVG' }).hasAttribute('disabled')).toBe(true);
     await user.click(copy);
-    expect(await navigator.clipboard.readText()).toBe(styleSvgs('filled')['triangle-right']);
+    expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
   });
 
   it('offers copyable Svelte, SolidJS, and Angular code on icon pages and updates it with the style', async () => {

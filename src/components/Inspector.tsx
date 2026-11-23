@@ -8,7 +8,7 @@ import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'rea
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
 import {
-  catalog, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
+  catalog, FREE_ICON_STYLE, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { artworkSize, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
@@ -105,6 +105,8 @@ export function Inspector({
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
+  const premium = style !== FREE_ICON_STYLE;
+  const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
   const showSecondary = !!source && duo && hasSecondaryRole(source);
@@ -364,11 +366,11 @@ export function Inspector({
 
       <RailActions>{(expand) => (
         <>
-          <IconButton icon="download" label={t('pane.downloadSvg')} disabled={!source || busy} onClick={() => {
+          <IconButton icon="download" label={t('pane.downloadSvg')} disabled={exportDisabled} className="disabled:opacity-50" onClick={() => {
             const file = `${baseName}.svg`;
             void run(() => downloadBlob(svgBlob(build(size)), file), t('export.downloaded', { file }));
           }} />
-          <IconButton icon="copy" label={t('pane.copySvg')} disabled={!source || busy} onClick={() => {
+          <IconButton icon="copy" label={t('pane.copySvg')} disabled={exportDisabled} className="disabled:opacity-50" onClick={() => {
             void run(() => copyText(build(size)), t('export.copiedSvg'));
           }} />
           {snippets && <IconButton icon="code" label={t('pane.openCode')} onClick={() => {
@@ -387,7 +389,8 @@ export function Inspector({
         baseName={baseName}
         size={size}
         build={(px) => build(px)}
-        disabled={!source || busy}
+        disabled={exportDisabled}
+        premium={premium}
         run={run}
       />
 

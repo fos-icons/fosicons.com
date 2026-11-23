@@ -9,7 +9,7 @@ import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, UiIcon, useTo
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork, useSizedArtwork } from '../lib/artwork';
-import { catalog, iconsByName, opticalSize, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
+import { catalog, FREE_ICON_STYLE, iconsByName, opticalSize, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
   categoryPath, displayName, editorPath, iconPath, relatedIcons, svgFilePath,
@@ -201,7 +201,7 @@ function PreviewStage({ name, style, svgAt, onStyleChange }: {
             fill
             label={t('icons.styleSwitcher')}
             value={style}
-            options={catalog.styles.map((s) => ({ value: s, label: t(`style.${s}`) }))}
+            options={catalog.styles.map((s) => ({ value: s, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }))}
             onChange={onStyleChange}
           />
         </div>
@@ -306,14 +306,16 @@ export default function IconPage() {
   const components = catalog.styles.map((s) => componentName(icon.name, s));
   const component = componentName(icon.name, style);
   const styleLabel = t(`style.${style}`);
+  const premium = style !== FREE_ICON_STYLE;
   const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
   const editorLink = `${editorPath(icon.name)}${style === catalog.styles[0] ? '' : `&style=${STYLE_META[style].slug}`}`;
 
   const copySvg = () => {
-    if (!shown) return;
+    if (premium || !shown) return;
     copyText(shown).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
   };
   const downloadPng = () => {
+    if (premium) return;
     const source = shownAt(PNG_PIXELS);
     if (!source) return;
     // Light-theme ink: a PNG usually lands on a white slide or doc, whatever theme the site is in.
@@ -392,9 +394,9 @@ export default function IconPage() {
 
         <div className="lg:col-start-1 lg:row-start-2">
           <div className="flex flex-wrap gap-2">
-            {applied ? (
+            {premium || applied ? (
               // With a modifier, the file is composed here rather than the library's published one.
-              <Button variant="primary" size="lg" icon="download" disabled={!shown} onClick={() => shown && downloadBlob(svgBlob(shown), `${fileBase}.svg`)}>
+              <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => !premium && shown && downloadBlob(svgBlob(shown), `${fileBase}.svg`)}>
                 {t('iconPage.download', { style: styleLabel })}
               </Button>
             ) : (
@@ -403,10 +405,11 @@ export default function IconPage() {
               </ButtonAnchor>
             )}
             <div className="flex flex-wrap gap-2">
-              <Button size="lg" onClick={downloadPng} disabled={!svg}>{t('iconPage.downloadPng')}</Button>
-              <Button size="lg" icon="copy" onClick={copySvg} disabled={!shown}>{t('iconPage.copySvg')}</Button>
+              <Button size="lg" onClick={downloadPng} disabled={premium || !svg}>{t('iconPage.downloadPng')}</Button>
+              <Button size="lg" icon="copy" onClick={copySvg} disabled={premium || !shown}>{t('iconPage.copySvg')}</Button>
             </div>
           </div>
+          {premium && <p className="mt-2 text-sm text-muted">{t('export.premiumSoon')}</p>}
           <LocalLink
             to={editorLink}
             onClick={openInPlace(() => openEditor(style))}
@@ -418,8 +421,6 @@ export default function IconPage() {
           <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 border-t border-line pt-6 text-sm">
             <dt className="text-muted">{t('iconPage.category')}</dt>
             <dd><LocalLink to={categoryPath(icon.category)} className="text-brand underline-offset-2 hover:underline">{category}</LocalLink></dd>
-            <dt className="text-muted">{t('iconPage.license')}</dt>
-            <dd><LocalLink to="/docs#licensing" className="underline-offset-2 hover:underline">{t('iconPage.licenseValue', { license: catalog.license })}</LocalLink></dd>
           </dl>
         </div>
       </div>

@@ -15,7 +15,7 @@ export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 export async function i18nFor(locale: string) {
   return createI18n(locale, await loadMessages(locale));
 }
-export { artworkDirectory, artworkKey, catalog } from './lib/catalog';
+export { artworkDirectory, artworkKey, catalog, FREE_ICON_STYLE } from './lib/catalog';
 export { brands } from './lib/brands';
 export { LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource } from './lib/links';
 

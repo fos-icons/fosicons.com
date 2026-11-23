@@ -15,16 +15,14 @@ const dist = join(root, 'dist');
 const ssrDir = join(root, 'dist-ssr');
 const server = await import(pathToFileURL(join(ssrDir, 'entry-server.js')).href);
 const {
-  PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands,
+  PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands, FREE_ICON_STYLE,
   SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
   LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
   DEFAULT_ARTWORK_SIZE, defaultGridSvg, artworkKey, gridPreviewPath, FRAMEWORK_PATHS, displayName,
 } = server;
 
-// Every style's artwork, for prerendering the landing pages and publishing
-// one SVG file per icon and style (/svg/<style>/<name>.svg) that pages link
-// to, Google Images can index, and anyone can download without JavaScript.
+// Load artwork for prerendering and publish the free style as standalone SVGs.
 const versionedArtwork = join(dist, artworkDirectory);
 mkdirSync(dirname(versionedArtwork), { recursive: true });
 renameSync(join(dist, 'icons'), versionedArtwork);
@@ -43,21 +41,15 @@ primeArtwork({ ...artwork, ...sizedArtwork });
 // Grid previews use the artwork the default interactive grid shows (its
 // optical size), so landing-page thumbnails match the home grid exactly.
 const previewArtwork = DEFAULT_ARTWORK_SIZE === catalog.grid ? artwork.regular : sizedArtwork[artworkKey('regular', DEFAULT_ARTWORK_SIZE)];
-let svgFiles = 0;
 mkdirSync(join(dist, 'svg', 'preview'), { recursive: true });
-for (const style of catalog.styles) {
-  mkdirSync(join(dist, 'svg', style), { recursive: true });
-  for (const icon of catalog.icons) {
-    const svg = artwork[style][icon.name];
-    if (!svg) throw new Error(`Missing ${style} artwork for ${icon.name}`);
-    writeFileSync(join(dist, svgFilePath(style, icon.name)), `${svg}\n`);
-    if (style === 'regular') {
-      const preview = previewArtwork[icon.name];
-      if (!preview) throw new Error(`Missing ${DEFAULT_ARTWORK_SIZE}px regular artwork for ${icon.name}`);
-      writeFileSync(join(dist, gridPreviewPath(icon.name)), `${defaultGridSvg(preview)}\n`);
-    }
-    svgFiles += 1;
-  }
+mkdirSync(join(dist, 'svg', FREE_ICON_STYLE), { recursive: true });
+for (const icon of catalog.icons) {
+  const svg = artwork[FREE_ICON_STYLE][icon.name];
+  if (!svg) throw new Error(`Missing ${FREE_ICON_STYLE} artwork for ${icon.name}`);
+  writeFileSync(join(dist, svgFilePath(FREE_ICON_STYLE, icon.name)), `${svg}\n`);
+  const preview = previewArtwork[icon.name];
+  if (!preview) throw new Error(`Missing ${DEFAULT_ARTWORK_SIZE}px regular artwork for ${icon.name}`);
+  writeFileSync(join(dist, gridPreviewPath(icon.name)), `${defaultGridSvg(preview)}\n`);
 }
 
 const template = readFileSync(join(dist, 'index.html'), 'utf8');
@@ -137,11 +129,11 @@ const urls = indexed.flatMap((page) => LOCALES.map(({ code }) => [
     ...LOCALES.map((alt) => `    <xhtml:link rel="alternate" hreflang="${alt.code}" href="${pageUrl(page, alt.code)}" />`),
     `    <xhtml:link rel="alternate" hreflang="x-default" href="${pageUrl(page, DEFAULT_LOCALE)}" />`,
   ] : []),
-  ...(page.icon ? catalog.styles.map((style) => [
+  ...(page.icon ? [
     '    <image:image>',
-    `      <image:loc>${absolute(svgFilePath(style, page.icon.name))}</image:loc>`,
+    `      <image:loc>${absolute(svgFilePath(FREE_ICON_STYLE, page.icon.name))}</image:loc>`,
     '    </image:image>',
-  ].join('\n')) : []),
+  ] : []),
   '  </url>',
 ].join('\n')));
 writeFileSync(join(dist, 'sitemap.xml'), [
@@ -190,7 +182,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   `- Flutter: \`${FLUTTER_PACKAGE.name}\` ([Setup](${absolute('/docs#flutter')}), [Dart package source](${packageSource('flutter')}))`,
   ...(FIGMA_URL ? [`- [Figma library](${FIGMA_URL})`] : []),
   `- [React icons](${absolute(FRAMEWORK_PATHS.react)}), [Vue icons](${absolute(FRAMEWORK_PATHS.vue)}), [Figma icons](${absolute(FRAMEWORK_PATHS.figma)}): getting started with each.`,
-  `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its SVG at ${absolute('/svg/<style>/<name>.svg')}.`,
+  `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its free Regular SVG at ${absolute('/svg/regular/<name>.svg')}.`,
   '',
   '## Categories',
   '',
@@ -213,4 +205,4 @@ const swPath = join(dist, 'sw.js');
 writeFileSync(swPath, readFileSync(swPath, 'utf8').replace("const VERSION = 'v1';", `const VERSION = '${(lock.revision ?? 'local').slice(0, 7)}-${entry}';`));
 
 rmSync(ssrDir, { recursive: true, force: true });
-console.log(`Prerendered ${written} pages in ${LOCALES.length} language(s); wrote ${svgFiles} SVG files, sitemap.xml (${urls.length} URLs), robots.txt, llms.txt, manifest.webmanifest, sw.js.`);
+console.log(`Prerendered ${written} pages in ${LOCALES.length} language(s); wrote ${catalog.icons.length} downloadable SVGs, grid previews, sitemap.xml (${urls.length} URLs), robots.txt, llms.txt, manifest.webmanifest, sw.js.`);

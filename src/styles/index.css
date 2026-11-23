@@ -26,6 +26,7 @@
   --color-canvas: var(--c-canvas);
   --color-surface: var(--c-surface);
   --color-sunken: var(--c-sunken);
+  --color-segmented-track: var(--c-segmented-track, var(--c-sunken));
   --color-ink: var(--c-ink);
   --color-muted: var(--c-muted);
   --color-faint: var(--c-faint);
@@ -72,6 +73,7 @@
   --c-canvas: #f3f1eb;
   --c-surface: #faf9f5;
   --c-sunken: #fffdf8;
+  --c-segmented-track: #e9e3d8;
   --c-ink: #292720;
   --c-muted: #6e685f;
   --c-faint: #6e685f;
@@ -308,6 +310,35 @@ dialog.sheet::backdrop {
 /* The sheet closes with a swipe down or a tap on its handle, not an X. */
 dialog.sheet .sheet-close {
   display: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .feedback-dialog[open] {
+    animation: feedback-arrive 280ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .feedback-dialog[open]::backdrop {
+    animation: feedback-backdrop-in 240ms ease-out both;
+  }
+  .feedback-dialog[data-closing] {
+    pointer-events: none;
+    animation: feedback-depart 200ms cubic-bezier(0.4, 0, 0.6, 1) both;
+  }
+  .feedback-dialog[data-closing]::backdrop {
+    animation: feedback-backdrop-out 200ms ease-in both;
+  }
+  @keyframes feedback-arrive {
+    from { opacity: 0; translate: 0 24px; }
+    to { opacity: 1; translate: 0 0; }
+  }
+  @keyframes feedback-depart {
+    to { opacity: 0; translate: 0 24px; }
+  }
+  @keyframes feedback-backdrop-in {
+    from { opacity: 0; }
+  }
+  @keyframes feedback-backdrop-out {
+    to { opacity: 0; }
+  }
 }
 
 /*

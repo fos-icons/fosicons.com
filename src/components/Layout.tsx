@@ -6,7 +6,7 @@ import markRegular from '../brand/mark-regular.svg?raw';
 import { catalog } from '../lib/catalog';
 import { isCatalogEditor } from '../lib/catalog-location';
 import { categoryPath, FRAMEWORK_PATHS } from '../lib/icon-pages';
-import { CONTAINER, HeaderSlotContext, PaneHostContext } from '../lib/layout';
+import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { LIBRARY_URL, NPM_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
@@ -25,7 +25,9 @@ export function Layout() {
   const { pathname, hash } = location;
   const editor = isCatalogEditor(location);
   const pageKey = editor ? 'catalog' : pathname;
-  const iconPage = !editor && splitLocale(pathname).path.startsWith('/icons/');
+  const pagePath = splitLocale(pathname).path;
+  const iconPage = !editor && pagePath.startsWith('/icons/');
+  const docsPage = pagePath.replace(/\/$/, '') === '/docs';
   const navigationType = useNavigationType();
   const mainRef = useRef<HTMLElement>(null);
   // A link to another page starts at its top (the router keeps the old scroll
@@ -50,14 +52,14 @@ export function Layout() {
           </a>
           {/* Icon pages keep the header (and its search) in view as frosted glass; elsewhere it scrolls away. */}
           <header className={`border-b border-line ${iconPage ? 'header-glass' : ''}`}>
-            <div className={`${CONTAINER} flex h-14 items-center gap-2`}>
-              <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink" aria-label={t('site.home')}>
+            <div className={`${CONTAINER} flex h-14 items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
+              <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
                 <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
                 <span className="whitespace-nowrap font-display text-[20px] font-semibold tracking-tight">{t('site.name')}</span>
               </LocalLink>
-              <div ref={setHeaderSlot} className="hidden min-w-0 flex-1 justify-center px-2 empty:hidden md:flex lg:px-6" />
-              <div className="ml-auto flex items-center gap-2 md:gap-5">
-                <HeaderActions />
+              <div ref={setHeaderSlot} className={`hidden min-w-0 empty:hidden md:flex ${docsPage ? 'md:col-start-2' : 'flex-1 justify-center px-2 lg:px-6'}`} />
+              <div className={`ml-auto flex items-center gap-2 md:gap-5 ${docsPage ? 'md:col-start-3' : ''}`}>
+                <HeaderActions docsPage={docsPage} />
               </div>
             </div>
           </header>
