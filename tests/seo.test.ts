@@ -15,9 +15,15 @@ describe('page metadata', () => {
     expect(pageFor('/', '?category=Essentials').path).toBe('/categories/essentials');
     expect(pageFor('/', '?icon=copy').path).toBe('/icons/copy');
     expect(pageFor('/docs/').id).toBe('docs');
-    expect(pageFor('/pricing').id).toBe('not-found');
+    expect(pageFor('/pricing/').id).toBe('pricing');
     expect(pageFor('/brands').id).toBe('brands');
     expect(pageFor('/nope').id).toBe('not-found');
+  });
+
+  it('indexes the pricing page at its canonical URL', () => {
+    const tags = headTags(PAGES.pricing);
+    expect(tags).toContain('<link rel="canonical" href="https://www.fosicons.com/pricing" />');
+    expect(tags).not.toContain('noindex');
   });
 
   it('derives counts from the catalog and keeps titles and descriptions search-friendly', () => {

@@ -8,10 +8,13 @@ import { ThemeProvider } from './lib/theme';
 import { isCatalogEditor, legacyCatalogDestination } from './lib/catalog-location';
 import { IconsPage } from './pages/IconsPage';
 import NotFoundPage from './pages/NotFoundPage';
+// The prerenderer reuses the app shell's styles before lazy routes load.
+import './pages/pricing.css';
 
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const FrameworkPage = lazy(() => import('./pages/FrameworkPage'));
 const IconPage = lazy(() => import('./pages/IconPage'));
+const PricingPage = lazy(() => import('./pages/PricingPage'));
 
 function CatalogRoute({ page }: { page: 'home' | 'brands' | 'category' | 'icon' }) {
   const location = useLocation();
@@ -42,6 +45,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
               <Route index element={<CatalogRoute page="home" />} />
               <Route path="brands" element={<CatalogRoute page="brands" />} />
               <Route path="docs" element={<DocsPage />} />
+              <Route path="pricing" element={<PricingPage />} />
               {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
               <Route path="icons/:name" element={<CatalogRoute page="icon" />} />
               <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />

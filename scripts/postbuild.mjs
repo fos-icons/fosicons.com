@@ -98,6 +98,7 @@ const pageFile = (path) => (path === '/' ? 'index.html' : `${path.slice(1)}/inde
 const ROUTES = [
   ['/', homePreloads],
   ['/docs'],
+  ['/pricing'],
   ['/brands'],
   ...Object.values(FRAMEWORK_PATHS).map((path) => [path]),
   ...catalog.categories.map((c) => [categoryPath(c.name)]),
@@ -174,6 +175,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   '',
   `- [Browse and export icons](${absolute('/')}): search by name, tag, or category; copy SVG, framework code, or PNG; download one icon or a ZIP.`,
   `- [Docs](${absolute('/docs')}): styles, SVG, framework setup, Figma, colors, sizes, modifiers, accessibility, licensing, and privacy.`,
+  `- [Pricing](${absolute('/pricing')}): Free and upcoming annual Pro and Advanced plans.`,
   `- [Source library on GitHub](${LIBRARY_URL}): the canonical SVGs, manifest, and metadata.`,
   '- React: `npm install @fos-icons/react` ([npm](https://www.npmjs.com/package/@fos-icons/react))',
   '- Vue 3: `npm install @fos-icons/vue` ([npm](https://www.npmjs.com/package/@fos-icons/vue))',

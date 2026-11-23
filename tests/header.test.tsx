@@ -33,6 +33,7 @@ function renderAt(url: string) {
             <Route element={<Layout />}>
               <Route path="/" element={<><HeroActions /><DownloadSection look={downloadLook} /></>} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
+              <Route path="/pricing" element={<h1>Pricing plans</h1>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -62,9 +63,21 @@ describe('Header actions', () => {
     const figma = within(nav).getByRole('link', { name: /^Figma/ });
     expect(figma.getAttribute('href')).toMatch(/^https:\/\/www\.figma\.com\/design\/5zcUV9E4Bu8FSssDfhyOWw\//);
     expect(figma.getAttribute('target')).toBe('_blank');
-    expect(within(nav).queryByRole('link', { name: /Pricing/ })).toBeNull();
   });
 
+  it('links Pricing from the header and the menu, closes the menu, and marks Pricing current', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    const nav = screen.getByRole('navigation', { name: 'Main' });
+    expect(within(nav).getByRole('link', { name: 'Pricing' }).getAttribute('href')).toBe('/pricing');
+    const menu = within(nav).getByRole('button', { name: 'Menu' });
+    await user.click(menu);
+    const links = within(nav).getAllByRole('link', { name: 'Pricing' });
+    await user.click(links[1]);
+    expect(await screen.findByRole('heading', { name: 'Pricing plans' })).toBeTruthy();
+    expect(menu.getAttribute('aria-expanded')).toBe('false');
+    expect(links[0].getAttribute('aria-current')).toBe('page');
+  });
   it('links to Docs from the header and marks it current', async () => {
     const user = userEvent.setup();
     renderAt('/');

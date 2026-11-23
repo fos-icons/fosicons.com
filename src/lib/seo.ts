@@ -34,7 +34,7 @@ export const facts = {
 };
 
 /** Pages with one fixed URL. */
-export type StaticPageId = 'home' | 'docs' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma';
+export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma';
 export type PageId = StaticPageId | 'icon' | 'category';
 
 export interface PageMeta {
@@ -52,12 +52,13 @@ export interface PageMeta {
 }
 
 const PATHS: Record<StaticPageId, string> = {
-  home: '/', docs: '/docs', brands: '/brands', 'not-found': '/404',
+  home: '/', docs: '/docs', pricing: '/pricing', brands: '/brands', 'not-found': '/404',
   react: FRAMEWORK_PATHS.react, vue: FRAMEWORK_PATHS.vue, figma: FRAMEWORK_PATHS.figma,
 };
 const META_KEYS = {
   home: ['meta.home.title', 'meta.home.description'],
   docs: ['meta.docs.title', 'meta.docs.description'],
+  pricing: ['meta.pricing.title', 'meta.pricing.description'],
   brands: ['meta.brands.title', 'meta.brands.description'],
   'not-found': ['meta.notFound.title', 'meta.notFound.description'],
   react: ['meta.react.title', 'meta.react.description'],
