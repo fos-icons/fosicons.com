@@ -67,6 +67,9 @@ export const styleFromSlug = (slug: string | null, allowed: readonly StyleId[] =
  * exact number matters (result counts, exports).
  */
 export const ICONS_ROUNDED = Math.floor(catalog.icons.length / 100) * 100;
+export const ICON_VARIANTS_ROUNDED = Math.floor(catalog.icons.length * catalog.styles.length / 100) * 100;
+/** Conservative lower bound across styles and supported modifier placements. */
+export const MODIFIER_COMBINATIONS_ROUNDED = 860_000;
 
 export const iconsByName = new Map(catalog.icons.map((icon) => [icon.name, icon]));
 

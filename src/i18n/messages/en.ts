@@ -18,7 +18,7 @@ const en = {
 
   // Page metadata (titles ≤ 60 characters, descriptions ~150)
   'meta.home.title': 'Fos Icons — Find the right icon, then ship it',
-  'meta.home.description': '{icons}+ free, {license}-licensed SVG icons. Customize and export SVG or PNG, or use Fos Icons with {platforms}.',
+  'meta.home.description': '{variants}+ SVG icon variants in four styles and {combinations}+ modifier and placement combinations. Use with {platforms}.',
   'meta.docs.title': 'Fos Icons Docs — SVG, React, Vue, Svelte & Flutter',
   'meta.docs.description': 'Set up Fos Icons with {platforms}. Learn how to use SVGs, modifiers, and accessible labels.',
   'meta.brands.title': 'Brand icons — Fos Icons',
@@ -109,7 +109,7 @@ const en = {
 
   // Icons page
   'icons.headline': 'Find the <em>right</em> icon, then ship it.',
-  'icons.intro': '{count}+ open-source icons with soft, rounded line work, drawn in {styles}. Download SVGs or use the library with {platforms}. Set the size, stroke width, and colors once, and every icon and download follows.',
+  'icons.intro': 'Explore {variants}+ soft, rounded icon variants in {styles}, with {combinations}+ ways to combine icons, modifiers, and placements. Customize and download SVGs or use the library with {platforms}.',
   'icons.searchIcons': 'Search icons',
   'icons.searchBrands': 'Search brands',
   'icons.clearSearch': 'Clear search',

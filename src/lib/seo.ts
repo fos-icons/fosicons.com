@@ -1,6 +1,6 @@
 import { createI18n, DEFAULT_LOCALE, LOCALES, localizePath, splitLocale, type I18n, type MessageKey } from '../i18n';
 import { brands } from './brands';
-import { catalog, ICONS_ROUNDED, iconsByName, STYLE_META, type IconEntry } from './catalog';
+import { catalog, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type IconEntry } from './catalog';
 import { legacyCatalogDestination } from './catalog-location';
 import {
   categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, svgFilePath,
@@ -11,7 +11,7 @@ import { FIGMA_URL, FLUTTER_PACKAGE, LIBRARY_URL, PLATFORM_NAMES } from './links
  * Search, AI-answer, and social-share metadata for every page. The build
  * writes it into each page's static HTML (scripts/postbuild.mjs); the app
  * keeps the title, description, and canonical link current while you navigate.
- * Counts come from the synced catalog; nothing here is hard-coded.
+ * Icon and style counts follow the synced catalog.
  */
 
 /** The production origin. Vercel redirects fosicons.com here, so canonical links must use www. */
@@ -79,6 +79,8 @@ const styleList = (i18n: I18n) => i18n.list(catalog.styles.map((s) => i18n.t(`st
 export function pageMeta(id: StaticPageId, i18n: I18n = createI18n(DEFAULT_LOCALE)): PageMeta {
   const vars = {
     icons: facts.icons,
+    variants: ICON_VARIANTS_ROUNDED,
+    combinations: MODIFIER_COMBINATIONS_ROUNDED,
     styles: styleList(i18n),
     platforms: i18n.list(PLATFORM_NAMES),
     license: facts.license,

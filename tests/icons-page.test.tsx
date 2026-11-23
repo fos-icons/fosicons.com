@@ -286,7 +286,7 @@ describe('Icons page', () => {
     expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General']);
     await user.click(tablist.getByRole('tab', { name: 'General' }));
     const general = within(screen.getByRole('tabpanel', { name: 'General' }));
-    for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield']) {
+    for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield', 'Home']) {
       expect(general.getByRole('button', { name: new RegExp(`^${label} modifier`) })).toBeTruthy();
     }
     expect(general.queryByRole('button', { name: /^(PDF|4K) modifier/ })).toBeNull();
@@ -299,7 +299,11 @@ describe('Icons page', () => {
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
     // Switching modifiers keeps the chosen corner.
     await user.click(screen.getByRole('tab', { name: 'Actions' }));
-    expect(within(screen.getByRole('tabpanel', { name: 'Actions' })).queryByRole('button', { name: /^(Search|Phone|Shield) modifier/ })).toBeNull();
+    const actions = within(screen.getByRole('tabpanel', { name: 'Actions' }));
+    expect(actions.queryByRole('button', { name: /^(Search|Phone|Shield|Home) modifier/ })).toBeNull();
+    // Add and remove lead, then the arrows, then everything else.
+    const order = actions.getAllByRole('button', { name: / modifier/ }).map((b) => b.getAttribute('title'));
+    expect(order.slice(0, 8)).toEqual(['Add', 'Remove', 'Arrow up', 'Arrow down', 'Arrow left', 'Arrow right', 'Reply', 'Forward']);
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);

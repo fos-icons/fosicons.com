@@ -29,8 +29,14 @@ export function useModifiers(enabled: boolean) {
 
 const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
 const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality', 'file-types'];
-const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield']);
+const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield', 'home']);
 const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_ACTIONS.has(modifier.name);
+/** Actions lead with add/remove, then the arrows; the rest keep their library order. */
+const ACTIONS_ORDER = ['add', 'remove', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'reply', 'forward'];
+const actionRank = (modifier: ModifierAsset) => {
+  const rank = ACTIONS_ORDER.indexOf(modifier.name);
+  return rank < 0 ? ACTIONS_ORDER.length : rank;
+};
 
 export function ModifierPicker({
   modifiers, value, onChange, authored, accessory,
@@ -48,7 +54,7 @@ export function ModifierPicker({
   const baseId = useId();
   const tiles = useMemo(() => new Map(modifiers.map((m) => [m.name, modifierTileSvg(m)])), [modifiers]);
   const groups = [
-    { id: 'actions', items: modifiers.filter(inActions) },
+    { id: 'actions', items: modifiers.filter(inActions).sort((a, b) => actionRank(a) - actionRank(b)) },
     {
       id: 'general',
       items: [

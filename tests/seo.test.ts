@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { FRAMEWORK_NAMES } from '../src/lib/links';
 import { describe, expect, it } from 'vitest';
 import catalog from '../src/data/catalog.json';
-import { ICONS_ROUNDED } from '../src/lib/catalog';
+import { ICON_VARIANTS_ROUNDED, MODIFIER_COMBINATIONS_ROUNDED } from '../src/lib/catalog';
 import { createIndex, suggest } from '../src/lib/search';
 import { categoryMeta, headTags, iconMeta, PAGES, pageFor, structuredData } from '../src/lib/seo';
 import { categorySlug, relatedIcons } from '../src/lib/icon-pages';
@@ -21,7 +21,10 @@ describe('page metadata', () => {
   });
 
   it('derives counts from the catalog and keeps titles and descriptions search-friendly', () => {
-    expect(PAGES.home.description).toContain(`${new Intl.NumberFormat('en-US').format(ICONS_ROUNDED)}+ free`);
+    const format = new Intl.NumberFormat('en-US');
+    expect(PAGES.home.description).toContain(`${format.format(ICON_VARIANTS_ROUNDED)}+ SVG icon variants`);
+    expect(PAGES.home.description).toContain(`${format.format(MODIFIER_COMBINATIONS_ROUNDED)}+ modifier and placement combinations`);
+    expect(PAGES.home.description.length).toBeLessThanOrEqual(160);
     for (const page of Object.values(PAGES)) {
       expect(page.title.length).toBeLessThanOrEqual(60);
       expect(page.description.length).toBeGreaterThan(50);
