@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
 import type { Plugin } from 'vite';
-import handleFeedback from './api/feedback';
+import { handleFeedbackRequest } from './api/feedback';
 import { FEEDBACK_PATH } from './src/lib/feedback';
 import sourceLock from './src/data/source-lock.json';
 
@@ -77,7 +77,7 @@ function feedbackEndpoint(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.split('?')[0] !== FEEDBACK_PATH) return next();
         try {
-          await handleFeedback(req, res);
+          await handleFeedbackRequest(req, res, false);
         } catch (error) {
           next(error);
         }

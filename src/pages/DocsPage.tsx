@@ -624,6 +624,7 @@ FosIcon(
         <Section id="privacy" title="Privacy">
           <p>This site sets no cookies. We use Vercel Web Analytics on the public site to count visitors and page views. The page URLs we report omit search terms, inspector settings, and fragments. See <a href="https://vercel.com/docs/analytics/privacy-policy" target="_blank" rel="noreferrer">Vercel Web Analytics privacy</a> for details.</p>
           <p>When you submit feedback, new icon requests are posted publicly to GitHub. Site, package, and icon issue reports are sent by email to the Fos Icons maintainers.</p>
+          {import.meta.env.VITE_FEEDBACK_TURNSTILE_SITE_KEY && <p>We use Cloudflare Turnstile to check feedback submissions for automated traffic. See <a href="https://www.cloudflare.com/turnstile-privacy-policy/" target="_blank" rel="noreferrer">Cloudflare’s Turnstile Privacy Addendum</a>.</p>}
           <p>Unsubmitted feedback stays in the current tab so you can resume it after dismissing the form or reloading the page.</p>
           <p>Your browser&apos;s local storage keeps preferences on your device:</p>
           <ul className="list-disc space-y-1 pl-5">
