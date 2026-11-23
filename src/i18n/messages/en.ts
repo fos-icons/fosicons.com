@@ -109,7 +109,7 @@ const en = {
 
   // Icons page
   'icons.headline': 'Find the <em>right</em> icon, then ship it.',
-  'icons.intro': '{count}+ open-source icons with soft, rounded line work, drawn in {styles}. Download SVGs or use the library with {platforms}. Set the size, stroke width, and colors once, and every icon and download follows.',
+  'icons.intro': 'Explore {variants}+ soft, rounded icon variants in {styles}, with {combinations}+ ways to combine icons, modifiers, and placements. Customize and download SVGs or use the library with {platforms}.',
   'icons.searchIcons': 'Search icons',
   'icons.searchBrands': 'Search brands',
   'icons.clearSearch': 'Clear search',

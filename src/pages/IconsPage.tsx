@@ -375,7 +375,12 @@ export function IconsPage() {
           {rich('icons.headline', { em: (text) => <span className="text-brand">{text}</span> })}
         </h1>
         <p className="mt-2 text-base text-muted">
-          {t('icons.intro', { count: ICONS_ROUNDED, styles: list(catalog.styles.map((s) => t(`style.${s}`))), platforms: list(PLATFORM_NAMES) })}
+          {t('icons.intro', {
+            variants: Math.floor(catalog.icons.length * catalog.styles.length / 100) * 100,
+            combinations: 860_000,
+            styles: list(catalog.styles.map((s) => t(`style.${s}`))),
+            platforms: list(PLATFORM_NAMES),
+          })}
         </p>
         <HeroActions className="mt-5" />
       </div>
