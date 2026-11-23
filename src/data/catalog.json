@@ -37,7 +37,7 @@
     },
     {
       "name": "Essentials",
-      "count": 93
+      "count": 94
     },
     {
       "name": "Files",
@@ -53,7 +53,7 @@
     },
     {
       "name": "Interfaces",
-      "count": 148
+      "count": 149
     },
     {
       "name": "Media & devices",
@@ -355,6 +355,10 @@
     },
     "upload": {
       "label": "Upload",
+      "group": "actions"
+    },
+    "home": {
+      "label": "Home",
       "group": "actions"
     },
     "user": {
@@ -2364,6 +2368,19 @@
         "subtract",
         "seal",
         "delete"
+      ],
+      "aliases": []
+    },
+    {
+      "name": "badge-verified",
+      "category": "Essentials",
+      "tags": [
+        "approved",
+        "certified",
+        "authentic",
+        "trusted",
+        "seal",
+        "check"
       ],
       "aliases": []
     },
@@ -5963,7 +5980,16 @@
       ],
       "aliases": [
         "interface/close-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "delete",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "cloud",
@@ -8389,7 +8415,16 @@
       ],
       "aliases": [
         "interface/download-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "download",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "drafting-compass",
@@ -8569,7 +8604,16 @@
       ],
       "aliases": [
         "ai edit"
-      ]
+      ],
+      "composition": {
+        "base": "edit",
+        "modifiers": [
+          {
+            "name": "sparkle",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "edit-square",
@@ -8597,7 +8641,16 @@
       ],
       "aliases": [
         "interface/edit-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "egg",
@@ -12111,7 +12164,16 @@
       ],
       "aliases": [
         "interface/home-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "home",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "hoop-basketball",
@@ -14693,20 +14755,6 @@
       "aliases": []
     },
     {
-      "name": "mark",
-      "category": "Navigation",
-      "tags": [
-        "map pin",
-        "location",
-        "add place",
-        "new location",
-        "marker",
-        "waypoint",
-        "drop pin"
-      ],
-      "aliases": []
-    },
-    {
       "name": "marker",
       "category": "Workspace",
       "tags": [
@@ -14735,6 +14783,21 @@
         "address"
       ],
       "aliases": []
+    },
+    {
+      "name": "marker-pin-add",
+      "category": "Navigation",
+      "tags": [
+        "map pin",
+        "location",
+        "add place",
+        "new location",
+        "waypoint",
+        "drop pin"
+      ],
+      "aliases": [
+        "mark"
+      ]
     },
     {
       "name": "maximize",
@@ -15277,7 +15340,7 @@
         "modifiers": [
           {
             "name": "sparkle",
-            "position": "top-right"
+            "position": "bottom-right"
           }
         ]
       }
@@ -15485,7 +15548,16 @@
       ],
       "aliases": [
         "interface/minus-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "remove",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "missile",
@@ -17738,7 +17810,16 @@
       ],
       "aliases": [
         "interface/plus-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "add",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "pocket",
@@ -18225,7 +18306,16 @@
       ],
       "aliases": [
         "interface/refresh-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "refresh",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "registered",
@@ -18845,7 +18935,16 @@
       ],
       "aliases": [
         "interface/search-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "search",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "sector",
@@ -21991,7 +22090,16 @@
       ],
       "aliases": [
         "interface/upload-window"
-      ]
+      ],
+      "composition": {
+        "base": "window",
+        "modifiers": [
+          {
+            "name": "upload",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "usb-flash-drive",
@@ -23097,6 +23205,21 @@
       ],
       "aliases": [
         "interface/wind-clock"
+      ]
+    },
+    {
+      "name": "window",
+      "category": "Interfaces",
+      "tags": [
+        "app",
+        "browser",
+        "screen",
+        "desktop",
+        "program",
+        "frame"
+      ],
+      "aliases": [
+        "app-window"
       ]
     },
     {
