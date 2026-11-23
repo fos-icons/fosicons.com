@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { useI18n } from '../i18n';
 import { FEEDBACK_MAX_LENGTH, FEEDBACK_PATH, FEEDBACK_TYPES, isFeedbackType } from '../lib/feedback';
+import { getFeedbackToken } from '../lib/feedback-verification';
 import { Button, buttonClass, IconButton, Select, UiIcon } from './ui';
 
 const DRAFT_KEY = 'fos-feedback-draft';
@@ -33,14 +34,24 @@ function saveDraft(draft: typeof EMPTY_DRAFT) {
 
 export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const { t } = useI18n();
+  const turnstileSiteKey = import.meta.env.VITE_FEEDBACK_TURNSTILE_SITE_KEY;
   const dialog = useRef<HTMLDialogElement>(null);
   const doneButton = useRef<HTMLButtonElement>(null);
+  const verificationContainer = useRef<HTMLDivElement>(null);
+  const attempt = useRef<AbortController | null>(null);
   const headingId = useId();
   const noticeId = useId();
   const [draft, setDraft] = useState(readDraft);
   const { type, description } = draft;
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'failed'>('idle');
+  const [status, setStatus] = useState<'idle' | 'verifying' | 'sending' | 'sent' | 'failed' | 'verification-failed' | 'rate-limited'>('idle');
   const sending = status === 'sending';
+  const busy = sending || status === 'verifying';
+  const error = {
+    failed: 'feedback.failed',
+    'verification-failed': 'feedback.verificationFailed',
+    'rate-limited': 'feedback.rateLimited',
+  } as const;
+  const errorTitle = status in error ? error[status as keyof typeof error] : undefined;
   const updateDraft = (next: typeof draft) => {
     setDraft(next);
     saveDraft(next);
@@ -48,6 +59,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
   const close = async () => {
     const element = dialog.current;
     if (!element?.open || sending || element.hasAttribute('data-closing')) return;
+    attempt.current?.abort();
     if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       element.setAttribute('data-closing', '');
       await Promise.allSettled(element.getAnimations().map((animation) => animation.finished));
@@ -57,6 +69,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
 
   useEffect(() => {
     if (dialog.current && !dialog.current.open) dialog.current.showModal();
+    return () => attempt.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -65,25 +78,40 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
 
   const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (sending || dialog.current?.hasAttribute('data-closing') || !isFeedbackType(type) || !description.trim()) return;
+    if (attempt.current || dialog.current?.hasAttribute('data-closing') || !isFeedbackType(type) || !description.trim()) return;
     const website = new FormData(event.currentTarget).get('website');
-    setStatus('sending');
+    const controller = new AbortController();
+    attempt.current = controller;
+    let turnstileToken: string | undefined;
     try {
+      if (turnstileSiteKey && verificationContainer.current) {
+        setStatus('verifying');
+        try {
+          turnstileToken = await getFeedbackToken(verificationContainer.current, turnstileSiteKey,
+            AbortSignal.any([controller.signal, AbortSignal.timeout(90000)]));
+        } catch {
+          if (!controller.signal.aborted) setStatus('verification-failed');
+          return;
+        }
+      }
+      controller.signal.throwIfAborted();
+      setStatus('sending');
       const response = await fetch(FEEDBACK_PATH, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, description, website }),
-        signal: AbortSignal.timeout(12000),
+        body: JSON.stringify({ type, description, website, turnstileToken }),
+        signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]),
       });
-      const result = await response.json();
-      if (response.ok && result.ok === true) {
+      if (response.ok && (await response.json()).ok === true) {
         saveDraft(EMPTY_DRAFT);
         setStatus('sent');
       } else {
-        setStatus('failed');
+        setStatus(response.status === 422 ? 'verification-failed' : response.status === 429 ? 'rate-limited' : 'failed');
       }
     } catch {
-      setStatus('failed');
+      if (!controller.signal.aborted) setStatus('failed');
+    } finally {
+      attempt.current = null;
     }
   };
 
@@ -116,7 +144,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
           <div className="space-y-5 px-5 py-5 sm:px-6">
             <label className="block text-sm font-semibold">
               {t('feedback.type')} <span aria-hidden="true" className="text-danger">*</span>
-              <Select className="mt-1.5" required disabled={sending} value={type} onChange={(event) => updateDraft({ ...draft, type: event.target.value })}>
+              <Select className="mt-1.5" required disabled={busy} value={type} onChange={(event) => updateDraft({ ...draft, type: event.target.value })}>
                 <option value="" disabled>{t('feedback.selectType')}</option>
                 {Object.keys(FEEDBACK_TYPES).map((value) => (
                   <option key={value} value={value}>{t(`feedback.type.${value as keyof typeof FEEDBACK_TYPES}`)}</option>
@@ -129,7 +157,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
                 required
                 rows={5}
                 maxLength={FEEDBACK_MAX_LENGTH}
-                disabled={sending}
+                disabled={busy}
                 value={description}
                 onChange={(event) => updateDraft({ ...draft, description: event.target.value })}
                 aria-describedby={type === 'new-icon' ? noticeId : undefined}
@@ -138,19 +166,20 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
             </label>
             <div hidden><input name="website" tabIndex={-1} autoComplete="off" /></div>
             {type === 'new-icon' && <p id={noticeId} className="rounded-lg bg-sunken px-3 py-2.5 text-sm leading-relaxed text-muted">{t('feedback.publicNotice')}</p>}
-            {status === 'failed' && (
+            {turnstileSiteKey && <div ref={verificationContainer} className="empty:hidden" />}
+            {errorTitle && (
               <div role="alert" className="flex items-start gap-2.5 rounded-xl border border-danger/25 bg-danger/10 px-3.5 py-3 text-sm leading-relaxed">
                 <UiIcon name="info-circle" className="size-5 text-danger" />
                 <div>
-                  <p className="font-semibold">{t('feedback.failed')}</p>
-                  <p className="text-muted">{t('feedback.retry')}</p>
+                  <p className="font-semibold">{t(errorTitle)}</p>
+                  <p className="text-muted">{t(status === 'rate-limited' ? 'feedback.rateLimitedRetry' : 'feedback.retry')}</p>
                 </div>
               </div>
             )}
           </div>
           <div className="flex flex-wrap justify-end gap-2 border-t border-line px-5 py-4 sm:px-6">
             <Button variant="ghost" size="lg" disabled={sending} onClick={close}>{t('feedback.cancel')}</Button>
-            <Button type="submit" variant="primary" size="lg" disabled={sending || !type || !description.trim()}>{t(sending ? 'feedback.sending' : 'feedback.submit')}</Button>
+            <Button type="submit" variant="primary" size="lg" disabled={busy || !type || !description.trim()}>{t(sending ? 'feedback.sending' : status === 'verifying' ? 'feedback.verifying' : 'feedback.submit')}</Button>
           </div>
         </form>
       )}

@@ -43,15 +43,19 @@ by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
 
 ### Feedback delivery
 
-The form posts to `POST /api/feedback`. Configure the following server-only environment variables in Vercel, or export them before starting Vite for local delivery tests.
+The form posts to `POST /api/feedback`. Configure these variables in Vercel, or export them before starting Vite for local delivery tests. Only the `VITE_` variable is public.
 
 | Variable | Purpose |
 | --- | --- |
 | `FEEDBACK_GITHUB_TOKEN` | Fine-grained GitHub token scoped to `fos-icons/fos-icons` with Issues write permission. |
 | `FEEDBACK_RESEND_API_KEY` | Resend key with permission to send email. |
 | `FEEDBACK_FROM_EMAIL` | Sender address on a domain verified in Resend. Reports go to `icon@fosicons.com`. |
+| `VITE_FEEDBACK_TURNSTILE_SITE_KEY` | Public Turnstile site key. |
+| `FEEDBACK_TURNSTILE_SECRET` | Matching server-only Turnstile secret key. |
 
-Apply a per-IP [Vercel Firewall rate limit](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting) to `POST /api/feedback` before enabling live delivery. Requests are anonymous and new icon submissions are published directly as GitHub issues.
+Create a [Managed Turnstile widget](https://developers.cloudflare.com/turnstile/get-started/widget-management/dashboard/) for the hostnames that serve the form, including `www.fosicons.com`. Set both keys in the target Vercel environment before deploying so the client build includes the public key. The deployed endpoint requires verification. The local Vite endpoint requires it when the secret is set.
+
+In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting), add a rule that matches method `POST` and path `/api/feedback`. Start with a fixed window of 5 requests per IP per 5 minutes and return `429` above the limit. Requests are anonymous and new icon submissions are published directly as GitHub issues.
 
 ## What the site does
 

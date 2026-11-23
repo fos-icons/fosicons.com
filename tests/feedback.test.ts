@@ -15,7 +15,7 @@ describe('feedback delivery', () => {
     vi.stubEnv('FEEDBACK_GITHUB_TOKEN', 'test-token');
     const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 201 }));
     vi.stubGlobal('fetch', send);
-    const response = await POST(request({ type: 'new-icon', description: 'Desk lamp\nWith an adjustable arm.' }));
+    const response = await POST(request({ type: 'new-icon', description: 'Desk lamp\nWith an adjustable arm.' }), false);
     expect(response.status).toBe(200);
     expect(send).toHaveBeenCalledTimes(1);
     const [url, init] = send.mock.calls[0];
@@ -31,7 +31,7 @@ describe('feedback delivery', () => {
     vi.stubEnv('FEEDBACK_FROM_EMAIL', 'feedback@fosicons.com');
     const send = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 200 }));
     vi.stubGlobal('fetch', send);
-    expect((await POST(request({ type, description: 'Can you check this?' }))).status).toBe(200);
+    expect((await POST(request({ type, description: 'Can you check this?' }), false)).status).toBe(200);
     const [url, init] = send.mock.calls[0];
     expect(url).toBe('https://api.resend.com/emails');
     expect(JSON.parse(String(init?.body))).toMatchObject({ to: ['icon@fosicons.com'], text: 'Can you check this?' });
@@ -57,5 +57,36 @@ describe('feedback delivery', () => {
     expect(response.status).toBe(503);
     expect(await response.json()).toEqual({ ok: false });
     expect(send).not.toHaveBeenCalled();
+  });
+
+  it('fails closed on deployments without a verification secret', async () => {
+    vi.stubEnv('FEEDBACK_GITHUB_TOKEN', 'test-token');
+    vi.stubEnv('FEEDBACK_TURNSTILE_SECRET', undefined);
+    const send = vi.fn();
+    vi.stubGlobal('fetch', send);
+    expect((await POST(request({ type: 'new-icon', description: 'Desk lamp' }))).status).toBe(503);
+    expect(send).not.toHaveBeenCalled();
+  });
+
+  it('requires a fresh token for this hostname and action before creating an issue', async () => {
+    vi.stubEnv('FEEDBACK_GITHUB_TOKEN', 'test-token');
+    vi.stubEnv('FEEDBACK_TURNSTILE_SECRET', 'test-secret');
+    const send = vi.fn<typeof fetch>()
+      .mockResolvedValueOnce(Response.json({ success: true, hostname: 'example.com', action: 'feedback' }))
+      .mockResolvedValueOnce(Response.json({ success: true, hostname: 'www.fosicons.com', action: 'other' }))
+      .mockResolvedValueOnce(Response.json({ success: false, 'error-codes': ['timeout-or-duplicate'] }))
+      .mockResolvedValueOnce(Response.json({ success: true, hostname: 'www.fosicons.com', action: 'feedback' }))
+      .mockResolvedValueOnce(new Response(null, { status: 201 }));
+    vi.stubGlobal('fetch', send);
+    const payload = { type: 'new-icon', description: 'Desk lamp' };
+    expect((await POST(request(payload))).status).toBe(422);
+    expect(send).not.toHaveBeenCalled();
+    for (const token of ['wrong-host', 'wrong-action', 'expired']) {
+      expect((await POST(request({ ...payload, turnstileToken: token }))).status).toBe(422);
+    }
+    expect(send.mock.calls.map(([url]) => url)).toEqual(Array(3).fill('https://challenges.cloudflare.com/turnstile/v0/siteverify'));
+    expect((await POST(request({ ...payload, turnstileToken: 'valid' }))).status).toBe(200);
+    expect(send.mock.calls[3][1]?.body?.toString()).toBe('secret=test-secret&response=valid');
+    expect(send.mock.calls[4][0]).toBe('https://api.github.com/repos/fos-icons/fos-icons/issues');
   });
 });

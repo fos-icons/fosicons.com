@@ -8,6 +8,7 @@ export const FEEDBACK_TYPES = {
 export type FeedbackType = keyof typeof FEEDBACK_TYPES;
 export const FEEDBACK_PATH = '/api/feedback';
 export const FEEDBACK_MAX_LENGTH = 2000;
+export const FEEDBACK_TURNSTILE_ACTION = 'feedback';
 
 export function isFeedbackType(value: unknown): value is FeedbackType {
   return typeof value === 'string' && Object.hasOwn(FEEDBACK_TYPES, value);
