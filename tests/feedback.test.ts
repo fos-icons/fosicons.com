@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { POST } from '../api/feedback';
+import { submitFeedback as POST } from '../api/feedback';
 
 const origin = 'https://www.fosicons.com';
 const request = (payload: unknown, sender = origin) => new Request(`${origin}/api/feedback`, {

@@ -3,9 +3,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
-import { Readable } from 'node:stream';
 import type { Plugin } from 'vite';
-import { POST as submitFeedback } from './api/feedback';
+import handleFeedback from './api/feedback';
 import { FEEDBACK_PATH } from './src/lib/feedback';
 import sourceLock from './src/data/source-lock.json';
 
@@ -77,22 +76,8 @@ function feedbackEndpoint(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         if (req.url?.split('?')[0] !== FEEDBACK_PATH) return next();
-        if (req.method !== 'POST') {
-          res.writeHead(405, { Allow: 'POST' }).end();
-          return;
-        }
         try {
-          const request = new Request(`http://${req.headers.host}${FEEDBACK_PATH}`, {
-            method: 'POST',
-            headers: {
-              Origin: req.headers.origin ?? '',
-              'Content-Type': req.headers['content-type'] ?? '',
-            },
-            body: Readable.toWeb(req) as ReadableStream<Uint8Array>,
-            duplex: 'half',
-          });
-          const response = await submitFeedback(request);
-          res.writeHead(response.status, Object.fromEntries(response.headers)).end(await response.text());
+          await handleFeedback(req, res);
         } catch (error) {
           next(error);
         }
