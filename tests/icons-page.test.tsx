@@ -303,7 +303,7 @@ describe('Icons page', () => {
     expect(actions.queryByRole('button', { name: /^(Search|Phone|Shield|Home) modifier/ })).toBeNull();
     // Add and remove lead, then the arrows, then everything else.
     const order = actions.getAllByRole('button', { name: / modifier/ }).map((b) => b.getAttribute('title'));
-    expect(order.slice(0, 7)).toEqual(['Add', 'Remove', 'Arrow up', 'Arrow down', 'Arrow left', 'Arrow right', 'Reply']);
+    expect(order.slice(0, 8)).toEqual(['Add', 'Remove', 'Arrow up', 'Arrow down', 'Arrow left', 'Arrow right', 'Reply', 'Forward']);
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);
