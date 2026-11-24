@@ -114,6 +114,8 @@ export default defineConfig(({ mode }) => ({
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
+    // Billing is off in tests whatever .env.local says; billing tests turn it on with vi.stubEnv.
+    env: { VITE_BILLING_MODE: '', VITE_BILLING_SANDBOX_ENABLED: 'false' },
     // Page tests render the full grid (1,000+ cells) in jsdom; CI runners are slower than 5s for some.
     testTimeout: 20_000,
   },

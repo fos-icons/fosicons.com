@@ -22,8 +22,9 @@ function stripeId(object: string | { id: string } | null) {
   return typeof object === 'string' ? object : object?.id;
 }
 
-function assertSandbox(object: { livemode: boolean }) {
-  if (object.livemode !== false) throw misconfigured();
+/** Every Stripe object must come from the configured mode: test objects in the sandbox, live objects in live billing. */
+function assertMode(config: BillingConfig, object: { livemode: boolean }) {
+  if (object.livemode !== config.live) throw misconfigured();
 }
 
 function canRetry(since: string) {
@@ -38,20 +39,20 @@ function hostedUrl(value: string | null, hostname: string) {
   return { url: value };
 }
 
-function annualPriceMatches(price: Stripe.Price, renewal: number) {
-  return price.livemode === false && price.billing_scheme === 'per_unit' && price.currency === 'usd' &&
+function annualPriceMatches(price: Stripe.Price, renewal: number, live: boolean) {
+  return price.livemode === live && price.billing_scheme === 'per_unit' && price.currency === 'usd' &&
     price.type === 'recurring' && price.unit_amount === renewal && !price.custom_unit_amount &&
     !price.transform_quantity && price.recurring?.interval === 'year' &&
     price.recurring.interval_count === 1 && price.recurring.usage_type === 'licensed';
 }
 
 export function validateOffer(
-  price: Stripe.Price, coupon: Stripe.Coupon | Stripe.DeletedCoupon, offer: BillingConfig['plans'][PaidPlan],
+  price: Stripe.Price, coupon: Stripe.Coupon | Stripe.DeletedCoupon, offer: BillingConfig['plans'][PaidPlan], live: boolean,
 ) {
   const product = price.product;
-  if (price.id !== offer.price || !price.active || !annualPriceMatches(price, offer.renewal) ||
-      typeof product === 'string' || product.deleted || !product.active || product.livemode !== false ||
-      coupon.deleted || coupon.id !== offer.coupon || coupon.livemode !== false || !coupon.valid ||
+  if (price.id !== offer.price || !price.active || !annualPriceMatches(price, offer.renewal, live) ||
+      typeof product === 'string' || product.deleted || !product.active || product.livemode !== live ||
+      coupon.deleted || coupon.id !== offer.coupon || coupon.livemode !== live || !coupon.valid ||
       coupon.duration !== 'once' || coupon.currency !== 'usd' || coupon.percent_off !== null ||
       coupon.amount_off !== offer.renewal - offer.initial || coupon.applies_to?.products.length !== 1 ||
       coupon.applies_to.products[0] !== product.id) {
@@ -59,26 +60,26 @@ export function validateOffer(
   }
 }
 
-async function listSubscriptions(stripe: BillingStripe, customer: string) {
+async function listSubscriptions(config: BillingConfig, stripe: BillingStripe, customer: string) {
   const page = await stripe.subscriptions.list({ customer, status: 'all', limit: 100 });
   if (page.has_more) throw unavailable();
-  for (const sub of page.data) assertOwnedSubscription(sub, customer);
+  for (const sub of page.data) assertOwnedSubscription(config, sub, customer);
   return page.data;
 }
 
-function assertOwnedSubscription(sub: Stripe.Subscription, customer: string) {
-  assertSandbox(sub);
+function assertOwnedSubscription(config: BillingConfig, sub: Stripe.Subscription, customer: string) {
+  assertMode(config, sub);
   if (stripeId(sub.customer) !== customer) throw unavailable();
 }
 
 export function projectSubscriptions(config: BillingConfig, subscriptions: Stripe.Subscription[]): SubscriptionProjection {
   const candidates = subscriptions.map(sub => {
-    assertSandbox(sub);
+    assertMode(config, sub);
     const item = !sub.items.has_more && sub.items.data.length === 1 ? sub.items.data[0] : undefined;
     const plan = item?.quantity === 1 && !sub.pause_collection &&
       (sub.status === 'active' || sub.status === 'trialing')
       ? (['advanced', 'pro'] as const).find(
-        name => config.plans[name].price === item.price.id && annualPriceMatches(item.price, config.plans[name].renewal),
+        name => config.plans[name].price === item.price.id && annualPriceMatches(item.price, config.plans[name].renewal, config.live),
       )
       : undefined;
     return {
@@ -94,7 +95,7 @@ export function projectSubscriptions(config: BillingConfig, subscriptions: Strip
     : { plan: 'free', status: null, subscription_id: null };
 }
 
-async function ensureCustomer(store: BillingStore, stripe: BillingStripe, userId: string) {
+async function ensureCustomer(config: BillingConfig, store: BillingStore, stripe: BillingStripe, userId: string) {
   let row = await store.byUser(userId);
   if (!row) {
     await store.reserveCustomer(userId);
@@ -106,18 +107,18 @@ async function ensureCustomer(store: BillingStore, stripe: BillingStripe, userId
   // No mutable fields (e.g. email) may change between idempotent retries.
   const customer = await stripe.customers.create(
     { metadata: { fos_customer_key: row.customer_key } },
-    { idempotencyKey: `fos-sandbox-customer-${row.customer_key}` },
+    { idempotencyKey: `fos-${config.mode}-customer-${row.customer_key}` },
   );
-  assertSandbox(customer);
+  assertMode(config, customer);
   if (customer.metadata.fos_customer_key !== row.customer_key) throw unavailable();
   const saved = await store.setCustomer(userId, row.customer_key, customer.id) ?? await store.byUser(userId);
   if (saved?.customer_id !== customer.id) throw unavailable();
   return customer.id;
 }
 
-function assertOwnedSession(session: Stripe.Checkout.Session, customer: string) {
-  assertSandbox(session);
-  if (!session.id.startsWith('cs_test_') || stripeId(session.customer) !== customer || session.mode !== 'subscription') {
+function assertOwnedSession(config: BillingConfig, session: Stripe.Checkout.Session, customer: string) {
+  assertMode(config, session);
+  if (!session.id.startsWith(config.live ? 'cs_live_' : 'cs_test_') || stripeId(session.customer) !== customer || session.mode !== 'subscription') {
     throw unavailable();
   }
 }
@@ -160,7 +161,7 @@ async function confirmOffer(config: BillingConfig, stripe: BillingStripe, plan: 
     stripe.prices.retrieve(offer.price, { expand: ['product'] }),
     stripe.coupons.retrieve(offer.coupon, { expand: ['applies_to'] }),
   ]);
-  validateOffer(price, coupon, offer);
+  validateOffer(price, coupon, offer, config.live);
 }
 
 async function rememberSession(store: BillingStore, userId: string, attempt: CheckoutAttempt, session: string) {
@@ -171,18 +172,18 @@ async function rememberSession(store: BillingStore, userId: string, attempt: Che
 export async function checkout(
   config: BillingConfig, store: BillingStore, stripe: BillingStripe, userId: string, plan: PaidPlan,
 ) {
-  const customer = await ensureCustomer(store, stripe, userId);
+  const customer = await ensureCustomer(config, store, stripe, userId);
   let offerVerified = false;
   for (let i = 0; i < 5; i++) {
     const row = await store.byUser(userId);
     if (row?.customer_id !== customer) throw unavailable();
     const attempt = getAttempt(row);
-    if ((await listSubscriptions(stripe, customer)).some(sub => !TERMINAL_SUBSCRIPTIONS.has(sub.status))) {
+    if ((await listSubscriptions(config, stripe, customer)).some(sub => !TERMINAL_SUBSCRIPTIONS.has(sub.status))) {
       throw subscriptionExists();
     }
     if (attempt?.session_id) {
       const session = await stripe.checkout.sessions.retrieve(attempt.session_id);
-      assertOwnedSession(session, customer);
+      assertOwnedSession(config, session, customer);
       if (session.id !== attempt.session_id) throw unavailable();
       if (session.status === 'open') {
         if (attempt.plan !== plan) throw inProgress();
@@ -192,7 +193,7 @@ export async function checkout(
         const subId = stripeId(session.subscription);
         if (!subId) throw subscriptionExists();
         const sub = await stripe.subscriptions.retrieve(subId);
-        assertOwnedSubscription(sub, customer);
+        assertOwnedSubscription(config, sub, customer);
         if (sub.id !== subId || !TERMINAL_SUBSCRIPTIONS.has(sub.status)) throw subscriptionExists();
       } else if (session.status !== 'expired') {
         throw unavailable();
@@ -208,7 +209,7 @@ export async function checkout(
     if (openSubscriptions.length > 0) {
       if (!attempt || openSubscriptions.length !== 1) throw inProgress();
       const [session] = openSubscriptions;
-      assertOwnedSession(session, customer);
+      assertOwnedSession(config, session, customer);
       if (session.status !== 'open' || session.metadata?.fos_attempt !== attempt.id) throw inProgress();
       await rememberSession(store, userId, attempt, session.id);
       if (attempt.plan !== plan) throw inProgress();
@@ -229,13 +230,13 @@ export async function checkout(
     // can be recovered above; otherwise old attempts require operator reconciliation.
     if (!canRetry(attempt.started_at)) throw inProgress();
     const session = await stripe.checkout.sessions.create(checkoutParams(config, customer, attempt), {
-      idempotencyKey: `fos-sandbox-checkout-${attempt.id}`,
+      idempotencyKey: `fos-${config.mode}-checkout-${attempt.id}`,
     });
-    assertOwnedSession(session, customer);
+    assertOwnedSession(config, session, customer);
     await rememberSession(store, userId, attempt, session.id);
     // An idempotent response may be a snapshot from the original create call.
     const current = await stripe.checkout.sessions.retrieve(session.id);
-    assertOwnedSession(current, customer);
+    assertOwnedSession(config, current, customer);
     if (current.id !== session.id || current.status !== 'open') throw inProgress();
     return checkoutUrl(config, current, attempt);
   }
@@ -250,7 +251,7 @@ export async function portal(config: BillingConfig, store: BillingStore, stripe:
     return_url: new URL(RETURN_PATH, config.site).href,
     ...(config.portalConfiguration ? { configuration: config.portalConfiguration } : {}),
   });
-  assertSandbox(session);
+  assertMode(config, session);
   if (session.customer !== row.customer_id) throw unavailable();
   return hostedUrl(session.url, 'billing.stripe.com');
 }
@@ -264,10 +265,10 @@ export async function webhook(
   } catch {
     throw new BillingError(400, 'invalid_webhook');
   }
-  if (event.livemode !== false || event.account || event.context) throw new BillingError(400, 'invalid_webhook');
+  if (event.livemode !== config.live || event.account || event.context) throw new BillingError(400, 'invalid_webhook');
   const object = event.data?.object;
   if (!event.type?.startsWith('customer.subscription.')) return;
-  if (object?.object !== 'subscription' || object.livemode !== false) throw new BillingError(400, 'invalid_webhook');
+  if (object?.object !== 'subscription' || object.livemode !== config.live) throw new BillingError(400, 'invalid_webhook');
   const customer = stripeId(object.customer);
   if (!customer?.startsWith('cus_')) throw new BillingError(400, 'invalid_webhook');
 
@@ -275,8 +276,8 @@ export async function webhook(
   // prevents a concurrent projection based on an older read from overwriting it.
   for (let i = 0; i < 5; i++) {
     const row = await store.byCustomer(customer);
-    if (!row) return; // This endpoint may also receive unrelated sandbox events.
-    const projection = projectSubscriptions(config, await listSubscriptions(stripe, customer));
+    if (!row) return; // This endpoint may also receive events for customers this site didn't create.
+    const projection = projectSubscriptions(config, await listSubscriptions(config, stripe, customer));
     if (await store.project(row.user_id, customer, row.projection_revision, projection)) return;
   }
   throw unavailable(); // Ask Stripe to retry, rather than acknowledge an unwritten update.

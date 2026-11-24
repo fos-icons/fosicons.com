@@ -137,21 +137,77 @@ describe('sandbox HTTP boundary', () => {
   });
 });
 
+describe('billing mode', () => {
+  const liveEnv = {
+    ...env, BILLING_SANDBOX_ENABLED: undefined, BILLING_MODE: 'live', VERCEL_ENV: 'production',
+    BILLING_SITE_URL: 'https://fosicons.com', STRIPE_SECRET_KEY: 'sk_live_fixture',
+  };
+
+  it('runs the sandbox only off production and live billing only on production, each with its own key', () => {
+    expect(readBillingConfig({ ...env, BILLING_SANDBOX_ENABLED: undefined, BILLING_MODE: 'sandbox' }))
+      .toMatchObject({ mode: 'sandbox', live: false });
+    expect(readBillingConfig(liveEnv)).toMatchObject({ mode: 'live', live: true });
+    for (const [settings, error] of [
+      [{ ...liveEnv, VERCEL_ENV: 'preview' }, 'billing_disabled'],
+      [{ ...liveEnv, VERCEL_ENV: undefined }, 'billing_disabled'],
+      [{ ...env, BILLING_MODE: 'sandbox', VERCEL_ENV: 'production' }, 'billing_disabled'],
+      [{ ...liveEnv, BILLING_MODE: 'LIVE' }, 'billing_disabled'],
+      [{ ...liveEnv, STRIPE_SECRET_KEY: 'sk_test_fixture' }, 'billing_misconfigured'],
+      [{ ...liveEnv, BILLING_SITE_URL: 'http://localhost:5173' }, 'billing_misconfigured'],
+      [{ ...liveEnv, BILLING_SITE_URL: 'http://fosicons.com' }, 'billing_misconfigured'],
+    ] as const) expect(() => readBillingConfig(settings), JSON.stringify(settings)).toThrow(error);
+  });
+
+  it('accepts only live Stripe objects in live mode', async () => {
+    const live = readBillingConfig(liveEnv);
+    const livePrice = { ...price(), livemode: true, product: { id: 'prod_pro', active: true, livemode: true } } as Stripe.Price;
+    const liveCoupon = { ...coupon(), livemode: true } as Stripe.Coupon;
+    expect(() => validateOffer(livePrice, liveCoupon, live.plans.pro, true)).not.toThrow();
+    expect(() => validateOffer(price(), coupon(), live.plans.pro, true)).toThrow('billing_misconfigured');
+    expect(projectSubscriptions(live, [{ ...sub('active', livePrice), livemode: true } as Stripe.Subscription]))
+      .toMatchObject({ plan: 'pro', status: 'active' });
+    expect(() => projectSubscriptions(live, [sub('active')])).toThrow('billing_misconfigured');
+
+    const create = vi.fn().mockResolvedValue({ livemode: false, customer, url: 'https://billing.stripe.com/p/test' });
+    const store = { byUser: async () => rowFixture() } as unknown as BillingStore;
+    const { portal } = await import('../server/billing/stripe');
+    await expect(portal(live, store, asStripe({ billingPortal: { sessions: { create } } }), owner))
+      .rejects.toThrow('billing_misconfigured');
+  });
+
+  it('accepts live webhook events and rejects test events in live mode', async () => {
+    const live = readBillingConfig(liveEnv);
+    const instance = new Stripe(env.STRIPE_SECRET_KEY);
+    const byCustomer = vi.fn().mockResolvedValue(null);
+    const db = { byCustomer } as unknown as BillingStore;
+    const stripe = asStripe({ webhooks: instance.webhooks });
+    const event = (livemode: boolean) => JSON.stringify({ id: 'evt_fixture', livemode, type: 'customer.subscription.updated',
+      data: { object: { object: 'subscription', livemode, customer, status: 'active' } } });
+    const sign = (text: string) => instance.webhooks.generateTestHeaderString({ payload: text, secret: env.STRIPE_WEBHOOK_SECRET });
+    const testEvent = event(false);
+    await expect(webhook(live, db, stripe, Buffer.from(testEvent), sign(testEvent))).rejects.toThrow('invalid_webhook');
+    expect(byCustomer).not.toHaveBeenCalled();
+    const liveEvent = event(true);
+    await webhook(live, db, stripe, Buffer.from(liveEvent), sign(liveEvent));
+    expect(byCustomer).toHaveBeenCalledExactlyOnceWith(customer);
+  });
+});
+
 describe('sandbox Stripe Checkout', () => {
   it('requires the exact annual price and the matching fixed product coupon', () => {
     const offer = runtime.plans.pro;
-    expect(() => validateOffer(price(), coupon(), offer)).not.toThrow();
+    expect(() => validateOffer(price(), coupon(), offer, false)).not.toThrow();
     for (const bad of [
       { ...price(), active: false }, { ...price(), livemode: true }, { ...price(), billing_scheme: 'tiered' },
       { ...price(), currency: 'eur' }, { ...price(), unit_amount: 4900 },
       { ...price(), recurring: { ...price().recurring!, interval: 'month' } },
       { ...price(), recurring: { ...price().recurring!, usage_type: 'metered' } },
-    ]) expect(() => validateOffer(bad, coupon(), offer)).toThrow('billing_misconfigured');
+    ]) expect(() => validateOffer(bad, coupon(), offer, false)).toThrow('billing_misconfigured');
     for (const bad of [
       { ...coupon(), livemode: true }, { ...coupon(), valid: false }, { ...coupon(), amount_off: 3000 },
       { ...coupon(), percent_off: 10 }, { ...coupon(), duration: 'forever' },
       { ...coupon(), applies_to: { products: ['prod_other'] } },
-    ]) expect(() => validateOffer(price(), bad, offer)).toThrow('billing_misconfigured');
+    ]) expect(() => validateOffer(price(), bad, offer, false)).toThrow('billing_misconfigured');
   });
 
   it('serializes competing checkout plans and reuses the owned open Session', async () => {

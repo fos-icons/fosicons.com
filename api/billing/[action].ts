@@ -107,7 +107,7 @@ export function createBillingHandler(deps: BillingDependencies) {
       if (error && typeof error === 'object' && 'code' in error && error.code === 'idempotency_key_in_use') {
         return reply(res, 409, { error: 'checkout_in_progress' });
       }
-      console.error('Sandbox billing provider request failed', action);
+      console.error('Billing provider request failed', action);
       return reply(res, 502, { error: 'billing_unavailable' });
     }
   };

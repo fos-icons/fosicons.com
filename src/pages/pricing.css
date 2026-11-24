@@ -139,7 +139,25 @@
   margin-block-start: 1.25rem;
 }
 
-.pricing-action a { min-block-size: 2.75rem; }
+.pricing-action {
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.pricing-action a,
+.pricing-action button { min-block-size: 2.75rem; }
+
+.pricing-action-error {
+  flex-basis: 100%;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+/* The plan you have: solid, not "coming soon" dashed. */
+.pricing-status--current {
+  border-style: solid;
+  color: var(--c-ink);
+}
 
 .pricing-status {
   display: inline-flex;
@@ -219,7 +237,7 @@
 .pricing-library-note a,
 .pricing-faq details a { color: var(--c-brand); text-decoration: underline; text-underline-offset: 0.15em; }
 
-.pricing-sandbox {
+.pricing-account {
   display: grid;
   gap: 0.75rem;
   margin-block-end: clamp(1.75rem, 4vw, 2.5rem);
@@ -227,10 +245,10 @@
   padding-block-start: 1.5rem;
 }
 
-.pricing-sandbox h2 { font-size: 1.375rem; font-weight: 650; }
-.pricing-sandbox p { max-inline-size: 55ch; text-wrap: pretty; }
-.pricing-sandbox form { display: grid; gap: 0.5rem; justify-items: start; }
-.pricing-sandbox input {
+.pricing-account h2 { font-size: 1.375rem; font-weight: 650; }
+.pricing-account p { max-inline-size: 55ch; text-wrap: pretty; }
+.pricing-account form { display: grid; gap: 0.5rem; justify-items: start; }
+.pricing-account input {
   inline-size: min(22rem, 100%);
   min-block-size: 2.75rem;
   border: 1px solid var(--c-line-strong);
@@ -238,9 +256,9 @@
   background: var(--c-surface);
   padding-inline: 0.75rem;
 }
-.pricing-sandbox-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.pricing-sandbox button { min-block-size: 2.75rem; }
-.pricing-sandbox [role="alert"] { font-weight: 650; }
+.pricing-account-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.pricing-account button { min-block-size: 2.75rem; }
+.pricing-account [role="alert"] { font-weight: 650; }
 
 /* FAQ */
 
