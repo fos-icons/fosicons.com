@@ -8,9 +8,11 @@ import {
   DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
   strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
 } from '../lib/look';
+import { usePlan } from '../lib/plan';
 import { isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { TeachingTip } from './TeachingTip';
+import { UpgradePrompt } from './UpgradePrompt';
 import { RailActions } from './QuickTools';
 import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
@@ -253,6 +255,7 @@ export function CustomizeControls({
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
+  const { can } = usePlan();
   const duo = isDuo(style);
   const r = resolveLook(look, theme);
 
@@ -310,7 +313,9 @@ export function CustomizeControls({
             })}
           </div>
           <TeachingTip tip="color" />
-          {duo ? (
+          {duo && !can('duoColors') ? (
+            <UpgradePrompt feature="duoColors" />
+          ) : duo ? (
             <>
               <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
               {style === 'duocolor' && (
@@ -377,23 +382,30 @@ export function CustomizePanel({
 }
 
 /**
- * Download every icon in the free style with the look set above.
+ * Download every icon in the chosen styles with the look set above, as one ZIP.
+ * Bulk ZIPs need Pro; the paid styles need Pro too where billing is off.
  */
 export function DownloadSection({ look }: { look: Look }) {
-  const { t, n } = useI18n();
+  const { t, n, list } = useI18n();
   const i18n = useI18n();
   const toast = useToast();
+  const { can, enforced } = usePlan();
   const { resolved: theme } = useTheme();
   const uid = useId();
-  const [includeRegular, setIncludeRegular] = useState(true);
+  const [chosen, setChosen] = useState<readonly StyleId[]>([FREE_ICON_STYLE]);
   const [busy, setBusy] = useState(false);
+  const zip = can('zip');
+  const open = (style: StyleId) => style === FREE_ICON_STYLE || can('styles');
+  const styles = catalog.styles.filter((style) => chosen.includes(style) && open(style));
+  const disabled = busy || !zip || styles.length === 0;
   const download = async () => {
-    if (busy || !includeRegular) return;
+    if (disabled) return;
     setBusy(true);
     try {
-      const styles = [FREE_ICON_STYLE] as const;
       const name = fullSetName(styles);
-      downloadBlob(await buildFullSet(look, theme, styles), name);
+      // Modifier colors are an Advanced feature: without it, files keep the library's.
+      const exported = can('modifiers') ? look : { ...look, modifierColor: null };
+      downloadBlob(await buildFullSet(exported, theme, styles), name);
       toast('success', t('download.done', { file: name }));
     } catch (error) {
       toast('error', errorText(error, i18n, 'error.download'));
@@ -401,11 +413,14 @@ export function DownloadSection({ look }: { look: Look }) {
       setBusy(false);
     }
   };
-  const label = busy ? t('download.preparing') : includeRegular ? t('download.all') : t('download.none');
+  const toggle = (style: StyleId, on: boolean) => setChosen(on ? [...chosen, style] : chosen.filter((s) => s !== style));
+  const label = busy ? t('download.preparing') : styles.length ? t('download.all') : t('download.none');
+  const onlyFree = styles.length === 1 && styles[0] === FREE_ICON_STYLE;
+  const count = n(catalog.icons.length * styles.length);
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
       <RailActions>{() => (
-        <IconButton icon="download" label={label} onClick={download} disabled={busy || !includeRegular} />
+        <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
       )}</RailActions>
       <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
       <fieldset className="mt-4">
@@ -413,13 +428,15 @@ export function DownloadSection({ look }: { look: Look }) {
         <div className="flex flex-wrap gap-1">
           {catalog.styles.map((style) => {
             const free = style === FREE_ICON_STYLE;
+            const available = open(style);
+            const checked = available && chosen.includes(style);
             return (
               <label key={style} className={`relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted ${
-                free ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
+                available ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
               }`}>
-                <input type="checkbox" className="sr-only" disabled={!free} checked={free && includeRegular}
-                  aria-description={t(free ? 'icons.free' : 'download.premiumSoon')} onChange={(event) => setIncludeRegular(event.target.checked)} />
-                <UiIcon name={free ? (includeRegular ? 'check' : 'plus') : 'crown-simple'} className="size-3" />
+                <input type="checkbox" className="sr-only" disabled={!available} checked={checked}
+                  aria-description={free ? t('icons.free') : available ? undefined : t(enforced ? 'upgrade.styles' : 'download.premiumSoon')} onChange={(event) => toggle(style, event.target.checked)} />
+                <UiIcon name={available ? (checked ? 'check' : 'plus') : 'crown-simple'} className="size-3" />
                 {t(`style.${style}`)}
                 {free && <span aria-hidden="true" className={freeBadgeClass}>{t('icons.free')}</span>}
               </label>
@@ -432,7 +449,7 @@ export function DownloadSection({ look }: { look: Look }) {
           variant="primary"
           icon="download"
           onClick={download}
-          disabled={busy || !includeRegular}
+          disabled={disabled}
           aria-describedby={`${uid}-note`}
           className="min-w-0 flex-1 disabled:cursor-wait"
         >
@@ -440,8 +457,12 @@ export function DownloadSection({ look }: { look: Look }) {
         </Button>
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
-        {t('download.note', { count: n(includeRegular ? catalog.icons.length : 0) })} {t('download.premiumSoon')}
+        {onlyFree || !styles.length
+          ? t('download.note', { count: n(styles.length ? catalog.icons.length : 0) })
+          : t('download.noteStyles', { count, styles: list(styles.map((s) => t(`style.${s}`))) })}
+        {enforced || can('styles') ? null : <> {t('download.premiumSoon')}</>}
       </p>
+      {!zip && <UpgradePrompt feature="zip" className="mt-1.5 text-xs leading-relaxed text-muted" />}
     </section>
   );
 }

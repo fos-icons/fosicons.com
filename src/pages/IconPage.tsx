@@ -22,6 +22,8 @@ import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import NotFoundPage from './NotFoundPage';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { usePlan } from '../lib/plan';
 import { useModifiers } from '../components/ModifierPicker';
 import { composeSvg, CORNERS, editablePreset, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
 import { resolveModifier } from '../lib/phrase';
@@ -227,7 +229,14 @@ function PreviewStage({ name, style, svgAt, onStyleChange }: {
 export default function IconPage() {
   const { name = '' } = useParams();
   const icon = iconsByName.get(name);
-  const preset = editablePreset(icon);
+  const { can } = usePlan();
+  /**
+   * Modifiers are Advanced. Without it, a modifier in the link is ignored (the
+   * page says how to get it), and a library icon that carries one opens as
+   * itself rather than as its base plus an editable modifier.
+   */
+  const modifiersUnlocked = can('modifiers');
+  const preset = modifiersUnlocked ? editablePreset(icon) : null;
   const inspected = preset?.base ?? icon;
   const i18n = useI18n();
   const { t, label, n, path } = i18n;
@@ -270,7 +279,7 @@ export default function IconPage() {
     if (preset) navigate({ pathname: path(iconPath(preset.base.name)), search: next.toString() });
     else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
   };
-  const canModify = !!inspected && !inspected.composition;
+  const canModify = !!inspected && !inspected.composition && modifiersUnlocked;
   const modifiers = useModifiers(canModify && (wide || !!badge));
   const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
@@ -306,7 +315,7 @@ export default function IconPage() {
   const components = catalog.styles.map((s) => componentName(icon.name, s));
   const component = componentName(icon.name, style);
   const styleLabel = t(`style.${style}`);
-  const premium = style !== FREE_ICON_STYLE;
+  const premium = style !== FREE_ICON_STYLE && !can('styles');
   const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
   const editorLink = `${editorPath(icon.name)}${style === catalog.styles[0] ? '' : `&style=${STYLE_META[style].slug}`}`;
 
@@ -409,7 +418,8 @@ export default function IconPage() {
               <Button size="lg" icon="copy" onClick={copySvg} disabled={premium || !shown}>{t('iconPage.copySvg')}</Button>
             </div>
           </div>
-          {premium && <p className="mt-2 text-sm text-muted">{t('export.premiumSoon')}</p>}
+          {premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
+          {badge && !modifiersUnlocked && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
           <LocalLink
             to={editorLink}
             onClick={openInPlace(() => openEditor(style))}

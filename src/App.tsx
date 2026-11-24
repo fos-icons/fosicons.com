@@ -4,6 +4,7 @@ import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
 import { DEFAULT_LOCALE, I18nProvider, localizePath, useI18n, type Translation } from './i18n';
 import { docsPageFor } from './i18n/content';
+import { PlanProvider } from './lib/plan';
 import { ThemeProvider } from './lib/theme';
 import { isCatalogEditor, legacyCatalogDestination } from './lib/catalog-location';
 import { IconsPage } from './pages/IconsPage';
@@ -40,26 +41,28 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
     <I18nProvider locale={locale} messages={messages}>
       <ThemeProvider>
         <ToastProvider>
-          <Routes>
-            <Route path={base} element={<Layout />}>
-              <Route index element={<CatalogRoute page="home" />} />
-              <Route path="brands" element={<CatalogRoute page="brands" />} />
-              <Route path="docs" element={<DocsPage />} />
-              <Route path="pricing" element={<PricingPage />} />
-              {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
-              <Route path="icons/:name" element={<CatalogRoute page="icon" />} />
-              <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />
-              <Route path="categories/:slug" element={<CatalogRoute page="category" />} />
-              <Route path="react-icons" element={<FrameworkPage framework="react" />} />
-              <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
-              <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-            {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}
-            <Route path="*" element={<Layout />}>
-              <Route path="*" element={<NotFoundPage />} />
-            </Route>
-          </Routes>
+          <PlanProvider>
+            <Routes>
+              <Route path={base} element={<Layout />}>
+                <Route index element={<CatalogRoute page="home" />} />
+                <Route path="brands" element={<CatalogRoute page="brands" />} />
+                <Route path="docs" element={<DocsPage />} />
+                <Route path="pricing" element={<PricingPage />} />
+                {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
+                <Route path="icons/:name" element={<CatalogRoute page="icon" />} />
+                <Route path="categories/time-weather" element={<Navigate to={localizePath('/categories/time-calendar', locale)} replace />} />
+                <Route path="categories/:slug" element={<CatalogRoute page="category" />} />
+                <Route path="react-icons" element={<FrameworkPage framework="react" />} />
+                <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
+                <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+              {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}
+              <Route path="*" element={<Layout />}>
+                <Route path="*" element={<NotFoundPage />} />
+              </Route>
+            </Routes>
+          </PlanProvider>
         </ToastProvider>
       </ThemeProvider>
     </I18nProvider>

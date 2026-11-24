@@ -13,6 +13,7 @@ import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, Select, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
+import { usePlan } from '../lib/plan';
 import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
@@ -137,6 +138,7 @@ function BrandsEmpty() {
 export function IconsPage() {
   const i18n = useI18n();
   const { t, rich, label, list, path } = i18n;
+  const plan = usePlan();
   const location = useLocation();
   const navigate = useNavigate();
   const state = useMemo(() => parseState(location.search, config, catalogRouteFilters(location)), [location]);
@@ -272,7 +274,9 @@ export function IconsPage() {
     return () => window.clearTimeout(timer);
   }, [phrase, phraseTarget, update]);
   const selected = state.icon ? iconsByName.get(state.icon) ?? brandsByName.get(state.icon) ?? null : null;
-  const selectedPreset = useMemo(() => editablePreset(selected), [selected]);
+  // Without Advanced, a library icon that carries a modifier opens as itself, not as base plus editable modifier.
+  const modifiersUnlocked = plan.can('modifiers');
+  const selectedPreset = useMemo(() => (modifiersUnlocked ? editablePreset(selected) : null), [selected, modifiersUnlocked]);
   const inspected = selectedPreset?.base ?? selected;
   const badgeRequest = useMemo(
     () => (state.modifier ? { name: state.modifier, corner: state.corner } : selectedPreset?.badge ?? null),
@@ -462,7 +466,7 @@ export function IconsPage() {
           <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>
             <IconGrid
               label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(`style.${drawStyle}`) })}
-              premiumLabel={drawStyle === FREE_ICON_STYLE ? undefined : t('icons.premium')}
+              premiumLabel={drawStyle === FREE_ICON_STYLE || plan.can('styles') ? undefined : t('icons.premium')}
               items={results}
               categoryTitle={browsingCore && !state.category ? (category) => label('category', category, category) : undefined}
               svgs={gridSvgs}

@@ -88,12 +88,23 @@ describe('sandbox HTTP boundary', () => {
     const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, stripe: vi.fn() });
     expect(await replyThrough(handle, 'status?billing=success&user_id=other', 'GET', { authorization: auth }))
       .toEqual({ code: 200, headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json; charset=utf-8' },
-        body: { plan: 'free', status: null } });
+        body: { plan: 'free', status: null, entitlement: 'free' } });
     expect(verifyUser).toHaveBeenCalledWith('header.payload.signature');
     expect(byUser).toHaveBeenCalledExactlyOnceWith(owner);
     expect(await replyThrough(handle, 'status', 'GET')).toMatchObject({ code: 401, body: { error: 'unauthorized' } });
     expect(await replyThrough(handle, 'status', 'POST')).toMatchObject({ code: 405, headers: { Allow: 'GET' } });
     expect(await replyThrough(handle, 'unknown', 'GET')).toMatchObject({ code: 404 });
+  });
+
+  it('reports the plan a stored status unlocks, and nothing for a lapsed subscription', async () => {
+    const verifyUser = vi.fn().mockResolvedValue(owner);
+    const byUser = vi.fn().mockResolvedValueOnce({ ...rowFixture(), plan: 'advanced', status: 'active' })
+      .mockResolvedValueOnce({ ...rowFixture(), plan: 'pro', status: 'past_due' });
+    const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, stripe: vi.fn() });
+    expect(await replyThrough(handle, 'status', 'GET', { authorization: auth }))
+      .toMatchObject({ code: 200, body: { plan: 'advanced', status: 'active', entitlement: 'advanced' } });
+    expect(await replyThrough(handle, 'status', 'GET', { authorization: auth }))
+      .toMatchObject({ code: 200, body: { plan: 'pro', status: 'past_due', entitlement: 'free' } });
   });
 
   it('rejects foreign origins and a body that tries to select a Stripe object', async () => {

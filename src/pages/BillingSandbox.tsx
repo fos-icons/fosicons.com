@@ -1,16 +1,12 @@
-import { createClient, type Session } from '@supabase/supabase-js';
+import type { Session } from '@supabase/supabase-js';
 import { useEffect, useState, type FormEvent } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Button } from '../components/ui';
 import { useI18n, type MessageKey } from '../i18n';
+import { getBillingClient } from '../lib/billing-client';
 import { isPaidPlan, PAID_PLANS, type PaidPlan } from '../lib/billing-plans';
+import { usePlan } from '../lib/plan';
 
-let client: ReturnType<typeof createClient> | undefined;
-function getClient() {
-  return client ??= createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY, {
-    auth: { detectSessionInUrl: false },
-  });
-}
 
 type Plan = PaidPlan | 'free';
 type Operation = 'checkout' | 'portal' | 'signOut';
@@ -24,6 +20,7 @@ function Account({ session }: { session: Session }) {
   const [pending, setPending] = useState<Operation | null>(null);
   const [error, setError] = useState<MessageKey | null>(null);
   const token = session.access_token;
+  const { refresh: refreshPlan } = usePlan();
 
   useEffect(() => {
     const controller = new AbortController();
@@ -83,7 +80,7 @@ function Account({ session }: { session: Session }) {
     setPending('signOut');
     setError(null);
     try {
-      const result = await getClient().auth.signOut({ scope: 'local' });
+      const result = await getBillingClient().auth.signOut({ scope: 'local' });
       if (result.error) setError('billing.signOutError');
     } catch {
       setError('billing.signOutError');
@@ -106,7 +103,7 @@ function Account({ session }: { session: Session }) {
         {(hasSubscription || (plan && plan !== 'free')) && (
           <Button disabled={loading || pending !== null} onClick={() => void openBilling('portal')}>{t('billing.portal')}</Button>
         )}
-        <Button disabled={loading || pending !== null} onClick={() => { setLoading(true); setError(null); setRefresh(refresh + 1); }}>
+        <Button disabled={loading || pending !== null} onClick={() => { setLoading(true); setError(null); setRefresh(refresh + 1); refreshPlan(); }}>
           {t('billing.refresh')}
         </Button>
         <Button variant="quiet" disabled={pending !== null} onClick={() => void signOut()}>{t('billing.signOut')}</Button>
@@ -130,7 +127,7 @@ function TestSignIn() {
     setError(null);
     const errorKey = sent ? 'billing.verifyError' : 'billing.sendError';
     try {
-      const { auth } = getClient();
+      const { auth } = getBillingClient();
       const address = email.trim();
       const result = sent
         ? await auth.verifyOtp({ type: 'email', email: address, token: code.trim() })
@@ -183,7 +180,7 @@ export default function BillingSandbox() {
   const [unavailable, setUnavailable] = useState(false);
   useEffect(() => {
     try {
-      const { data } = getClient().auth.onAuthStateChange((_event, current) => setSession(current));
+      const { data } = getBillingClient().auth.onAuthStateChange((_event, current) => setSession(current));
       return () => data.subscription.unsubscribe();
     } catch {
       setUnavailable(true);

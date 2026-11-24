@@ -18,6 +18,8 @@ import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
+import { UpgradePrompt } from './UpgradePrompt';
+import { usePlan } from '../lib/plan';
 import {
   authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
@@ -67,17 +69,20 @@ export function Inspector({
   const sourceStroke = opticalStroke(artworkSize(look));
 
   /** Chosen modifier (badge) color, kept with the rest of the look so it carries across icons. */
-  const modifier = look.modifierColor;
+  const { can } = usePlan();
+  /** Modifiers, their placement, and badge colors are Advanced: without it, a modifier from a link is ignored. */
+  const modifiersUnlocked = can('modifiers');
+  const modifier = modifiersUnlocked ? look.modifierColor : null;
   const canTryModifiers = kind === 'core' && !icon.composition;
-  const modifiers = useModifiers(canTryModifiers && !!librarySource);
+  const modifiers = useModifiers(canTryModifiers && modifiersUnlocked && !!librarySource);
   const available = useMemo(() => modifiers.list ? modifiersFor(icon.name, modifiers.list) : [], [icon.name, modifiers.list]);
   const badge = useMemo<ModifierChoice | null>(() => {
-    if (!badgeRequest) return null;
+    if (!badgeRequest || !modifiersUnlocked) return null;
     const modifier = available.find((m) => m.name === badgeRequest.name);
     if (!modifier) return null;
     const { corner } = badgeRequest;
     return { modifier, corner: corner && modifier.positions[corner] ? corner : initialCorner(modifier) };
-  }, [available, badgeRequest]);
+  }, [available, badgeRequest, modifiersUnlocked]);
   const setBadge = (choice: ModifierChoice | null) => {
     onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
   };
@@ -105,7 +110,7 @@ export function Inspector({
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
-  const premium = style !== FREE_ICON_STYLE;
+  const premium = style !== FREE_ICON_STYLE && !can('styles');
   const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
@@ -257,7 +262,9 @@ export function Inspector({
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
-          {!canTryModifiers ? null : modifiers.error ? (
+          {!canTryModifiers ? null : !modifiersUnlocked ? (
+            <UpgradePrompt feature="modifiers" />
+          ) : modifiers.error ? (
             <p className="text-sm text-danger">{modifiers.error}</p>
           ) : !modifiers.list ? (
             <div className="h-24 animate-pulse rounded-xl bg-sunken" />
@@ -317,7 +324,7 @@ export function Inspector({
             </>
           )}
           {/* Library icons that already carry a modifier have no picker: a full color field instead. */}
-          {showModifier && (!modifiers.list || !badge) && (
+          {showModifier && modifiersUnlocked && (!modifiers.list || !badge) && (
             <div className="mt-4">
               <ColorField
                 label={t('inspector.modifierColor')}
@@ -390,7 +397,7 @@ export function Inspector({
         size={size}
         build={(px) => build(px)}
         disabled={exportDisabled}
-        premium={premium}
+        locked={premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} />}
         run={run}
       />
 
