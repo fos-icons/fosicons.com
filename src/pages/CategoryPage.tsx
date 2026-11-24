@@ -10,6 +10,8 @@ import { downloadBlob } from '../lib/export';
 import { categoryBySlug, categoryPath, iconsInCategory } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
 import { FRAMEWORK_NAMES } from '../lib/links';
+import { UpgradePrompt } from '../components/UpgradePrompt';
+import { usePlan } from '../lib/plan';
 import NotFoundPage from './NotFoundPage';
 
 export default function CategoryPage() {
@@ -18,6 +20,7 @@ export default function CategoryPage() {
   const { t, label, list, n } = i18n;
   const toast = useToast();
   const [downloading, setDownloading] = useState(false);
+  const zip = usePlan().can('zip');
   const category = categoryBySlug(slug);
   if (!category) return <NotFoundPage />;
 
@@ -26,6 +29,7 @@ export default function CategoryPage() {
   const styles = list(catalog.styles.map((s) => t(`style.${s}`)));
 
   const download = async () => {
+    if (!zip) return;
     setDownloading(true);
     try {
       const name = categorySetName(slug);
@@ -49,13 +53,14 @@ export default function CategoryPage() {
         <ButtonLink to={`${categoryPath(category.name)}?view=editor`} variant="primary" size="lg" icon="palette" className="min-h-11">
           {t('categoryPage.customize')}
         </ButtonLink>
-        <Button size="lg" icon="download" onClick={download} disabled={downloading} aria-busy={downloading} aria-describedby="category-download-format" className="min-h-11">
+        <Button size="lg" icon="download" onClick={download} disabled={downloading || !zip} aria-busy={downloading} aria-describedby="category-download-format" className="min-h-11">
           {downloading ? t('download.preparing') : t('categoryPage.download', { count: icons.length })}
         </Button>
       </div>
       <p id="category-download-format" className="mt-2 text-sm text-muted">
         {t('categoryPage.downloadFormat')}
       </p>
+      {!zip && <UpgradePrompt feature="zip" className="mt-1 text-sm text-muted" />}
 
       <div className="mt-10">
         <IconLinkGrid icons={icons} />

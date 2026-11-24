@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n';
-import { useId, useState } from 'react';
+import { useId, useState, type ReactNode } from 'react';
 import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng } from '../lib/export';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { Section } from './Customize';
@@ -48,7 +48,7 @@ let rememberedCopy: { kind: CopyKind; scale: Scale } = { kind: 'svg', scale: 2 }
  * the same shape: pick what to copy, and the scale for images.
  */
 export function ExportPanel({
-  name, baseName, size, build, disabled, premium = false, run,
+  name, baseName, size, build, disabled, locked, run,
 }: {
   /** Icon name, for the button label and Copy name. */
   name: string;
@@ -58,7 +58,8 @@ export function ExportPanel({
   /** Build the export SVG at a pixel size. */
   build: (px: number) => string;
   disabled: boolean;
-  premium?: boolean;
+  /** Why exporting is locked (an upgrade prompt), shown in place of the download notes. */
+  locked?: ReactNode;
   run: (action: () => Promise<void> | void, success: string) => Promise<void>;
 }) {
   const uid = useId();
@@ -192,8 +193,7 @@ export function ExportPanel({
       <Button variant="primary" icon="download" className="h-10 w-full" disabled={disabled} onClick={exportAll}>
         {rows.length > 1 ? t('export.buttonMany', { name, count: rows.length }) : t('export.button', { name })}
       </Button>
-      {premium ? <p className="text-xs text-muted">{t('export.premiumSoon')}</p>
-        : downloadNote && <p className="text-xs text-faint">{downloadNote}</p>}
+      {locked || (downloadNote && <p className="text-xs text-faint">{downloadNote}</p>)}
 
       <div className="border-t border-line pt-3">
         <h4 className="mb-2 text-xs text-muted">{t('export.copy')}</h4>

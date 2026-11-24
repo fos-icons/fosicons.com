@@ -2,6 +2,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { BillingError, readBillingConfig, type BillingConfig } from '../../server/billing/config.js';
 import { createBillingStore, type BillingStore } from '../../server/billing/store.js';
 import { checkout, createBillingStripe, portal, readPlan, webhook, type BillingStripe } from '../../server/billing/stripe.js';
+import { entitledPlan } from '../../src/lib/entitlements.js';
 
 export const config = { api: { bodyParser: false } };
 
@@ -91,7 +92,9 @@ export function createBillingHandler(deps: BillingDependencies) {
       const userId = await store.verifyUser(token);
       if (action === 'status') {
         const row = await store.byUser(userId);
-        return reply(res, 200, { plan: row?.plan ?? 'free', status: row?.status ?? null });
+        const status = { plan: row?.plan ?? 'free', status: row?.status ?? null };
+        // `entitlement` is the plan whose features this status unlocks.
+        return reply(res, 200, { ...status, entitlement: entitledPlan(status) });
       }
       if (action === 'portal') return reply(res, 200, await portal(runtime, store, deps.stripe(runtime), userId));
       const mediaType = req.headers['content-type']?.split(';')[0].trim().toLowerCase();

@@ -8,7 +8,9 @@ import { opticalStroke } from '../lib/catalog';
 import { buildSvg } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { buildZip, type ZipEntry } from '../lib/zip';
+import { usePlan } from '../lib/plan';
 import { RailActions } from './QuickTools';
+import { UpgradePrompt } from './UpgradePrompt';
 import { CustomizeControls, Section } from './Customize';
 import { Button, IconButton, Segmented, Select, UiIcon, useToast } from './ui';
 
@@ -17,7 +19,7 @@ type Format = 'svg' | 'png';
 
 /** The pane when several icons are selected: one look, applied to all of them. */
 export function SelectionPanel({
-  names, style, kind, svgs, look, onLookChange, onRemove, onClear, headingId,
+  names, style, kind, svgs, look: chosenLook, onLookChange, onRemove, onClear, headingId,
 }: {
   names: string[];
   style: StyleId;
@@ -34,6 +36,10 @@ export function SelectionPanel({
   const i18n = useI18n();
   const { t } = i18n;
   const { resolved: theme } = useTheme();
+  const { can } = usePlan();
+  /** Modifier colors are an Advanced feature: without it, files keep the library's. */
+  const modifiersUnlocked = can('modifiers');
+  const look = useMemo(() => (modifiersUnlocked ? chosenLook : { ...chosenLook, modifierColor: null }), [chosenLook, modifiersUnlocked]);
   const [format, setFormat] = useState<Format>('svg');
   const [scale, setScale] = useState<(typeof PNG_SCALES)[number]>(2);
   const [busy, setBusy] = useState(false);
@@ -41,8 +47,10 @@ export function SelectionPanel({
   const sourceStroke = opticalStroke(artworkSize(look));
   const slug = STYLE_META[style].slug;
   const ready = !!svgs && names.every((n) => svgs[n]);
-  const premium = style !== FREE_ICON_STYLE;
-  const downloadDisabled = premium || !ready || busy;
+  const premium = style !== FREE_ICON_STYLE && !can('styles');
+  /** A selection downloads as one ZIP: a bulk export. */
+  const zipLocked = !can('zip');
+  const downloadDisabled = premium || zipLocked || !ready || busy;
 
   const build = (name: string, px: number, idPrefix?: string) => {
     const source = svgs?.[name];
@@ -127,7 +135,7 @@ export function SelectionPanel({
         </ul>
       </div>
 
-      <CustomizeControls look={look} onChange={onLookChange} style={style} kind={kind} />
+      <CustomizeControls look={chosenLook} onChange={onLookChange} style={style} kind={kind} />
 
       <Section title={t('export.title')}>
         <div className="space-y-3">
@@ -167,9 +175,13 @@ export function SelectionPanel({
           >
             {t('selection.copyNames')}
           </Button>
-          <p className="text-xs leading-relaxed text-faint">
-            {premium ? t('download.premiumSoon') : format === 'png' ? t('selection.notePng') : t('selection.noteSvg')}
-          </p>
+          {zipLocked ? <UpgradePrompt feature="zip" />
+            : premium ? <UpgradePrompt feature="styles" fallback={t('download.premiumSoon')} className="text-xs leading-relaxed text-faint" />
+              : (
+                <p className="text-xs leading-relaxed text-faint">
+                  {format === 'png' ? t('selection.notePng') : t('selection.noteSvg')}
+                </p>
+              )}
         </div>
       </Section>
       <div className="h-4" />
