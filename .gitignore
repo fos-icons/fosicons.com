@@ -1,6 +1,9 @@
 node_modules
 dist
 *.local
+.env
+.env.*
+!.env.billing.example
 .DS_Store
 coverage
 dist-ssr

@@ -23,19 +23,18 @@ it('shows the annual launch plans without offering checkout', () => {
   const advanced = within(screen.getByRole('article', { name: 'Advanced' }));
   expect(free.getByText('$0')).toBeTruthy();
   expect(free.getByRole('link', { name: 'Browse Regular icons' }).getAttribute('href')).toBe('/?style=regular');
-  expect(free.queryByText('Standard annual price:', { exact: false })).toBeNull();
+  expect(free.queryByText(/^Renews at/)).toBeNull();
   expect(pro.getByText('$49')).toBeTruthy();
-  expect(pro.getByText('$69').tagName).toBe('DEL');
-  expect(pro.getByText('Standard annual price: $69 USD.')).toBeTruthy();
+  expect(pro.getByText('Renews at $69 USD/year')).toBeTruthy();
   expect(advanced.getByText('$99')).toBeTruthy();
-  expect(advanced.getByText('$129').tagName).toBe('DEL');
-  expect(advanced.getByText('Standard annual price: $129 USD.')).toBeTruthy();
+  expect(advanced.getByText('Renews at $129 USD/year')).toBeTruthy();
   for (const paid of [pro, advanced]) {
-    expect(paid.getByText('USD / year')).toBeTruthy();
+    expect(paid.getByText('USD for the first year')).toBeTruthy();
     expect(paid.getByText('Coming soon')).toBeTruthy();
     expect(paid.queryByRole('link')).toBeNull();
     expect(paid.queryByRole('button')).toBeNull();
   }
+  expect(screen.queryByRole('heading', { name: 'Test Stripe checkout' })).toBeNull();
 });
 
 it('compares styles, exports, modifiers, and planned integrations by tier', () => {

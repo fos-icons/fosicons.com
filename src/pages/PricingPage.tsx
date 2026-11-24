@@ -1,16 +1,21 @@
-import { useId } from 'react';
+import { lazy, Suspense, useEffect, useId, useState } from 'react';
 import { Glyph } from '../components/LandingParts';
 import { ButtonLink, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
+import { isPaidPlan, PAID_PLANS } from '../lib/billing-plans';
 import type { StyleId } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
 
 const plans = [
-  { id: 'free', price: 0, standardPrice: null, highlights: ['regular', 'find', 'customize', 'singleExport'] },
-  { id: 'pro', price: 49, standardPrice: 69, highlights: ['styles', 'duoColors', 'zip', 'agents'] },
-  { id: 'advanced', price: 99, standardPrice: 129, highlights: ['modifiers', 'placement', 'modifierExports', 'modifierAgents'] },
+  { id: 'free', highlights: ['regular', 'find', 'customize', 'singleExport'] },
+  { id: 'pro', highlights: ['styles', 'duoColors', 'zip', 'agents'] },
+  { id: 'advanced', highlights: ['modifiers', 'placement', 'modifierExports', 'modifierAgents'] },
 ] as const;
+
+const sandboxConfigured = import.meta.env.VITE_BILLING_SANDBOX_ENABLED === 'true'
+  && Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
+const BillingSandbox = sandboxConfigured ? lazy(() => import('./BillingSandbox')) : null;
 
 type PlanId = (typeof plans)[number]['id'];
 const planLevel: Record<PlanId, number> = { free: 0, pro: 1, advanced: 2 };
@@ -57,6 +62,18 @@ const questions = ['annual', 'modifiers', 'license', 'agents'] as const;
 
 export default function PricingPage() {
   const { n, t, rich } = useI18n();
+  const [sandboxAvailable, setSandboxAvailable] = useState(false);
+  useEffect(() => {
+    if (!sandboxConfigured) return;
+    const controller = new AbortController();
+    void fetch('/api/billing/status', { signal: controller.signal })
+      .then((response) => {
+        if (!controller.signal.aborted) setSandboxAvailable(response.status === 401);
+      }, () => {
+        if (!controller.signal.aborted) setSandboxAvailable(false);
+      });
+    return () => controller.abort();
+  }, []);
   const currency = (amount: number) => n(amount, {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0,
   });
@@ -68,6 +85,8 @@ export default function PricingPage() {
         <p>{t('pricing.intro')}</p>
       </header>
 
+      {sandboxAvailable && BillingSandbox && <Suspense fallback={null}><BillingSandbox /></Suspense>}
+
       <section className="pricing-board" aria-labelledby="pricing-title">
         <div className="pricing-board-head">
           <div className="pricing-lede">
@@ -76,7 +95,7 @@ export default function PricingPage() {
             <p className="pricing-launch">{t('pricing.launch')}</p>
           </div>
 
-          {plans.map(({ id, price, standardPrice, highlights }) => (
+          {plans.map(({ id, highlights }) => (
             <article key={id} className={`pricing-plan pricing-plan--${id}`} aria-labelledby={`pricing-${id}`}>
               <div className="pricing-plan-name">
                 <PlanArtwork plan={id} />
@@ -84,17 +103,16 @@ export default function PricingPage() {
               </div>
               <p className="pricing-price">
                 <span className="pricing-price-amount">
-                  <strong>{currency(price)}</strong>
-                  {standardPrice !== null && <del aria-hidden="true">{currency(standardPrice)}</del>}
+                  <strong>{currency(isPaidPlan(id) ? PAID_PLANS[id].firstYear : 0)}</strong>
                 </span>
-                <span className="pricing-price-term">{t(price ? 'pricing.perYear' : 'pricing.noCharge')}</span>
-                {standardPrice !== null && (
-                  <span className="sr-only">{t('pricing.standardAnnualPrice', { price: currency(standardPrice) })}</span>
+                <span className="pricing-price-term">{t(isPaidPlan(id) ? 'pricing.firstYear' : 'pricing.noCharge')}</span>
+                {isPaidPlan(id) && (
+                  <span className="pricing-renewal">{t('pricing.renewsAt', { price: currency(PAID_PLANS[id].renewal) })}</span>
                 )}
               </p>
               <p className="pricing-summary">{t(`pricing.summary.${id}`)}</p>
               <div className="pricing-action">
-                {price ? (
+                {isPaidPlan(id) ? (
                   <span className="pricing-status"><span aria-hidden="true" />{t('pricing.comingSoon')}</span>
                 ) : (
                   <ButtonLink to="/?style=regular" variant="primary" size="lg" iconEnd="arrow-right">{t('pricing.browse')}</ButtonLink>
