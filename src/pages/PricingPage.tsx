@@ -1,11 +1,14 @@
 import { lazy, Suspense, useEffect, useId, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Glyph } from '../components/LandingParts';
-import { ButtonLink, UiIcon } from '../components/ui';
+import { Button, ButtonLink, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
-import { isPaidPlan, PAID_PLANS } from '../lib/billing-plans';
+import { useHostedBilling } from '../lib/billing-actions';
+import { isPaidPlan, PAID_PLANS, type PaidPlan } from '../lib/billing-plans';
 import type { StyleId } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
+import { billingMode, hasOpenSubscription, usePlan } from '../lib/plan';
 
 const plans = [
   { id: 'free', highlights: ['regular', 'find', 'customize', 'singleExport'] },
@@ -13,9 +16,7 @@ const plans = [
   { id: 'advanced', highlights: ['modifiers', 'placement', 'modifierExports', 'modifierAgents'] },
 ] as const;
 
-const sandboxConfigured = import.meta.env.VITE_BILLING_SANDBOX_ENABLED === 'true'
-  && Boolean(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY);
-const BillingSandbox = sandboxConfigured ? lazy(() => import('./BillingSandbox')) : null;
+const BillingAccount = billingMode ? lazy(() => import('./BillingAccount')) : null;
 
 type PlanId = (typeof plans)[number]['id'];
 const planLevel: Record<PlanId, number> = { free: 0, pro: 1, advanced: 2 };
@@ -60,20 +61,70 @@ function PlanArtwork({ plan }: { plan: PlanId }) {
 
 const questions = ['annual', 'modifiers', 'license', 'agents'] as const;
 
+/**
+ * A paid plan's main action. Signed out, it opens sign-in for that plan; on
+ * Free, it goes straight to Checkout; with a subscription, it shows the
+ * current plan or opens the billing portal, so nobody pays twice.
+ */
+function PlanAction({ plan, ready, onChoose }: { plan: PaidPlan; ready: boolean; onChoose: (plan: PaidPlan) => void }) {
+  const { t } = useI18n();
+  const { session, subscription, loading } = usePlan();
+  const billing = useHostedBilling(session?.token);
+  const name = t(`pricing.plan.${plan}`);
+  const errorId = useId();
+
+  if (session && subscription && hasOpenSubscription(subscription)) {
+    if (subscription.plan === plan) {
+      return <span className="pricing-status pricing-status--current"><span aria-hidden="true" />{t('pricing.currentPlan')}</span>;
+    }
+    return (
+      <>
+        <Button size="lg" disabled={billing.pending !== null} onClick={() => void billing.open('portal')}>{t('billing.manage')}</Button>
+        {billing.error && <p role="alert" className="pricing-action-error">{t(billing.error)}</p>}
+      </>
+    );
+  }
+  return (
+    <>
+      <Button
+        variant="primary" size="lg" iconEnd="arrow-right"
+        disabled={!ready || loading || billing.pending !== null}
+        aria-describedby={billing.error ? errorId : undefined}
+        onClick={() => (session ? void billing.open('checkout', plan) : onChoose(plan))}
+      >
+        {t('pricing.get', { plan: name })}
+      </Button>
+      {billing.error && <p id={errorId} role="alert" className="pricing-action-error">{t(billing.error)}</p>}
+    </>
+  );
+}
+
 export default function PricingPage() {
   const { n, t, rich } = useI18n();
-  const [sandboxAvailable, setSandboxAvailable] = useState(false);
+  const { session } = usePlan();
+  /**
+   * Whether the billing endpoint is up: it answers 401 to an anonymous status
+   * read when it's configured, and 503 when it's off (e.g. a live build on a
+   * preview deployment). `null` while checking.
+   */
+  const [available, setAvailable] = useState<boolean | null>(billingMode ? null : false);
+  const [chosen, setChosen] = useState<PaidPlan | null>(null);
+  const [search] = useSearchParams();
+  /** Back from Stripe (`?billing=success` or `cancel`). */
+  const returned = search.has('billing');
   useEffect(() => {
-    if (!sandboxConfigured) return;
+    if (!billingMode) return;
     const controller = new AbortController();
     void fetch('/api/billing/status', { signal: controller.signal })
       .then((response) => {
-        if (!controller.signal.aborted) setSandboxAvailable(response.status === 401);
+        if (!controller.signal.aborted) setAvailable(response.status === 401);
       }, () => {
-        if (!controller.signal.aborted) setSandboxAvailable(false);
+        if (!controller.signal.aborted) setAvailable(false);
       });
     return () => controller.abort();
   }, []);
+  /** Live billing shows the account panel only once it's needed; the sandbox always shows it to testers. */
+  const showAccount = available === true && (billingMode === 'sandbox' || !!session || !!chosen || returned);
   const currency = (amount: number) => n(amount, {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0,
   });
@@ -85,14 +136,16 @@ export default function PricingPage() {
         <p>{t('pricing.intro')}</p>
       </header>
 
-      {sandboxAvailable && BillingSandbox && <Suspense fallback={null}><BillingSandbox /></Suspense>}
+      {showAccount && BillingAccount && billingMode && (
+        <Suspense fallback={null}><BillingAccount mode={billingMode} chosen={chosen} /></Suspense>
+      )}
 
       <section className="pricing-board" aria-labelledby="pricing-title">
         <div className="pricing-board-head">
           <div className="pricing-lede">
             <h2 id="pricing-compare">{t('pricing.compare')}</h2>
             <p>{t('pricing.compareIntro')}</p>
-            <p className="pricing-launch">{t('pricing.launch')}</p>
+            {available === false && <p className="pricing-launch">{t('pricing.launch')}</p>}
           </div>
 
           {plans.map(({ id, highlights }) => (
@@ -113,7 +166,9 @@ export default function PricingPage() {
               <p className="pricing-summary">{t(`pricing.summary.${id}`)}</p>
               <div className="pricing-action">
                 {isPaidPlan(id) ? (
-                  <span className="pricing-status"><span aria-hidden="true" />{t('pricing.comingSoon')}</span>
+                  available === false
+                    ? <span className="pricing-status"><span aria-hidden="true" />{t('pricing.comingSoon')}</span>
+                    : <PlanAction plan={id} ready={available === true} onChoose={setChosen} />
                 ) : (
                   <ButtonLink to="/?style=regular" variant="primary" size="lg" iconEnd="arrow-right">{t('pricing.browse')}</ButtonLink>
                 )}

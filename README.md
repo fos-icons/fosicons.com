@@ -41,7 +41,7 @@ pnpm run dev          # http://localhost:5173
 `sync:check` and `pnpm run check` look for the library at `../fos-icons`
 by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
 
-### Stripe billing sandbox
+### Billing (Stripe)
 
 Pro is **$49 USD for the first year, then $69 USD/year**. Advanced is **$99 USD
 for the first year, then $129 USD/year**. In Stripe, create the two standard
@@ -49,11 +49,26 @@ USD annual Prices ($69 and $129) and apply a product-restricted, fixed-value
 coupon **once** ($20 off Pro and $30 off Advanced). Do not set up a separate
 $49 or $99 recurring Price: it would renew at the introductory rate.
 
+`BILLING_MODE` (server) and `VITE_BILLING_MODE` (browser) choose where billing
+runs. Leave both unset to keep billing off.
+
+| Mode | Runs on | Stripe | Sign-in |
+| --- | --- | --- | --- |
+| `sandbox` | Local and preview, never Vercel production | Test keys and test-mode objects only | Existing Supabase users only |
+| `live` | Vercel production only | Live keys and live-mode objects only | Anyone can sign up with an email code |
+
+The server refuses any other combination, so a preview deployment can't take
+real payments and production can't run the sandbox. When the server refuses,
+the Pricing page keeps showing "Coming soon". The older
+`BILLING_SANDBOX_ENABLED=true` flags still mean `sandbox`.
+
+#### Sandbox (local testing)
+
 1. Use a dedicated Supabase project for this sandbox. Apply the SQL migration
    under `supabase/migrations/`, enable email sign-in, create a test user, and
    configure the passwordless email template to include `{{ .Token }}` instead
-   of a magic link. Test sign-in only accepts existing users. Configure SMTP if
-   email is not delivered for the test address.
+   of a magic link. Configure SMTP if email is not delivered for the test
+   address.
 2. Create the Prices and coupons in a Stripe sandbox, not live mode. Enable
    the sandbox Customer Portal for invoice history, card updates, and
    cancellation at the end of the paid period. Leave plan switching off.
@@ -61,25 +76,55 @@ $49 or $99 recurring Price: it would renew at the introductory rate.
    sandbox project. The `VITE_` variables are public; never put the Stripe API
    key, webhook signing secret, or Supabase service-role key in them.
    Use the Supabase legacy `service_role` JWT for `SUPABASE_SERVICE_ROLE_KEY`.
-   `BILLING_SITE_URL` must match the origin you open in the browser. Turn on
-   both sandbox flags in `.env.local`.
+   `BILLING_SITE_URL` must match the origin you open in the browser. Set both
+   modes to `sandbox`.
 4. In the Stripe CLI, select the sandbox and run:
 
    ```sh
    stripe listen --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.paused,customer.subscription.resumed --forward-to localhost:5173/api/billing/webhook
    ```
 
-   Put its signing secret into `.env.local`, then run `pnpm run dev`. In
-   `/pricing`, sign in as the test user and use a
-   [Stripe test card](https://docs.stripe.com/testing#cards). Return to Pricing
-   and refresh the sandbox subscription; the return URL alone does not grant
+   Put its signing secret into `.env.local`, then run `pnpm run dev`. On
+   `/pricing`, choose a plan, sign in as the test user and pay with a
+   [Stripe test card](https://docs.stripe.com/testing#cards). The page re-reads
+   the subscription after you return; the return URL alone does not grant
    access.
 
-This integration rejects live Stripe keys and is disabled on Vercel
-production. Sandbox subscriptions do not change catalog access or unlock
-exports. Before turning on live billing, enforce paid export permissions,
-decide failed-payment and tax policies, and verify the selling entity and
-payout account.
+#### Going live
+
+Do these first:
+
+- Activate the live Stripe account and confirm the selling entity and payout
+  account.
+- Decide on tax (Checkout runs with `automatic_tax` off) and on what happens
+  when a renewal payment fails.
+- Publish terms, a refund policy, and privacy wording that covers billing.
+- Make sure the paid plans don't promise features that aren't available yet.
+
+Then:
+
+1. Create a **separate production Supabase project**. Apply the migration,
+   enable email sign-in with the `{{ .Token }}` template, configure SMTP, and
+   consider turning on Supabase CAPTCHA, since anyone can request a code.
+2. In Stripe **live mode**, create the Prices, coupons, and Customer Portal
+   (plan switching off). Add a webhook endpoint at
+   `https://fosicons.com/api/billing/webhook` for the five
+   `customer.subscription.*` events above.
+3. In Vercel, set these for the **Production** environment only:
+   - `BILLING_MODE=live` and `VITE_BILLING_MODE=live`;
+   - `BILLING_SITE_URL=https://fosicons.com`;
+   - the live Stripe values from `.env.billing.example`;
+   - the production Supabase values.
+
+   Keep the Stripe secret key, webhook secret and service-role key as
+   server-only variables.
+4. Redeploy. The `VITE_` values are built into the page, so changing them
+   always needs a redeploy.
+5. Buy a plan yourself with a real card, check that the plan unlocks, then
+   refund and cancel it in the Stripe Dashboard.
+
+Plan checks run in the browser (see `src/lib/entitlements.ts`): they're a
+convenience, not access control, because the artwork is public.
 
 ### Feedback delivery
 
@@ -165,7 +210,8 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
 - **Pricing** (`/pricing`): Free, Pro ($49 USD first year, then $69 USD/year),
   and Advanced ($99 USD first year, then $129 USD/year).
   Plan highlights and a grouped comparison cover icon styles, customization, exports, modifiers, and planned AI integrations.
-  The page previews the paid plans; checkout and plan-based access are not enabled.
+  Where billing is on (see [Billing](#billing-stripe)), the paid cards start Stripe Checkout and the
+  site unlocks features by plan; elsewhere they show "Coming soon".
 - **Code samples**: docs, icon-page, and inspector examples share a light stone
   surface in light mode and warm charcoal in dark mode, with syntax colors (highlight.js core with
   TSX, HTML, CSS, and shell, loaded on demand). Shell samples are
