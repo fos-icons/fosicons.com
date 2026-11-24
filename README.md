@@ -41,6 +41,46 @@ pnpm run dev          # http://localhost:5173
 `sync:check` and `pnpm run check` look for the library at `../fos-icons`
 by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
 
+### Stripe billing sandbox
+
+Pro is **$49 USD for the first year, then $69 USD/year**. Advanced is **$99 USD
+for the first year, then $129 USD/year**. In Stripe, create the two standard
+USD annual Prices ($69 and $129) and apply a product-restricted, fixed-value
+coupon **once** ($20 off Pro and $30 off Advanced). Do not set up a separate
+$49 or $99 recurring Price: it would renew at the introductory rate.
+
+1. Use a dedicated Supabase project for this sandbox. Apply the SQL migration
+   under `supabase/migrations/`, enable email sign-in, create a test user, and
+   configure the passwordless email template to include `{{ .Token }}` instead
+   of a magic link. Test sign-in only accepts existing users. Configure SMTP if
+   email is not delivered for the test address.
+2. Create the Prices and coupons in a Stripe sandbox, not live mode. Enable
+   the sandbox Customer Portal for invoice history, card updates, and
+   cancellation at the end of the paid period. Leave plan switching off.
+3. Copy `.env.billing.example` to `.env.local` and set the values for the
+   sandbox project. The `VITE_` variables are public; never put the Stripe API
+   key, webhook signing secret, or Supabase service-role key in them.
+   Use the Supabase legacy `service_role` JWT for `SUPABASE_SERVICE_ROLE_KEY`.
+   `BILLING_SITE_URL` must match the origin you open in the browser. Turn on
+   both sandbox flags in `.env.local`.
+4. In the Stripe CLI, select the sandbox and run:
+
+   ```sh
+   stripe listen --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.paused,customer.subscription.resumed --forward-to localhost:5173/api/billing/webhook
+   ```
+
+   Put its signing secret into `.env.local`, then run `pnpm run dev`. In
+   `/pricing`, sign in as the test user and use a
+   [Stripe test card](https://docs.stripe.com/testing#cards). Return to Pricing
+   and refresh the sandbox subscription; the return URL alone does not grant
+   access.
+
+This integration rejects live Stripe keys and is disabled on Vercel
+production. Sandbox subscriptions do not change catalog access or unlock
+exports. Before turning on live billing, enforce paid export permissions,
+decide failed-payment and tax policies, and verify the selling entity and
+payout account.
+
 ### Feedback delivery
 
 The form posts to `POST /api/feedback`. Configure these variables in Vercel, or export them before starting Vite for local delivery tests. Only the `VITE_` variable is public.
@@ -122,7 +162,8 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   The Docs header links back to Browse icons and puts the Figma library link in its Figma section.
 - **Bulk downloads**: The customize panel builds a ZIP of Regular icons with the selected look,
   plus LICENSE and README. Solid, Duocolor, and Duotone are available for preview.
-- **Pricing** (`/pricing`): Free, Pro ($49 USD/year against a $69 standard price), and Advanced ($99 USD/year against a $129 standard price).
+- **Pricing** (`/pricing`): Free, Pro ($49 USD first year, then $69 USD/year),
+  and Advanced ($99 USD first year, then $129 USD/year).
   Plan highlights and a grouped comparison cover icon styles, customization, exports, modifiers, and planned AI integrations.
   The page previews the paid plans; checkout and plan-based access are not enabled.
 - **Code samples**: docs, icon-page, and inspector examples share a light stone

@@ -1,5 +1,5 @@
 /// <reference types="vitest/config" />
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
@@ -86,8 +86,27 @@ function feedbackEndpoint(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint()],
+function billingEndpoint(mode: string): Plugin {
+  const env = { ...loadEnv(mode, process.cwd(), ['BILLING_', 'STRIPE_', 'SUPABASE_']), ...process.env };
+  return {
+    name: 'fos-billing-sandbox',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url?.startsWith('/api/billing/')) return next();
+        try {
+          const { default: handleBilling } = await server.ssrLoadModule('/api/billing/[action].ts');
+          await handleBilling(req, res, env);
+        } catch (error) {
+          next(error);
+        }
+      });
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint(), billingEndpoint(mode)],
   build: { target: 'es2022', chunkSizeWarningLimit: 700 },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },
@@ -98,4 +117,4 @@ export default defineConfig({
     // Page tests render the full grid (1,000+ cells) in jsdom; CI runners are slower than 5s for some.
     testTimeout: 20_000,
   },
-});
+}));
