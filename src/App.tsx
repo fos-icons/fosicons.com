@@ -13,6 +13,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import './pages/pricing.css';
 
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
+const AiAgentsPage = lazy(() => import('./pages/AiAgentsPage'));
 const FrameworkPage = lazy(() => import('./pages/FrameworkPage'));
 const IconPage = lazy(() => import('./pages/IconPage'));
 const PricingPage = lazy(() => import('./pages/PricingPage'));
@@ -55,6 +56,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 <Route path="react-icons" element={<FrameworkPage framework="react" />} />
                 <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
                 <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
+                <Route path="ai-agents" element={<AiAgentsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}

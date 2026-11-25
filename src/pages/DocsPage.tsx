@@ -42,7 +42,7 @@ const CONTENTS: { id: string; title: string; sections: readonly (readonly [strin
   {
     id: 'plugins',
     title: 'Plugins',
-    sections: [['framer', 'Framer']],
+    sections: [['framer', 'Framer'], ['ai-agents', 'AI agents']],
   },
   {
     id: 'reference',
@@ -605,6 +605,11 @@ FosIcon(
           <p>The Fos Icons plugin lets you search the library in the Framer editor. Pick Regular, Solid, Duocolor, or Duotone, then adjust the size, colors, and stroke weight where supported.</p>
           <p>Select an icon and choose <strong>Insert icon</strong> to add it to the canvas as an SVG. With one SVG selected on the canvas, <strong>Replace selected SVG</strong> swaps in the new icon.</p>
           <p>To run the plugin locally, follow the <a target="_blank" rel="noreferrer" href={`${LIBRARY_URL}/tree/main/plugins/framer#development`}>Framer plugin setup guide</a>.</p>
+        </Section>
+
+        <Section id="ai-agents" title="AI agents">
+          <p>Coding agents can use Fos Icons through a free, read-only MCP server at <code>https://www.fosicons.com/mcp</code> (Streamable HTTP, no authentication). Its tools search the catalog, return install and import code for every framework, list icons by category, and check that icon names exist, so agents don&apos;t invent names or draw SVG by hand.</p>
+          <p>Plugins for Claude Code and Codex bundle the server with Agent Skills, including one for migrating from lucide or Heroicons. <LocalLink to="/ai-agents">Set up your agent</LocalLink> for install steps for Claude Code, Codex, ChatGPT, Cursor, VS Code, and other MCP clients.</p>
         </Section>
 
         <Section id="accessibility" title="Accessibility">
