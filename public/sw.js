@@ -12,15 +12,19 @@ const ASSETS = `assets-${VERSION}`;
 const DATA = `data-${VERSION}`;
 const KEEP = [PAGES, ASSETS, DATA];
 
+// A new version waits until no tab uses the old one before it takes over and
+// deletes the old caches. Taking over mid-load (skipWaiting + clients.claim)
+// let Safari drop a page's in-flight requests, such as its stylesheet, right
+// after a deploy. The old version serves the new build correctly meanwhile:
+// pages come from the network, and assets are versioned by file name.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(PAGES).then((cache) => cache.addAll(['/', '/docs/', '/404.html'])).then(() => self.skipWaiting()));
+  event.waitUntil(caches.open(PAGES).then((cache) => cache.addAll(['/', '/docs/', '/404.html'])));
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => !KEEP.includes(key)).map((key) => caches.delete(key))))
-      .then(() => self.clients.claim()),
+      .then((keys) => Promise.all(keys.filter((key) => !KEEP.includes(key)).map((key) => caches.delete(key)))),
   );
 });
 

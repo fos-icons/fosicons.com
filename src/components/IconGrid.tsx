@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { Fragment, memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { IconCardContent, iconCardClass, iconCardGlyphClass } from './IconCard';
+import { IconCardTooltip, iconCardClass, iconCardGlyphClass } from './IconCard';
 import { UiIcon } from './ui';
 
 export interface GridItem {
@@ -78,18 +78,19 @@ const Cell = memo(function Cell({
             <UiIcon name="crown-simple" className="size-3 [&_path]:[stroke-width:1.75]" />
           </span>
         )}
-        <IconCardContent name={name}>
-          {svg ? (
-            <span
-              aria-hidden="true"
-              data-artwork className={`glyph text-[color:var(--glyph-color)] ${iconCardGlyphClass}`}
-              dangerouslySetInnerHTML={{ __html: svg }}
-            />
-          ) : (
-            <span aria-hidden="true" className={`animate-pulse rounded-md bg-sunken ${iconCardGlyphClass}`} />
-          )}
-        </IconCardContent>
+        {svg ? (
+          <span
+            aria-hidden="true"
+            data-artwork className={`glyph text-[color:var(--glyph-color)] ${iconCardGlyphClass}`}
+            dangerouslySetInnerHTML={{ __html: svg }}
+          />
+        ) : (
+          <span aria-hidden="true" className={`animate-pulse rounded-md bg-sunken ${iconCardGlyphClass}`} />
+        )}
       </button>
+      {/* Beside the button, not in it: the button skips rendering off screen
+          (content-visibility), which would clip a tooltip inside it. */}
+      <IconCardTooltip name={name} />
     </li>
   );
 });

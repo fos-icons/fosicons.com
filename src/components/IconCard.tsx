@@ -7,16 +7,23 @@ export function iconCardClass(selected = false) {
   return `icon-card relative flex aspect-square w-full items-center justify-center rounded-xl text-ink focus-visible:outline-offset-[-2px] ${state}`;
 }
 
+/** The icon's name, shown under a card on hover or keyboard focus (see .icon-card-tooltip). */
+export function IconCardTooltip({ name }: { name: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className="icon-card-tooltip pointer-events-none absolute start-1/2 top-full mt-1 w-max max-w-[calc(100%+2rem)] -translate-x-1/2 rounded-md bg-black px-2 py-1 text-center text-xs leading-4 text-white [overflow-wrap:anywhere]"
+    >
+      {name}
+    </span>
+  );
+}
+
 export function IconCardContent({ name, children }: { name: string; children: ReactNode }) {
   return (
     <>
       {children}
-      <span
-        aria-hidden="true"
-        className="icon-card-tooltip pointer-events-none absolute start-1/2 top-full mt-1 w-max max-w-[calc(100%+2rem)] -translate-x-1/2 rounded-md bg-black px-2 py-1 text-center text-xs leading-4 text-white [overflow-wrap:anywhere]"
-      >
-        {name}
-      </span>
+      <IconCardTooltip name={name} />
     </>
   );
 }
