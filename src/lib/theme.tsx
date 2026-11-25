@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useClientValue } from './hydration';
 
 export type SiteTheme = 'light' | 'dark' | 'ivory';
 export type ThemePreference = 'system' | SiteTheme;
@@ -13,7 +14,6 @@ function readPreference(): ThemePreference {
   }
 }
 
-const media = () => window.matchMedia('(prefers-color-scheme: dark)');
 
 interface ThemeValue {
   preference: ThemePreference;
@@ -24,22 +24,23 @@ interface ThemeValue {
 const ThemeContext = createContext<ThemeValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [preference, setPref] = useState<ThemePreference>(readPreference);
-  const [systemDark, setSystemDark] = useState(() => typeof window !== 'undefined' && media().matches);
-
-  useEffect(() => {
-    const query = media();
-    const onChange = () => setSystemDark(query.matches);
-    query.addEventListener('change', onChange);
-    return () => query.removeEventListener('change', onChange);
-  }, []);
+  // The page was prerendered for the system theme; the inline script in
+  // index.html has already applied the saved one to <html> before paint.
+  const saved = useClientValue(readPreference, 'system');
+  const [chosen, setPref] = useState<ThemePreference | null>(null);
+  const preference = chosen ?? saved;
+  const systemDark = useMediaQuery('(prefers-color-scheme: dark)');
 
   const resolved = preference === 'system' ? (systemDark ? 'dark' : 'light') : preference;
 
+  // True only for the render that hydrates prerendered HTML, whose theme is a
+  // placeholder: leave <html> as the inline script set it until the real one.
+  const hydrating = useClientValue(() => false, true);
   useEffect(() => {
+    if (hydrating) return;
     document.documentElement.classList.toggle('dark', resolved === 'dark');
     document.documentElement.classList.toggle('ivory', resolved === 'ivory');
-  }, [resolved]);
+  }, [resolved, hydrating]);
 
   const setPreference = useCallback((value: ThemePreference) => {
     setPref(value);
@@ -61,14 +62,12 @@ export function useTheme() {
   return value;
 }
 
+/** Whether a media query matches; false in the prerendered HTML (and while hydrating it). */
 export function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(() => typeof window !== 'undefined' && window.matchMedia(query).matches);
-  useEffect(() => {
+  const subscribe = useCallback((onChange: () => void) => {
     const list = window.matchMedia(query);
-    const onChange = () => setMatches(list.matches);
-    onChange();
     list.addEventListener('change', onChange);
     return () => list.removeEventListener('change', onChange);
   }, [query]);
-  return matches;
+  return useClientValue(() => window.matchMedia(query).matches, false, subscribe);
 }

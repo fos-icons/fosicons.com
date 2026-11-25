@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useClientValue } from './hydration';
 
 /** Side pane width in px: default, limits, and keyboard step. */
 export const PANE_WIDTH = { default: 380, min: 320, max: 640, step: 16 } as const;
@@ -17,7 +18,9 @@ function read(): number {
 
 /** The desktop side pane's width, remembered on this device (see Docs › Privacy). */
 export function usePaneWidth() {
-  const [width, setState] = useState(read);
+  const saved = useClientValue(read, PANE_WIDTH.default);
+  const [chosen, setState] = useState<number | null>(null);
+  const width = chosen ?? saved;
   const setWidth = useCallback((next: number, remember = true) => {
     const value = clamp(next);
     setState(value);

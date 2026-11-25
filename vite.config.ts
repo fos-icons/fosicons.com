@@ -124,9 +124,25 @@ function billingEndpoint(mode: string): Plugin {
   };
 }
 
-export default defineConfig(({ mode }) => ({
+/**
+ * Client chunks that change far less often than the app code, so a deploy
+ * doesn't make returning visitors download them again: React and the router
+ * (change with dependency upgrades) and the catalog (changes with a library
+ * sync). Anything else stays with the code that imports it.
+ */
+function stableChunk(id: string): string | undefined {
+  if (/[\\/]node_modules[\\/]\.pnpm[\\/](react|react-dom|scheduler|react-router|react-router-dom|cookie|set-cookie-parser)@/.test(id)) return 'react';
+  if (/[\\/]src[\\/]data[\\/]catalog\.json$/.test(id)) return 'catalog';
+  return undefined;
+}
+
+export default defineConfig(({ mode, isSsrBuild }) => ({
   plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint(), mcpEndpoint(), billingEndpoint(mode)],
-  build: { target: 'es2022', chunkSizeWarningLimit: 700 },
+  build: {
+    target: 'es2022',
+    chunkSizeWarningLimit: 700,
+    rollupOptions: isSsrBuild ? {} : { output: { manualChunks: stableChunk } },
+  },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },
   test: {

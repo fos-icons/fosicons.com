@@ -84,13 +84,17 @@ async function writePage(file, location, locale, extraPreloads = []) {
   const [pathname, search = ''] = location.split('?');
   const page = pageFor(pathname, search ? `?${search}` : '', i18n);
   trackArtwork();
-  const body = await server.render(localizePath(location, locale), locale);
+  const url = localizePath(location, locale);
+  const body = await server.render(url, locale);
   const art = embed(takeTrackedArtwork());
+  // The app hydrates this HTML only at the URL it was rendered for (see
+  // src/main.tsx). 404.html is served for any unknown path, so it never does.
+  const stamp = file === '404.html' ? '' : ` data-prerendered="${url.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"`;
   const preloads = [...fontPreloads, ...extraPreloads];
   const html = template
     .replace(HTML_TAG, `<html lang="${i18n.config.code}" dir="${i18n.dir}">`)
     .replace(META, [headTags(page, i18n), ...preloads].join('\n    '))
-    .replace(ROOT, `<div id="root">${body}</div>${art}`);
+    .replace(ROOT, `<div id="root"${stamp}>${body}</div>${art}`);
   mkdirSync(dirname(join(dist, file)), { recursive: true });
   writeFileSync(join(dist, file), html);
   return page;

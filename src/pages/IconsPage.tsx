@@ -25,6 +25,7 @@ import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
 import { prepareGridSvg } from '../lib/svg';
+import { useClientValue } from '../lib/hydration';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
   parseState, type CatalogState, type UrlStateConfig, type View,
@@ -148,7 +149,9 @@ export function IconsPage() {
   const [artworkErrors, setArtworkErrors] = useState<Record<string, string | undefined>>({});
   const [attempt, setAttempt] = useState(0);
   const [look, setLook] = useState<Look>(DEFAULT_LOOK);
-  const [collapsed, setCollapsedState] = useState(readCollapsed);
+  const savedCollapsed = useClientValue(readCollapsed, false);
+  const [chosenCollapsed, setCollapsedState] = useState<boolean | null>(null);
+  const collapsed = chosenCollapsed ?? savedCollapsed;
   const [customizeOpen, setCustomizeOpen] = useState(false);
   /** Two or more icons picked with Shift/⌘/Ctrl-click: a set to customize and download together. */
   const [multi, setMulti] = useState<string[]>([]);
