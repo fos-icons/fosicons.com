@@ -1,6 +1,6 @@
 import { UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
-import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom';
 import { CONTAINER, DOCS_GRID, useHeaderSlot } from '../lib/layout';
 import { useMediaQuery } from '../lib/theme';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
+import { useActiveSection } from '../hooks/useActiveSection';
 
 const nf = new Intl.NumberFormat('en-US');
 const compositions = catalog.icons.filter((i) => i.composition);
@@ -86,65 +87,6 @@ function Section({ id, title, children }: { id: string; title: string; children:
       <div className="prose-docs mt-4 space-y-4">{children}</div>
     </section>
   );
-}
-
-/** Line below the top of the viewport that decides the current section. */
-const SPY_OFFSET = 120;
-
-/**
- * The section being read: the last one whose top has passed SPY_OFFSET, or
- * the last section once the page bottom is reached. A clicked link wins until
- * its scroll settles, so short final sections can still be selected.
- */
-function useActiveSection(ids: readonly string[]) {
-  const [active, setActive] = useState(ALL_IDS[0]);
-  const pinned = useRef<{ id: string; timer: number } | null>(null);
-  const key = ids.join(' ');
-
-  useEffect(() => {
-    const shown = key ? key.split(' ') : [];
-    let frame = 0;
-    const measure = () => {
-      frame = 0;
-      if (pinned.current || !shown.length) return;
-      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
-      let current = shown[0];
-      for (const id of shown) {
-        const el = document.getElementById(id);
-        if (el && el.getBoundingClientRect().top <= SPY_OFFSET) current = id;
-      }
-      setActive(atBottom ? shown[shown.length - 1] : current);
-    };
-    const onScroll = () => {
-      if (pinned.current) {
-        // Release the clicked section once scrolling stops.
-        window.clearTimeout(pinned.current.timer);
-        pinned.current.timer = window.setTimeout(() => { pinned.current = null; }, 150);
-      }
-      if (!frame) frame = requestAnimationFrame(measure);
-    };
-    measure();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    window.addEventListener('resize', onScroll);
-    return () => {
-      window.removeEventListener('scroll', onScroll);
-      window.removeEventListener('resize', onScroll);
-      cancelAnimationFrame(frame);
-    };
-  }, [key]);
-
-  useEffect(() => () => {
-    if (pinned.current) window.clearTimeout(pinned.current.timer);
-    pinned.current = null;
-  }, []);
-
-  const choose = useCallback((id: string) => {
-    if (pinned.current) window.clearTimeout(pinned.current.timer);
-    // If no scroll follows (already in place), release shortly after.
-    pinned.current = { id, timer: window.setTimeout(() => { pinned.current = null; }, 600) };
-    setActive(id);
-  }, []);
-  return [active, choose] as const;
 }
 
 const HIGHLIGHT = 'docs-search';
@@ -335,7 +277,7 @@ export default function DocsPage() {
   const handledSection = useRef<string | null>(null);
   const [query, setQuery] = useState('');
   const shown = useSectionFilter(query);
-  const [active, setActive] = useActiveSection(shown);
+  const [active, setActive] = useActiveSection(shown, ALL_IDS[0]);
   const searching = queryWords(query).length > 0;
   const section = hash.slice(1);
   useEffect(() => {

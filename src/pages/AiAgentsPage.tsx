@@ -1,5 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { useActiveSection } from '../hooks/useActiveSection';
 import { Breadcrumbs, CopyCode, LandingSection } from '../components/LandingParts';
 import { ButtonAnchor, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
@@ -56,16 +57,131 @@ function Points({ items }: { items: ReactNode[] }) {
   );
 }
 
+/** The right-hand "On this page" list: every setup card, then the reference sections. */
+export const PAGE_SECTIONS: { id: string; label: string; install?: boolean }[] = [
+  { id: 'claude-code', label: 'Claude Code', install: true },
+  { id: 'codex', label: 'Codex', install: true },
+  { id: 'chatgpt', label: 'ChatGPT', install: true },
+  { id: 'cursor', label: 'Cursor', install: true },
+  { id: 'vscode', label: 'VS Code', install: true },
+  { id: 'other', label: 'Any MCP client', install: true },
+  { id: 'skills', label: 'Agent Skills', install: true },
+  { id: 'rules', label: 'Cursor rule', install: true },
+  { id: 'tools', label: 'Tools' },
+  { id: 'try', label: 'Try asking' },
+  { id: 'faq', label: 'Questions' },
+];
+const SECTION_IDS = PAGE_SECTIONS.map(({ id }) => id);
+
+function PageContents({ active, onChoose }: { active: string; onChoose: (id: string) => void }) {
+  const listId = useId();
+  const [open, setOpen] = useState(false);
+  const item = (id: string, label: string, nested = false) => (
+    <li key={id}>
+      <a
+        href={`#${id}`}
+        aria-current={active === id ? 'location' : undefined}
+        onClick={(event) => {
+          if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+          event.preventDefault();
+          onChoose(id);
+          setOpen(false);
+        }}
+        className={`flex min-h-11 items-center rounded-md px-2 text-sm lg:min-h-8 ${nested ? 'ml-3' : ''} ${active === id ? 'bg-brand-soft font-medium text-brand' : 'text-muted hover:bg-sunken hover:text-ink'}`}
+      >
+        {label}
+      </a>
+    </li>
+  );
+  return (
+    <aside className="min-w-0 self-start lg:sticky lg:top-8 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:p-1">
+      <nav aria-label="On this page">
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={listId}
+          onClick={() => setOpen(!open)}
+          className="flex min-h-11 w-full items-center justify-between gap-2 rounded-lg border border-line bg-surface px-3 text-sm font-medium text-ink lg:hidden"
+        >
+          On this page
+          <UiIcon name="chevron-down" className={`size-4 ${open ? 'rotate-180' : ''}`} />
+        </button>
+        <div id={listId} className={`${open ? 'block' : 'hidden'} pt-2 lg:block lg:pt-0`}>
+          <p aria-hidden="true" className="mb-2 hidden pl-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted lg:block">On this page</p>
+          <p className="px-2 py-1 text-sm font-medium text-ink">Install</p>
+          <ul className="space-y-0.5 pb-2">
+            {PAGE_SECTIONS.filter((s) => s.install).map(({ id, label }) => item(id, label, true))}
+          </ul>
+          <ul className="space-y-0.5 border-t border-line pt-2">
+            {PAGE_SECTIONS.filter((s) => !s.install).map(({ id, label }) => item(id, label))}
+          </ul>
+        </div>
+      </nav>
+    </aside>
+  );
+}
+
+/** Smooth unless the visitor asked for reduced motion. */
+const scrollToSection = (id: string, smooth = true) => {
+  const reduce = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.getElementById(id)?.scrollIntoView({ behavior: smooth && !reduce ? 'smooth' : 'auto' });
+};
+
+/** How long to wait for the editor to take focus before saying nothing happened. */
+const OPEN_TIMEOUT_MS = 1500;
+
+/**
+ * cursor:// and vscode: links open the editor. Browsers give no signal when
+ * no app handles the link, so if the page keeps focus, report which app didn't open.
+ */
+function useOpenCheck() {
+  const [missed, setMissed] = useState<string | null>(null);
+  const cleanup = useRef<(() => void) | undefined>(undefined);
+  useEffect(() => () => cleanup.current?.(), []);
+  const watch = (app: string) => {
+    cleanup.current?.();
+    setMissed(null);
+    const left = () => cleanup.current?.();
+    const timer = window.setTimeout(() => { cleanup.current?.(); setMissed(app); }, OPEN_TIMEOUT_MS);
+    window.addEventListener('blur', left);
+    document.addEventListener('visibilitychange', left);
+    cleanup.current = () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('blur', left);
+      document.removeEventListener('visibilitychange', left);
+      cleanup.current = undefined;
+    };
+  };
+  return [missed, watch] as const;
+}
+
 export default function AiAgentsPage() {
   const { t, list, n } = useI18n();
   const count = `${n(ICONS_ROUNDED)}+`;
   const styles = list(catalog.styles.map((s) => t(`style.${s}`)));
   const link = 'text-brand underline underline-offset-2';
   const { hash } = useLocation();
-  // Links from the header menu land on a card; this page renders after navigation, so scroll here.
+  const navigate = useNavigate();
+  // Arriving with a hash jumps straight there; choices made on the page scroll smoothly.
+  const landed = useRef(false);
+  const [active, setActive] = useActiveSection(SECTION_IDS);
+  const [missed, watchOpen] = useOpenCheck();
+  // A link to a card (#codex) lands after the page renders, so scroll here.
   useEffect(() => {
-    if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
-  }, [hash]);
+    const id = decodeURIComponent(hash.slice(1));
+    if (!id) { landed.current = true; return; }
+    if (SECTION_IDS.includes(id)) setActive(id);
+    scrollToSection(id, landed.current);
+    landed.current = true;
+  }, [hash, setActive]);
+  const choose = (id: string) => {
+    if (`#${id}` !== hash) {
+      navigate({ hash: `#${id}` }, { replace: true, preventScrollReset: true });
+    } else {
+      setActive(id);
+      scrollToSection(id);
+    }
+  };
 
   const faq: [string, ReactNode][] = [
     ['Is it free?', <>Yes. The MCP server, plugins, and skills are free for everyone, with no account or API key.</>],
@@ -76,7 +192,7 @@ export default function AiAgentsPage() {
   ];
 
   return (
-    <div className={`${CONTAINER} pb-24 pt-8 sm:pt-10`}>
+    <div className={`code-stone ${CONTAINER} pb-24 pt-8 sm:pt-10`}>
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: 'AI agents' }]} />
       <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
         Fos Icons for <span className="text-brand">AI agents</span>
@@ -86,12 +202,21 @@ export default function AiAgentsPage() {
         framework, instead of guessing names that don’t exist or drawing SVG paths by hand. Free, read-only, and no sign-in.
       </p>
       <div className="mt-6 flex flex-wrap gap-2">
-        <ButtonAnchor href={CURSOR_INSTALL} variant="primary" size="lg">Add to Cursor</ButtonAnchor>
-        <ButtonAnchor href={VSCODE_INSTALL} size="lg">Add to VS Code</ButtonAnchor>
-        <ButtonAnchor href="#clients" size="lg">Other agents</ButtonAnchor>
+        <ButtonAnchor href={CURSOR_INSTALL} onClick={() => watchOpen('cursor')} variant="primary" size="lg">Add to Cursor</ButtonAnchor>
+        <ButtonAnchor href={VSCODE_INSTALL} onClick={() => watchOpen('vscode')} size="lg">Add to VS Code</ButtonAnchor>
+        <ButtonAnchor href="#clients" onClick={(event) => { event.preventDefault(); choose('claude-code'); }} size="lg">Other agents</ButtonAnchor>
       </div>
+      <p id="install-status" role="status" className="mt-3 min-h-5 text-sm text-muted">
+        {missed && (<>
+          {missed === 'cursor' ? 'Cursor' : 'VS Code'} didn’t open. Install it first, or{' '}
+          <a href={`#${missed}`} onClick={(event) => { event.preventDefault(); choose(missed); }} className={link}>add the server by hand</a>.
+        </>)}
+      </p>
 
-      <LandingSection id="clients" title="Install" className="mt-12">
+      <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,1fr)_13rem] lg:gap-12">
+      <PageContents active={active} onChoose={choose} />
+      <div className="min-w-0 lg:col-start-1 lg:row-start-1">
+      <LandingSection id="clients" title="Install">
         <div className="grid max-w-4xl gap-4">
           <Client id="claude-code" title="Claude Code">
             <Note>The plugin adds the MCP server and two skills: one for using the icons, one for migrating from lucide or Heroicons. Run these in Claude Code:</Note>
@@ -178,6 +303,8 @@ export default function AiAgentsPage() {
           and the <LocalLink to="/docs#terms" className={link}>terms</LocalLink> cover use of the server.
         </p>
       </LandingSection>
+      </div>
+      </div>
     </div>
   );
 }
