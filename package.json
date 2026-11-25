@@ -9,6 +9,7 @@
     "sync:check": "node scripts/sync-icons.mjs --check",
     "dev": "vite",
     "build": "tsc -b && vite build && vite build --ssr src/entry-server.tsx --outDir dist-ssr --emptyOutDir && node scripts/postbuild.mjs",
+    "check:hydration": "node scripts/check-hydration.mjs",
     "preview": "vite preview",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

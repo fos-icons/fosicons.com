@@ -28,6 +28,12 @@ export async function render(url: string, locale: string = DEFAULT_LOCALE): Prom
         <AppShell locale={locale} messages={messages} />
       </StaticRouter>
     </StrictMode>,
+    // Write every Suspense boundary's content in place. By default React
+    // outlines large ones behind their fallback and reveals them with an
+    // inline script after a frame or more, which delays the page's content
+    // and leaves hydration to meet a half-revealed boundary. A static page
+    // gains nothing from streaming them.
+    { progressiveChunkSize: Number.POSITIVE_INFINITY },
   );
   const chunks: Buffer[] = [];
   for await (const chunk of prelude) chunks.push(Buffer.from(chunk));
