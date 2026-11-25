@@ -1,6 +1,7 @@
 import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
 import type { LinkProps } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
+import animatedCheck from '../data/ui-animated-check.json';
 import uiIcons from '../data/ui-icons.json';
 
 export type UiIconName = keyof typeof uiIcons;
@@ -340,9 +341,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className="pointer-events-auto flex max-w-md items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink shadow-lg"
+            className="pointer-events-auto flex max-w-md items-center gap-2 rounded-xl border border-white/15 bg-black px-4 py-2.5 text-sm text-white shadow-lg"
           >
-            <UiIcon name={toast.tone === 'success' ? 'check' : 'x-circle'} className={`size-[18px] ${toast.tone === 'success' ? 'text-success' : 'text-danger'}`} />
+            {toast.tone === 'success' ? (
+              <span aria-hidden="true" className="toast-check glyph inline-block size-[18px] shrink-0"
+                dangerouslySetInnerHTML={{ __html: animatedCheck.check ?? uiIcons.check }} />
+            ) : <UiIcon name="x-circle" className="size-[18px]" />}
             <span>{toast.message}</span>
           </div>
         ))}

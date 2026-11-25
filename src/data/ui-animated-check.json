@@ -1,0 +1,3 @@
+{
+  "check": "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" fill=\"none\" viewBox=\"0 0 24 24\" class=\"fa-check\"><style>.fa-check-0{stroke-dasharray:1;animation:fa-check-m0-0 1.6s cubic-bezier(.65,0,.35,1) infinite}@keyframes fa-check-m0-0{0%{stroke-dashoffset:1}50%,100%{stroke-dashoffset:0}}@media (prefers-reduced-motion:reduce){.fa-check *{animation:none!important}}</style><g class=\"fa-check-0\"><path pathLength=\"1\" stroke=\"currentColor\" stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1.25\" d=\"M578.625 844L585.321 850.696L597.375 837.304\" transform=\"translate(-576 -832)\"/></g></svg>"
+}

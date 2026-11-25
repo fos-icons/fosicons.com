@@ -31,6 +31,7 @@ Commit the regenerated files together with `src/data/source-lock.json`.
 | `src/data/catalog-meta.json` | shared counts, categories, styles and sample artwork locations, without searchable entries |
 | `src/data/palettes.json` | the Light/Dark duo palettes |
 | `src/data/ui-icons.json` | Regular glyphs the site chrome uses (`UI_ICONS` in the script) |
+| `src/data/ui-animated-check.json` | the library's animated check for success toasts, without loading the complete animation catalog |
 | `public/licenses/fos-icons-LICENSE.txt` | the library's MIT license |
 | `src/data/source-lock.json` | repository, git revision, whether the checkout had local changes, manifest and snapshot SHA-256 |
 

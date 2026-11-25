@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { Inspector, SidePane, type InspectorProps } from '../components/Inspector';
@@ -188,6 +188,31 @@ const PAGE_SIZES = [...new Set([catalog.grid, ...[...ACTUAL_SIZES.map((s) => s.p
 
 type PreviewStyle = StyleId | typeof ANIMATED_SLUG;
 
+function PreviewCanvas({ svg, label, stageRef, offscreen, children }: {
+  svg?: string;
+  label: string;
+  stageRef?: Ref<HTMLDivElement>;
+  offscreen?: boolean;
+  children?: ReactNode;
+}) {
+  // Match the source artwork, including the 24px Animated SVG and any loading fallback.
+  const grid = Number(svg?.match(/^\s*<svg\b[^>]*\bviewBox="0 0 (\d+) \1"/)?.[1] ?? 0);
+  return (
+    <div className="icon-preview-canvas relative isolate flex flex-1 flex-col rounded-t-2xl">
+      {grid > 0 && (
+        <div aria-hidden="true" data-preview-grid={grid}
+          className="icon-preview-grid pointer-events-none absolute inset-0 -z-10 rounded-[inherit]"
+          style={{ '--grid-units': grid } as CSSProperties} />
+      )}
+      <div ref={stageRef} data-offscreen={offscreen || undefined}
+        className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
+        <Glyph svg={svg} idPrefix="stage-" className="icon-preview-glyph" label={label} />
+        {children}
+      </div>
+    </div>
+  );
+}
+
 function ActualSizePreviews({ svgAt, listRef, offscreen }: {
   svgAt: (px: number) => string | undefined;
   listRef?: React.Ref<HTMLUListElement>;
@@ -266,9 +291,7 @@ function AnimatedPreview({ name, svgAt, label }: {
   const sampleSvg = svg?.replace(/<style>[\s\S]*?<\/style>/, '');
   return (
     <div className="animated-preview flex flex-1 flex-col" data-paused={paused || hidden || undefined}>
-      <div ref={stage} data-offscreen={!stageVisible || undefined}
-        className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-        <Glyph svg={svg ?? svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+      <PreviewCanvas stageRef={stage} offscreen={!stageVisible} svg={svg ?? svgAt(STAGE_PIXELS)} label={label}>
         {svg && !reducedMotion && (
           <Button size="sm" variant="quiet" className="absolute bottom-2 end-2" onClick={() => setPaused(!paused)}>
             {t(paused ? 'iconPage.playAnimation' : 'iconPage.pauseAnimation')}
@@ -280,7 +303,7 @@ function AnimatedPreview({ name, svgAt, label }: {
             <Button size="sm" variant="quiet" onClick={() => { setError(null); retry(attempt + 1); }}>{t('icons.tryAgain')}</Button>
           </div>
         )}
-      </div>
+      </PreviewCanvas>
       <ActualSizePreviews svgAt={(px) => sampleSvg ?? svgAt(px)} listRef={samples} offscreen={!samplesVisible} />
     </div>
   );
@@ -302,9 +325,9 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
   const options = catalog.styles.map((s) => ({ value: s as PreviewStyle, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
   if (canAnimate) options.push({ value: ANIMATED_SLUG, label: t('style.animated'), badge: undefined });
   return (
-    <section aria-labelledby="icon-preview" className="flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
+    <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
       <h2 id="icon-preview" className="sr-only">{t('iconPage.styles')}</h2>
-      <div className="flex items-center gap-2 p-3">
+      <div className="icon-preview-toolbar absolute inset-x-0 top-0 z-10 flex items-center px-3">
         <div className="min-w-0 flex-1">
           <Segmented
             fill
@@ -318,9 +341,7 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
       </div>
       {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} /> : (
         <>
-          <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-            <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
-          </div>
+          <PreviewCanvas svg={svgAt(STAGE_PIXELS)} label={label} />
           <ActualSizePreviews svgAt={svgAt} />
         </>
       )}
@@ -499,7 +520,7 @@ export default function IconPage() {
       {/* Phones read heading, preview, then actions; from lg the preview spans the right column. */}
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8">
         <div>
-          <h1 className="text-balance font-display text-4xl font-semibold tracking-tight sm:text-5xl">{t('iconPage.heading', { name: title })}</h1>
+          <h1 className="text-balance font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t('iconPage.heading', { name: title })}</h1>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
             {t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
           </p>

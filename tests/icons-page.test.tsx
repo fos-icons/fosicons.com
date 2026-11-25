@@ -51,6 +51,9 @@ function useDesktop() {
 }
 
 const fetchMock = vi.fn(async (url: string) => {
+  if (url.includes('/animated.json?')) {
+    return new Response(readFileSync(join(__dirname, '../public/icons/animated.json'), 'utf8'));
+  }
   if (url === `/modifiers.json?v=${lock.revision ?? lock.manifestSha256}`) {
     return new Response(readFileSync(join(__dirname, '../public/modifiers.json'), 'utf8'), { status: 200 });
   }
@@ -76,6 +79,18 @@ beforeEach(() => {
 afterEach(() => { cleanup(); resetSectionState(); resetExportRows(); vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); });
 
 describe('Icons page', () => {
+  it('keeps the Animated style on both links from the grid inspector to an icon page', async () => {
+    useDesktop();
+    const user = userEvent.setup();
+    renderAt('/?style=animated&q=lock');
+    const grid = screen.getByRole('list', { name: 'Animated icons' });
+    await user.click(within(grid).getByRole('button', { name: /^lock$/ }));
+    const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
+    for (const name of ['Open icon page', 'Icon page']) {
+      expect(within(pane).getByRole('link', { name }).getAttribute('href')).toBe('/icons/lock?style=animated');
+    }
+  });
+
   it('shows the full catalog count from source data and loads only one style', async () => {
     renderAt('/');
     expect(screen.getByText(`${(catalog.icons.length + brands.approved.length).toLocaleString('en-US')} icons`)).toBeTruthy();
