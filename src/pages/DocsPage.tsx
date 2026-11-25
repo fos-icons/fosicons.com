@@ -551,7 +551,7 @@ FosIcon(
 
         <Section id="ai-agents" title="AI agents">
           <p>Coding agents can use Fos Icons through a free, read-only MCP server at <code>https://www.fosicons.com/mcp</code> (Streamable HTTP, no authentication). Its tools search the catalog, return install and import code for every framework, list icons by category, and check that icon names exist, so agents don&apos;t invent names or draw SVG by hand.</p>
-          <p>Plugins for Claude Code and Codex bundle the server with Agent Skills, including one for migrating from lucide or Heroicons. <LocalLink to="/ai-agents">Set up your agent</LocalLink> for install steps for Claude Code, Codex, ChatGPT, Cursor, VS Code, and other MCP clients.</p>
+          <p>Plugins for Claude Code and Codex bundle the server with Agent Skills, including one for switching a project from another icon library. <LocalLink to="/ai-agents">Set up your agent</LocalLink> for install steps for Claude Code, Codex, ChatGPT, Cursor, VS Code, and other MCP clients.</p>
         </Section>
 
         <Section id="accessibility" title="Accessibility">

@@ -219,7 +219,7 @@ export default function AiAgentsPage() {
       <LandingSection id="clients" title="Install">
         <div className="grid max-w-4xl gap-8">
           <Client id="claude-code" title="Claude Code">
-            <Note>The plugin adds the MCP server and two skills: one for using the icons, one for migrating from lucide or Heroicons. Run these in Claude Code:</Note>
+            <Note>The plugin adds the MCP server and two skills: one for using the icons, one for switching a project from another icon library. Run these in Claude Code:</Note>
             <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />
             <Note>Only want the server? {code(`claude mcp add --transport http ${SERVER} ${MCP_URL}`)}</Note>
           </Client>
@@ -281,7 +281,7 @@ export default function AiAgentsPage() {
         <Points items={[
           <>“Add a settings button with a Fos gear icon to the navbar.”</>,
           <>“Which Fos icons would work for an empty inbox state? Show me three.”</>,
-          <>“Replace every lucide-react icon in this project with Fos Icons.”</>,
+          <>“Switch this project’s icons to Fos Icons.”</>,
           <>“Check that all the Fos icon names in src/ exist.”</>,
         ]} />
       </LandingSection>
