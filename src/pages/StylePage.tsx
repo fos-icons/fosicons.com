@@ -1,5 +1,5 @@
 import { useId, type ReactNode } from 'react';
-import { Breadcrumbs, CopyCode, Glyph, LandingSection, useStyleVars } from '../components/LandingParts';
+import { Breadcrumbs, CodeTabs, Glyph, LandingSection, useStyleVars } from '../components/LandingParts';
 import { IconCardContent, iconCardClass, iconCardGlyphClass } from '../components/IconCard';
 import { ButtonLink, Chip, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
@@ -171,27 +171,18 @@ export default function StylePage({ style }: { style: StyleId }) {
         <Points items={copy.points} />
       </LandingSection>
 
-      <LandingSection id="usage" title="Use them in code" className="mt-12">
+      <LandingSection id="usage" title="Use them in code" className="code-stone mt-12">
         <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
           The {code('@fos-icons/react')} and {code('@fos-icons/vue')} packages include every style, {catalog.license} licensed.
           Each icon is its own tree-shakeable component.
         </p>
-        <div className="grid gap-4 lg:grid-cols-2">
-          <CopyCode
-            lang="tsx"
-            what="React example"
-            label="React"
-            wrap
-            code={`import { ${name} } from '@fos-icons/react';\n\n<${name} ${copy.react} />`}
-          />
-          <CopyCode
-            lang="vue"
-            what="Vue example"
-            label="Vue"
-            wrap
-            code={`<script setup lang="ts">\nimport { ${name} } from '@fos-icons/vue';\n</script>\n\n<template>\n  <${name} ${copy.vue} />\n</template>`}
-          />
-        </div>
+        <CodeTabs
+          label="Framework"
+          tabs={[
+            { id: 'react', label: 'React', lang: 'tsx', code: `import { ${name} } from '@fos-icons/react';\n\n<${name} ${copy.react} />` },
+            { id: 'vue', label: 'Vue', lang: 'vue', code: `<script setup lang="ts">\nimport { ${name} } from '@fos-icons/vue';\n</script>\n\n<template>\n  <${name} ${copy.vue} />\n</template>` },
+          ]}
+        />
       </LandingSection>
 
       <LandingSection id="availability" title="Where it's free" className="mt-12">

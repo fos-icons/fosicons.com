@@ -601,11 +601,11 @@ FosIcon(
         </Section>
 
         <Section id="source" title="Source data">
-          <p>This site is generated from the <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/fos-icons">fos-icons</a> library. Counts, categories, names, and aliases come from its manifest.</p>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 rounded-xl border border-line p-4 font-mono text-xs text-muted">
-            <dt>Revision</dt><dd className="break-all text-ink">{lock.revision ?? 'unknown'}{lock.dirty ? ' (with uncommitted changes)' : ''}</dd>
-            <dt>Manifest</dt><dd className="break-all text-ink">sha256:{lock.manifestSha256}</dd>
-          </dl>
+          <p>
+            This site is built from the <a target="_blank" rel="noreferrer" href="https://github.com/fos-icons/fos-icons">fos-icons</a> library
+            {lock.revision && <> at <a target="_blank" rel="noreferrer" href={`https://github.com/fos-icons/fos-icons/commit/${lock.revision}`}><code>{lock.revision.slice(0, 7)}</code></a></>}.
+            Counts, categories, names, and aliases come from its manifest.
+          </p>
         </Section>
       </article>
     </div>
