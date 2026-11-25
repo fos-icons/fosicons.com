@@ -48,28 +48,6 @@ describe('AI agents page', () => {
     const { result } = await response.json() as { result: { tools: { name: string }[] } };
     expect(AGENT_TOOLS.map(([name]) => name).sort()).toEqual(result.tools.map((t) => t.name).sort());
   });
-});
-
-describe('Header MCP menu', () => {
-  it('links every setup card from the header and the page has each card', async () => {
-    const { HeaderActions } = await import('../src/components/HeaderActions');
-    const { AGENT_CLIENTS } = await import('../src/lib/agents');
-    const userEvent = (await import('@testing-library/user-event')).default;
-    const user = userEvent.setup();
-    render(<ToastProvider><MemoryRouter><HeaderActions /><AiAgentsPage /></MemoryRouter></ToastProvider>);
-    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
-    const toggle = nav.getByRole('button', { name: 'MCP' });
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-    await user.click(toggle);
-    expect(toggle.getAttribute('aria-expanded')).toBe('true');
-    for (const { id, label } of AGENT_CLIENTS) {
-      expect(nav.getByRole('link', { name: label }).getAttribute('href')).toBe(`/ai-agents#${id}`);
-      expect(document.getElementById(id)).not.toBeNull();
-    }
-    await user.keyboard('{Escape}');
-    expect(toggle.getAttribute('aria-expanded')).toBe('false');
-  });
-
   it('opens and closes the questions as an accordion', async () => {
     renderPage();
     const question = screen.getByText('Is it free?');

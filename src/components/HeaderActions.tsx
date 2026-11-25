@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
-import { LocalLink, useI18n } from '../i18n';
-import { AGENT_CLIENTS } from '../lib/agents';
+import { useI18n } from '../i18n';
 import { ORG_URL } from '../lib/links';
 import { Button, ButtonAnchor, ButtonLink, UiIcon } from './ui';
 
@@ -17,6 +16,7 @@ const mainLinks = [
   { to: '/', label: 'header.browseNav' },
   { to: '/docs', label: 'header.docs' },
   { to: '/pricing', label: 'header.pricing' },
+  { to: '/ai-agents', label: 'header.mcp' },
 ] as const;
 
 /**
@@ -75,7 +75,6 @@ export function HeaderActions() {
             {t(label)}
           </NavLink>
         ))}
-        <McpMenu />
         <button type="button" aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className={textLink}>
           {t('header.feedback')}
         </button>
@@ -105,9 +104,6 @@ export function HeaderActions() {
               {t(label)}
             </NavLink>
           ))}
-          <NavLink to={path('/ai-agents')} onClick={close} className={`flex items-center rounded-lg px-3 text-sm font-medium text-ink underline-offset-4 hover:bg-sunken ${menuItem} ${currentLink}`}>
-            {t('header.mcp')}
-          </NavLink>
           <Button aria-haspopup="dialog" onClick={() => openFeedback(toggleRef.current)} variant="ghost" className={menuItem}>
             {t('header.feedback')}
           </Button>
@@ -119,68 +115,5 @@ export function HeaderActions() {
         </Suspense>
       )}
     </nav>
-  );
-}
-
-/**
- * Desktop "MCP" disclosure: links to the /ai-agents setup card for each agent.
- * A list of links, not an ARIA menu, so Tab and screen readers work as usual.
- */
-function McpMenu() {
-  const { t, path } = useI18n();
-  const { pathname, hash } = useLocation();
-  const [open, setOpen] = useState(false);
-  const panelId = useId();
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const toggleRef = useRef<HTMLButtonElement>(null);
-  const current = pathname === path('/ai-agents');
-
-  useEffect(() => { setOpen(false); }, [pathname, hash]);
-
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setOpen(false); toggleRef.current?.focus(); }
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer);
-    };
-  }, [open]);
-
-  const item = 'flex min-h-9 items-center rounded-lg px-3 text-sm text-ink hover:bg-sunken';
-  return (
-    <div ref={wrapRef} className="relative" onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOpen(false); }}>
-      <button
-        ref={toggleRef}
-        type="button"
-        aria-expanded={open}
-        aria-controls={panelId}
-        onClick={() => setOpen((value) => !value)}
-        className={`${textLink} inline-flex min-h-11 items-center gap-1 ${current ? 'text-ink underline' : ''}`}
-      >
-        {t('header.mcp')}
-        <UiIcon name="chevron-down" className={`size-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
-      </button>
-      <div id={panelId} hidden={!open} className="absolute end-0 top-full z-40 w-60 rounded-xl border border-line bg-surface p-2 shadow-md">
-        <p className="px-3 pb-1 pt-1.5 text-xs font-medium text-muted">{t('header.mcpSetup')}</p>
-        <ul>
-          {AGENT_CLIENTS.map(({ id, label }) => (
-            <li key={id}><LocalLink to={`/ai-agents#${id}`} onClick={() => setOpen(false)} className={item}>{label}</LocalLink></li>
-          ))}
-        </ul>
-        <div className="mt-1 border-t border-line pt-1">
-          <LocalLink to="/ai-agents" onClick={() => setOpen(false)} className={`${item} font-medium`}>
-            {t('header.mcpOverview')}
-            <UiIcon name="arrow-right" className="ms-auto size-4 text-muted" />
-          </LocalLink>
-        </div>
-      </div>
-    </div>
   );
 }

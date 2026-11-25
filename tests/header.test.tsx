@@ -34,6 +34,7 @@ function renderAt(url: string) {
               <Route path="/" element={<><HeroActions /><DownloadSection look={downloadLook} /></>} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
               <Route path="/pricing" element={<h1>Pricing plans</h1>} />
+              <Route path="/ai-agents" element={<h1>Fos Icons for AI agents</h1>} />
             </Route>
           </Routes>
         </MemoryRouter>
@@ -62,15 +63,25 @@ describe('Header actions', () => {
     expect(start.getAttribute('target')).toBe('_blank');
   });
 
-  it.each(['/', '/docs', '/pricing'])('keeps the same header link order and destinations on %s', (url) => {
+  it.each(['/', '/docs', '/pricing', '/ai-agents'])('keeps the same header link order and destinations on %s', (url) => {
     renderAt(url);
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
     const links = nav.getAllByRole('link');
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
-      ['Browse', '/'], ['Docs', '/docs'], ['Pricing', '/pricing'],
+      ['Browse', '/'], ['Docs', '/docs'], ['Pricing', '/pricing'], ['MCP', '/ai-agents'],
     ]);
     expect(links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.getAttribute('href'))).toEqual([url]);
     expect(nav.getByRole('button', { name: 'Feedback' })).toBeTruthy();
+  });
+
+  it('opens the AI agents page directly from the MCP link', async () => {
+    const user = userEvent.setup();
+    renderAt('/');
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+    expect(nav.queryByRole('button', { name: 'MCP' })).toBeNull();
+    await user.click(nav.getByRole('link', { name: 'MCP' }));
+    expect(screen.getByRole('heading', { name: 'Fos Icons for AI agents' })).toBeTruthy();
+    expect(nav.getByRole('link', { name: 'MCP' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('links Pricing from the header and the menu, closes the menu, and marks Pricing current', async () => {
