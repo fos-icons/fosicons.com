@@ -532,6 +532,7 @@ const en = {
   'footer.reactIcons': 'React icons',
   'footer.vueIcons': 'Vue icons',
   'footer.figmaIcons': 'Figma icons',
+  'footer.aiAgents': 'AI agents',
   'inspector.iconPage': 'Icon page',
 } as const;
 

@@ -92,7 +92,7 @@ export default function AiAgentsPage() {
       </div>
 
       <LandingSection id="clients" title="Install" className="mt-12">
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid max-w-4xl gap-4">
           <Client id="claude-code" title="Claude Code">
             <Note>The plugin adds the MCP server and two skills: one for using the icons, one for migrating from lucide or Heroicons. Run these in Claude Code:</Note>
             <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />

@@ -475,6 +475,8 @@ describe('Icons page', () => {
     expect(within(header).queryByRole('link', { name: /GitHub/ })).toBeNull();
     const footer = screen.getByRole('contentinfo');
     expect(within(footer).queryByRole('link', { name: 'Docs' })).toBeNull();
+    const footerBrowse = within(footer).getByRole('navigation', { name: 'Browse' });
+    expect(within(footerBrowse).getByRole('link', { name: 'AI agents' }).getAttribute('href')).toBe('/ai-agents');
     expect(within(footer).getByRole('link', { name: /GitHub/ })).toBeTruthy();
     expect(within(footer).getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('/docs#privacy');
     expect(within(footer).getByRole('link', { name: 'License' }).getAttribute('href')).toBe('/docs#licensing');
