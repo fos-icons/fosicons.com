@@ -68,7 +68,7 @@ describe('Header actions', () => {
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
     const links = nav.getAllByRole('link');
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
-      ['Browse', '/'], ['Docs', '/docs'], ['Pricing', '/pricing'], ['MCP', '/ai-agents'],
+      ['Browse', '/'], ['MCP', '/ai-agents'], ['Pricing', '/pricing'], ['Docs', '/docs'],
     ]);
     expect(links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.getAttribute('href'))).toEqual([url]);
     expect(nav.getByRole('button', { name: 'Feedback' })).toBeTruthy();
@@ -92,7 +92,7 @@ describe('Header actions', () => {
     const menu = within(nav).getByRole('button', { name: 'Menu' });
     await user.click(menu);
     const panel = within(document.getElementById(menu.getAttribute('aria-controls')!)!);
-    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'Docs', 'Pricing', 'MCP']);
+    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'MCP', 'Pricing', 'Docs']);
     expect(panel.getByRole('button', { name: 'Feedback' })).toBeTruthy();
     const links = within(nav).getAllByRole('link', { name: 'Pricing' });
     await user.click(links[1]);
