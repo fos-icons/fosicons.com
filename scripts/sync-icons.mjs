@@ -21,7 +21,7 @@ const LOCK_PATH = join(ROOT, 'src/data/source-lock.json');
 /** Regular icons the website chrome uses. They must exist in the library. */
 export const UI_ICONS = [
   'search', 'x', 'download', 'copy', 'image', 'code', 'sun', 'moon', 'monitor',
-  'check', 'info-circle', 'chevron-down', 'link', 'link-external', 'menu',
+  'check', 'badge-verified', 'info-circle', 'chevron-down', 'link', 'link-external', 'menu',
   'book-open', 'palette', 'arrow-left', 'filter', 'x-circle',
   'layout-sidebar-right', 'settings-sliders', 'undo', 'message-smile-square',
   'plus', 'minus', 'dots-horizontal', 'compass', 'binoculars', 'map', 'route', 'home',

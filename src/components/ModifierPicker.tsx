@@ -28,9 +28,10 @@ export function useModifiers(enabled: boolean) {
 }
 
 const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
-const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality', 'file-types'];
+const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality'];
 const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield', 'home']);
 const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_ACTIONS.has(modifier.name);
+const isFileType = (modifier: ModifierAsset) => modifier.group === 'file-types';
 /** Actions lead with add/remove, then the arrows; the rest keep their library order. */
 const ACTIONS_ORDER = ['add', 'remove', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'reply', 'forward'];
 const actionRank = (modifier: ModifierAsset) => {
@@ -59,9 +60,10 @@ export function ModifierPicker({
       id: 'general',
       items: [
         ...GENERAL_GROUPS.flatMap((group) => modifiers.filter((m) => m.group === group)),
-        ...modifiers.filter((m) => !inActions(m) && !GENERAL_GROUPS.includes(m.group)),
+        ...modifiers.filter((m) => !inActions(m) && !isFileType(m) && !GENERAL_GROUPS.includes(m.group)),
       ],
     },
+    { id: 'file-types', items: modifiers.filter(isFileType) },
   ] as const;
   const [tab, setTab] = useState(() => groups.find((g) => g.items.some((m) => m.name === value?.modifier.name))?.id ?? groups[0]?.id);
   const current = groups.find((g) => g.id === tab) ?? groups[0];
