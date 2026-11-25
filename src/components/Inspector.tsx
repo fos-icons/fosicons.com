@@ -282,6 +282,7 @@ export function Inspector({
                   <span className="flex items-center gap-1">
                     <input
                       type="color"
+                      name="modifier-color"
                       aria-label={t('inspector.modifierColor')}
                       title={modifier ? t('inspector.modifierColor') : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
                       value={(modifier ?? modifierDefault ?? colors.primary).length === 7 ? (modifier ?? modifierDefault ?? colors.primary) : '#000000'}

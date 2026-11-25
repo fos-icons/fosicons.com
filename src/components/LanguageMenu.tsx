@@ -16,6 +16,7 @@ export function LanguageMenu() {
     <span className="relative inline-flex items-center">
       <UiIcon name="globe" className="pointer-events-none absolute left-2 size-4" />
       <select
+        name="language"
         aria-label={t('footer.language')}
         value={config.code}
         onChange={(e) => window.location.assign(`${localizePath(path, e.target.value)}${search}${hash}`)}

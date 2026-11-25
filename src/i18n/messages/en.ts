@@ -42,6 +42,14 @@ const en = {
   'meta.figma.title': 'Figma Icons — {icons}+ Free Icon Components | Fos Icons',
   'meta.aiAgents.title': 'Icons for AI Agents — MCP Server and Skills | Fos Icons',
   'meta.aiAgents.description': 'Connect Claude Code, Codex, ChatGPT, Cursor, or VS Code to {icons}+ free icons. A free MCP server and Agent Skills find real icons and write exact imports.',
+  'meta.style.regular.title': 'Regular Icons — {icons}+ Free Line SVG Icons | Fos Icons',
+  'meta.style.regular.description': '{icons}+ free line icons with 1.25px strokes on a 24px grid. Copy SVG, PNG, React, or Vue code, or download a ZIP. {license} licensed.',
+  'meta.style.filled.title': 'Solid Icons — {icons}+ Filled SVG Icons | Fos Icons',
+  'meta.style.filled.description': '{icons}+ solid icons: filled silhouettes with transparent cutouts for active states and small sizes. Free in the React and Vue packages.',
+  'meta.style.duocolor.title': 'Duocolor Icons — {icons}+ Two-Color SVG Icons | Fos Icons',
+  'meta.style.duocolor.description': '{icons}+ duocolor icons: a primary structure with secondary details, each color set separately. Free in the React and Vue packages.',
+  'meta.style.duotone.title': 'Duotone Icons — {icons}+ Tinted Line SVG Icons | Fos Icons',
+  'meta.style.duotone.description': '{icons}+ duotone icons: 1.25px line work with a 16% interior tint, in one or two colors. Free in the React and Vue packages.',
   'meta.figma.description': 'A free Figma icon library: {icons}+ icon components with {styles} variants, plus modifiers and light and dark themes. {license} licensed.',
   'meta.shareImageAlt': 'Fos Icons: open-source icons in Regular, Solid, Duocolor, and Duotone, shown on a grid.',
 
@@ -533,6 +541,7 @@ const en = {
   'footer.vueIcons': 'Vue icons',
   'footer.figmaIcons': 'Figma icons',
   'footer.aiAgents': 'AI agents',
+  'footer.styleIcons': '{style} icons',
   'inspector.iconPage': 'Icon page',
 } as const;
 

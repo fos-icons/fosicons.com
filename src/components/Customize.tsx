@@ -34,6 +34,7 @@ export function ColorField({ label, value, onChange, hint }: { label: string; va
       <div className="mt-0.5 flex items-center gap-3">
         <input
           type="color"
+          name={`${id}-picker`}
           aria-label={t('customize.colorInput', { label })}
           value={value.length === 7 ? value : '#000000'}
           onChange={(e) => onChange(e.target.value.toUpperCase())}
@@ -139,6 +140,7 @@ export function SizeControl({ look, onChange, compact = false }: { look: Look; o
           <span className="sr-only">{t('customize.sizeCustom')}</span>
           <input
             type="number"
+            name="size"
             inputMode="numeric"
             min={MIN_SIZE}
             max={MAX_SIZE}
@@ -434,7 +436,7 @@ export function DownloadSection({ look }: { look: Look }) {
               <label key={style} className={`relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted ${
                 available ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
               }`}>
-                <input type="checkbox" className="sr-only" disabled={!available} checked={checked}
+                <input type="checkbox" name="download-style" value={style} className="sr-only" disabled={!available} checked={checked}
                   aria-description={free ? t('icons.free') : available ? undefined : t(enforced ? 'upgrade.styles' : 'download.premiumSoon')} onChange={(event) => toggle(style, event.target.checked)} />
                 <UiIcon name={available ? (checked ? 'check' : 'plus') : 'crown-simple'} className="size-3" />
                 {t(`style.${style}`)}

@@ -19,7 +19,7 @@ const {
   SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
   LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
   primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
-  DEFAULT_ARTWORK_SIZE, defaultGridSvg, artworkKey, gridPreviewPath, FRAMEWORK_PATHS, displayName,
+  DEFAULT_ARTWORK_SIZE, defaultGridSvg, artworkKey, gridPreviewPath, FRAMEWORK_PATHS, STYLE_PATHS, STYLE_META, displayName,
 } = server;
 
 // Load artwork for prerendering and publish the free style as standalone SVGs.
@@ -66,7 +66,11 @@ const fontPreloads = ['funnel-display-latin-wght-normal', 'asta-sans-latin-wght-
   return `<link rel="preload" href="/assets/${file}" as="font" type="font/woff2" crossorigin />`;
 });
 // The home grid's first artwork chunk, so icons paint without waiting for the app.
-const homePreloads = [`<link rel="preload" href="/${artworkDirectory}/${catalog.styles[0]}/0.json" as="fetch" crossorigin />`];
+// The home grid draws Regular from its default optical size (32px, not the
+// 24px canonical set), so preload that size's first chunk. `/?style=…` gets
+// the same HTML but draws another style, so it skips the preload.
+const homeChunk = `/${artworkDirectory}/${DEFAULT_ARTWORK_SIZE === catalog.grid ? '' : `${DEFAULT_ARTWORK_SIZE}/`}${catalog.styles[0]}/0.json`;
+const homePreloads = [`<script>if(!/[?&]style=/.test(location.search)){var l=document.createElement('link');l.rel='preload';l.as='fetch';l.crossOrigin='anonymous';l.href=${JSON.stringify(homeChunk)};document.head.appendChild(l)}</script>`];
 
 const embed = (store) => {
   const used = Object.fromEntries(Object.entries(store).filter(([, svgs]) => Object.keys(svgs).length));
@@ -102,6 +106,7 @@ const ROUTES = [
   ['/brands'],
   ['/ai-agents'],
   ...Object.values(FRAMEWORK_PATHS).map((path) => [path]),
+  ...Object.values(STYLE_PATHS).map((path) => [path]),
   ...catalog.categories.map((c) => [categoryPath(c.name)]),
   ...catalog.icons.map((icon) => [iconPath(icon.name)]),
 ];
@@ -186,6 +191,7 @@ writeFileSync(join(dist, 'llms.txt'), [
   `- Flutter: \`${FLUTTER_PACKAGE.name}\` ([Setup](${absolute('/docs#flutter')}), [Dart package source](${packageSource('flutter')}))`,
   ...(FIGMA_URL ? [`- [Figma library](${FIGMA_URL})`] : []),
   `- [React icons](${absolute(FRAMEWORK_PATHS.react)}), [Vue icons](${absolute(FRAMEWORK_PATHS.vue)}), [Figma icons](${absolute(FRAMEWORK_PATHS.figma)}): getting started with each.`,
+  `- Style pages: ${catalog.styles.map((s) => `[${STYLE_META[s].label} icons](${absolute(STYLE_PATHS[s])})`).join(', ')}. Regular is free on this site; every style is free in the React and Vue packages.`,
   `- Every icon has its own page at ${absolute('/icons/<name>')} (for example [${displayName(catalog.icons[0].name)}](${absolute(iconPath(catalog.icons[0].name))})) and its free Regular SVG at ${absolute('/svg/regular/<name>.svg')}.`,
   '',
   '## Categories',

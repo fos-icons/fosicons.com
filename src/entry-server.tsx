@@ -7,7 +7,7 @@ import { createI18n, DEFAULT_LOCALE, loadMessages } from './i18n';
 export { headTags, pageFor, pageMeta, iconMeta, categoryMeta, pageUrl, PAGES, PAGE_IDS, facts, SITE_URL, SITE_NAME, absolute } from './lib/seo';
 export { webManifest } from './lib/manifest';
 export { primeArtwork, trackArtwork, takeTrackedArtwork } from './lib/artwork';
-export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, gridPreviewPath, iconPath, svgFilePath } from './lib/icon-pages';
+export { categoryPath, categorySlug, displayName, FRAMEWORK_PATHS, gridPreviewPath, iconPath, STYLE_PATHS, svgFilePath } from './lib/icon-pages';
 export { DEFAULT_ARTWORK_SIZE, defaultGridSvg } from './lib/look';
 export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 
@@ -15,7 +15,7 @@ export { DEFAULT_LOCALE, LOCALES, localizePath } from './i18n';
 export async function i18nFor(locale: string) {
   return createI18n(locale, await loadMessages(locale));
 }
-export { artworkDirectory, artworkKey, catalog, FREE_ICON_STYLE } from './lib/catalog';
+export { artworkDirectory, artworkKey, catalog, FREE_ICON_STYLE, STYLE_META } from './lib/catalog';
 export { brands } from './lib/brands';
 export { LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource } from './lib/links';
 
