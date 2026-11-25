@@ -1,10 +1,12 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Breadcrumbs, CopyCode, LandingSection } from '../components/LandingParts';
 import { ButtonAnchor, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
 import { catalog, ICONS_ROUNDED } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
 import { LIBRARY_URL } from '../lib/links';
+export { AGENT_CLIENTS } from '../lib/agents';
 
 /**
  * /ai-agents: how to connect Claude Code, Codex, ChatGPT, Cursor, VS Code, and
@@ -33,7 +35,7 @@ const external = (href: string, children: ReactNode) => (
 
 function Client({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 scroll-mt-6 flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
       <h3 id={`${id}-title`} className="font-display text-lg font-semibold">{title}</h3>
       {children}
     </section>
@@ -60,6 +62,11 @@ export default function AiAgentsPage() {
   const count = `${n(ICONS_ROUNDED)}+`;
   const styles = list(catalog.styles.map((s) => t(`style.${s}`)));
   const link = 'text-brand underline underline-offset-2';
+  const { hash } = useLocation();
+  // Links from the header menu land on a card; this page renders after navigation, so scroll here.
+  useEffect(() => {
+    if (hash) document.getElementById(decodeURIComponent(hash.slice(1)))?.scrollIntoView();
+  }, [hash]);
 
   const faq: [string, ReactNode][] = [
     ['Is it free?', <>Yes. The MCP server, plugins, and skills are free for everyone, with no account or API key.</>],
@@ -154,14 +161,17 @@ export default function AiAgentsPage() {
       </LandingSection>
 
       <LandingSection id="faq" title="Questions" className="mt-12">
-        <dl className="grid gap-6 sm:grid-cols-2">
+        <div className="max-w-3xl">
           {faq.map(([q, a]) => (
-            <div key={q}>
-              <dt className="font-medium">{q}</dt>
-              <dd className="mt-1 text-sm leading-relaxed text-muted">{a}</dd>
-            </div>
+            <details key={q} className="group border-t border-line last:border-b">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-medium transition-colors hover:text-brand [&::-webkit-details-marker]:hidden">
+                {q}
+                <UiIcon name="chevron-down" className="size-4 shrink-0 text-muted transition-transform duration-200 group-open:rotate-180" />
+              </summary>
+              <p className="max-w-[62ch] pb-5 text-sm leading-relaxed text-muted">{a}</p>
+            </details>
           ))}
-        </dl>
+        </div>
         <p className="mt-8 text-sm text-muted">
           Building your own client? The <LocalLink to="/docs#ai-agents" className={link}>docs</LocalLink> cover the tools
           and the <LocalLink to="/docs#terms" className={link}>terms</LocalLink> cover use of the server.
