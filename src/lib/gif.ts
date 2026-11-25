@@ -52,9 +52,11 @@ async function rasterize(svg: string, px: number, context: CanvasRenderingContex
  * frozen into a static copy that is rasterized and encoded.
  */
 export async function svgToGif(svg: string, px: number, background: GifBackground = 'transparent'): Promise<Blob> {
-  // gifenc is CommonJS: take its default export, and load it only when a GIF is made.
+  // Loaded only when a GIF is made. The browser gets gifenc's ES build (named
+  // exports; its default is GIFEncoder alone); Node gets CommonJS, whose
+  // functions sit on the default export.
   const gifenc = await import('gifenc');
-  const { applyPalette, GIFEncoder, quantize } = gifenc.default ?? gifenc;
+  const { applyPalette, GIFEncoder, quantize } = typeof gifenc.GIFEncoder === 'function' ? gifenc : gifenc.default;
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none';
