@@ -477,7 +477,7 @@ describe('Icons page', () => {
     expect(within(footer).queryByRole('link', { name: 'Docs' })).toBeNull();
     const footerBrowse = within(footer).getByRole('navigation', { name: 'Browse' });
     expect(within(footerBrowse).getByRole('link', { name: 'AI agents' }).getAttribute('href')).toBe('/ai-agents');
-    expect(within(footer).getByRole('link', { name: /GitHub/ })).toBeTruthy();
+    expect(within(footer).getByRole('link', { name: /GitHub/ }).getAttribute('href')).toBe('https://github.com/fos-icons');
     expect(within(footer).getByRole('link', { name: 'Privacy' }).getAttribute('href')).toBe('/docs#privacy');
     expect(within(footer).getByRole('link', { name: 'License' }).getAttribute('href')).toBe('/docs#licensing');
     const npm = within(footer).getByRole('link', { name: /^npm/ });

@@ -7,7 +7,7 @@ import { catalog } from '../lib/catalog';
 import { isCatalogEditor } from '../lib/catalog-location';
 import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
-import { LIBRARY_URL, NPM_URL, X_URL } from '../lib/links';
+import { NPM_URL, ORG_URL, X_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
 import { LanguageMenu } from './LanguageMenu';
@@ -142,7 +142,7 @@ export function Layout() {
                   </a>
                   <span aria-hidden="true" className="text-line-strong">|</span>
                   <div className="flex items-center gap-1">
-                    <BrandLink href={LIBRARY_URL} brand="github" label={t('footer.github')} newTab={t('site.newTab')} />
+                    <BrandLink href={ORG_URL} brand="github" label={t('footer.github')} newTab={t('site.newTab')} />
                     <BrandLink href={X_URL} brand="x" label={t('footer.x')} newTab={t('site.newTab')} />
                   </div>
                 </nav>
