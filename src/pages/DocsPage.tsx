@@ -326,7 +326,8 @@ export default function DocsPage() {
         <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
         <p className="mt-3 text-base text-muted">
           Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format([...PLATFORM_NAMES, 'Framer'])}. {nf.format(ICONS_ROUNDED)}+ icons,
-          each in {catalog.styles.length} styles and {catalog.sizes.length} optical sizes from {catalog.sizes[0]} to {catalog.sizes[catalog.sizes.length - 1]}px.
+          each in {catalog.styles.length} styles and {catalog.sizes.length} optical sizes from {catalog.sizes[0]} to {catalog.sizes[catalog.sizes.length - 1]}px,
+          plus {animatedNames.size} <a href="#animated">animated</a> icons.
         </p>
         {!inHeader && <div className="mt-5 md:mt-4">{search}</div>}
       </header>
@@ -348,9 +349,11 @@ export default function DocsPage() {
             {catalog.styles.map((s) => (
               <li key={s}><strong>{STYLE_META[s].label}</strong>{s === 'filled' && <> (<code>filled</code> in files and code)</>} — {STYLE_META[s].description}.</li>
             ))}
+            <li><strong>Animated</strong> — {animatedNames.size} common icons, drawn in Regular with a CSS animation inside the SVG (see <a href="#animated">Animated</a>).</li>
           </ul>
           <p>
-            Every icon ships in all four styles under the same canonical kebab-case name. Line styles
+            Every icon ships in all {catalog.styles.length} static styles under the same canonical kebab-case name; Animated is a
+            curated set, not a version of every icon. Line styles
             use {catalog.strokeWidth}px strokes at {catalog.grid}px; each optical size has its own weight
             (see <a href="#sizes">Sizes</a>). Negative space and modifier clearances are genuinely
             transparent, not painted with a background color.
