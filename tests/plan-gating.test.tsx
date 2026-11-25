@@ -19,6 +19,9 @@ import { IconsPage } from '../src/pages/IconsPage';
 import { styleSvgs } from './helpers';
 
 const fetchMock = vi.fn(async (url: string) => {
+  if (url.includes('/animated.json?')) {
+    return new Response(readFileSync(join(__dirname, '../public/icons/animated.json'), 'utf8'));
+  }
   if (url === `/modifiers.json?v=${lock.revision ?? lock.manifestSha256}`) {
     return new Response(readFileSync(join(__dirname, '../public/modifiers.json'), 'utf8'), { status: 200 });
   }
@@ -68,6 +71,40 @@ beforeEach(() => {
   desktop();
 });
 afterEach(() => { cleanup(); resetSectionState(); resetExportRows(); vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); });
+
+describe('animated icon pages', () => {
+  it('switches the preview and framework examples without unlocking static export controls', async () => {
+    const user = userEvent.setup();
+    renderAs('free', '/icons/download');
+    expect(screen.getByText('Download Regular SVG')).toBeTruthy();
+    expect(fetchMock.mock.calls.some(([url]) => url.includes('/animated.json?'))).toBe(false);
+
+    await user.click(screen.getByRole('radio', { name: 'Animated' }));
+    expect((await screen.findByRole('img', { name: 'Download icon, Animated style' })).querySelector('.fa-download style')).not.toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Pause animation' }));
+    expect(screen.getByRole('button', { name: 'Play animation' })).toBeTruthy();
+    expect(screen.queryByText('Download Regular SVG')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Customize animation' }).getAttribute('href')).toBe('/icons/download?view=editor&style=animated');
+    expect(screen.getByText('Copy and download animated icons with Advanced.', { exact: false })).toBeTruthy();
+
+    for (const name of ['React', 'Vue', 'Svelte', 'SolidJS', 'Angular']) {
+      await user.click(screen.getByRole('tab', { name }));
+      const panel = screen.getByRole('tabpanel', { name });
+      expect(panel.querySelector('pre')?.textContent).toContain('/icons/download-animated.svg');
+      expect(panel.querySelector('pre')?.textContent).not.toContain('DownloadRegular');
+    }
+
+    await user.click(screen.getByRole('radio', { name: 'Regular' }));
+    expect(await screen.findByText('Download Regular SVG')).toBeTruthy();
+    expect(screen.getByRole('tabpanel', { name: 'Angular' }).querySelector('pre')?.textContent).not.toContain('download-animated.svg');
+  });
+
+  it('keeps an icon without animated artwork in Regular, even with an Animated URL', () => {
+    renderAs(null, '/icons/accordion?style=animated');
+    expect(screen.queryByRole('radio', { name: 'Animated' })).toBeNull();
+    expect(screen.getByRole('img', { name: 'Accordion icon, Regular style' })).toBeTruthy();
+  });
+});
 
 describe('entitlements', () => {
   it('follows the pricing matrix: styles, duo colors, and ZIPs with Pro; modifiers and animated icons with Advanced', () => {

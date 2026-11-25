@@ -420,6 +420,7 @@ export default function DocsPage() {
 
         <Section id="animated" title="Animated">
           <p><strong>{animatedNames.size} common icons</strong> also come animated: check, heart, wifi, loaders, the hourglass, every chevron, and more. Browse them in the <a href={path('/?style=animated')}>Animated</a> tab, where each one plays on hover. Copying and downloading them comes with the Advanced plan.</p>
+          <p>Where available, choose <strong>Animated</strong> on an icon page such as <a href={path('/icons/download?style=animated')}>Download</a> to preview the motion and see framework examples.</p>
           <p>Each file is a plain SVG built from the Regular artwork, with its CSS animation inside a <code>&lt;style&gt;</code> block. No JavaScript or runtime is needed, so it plays in an <code>&lt;img&gt;</code> tag, inline in HTML, or as a CSS background. The library files are in <code>icons/animated/</code>.</p>
           <Code lang="html">{`<img src="./icons/animated/check.svg" width="24" height="24" alt="Done">`}</Code>
           <ul className="list-disc space-y-1 pl-5">
