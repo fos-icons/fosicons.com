@@ -1,4 +1,5 @@
-import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import { type ComponentType, type LazyExoticComponent } from 'react';
+import { lazyPage } from '../lib/lazy-page';
 import { DEFAULT_LOCALE } from './config';
 
 /**
@@ -19,7 +20,7 @@ export function docsPageFor(locale: string): LazyExoticComponent<ComponentType> 
   const key = hasTranslatedDocs(locale) ? locale : DEFAULT_LOCALE;
   if (!pages.has(key)) {
     const load = key === DEFAULT_LOCALE ? () => import('../pages/DocsPage') : translated[`./content/${key}/DocsPage.tsx`];
-    pages.set(key, lazy(load));
+    pages.set(key, lazyPage(load));
   }
   return pages.get(key)!;
 }

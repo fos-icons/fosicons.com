@@ -456,7 +456,8 @@ const en = {
   // Errors (shown in toasts)
   'error.generic': 'Something went wrong.',
   'error.pageTitle': 'This page couldn’t load',
-  'error.pageBody': 'Reload the page to try again, or return to the icon catalog.',
+  'error.pageBody': 'Something went wrong while showing this page. Reload to try again, or return to the icon catalog.',
+  'error.pageDownload': 'Part of this page couldn’t be downloaded. This happens when the site has just been updated or your connection dropped. Reload to get the latest version.',
   'error.pageReload': 'Reload page',
   'error.copy': 'Could not copy.',
   'error.zip': 'Could not build the ZIP.',
