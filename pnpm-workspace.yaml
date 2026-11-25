@@ -1,2 +1,6 @@
 allowBuilds:
   esbuild: true
+
+overrides:
+  # Storybook's React docgen plugin still requests the affected glob 13 range.
+  '@joshwooding/vite-plugin-react-docgen-typescript@0.7.0>glob': ^14.0.2

@@ -635,6 +635,7 @@ FosIcon(
           </ul>
           <p>Icon searches, customizations, and downloads are processed in your browser. We do not track them as separate analytics events. Links to GitHub, npm, and Figma take you to those services, which have their own privacy policies. Like any website, the server hosting this one may keep standard request logs.</p>
           <p>To clear the stored preferences, clear this site&apos;s data in your browser settings.</p>
+          <p>The MCP server at <code>/mcp</code>, used by AI agents and the Fos Icons plugins, needs no account and stores no conversation content. For each tool call it logs the tool name and options such as the framework and style, and, for searches that find no icon, the first 60 characters of the search text, so we can see which icons people need. Requests are rate limited by IP address.</p>
         </Section>
 
         <Section id="source" title="Source data">

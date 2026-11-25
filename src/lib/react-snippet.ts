@@ -1,5 +1,5 @@
 import type { StyleId } from './catalog';
-import { isDuo } from './svg';
+import { isDuo } from './svg.js';
 
 /** Mirrors the Fos Icons package naming rule. */
 export function componentName(name: string, style: StyleId): string {

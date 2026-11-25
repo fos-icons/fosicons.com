@@ -188,8 +188,9 @@
   font-size: 0.9375rem;
 }
 
-.pricing-highlights li { display: flex; align-items: baseline; gap: 0.55rem; }
-.pricing-highlights .glyph { align-self: start; margin-block-start: 0.2rem; color: var(--c-brand); }
+.pricing-highlights li { display: flex; align-items: flex-start; gap: 0.5rem; line-height: 1.6; }
+.pricing-highlights .glyph { color: var(--c-brand); }
+.pricing-highlights strong { font-weight: 700; }
 
 /* Matrix */
 

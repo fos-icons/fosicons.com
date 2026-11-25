@@ -67,7 +67,7 @@ const fetchMock = vi.fn(async (url: string) => {
 
 beforeEach(() => {
   resetStyleCache();
-  fetchMock.mockClear();
+  fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
   // jsdom has no showModal; the mobile sheet uses it.
   HTMLDialogElement.prototype.showModal ??= function (this: HTMLDialogElement) { this.setAttribute('open', ''); };
@@ -283,7 +283,7 @@ describe('Icons page', () => {
     expect(preview.innerHTML).not.toContain('clip-path');
 
     const tablist = within(await screen.findByRole('tablist', { name: 'Modifier categories' }, { timeout: 8000 }));
-    expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General']);
+    expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General', 'File']);
     await user.click(tablist.getByRole('tab', { name: 'General' }));
     const general = within(screen.getByRole('tabpanel', { name: 'General' }));
     for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield', 'Home']) {
@@ -380,11 +380,24 @@ describe('Icons page', () => {
   it('offers file-type labels on files, only in the corners they support', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=file');
-    await user.click(await screen.findByRole('tab', { name: 'General' }, { timeout: 8000 }));
-    await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
+    const general = await screen.findByRole('tab', { name: 'General' }, { timeout: 8000 });
+    await user.click(general);
+    expect(screen.queryByRole('button', { name: /^PDF modifier/ })).toBeNull();
+    await user.keyboard('{ArrowRight}');
+    const fileTab = screen.getByRole('tab', { name: 'File' });
+    expect(document.activeElement).toBe(fileTab);
+    const panel = within(screen.getByRole('tabpanel', { name: 'File' }));
+    expect(panel.queryByRole('button', { name: /^Lock modifier/ })).toBeNull();
+    await user.click(panel.getByRole('button', { name: /^PDF modifier/ }));
     const enabled = ['Top left', 'Top right', 'Bottom left', 'Bottom right']
       .filter((c) => !(screen.getByRole('button', { name: c }) as HTMLButtonElement).disabled);
     expect(enabled).toEqual(['Bottom left']);
+  });
+
+  it('opens the File tab when restoring a shared file modifier', async () => {
+    renderAt('/?icon=file&modifier=pdf&corner=bottom-left');
+    const panel = within(await screen.findByRole('tabpanel', { name: 'File' }, { timeout: 8000 }));
+    expect(panel.getByRole('button', { name: /^PDF modifier/, pressed: true })).toBeTruthy();
   });
 
   it('falls back to a modifier\'s own corner when it cannot sit in the chosen one', async () => {
@@ -393,7 +406,7 @@ describe('Icons page', () => {
     await user.click(await screen.findByRole('tab', { name: 'Actions' }, { timeout: 8000 }));
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     await user.click(screen.getByRole('button', { name: 'Top right' }));
-    await user.click(screen.getByRole('tab', { name: 'General' }));
+    await user.click(screen.getByRole('tab', { name: 'File' }));
     await user.click(screen.getByRole('button', { name: /^PDF modifier/ }));
     expect(screen.getByRole('button', { name: 'Bottom left' }).getAttribute('aria-pressed')).toBe('true');
     // The chosen corner comes back for the next modifier that fits there.

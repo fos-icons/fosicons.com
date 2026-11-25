@@ -176,8 +176,8 @@ export default function PricingPage() {
               <ul className="pricing-highlights">
                 {highlights.map((feature) => (
                   <li key={feature}>
-                    <UiIcon name="check" className="size-4 shrink-0" />
-                    <span>{t(`pricing.highlight.${feature}`)}</span>
+                    <UiIcon name="badge-verified" className="size-6" />
+                    <span>{rich(`pricing.highlight.${feature}`, { strong: (text) => <strong>{text}</strong> })}</span>
                   </li>
                 ))}
               </ul>
@@ -210,7 +210,7 @@ export default function PricingPage() {
                       return (
                         <td key={id} className={`pricing-cell--${id}`} data-included={included || undefined}>
                           <span className="sr-only">{t(included ? 'pricing.included' : 'pricing.notIncluded')}</span>
-                          <UiIcon name={included ? 'check' : 'minus'} className="size-4" />
+                          <UiIcon name={included ? 'badge-verified' : 'minus'} className="size-5" />
                         </td>
                       );
                     })}

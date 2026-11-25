@@ -86,6 +86,25 @@ function feedbackEndpoint(): Plugin {
   };
 }
 
+/** Dev only: the MCP endpoint at /mcp (production rewrites /mcp to the api/mcp.ts function). */
+function mcpEndpoint(): Plugin {
+  return {
+    name: 'fos-mcp',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (req.url?.split('?')[0] !== '/mcp') return next();
+        try {
+          const { default: handleMcp } = await server.ssrLoadModule('/api/mcp.ts');
+          await handleMcp(req, res);
+        } catch (error) {
+          next(error);
+        }
+      });
+    },
+  };
+}
+
 function billingEndpoint(mode: string): Plugin {
   const env = { ...loadEnv(mode, process.cwd(), ['BILLING_', 'STRIPE_', 'SUPABASE_']), ...process.env };
   return {
@@ -106,7 +125,7 @@ function billingEndpoint(mode: string): Plugin {
 }
 
 export default defineConfig(({ mode }) => ({
-  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint(), billingEndpoint(mode)],
+  plugins: [react(), tailwindcss(), versionedArtwork(), svgFiles(), webManifest(), feedbackEndpoint(), mcpEndpoint(), billingEndpoint(mode)],
   build: { target: 'es2022', chunkSizeWarningLimit: 700 },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },
