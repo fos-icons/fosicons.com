@@ -2,10 +2,10 @@ import { readFileSync } from 'node:fs';
 import { FRAMEWORK_NAMES } from '../src/lib/links';
 import { describe, expect, it } from 'vitest';
 import catalog from '../src/data/catalog.json';
-import { ICON_VARIANTS_ROUNDED, MODIFIER_COMBINATIONS_ROUNDED } from '../src/lib/catalog';
+import { ICON_VARIANTS_ROUNDED, MODIFIER_COMBINATIONS_ROUNDED, relatedIcons } from '../src/lib/catalog';
 import { createIndex, suggest } from '../src/lib/search';
 import { categoryMeta, headTags, iconMeta, PAGES, pageFor, structuredData } from '../src/lib/seo';
-import { categorySlug, relatedIcons } from '../src/lib/icon-pages';
+import { categorySlug } from '../src/lib/icon-pages';
 import { scopeIds } from '../src/lib/artwork';
 
 describe('page metadata', () => {

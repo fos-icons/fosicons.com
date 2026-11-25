@@ -4,7 +4,7 @@ import { IconCardContent, iconCardClass, iconCardGlyphClass } from '../component
 import { ButtonLink, Chip, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork } from '../lib/artwork';
-import { catalog, ICONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
+import { catalogMeta as catalog, ICONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog-meta';
 import { categoryPath, iconPath, POPULAR_ICONS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
 import { componentName } from '../lib/react-snippet';

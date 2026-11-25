@@ -2,7 +2,7 @@ import { SlashHint, UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { animatedNames, catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
+import { animatedNames, catalogMeta as catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog-meta';
 import { copyText } from '../lib/export';
 import { editorPath } from '../lib/icon-pages';
 import { angularSnippet, solidSnippet } from '../lib/react-snippet';
@@ -16,8 +16,6 @@ import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { useActiveSection } from '../hooks/useActiveSection';
 
 const nf = new Intl.NumberFormat('en-US');
-const compositions = catalog.icons.filter((i) => i.composition);
-const modifierNames = new Set(compositions.flatMap((i) => i.composition!.modifiers.map((m) => m.name)));
 
 const CONTENTS: { id: string; title: string; sections: readonly (readonly [string, string])[] }[] = [
   {
@@ -412,7 +410,7 @@ export default function DocsPage() {
 
         <Section id="modifiers" title="Modifiers">
           <p>Modifiers combine a base icon with a small solid glyph — Add, Delete, Lock, file-type labels, and more — with a designed corner position and a transparent clearance gap so the glyph never touches the base.</p>
-          <p>The library currently includes <strong>{compositions.length} authored compositions</strong> across {new Set(compositions.map((c) => c.composition!.base)).size} base icons, using {modifierNames.size} modifiers. In the inspector, open a base icon such as <a href={path(editorPath('user'))}>user</a> or <a href={path(editorPath('file'))}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
+          <p>The library currently includes <strong>{catalog.compositions.count} authored compositions</strong> across {catalog.compositions.bases} base icons, using {catalog.compositions.modifiers} modifiers. In the inspector, open a base icon such as <a href={path(editorPath('user'))}>user</a> or <a href={path(editorPath('file'))}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
           <p>Opening an icon with one modifier starts with the base icon and that modifier selected. You can also choose a modifier and corner in the inspector, or compose the SVG with the Python tool.</p>
           <Code lang="sh">{`python3 scripts/compose_svg.py home-smile --modifier key --position bottom-right --output home-key.svg`}</Code>
         </Section>

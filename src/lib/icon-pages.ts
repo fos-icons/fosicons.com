@@ -1,5 +1,4 @@
-import { orderBrowseIcons } from './browse-order';
-import { catalog, iconsByName, type IconEntry, type StyleId } from './catalog';
+import { catalogMeta, type IconEntry, type StyleId } from './catalog-meta';
 
 /**
  * Crawlable landing pages: one per icon (/icons/<name>), one per category
@@ -16,7 +15,7 @@ export const displayName = (name: string) =>
 export const categorySlug = (category: string) =>
   category.toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
 
-const categoriesBySlug = new Map(catalog.categories.map((c) => [categorySlug(c.name), c]));
+const categoriesBySlug = new Map(catalogMeta.categories.map((c) => [categorySlug(c.name), c]));
 export const categoryBySlug = (slug: string) => categoriesBySlug.get(slug) ?? null;
 
 export const iconPath = (name: string) => `/icons/${name}`;
@@ -41,25 +40,6 @@ export const iconKeywords = (icon: IconEntry) => {
 export const displayAliases = (icon: IconEntry) =>
   [...new Set(icon.aliases.filter((a) => !a.includes('/')).map((a) => a.replace(/-/g, ' ')))].filter((a) => a !== icon.name.replace(/-/g, ' '));
 
-export const iconsInCategory = (category: string): IconEntry[] => orderBrowseIcons(catalog.icons.filter((i) => i.category === category));
-
-/** Icons to suggest next to one: shared tags first, then the rest of its category. */
-export function relatedIcons(icon: IconEntry, limit = 24): IconEntry[] {
-  const tags = new Set(icon.tags);
-  const base = icon.composition?.base;
-  return catalog.icons
-    .filter((other) => other.name !== icon.name && (other.category === icon.category || other.tags.some((t) => tags.has(t))))
-    .map((other) => ({
-      other,
-      score: (other.category === icon.category ? 1 : 0)
-        + other.tags.filter((t) => tags.has(t)).length * 2
-        + (other.composition?.base === icon.name || other.name === base ? 4 : 0),
-    }))
-    .sort((a, b) => b.score - a.score || a.other.name.localeCompare(b.other.name))
-    .slice(0, limit)
-    .map(({ other }) => other);
-}
-
 export type FrameworkId = 'react' | 'vue' | 'figma';
 export const FRAMEWORK_PATHS: Record<FrameworkId, string> = {
   react: '/react-icons',
@@ -75,19 +55,4 @@ export const STYLE_PATHS: Record<StyleId, string> = {
   duotone: '/duotone-icons',
 };
 
-/** Well-known icons to show on the framework pages, where the library has them. */
-const POPULAR = [
-  'home', 'search', 'settings', 'user', 'bell', 'calendar', 'mail', 'heart', 'star', 'camera',
-  'trash', 'edit', 'download', 'upload', 'share', 'lock', 'cart', 'chat', 'map', 'clock',
-  'image', 'folder', 'phone', 'globe', 'sparkles', 'link', 'filter', 'bookmark',
-];
-export const POPULAR_ICONS: IconEntry[] = (() => {
-  const picked = POPULAR.map((n) => iconsByName.get(n)).filter((i): i is IconEntry => !!i && !i.composition);
-  // Top up from the catalog's first icons of each category so the grid is never thin.
-  for (const c of catalog.categories) {
-    if (picked.length >= 24) break;
-    const first = catalog.icons.find((i) => i.category === c.name && !i.composition && !picked.includes(i));
-    if (first) picked.push(first);
-  }
-  return picked.slice(0, 24);
-})();
+export const POPULAR_ICONS = catalogMeta.examples.map((name) => ({ name }));

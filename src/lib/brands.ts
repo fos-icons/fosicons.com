@@ -1,8 +1,10 @@
 import { LocalizedError } from '../i18n/errors';
 import brandData from '../data/brands.json';
-import { iconsByName, type IconEntry } from './catalog';
+import { catalogMeta, type IconEntry } from './catalog-meta';
 import { scopeSvg } from './svg';
-import { BRAND_STYLES, type BrandStyle } from './url-state';
+import type { BrandStyle } from './url-state';
+
+export const BRAND_STYLES: BrandStyle[] = ['regular', 'filled'];
 
 export interface BrandEntry {
   name: string;
@@ -61,7 +63,8 @@ export const BRANDS_CATEGORY = 'Brands';
  * A brand's name in the combined catalog. A few brands share a name with a
  * core icon (apple, signal, x…); those marks are listed as "<name>-logo".
  */
-const catalogName = (name: string) => (iconsByName.has(name) ? `${name}-logo` : name);
+const collisions = new Set(catalogMeta.brandNameCollisions);
+const catalogName = (name: string) => (collisions.has(name) ? `${name}-logo` : name);
 
 /** Brand marks as entries of the combined catalog, all in the Brands category. */
 export const brandCatalogEntries: IconEntry[] = brands.approved.map((b) => ({

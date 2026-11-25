@@ -42,7 +42,7 @@ const GROW_MARGIN = '1200px 0px';
 const NEED_MARGIN = '900px 0px';
 
 const Cell = memo(function Cell({
-  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false,
+  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false, stagger,
 }: {
   name: string;
   svg: string | undefined;
@@ -53,9 +53,11 @@ const Cell = memo(function Cell({
   index: number;
   premiumLabel?: string;
   playing?: boolean;
+  stagger: boolean;
 }) {
   return (
-    <li className="icon-cell" data-name={name} data-playing={playing || undefined} style={{ '--i': Math.min(index, 40) } as CSSProperties}>
+    <li className="icon-cell" data-name={name} data-playing={playing || undefined} data-stagger={stagger || undefined}
+      style={stagger ? { '--stagger-index': index } as CSSProperties : undefined}>
       <button
         type="button"
         data-icon={name}
@@ -88,7 +90,7 @@ const Cell = memo(function Cell({
             dangerouslySetInnerHTML={{ __html: svg }}
           />
         ) : (
-          <span aria-hidden="true" className={`animate-pulse rounded-md bg-sunken ${iconCardGlyphClass}`} />
+          <span aria-hidden="true" className={`rounded-md bg-sunken ${iconCardGlyphClass}`} />
         )}
       </button>
       {/* Beside the button, not in it: the button skips rendering off screen
@@ -105,6 +107,10 @@ const Cell = memo(function Cell({
 export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle, playing }: Props) {
   const items = allItems;
   const listRef = useRef<HTMLUListElement>(null);
+
+  // Stagger a few results after a filter change, not the initial grid or scroll batches.
+  const [entrance, setEntrance] = useState({ items, stagger: false });
+  if (entrance.items !== items) setEntrance({ items, stagger: true });
 
   // Progressive mounting: a screenful first, then another batch whenever the
   // end of the mounted cells comes near the viewport, so loading never pays
@@ -253,6 +259,7 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, pre
             svg={svgs?.[item.name]}
             selected={selected.has(item.name)}
             playing={playing?.has(item.name)}
+            stagger={entrance.stagger && index < 24}
             tabbable={index === activeIndex}
             onSelect={onSelect}
             onFocusIndex={onFocusIndex}

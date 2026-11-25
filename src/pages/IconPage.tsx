@@ -9,10 +9,10 @@ import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, Ui
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork, useSizedArtwork } from '../lib/artwork';
-import { catalog, FREE_ICON_STYLE, iconsByName, opticalSize, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
+import { catalog, chunksFor, FREE_ICON_STYLE, iconsByName, opticalSize, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
-  categoryPath, displayName, editorPath, iconPath, relatedIcons, svgFilePath,
+  categoryPath, displayName, editorPath, iconPath, svgFilePath,
 } from '../lib/icon-pages';
 import { CONTAINER, useHeaderSlot, usePaneHost } from '../lib/layout';
 import { DEFAULT_LOOK, exportColors, type Look } from '../lib/look';
@@ -256,7 +256,7 @@ export default function IconPage() {
     else q.set('style', STYLE_META[next].slug);
     return q;
   }, { replace: true, preventScrollReset: true, state: location.state });
-  const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES);
+  const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES, chunksFor);
   const svg = sized[0][inspected?.name ?? name];
   const navigate = useNavigate();
   const desktop = useMediaQuery('(min-width: 1024px)');
@@ -302,7 +302,7 @@ export default function IconPage() {
   const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
   const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
-  const editSvg = useArtwork(editing ?? catalog.styles[0], inspected && editing ? [inspected.name] : [])[inspected?.name ?? name];
+  const editSvg = useArtwork(editing ?? catalog.styles[0], inspected && editing ? [inspected.name] : [], chunksFor)[inspected?.name ?? name];
   if (!icon) return <NotFoundPage />;
   const openEditor = (style: StyleId) => setEditing(style);
   const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);

@@ -132,7 +132,7 @@ function billingEndpoint(mode: string): Plugin {
  */
 function stableChunk(id: string): string | undefined {
   if (/[\\/]node_modules[\\/]\.pnpm[\\/](react|react-dom|scheduler|react-router|react-router-dom|cookie|set-cookie-parser)@/.test(id)) return 'react';
-  if (/[\\/]src[\\/]data[\\/]catalog\.json$/.test(id)) return 'catalog';
+  if (/[\\/]src[\\/]data[\\/]catalog\.json$/.test(id)) return 'catalog-data';
   return undefined;
 }
 

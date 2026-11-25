@@ -3,8 +3,8 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
-import { animatedNames, catalog } from '../lib/catalog';
-import { isCatalogEditor } from '../lib/catalog-location';
+import { animatedNames, catalogMeta as catalog } from '../lib/catalog-meta';
+import { isCatalogEditor } from '../lib/catalog-routing';
 import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { NPM_URL, ORG_URL, X_URL } from '../lib/links';
@@ -46,6 +46,8 @@ export function Layout() {
   const { pathname, hash } = location;
   const editor = isCatalogEditor(location);
   const pageKey = editor ? 'catalog' : pathname;
+  const [entrance, setEntrance] = useState({ pageKey, animate: false });
+  if (entrance.pageKey !== pageKey) setEntrance({ pageKey, animate: true });
   const pagePath = splitLocale(pathname).path;
   const iconPage = !editor && pagePath.startsWith('/icons/');
   const docsPage = pagePath.replace(/\/$/, '') === '/docs';
@@ -95,7 +97,7 @@ export function Layout() {
           <div className="col-start-1 row-start-2 flex min-w-0 flex-col">
             <main ref={mainRef} id="main" tabIndex={-1} className="flex-1 outline-none">
               {/* Re-keyed per page so moving between pages eases in (see .route-enter). */}
-              <div key={pageKey} className="route-enter page-enter">
+              <div key={pageKey} className="route-enter page-enter" data-enter={entrance.animate || undefined}>
                 <PageBoundary>
                   <Suspense fallback={<PageLoader />}>
                     <Outlet />

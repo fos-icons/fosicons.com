@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { artworkKey, catalog, chunksFor, loadIconChunk, type StyleId } from './catalog';
+import { artworkKey, loadIconChunk } from './artwork-files';
+import { catalogMeta, type StyleId } from './catalog-meta';
 
 /**
  * Icon artwork for the landing pages (icon, category, framework).
@@ -52,11 +53,21 @@ const pick = (keys: readonly string[], names: readonly string[]) => keys.map((ke
   return out;
 });
 
+function sampleChunksFor(names: readonly string[]): number[] {
+  return [...new Set(names.flatMap((name) => {
+    const chunk = catalogMeta.sampleChunks[name];
+    return typeof chunk === 'number' ? [chunk] : [];
+  }))];
+}
+
 /**
  * SVG source for these icons in one style at each optical size (the same
  * order as `sizes`); missing entries fill in as chunks load.
  */
-export function useSizedArtwork(style: StyleId, names: readonly string[], sizes: readonly number[]): Record<string, string>[] {
+export function useSizedArtwork(
+  style: StyleId, names: readonly string[], sizes: readonly number[],
+  chunksFor: (names: readonly string[]) => number[] = sampleChunksFor,
+): Record<string, string>[] {
   const nameKey = names.join(',');
   const sizeKey = sizes.join(',');
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -91,16 +102,16 @@ export function useSizedArtwork(style: StyleId, names: readonly string[], sizes:
     return () => { live = false; };
     // `sizes` is captured through `keys`.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [style, id, keys, list]);
+  }, [style, id, keys, list, chunksFor]);
 
   return current;
 }
 
 /** SVG source for these icons in one style (24px artwork). */
-export function useArtwork(style: StyleId, names: readonly string[]): Record<string, string> {
-  return useSizedArtwork(style, names, CANONICAL)[0];
+export function useArtwork(style: StyleId, names: readonly string[], chunksFor?: (names: readonly string[]) => number[]): Record<string, string> {
+  return useSizedArtwork(style, names, CANONICAL, chunksFor)[0];
 }
-const CANONICAL = [catalog.grid] as const;
+const CANONICAL = [catalogMeta.grid] as const;
 
 /**
  * Prefix every id (and reference to it) so several icons can share one

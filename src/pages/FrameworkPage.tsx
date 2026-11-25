@@ -4,11 +4,11 @@ import {
 } from '../components/LandingParts';
 import { ButtonAnchor, ButtonLink, Chip, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
-import { catalog, ICONS_ROUNDED } from '../lib/catalog';
+import { catalogMeta as catalog, ICONS_ROUNDED } from '../lib/catalog-meta';
 import { categoryPath, POPULAR_ICONS, type FrameworkId } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
 import { FIGMA_URL } from '../lib/links';
-import { NPM_REACT_URL, NPM_VUE_URL } from '../lib/seo';
+import { NPM_REACT_URL, NPM_VUE_URL } from '../lib/seo-meta';
 
 /**
  * Landing pages for "React icons", "Vue icons", and "Figma icons": what the

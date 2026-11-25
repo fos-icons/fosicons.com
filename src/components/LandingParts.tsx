@@ -33,7 +33,7 @@ export function Glyph({ svg, idPrefix, className = 'size-6', label }: { svg?: st
  * The catalog cards as links to individual icon pages, with standalone
  * previews that use the catalog's default stroke and load lazily.
  */
-export function IconLinkGrid({ icons }: { icons: IconEntry[] }) {
+export function IconLinkGrid({ icons }: { icons: readonly Pick<IconEntry, 'name'>[] }) {
   return (
     <ul className="icon-card-grid">
       {icons.map((icon) => (

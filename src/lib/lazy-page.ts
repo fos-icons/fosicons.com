@@ -37,9 +37,13 @@ export function reloadForNewVersion(now = Date.now()): boolean {
 
 /** React.lazy that reloads once if the chunk can't be downloaded. */
 export function lazyPage<T extends ComponentType<any>>(load: () => Promise<{ default: T }>): LazyExoticComponent<T> { // eslint-disable-line @typescript-eslint/no-explicit-any
-  return lazy(() => load().catch((error: unknown) => {
+  return lazy(() => loadPage(load));
+}
+
+export function loadPage<T>(load: () => Promise<T>): Promise<T> {
+  return load().catch((error: unknown) => {
     // Keep the Suspense fallback up while the page reloads.
     if (isChunkLoadError(error) && reloadForNewVersion()) return new Promise<never>(() => {});
     throw error;
-  }));
+  });
 }

@@ -4,10 +4,10 @@ import { Breadcrumbs, IconLinkGrid, LandingSection } from '../components/Landing
 import { Button, ButtonLink, Chip, useToast } from '../components/ui';
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
-import { catalog } from '../lib/catalog';
+import { catalog, iconsInCategory } from '../lib/catalog';
 import { buildCategorySet, categorySetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
-import { categoryBySlug, categoryPath, iconsInCategory } from '../lib/icon-pages';
+import { categoryBySlug, categoryPath } from '../lib/icon-pages';
 import { CONTAINER } from '../lib/layout';
 import { FRAMEWORK_NAMES } from '../lib/links';
 import { UpgradePrompt } from '../components/UpgradePrompt';

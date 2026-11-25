@@ -1,6 +1,6 @@
 import ivory from '../data/ivory.json';
 import type { SiteTheme } from './theme';
-import { catalog, opticalSize, opticalStroke, palettes, type StyleId } from './catalog';
+import { catalogMeta as catalog, opticalSize, opticalStroke, palettes, type StyleId } from './catalog-meta';
 import { hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
 
 /**

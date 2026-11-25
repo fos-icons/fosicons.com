@@ -1,7 +1,7 @@
 import { Analytics } from '@vercel/analytics/react';
 import { StrictMode } from 'react';
 import { createRoot, hydrateRoot } from 'react-dom/client';
-import { App } from './App';
+import { App, preloadCatalogEditor } from './App';
 import { prepareAnalyticsEvent } from './lib/analytics';
 import { primeArtwork } from './lib/artwork';
 import { reloadForNewVersion } from './lib/lazy-page';
@@ -41,7 +41,9 @@ window.addEventListener('load', () => {
 
 // The language comes from the URL (/fr/…); load its messages before the first render.
 const { locale } = splitLocale(window.location.pathname);
-loadMessages(locale).then((messages) => {
+const initialRoute = { pathname: window.location.pathname, search: window.location.search, state: window.history.state?.usr };
+// Keep the prerendered catalog visible until the interactive grid can take over.
+Promise.all([loadMessages(locale), Promise.allSettled([preloadCatalogEditor(initialRoute)])]).then(([messages]) => {
   const root = document.getElementById('root')!;
   // Exactly the tree the build prerenders (src/entry-server.tsx), so hydration matches it.
   const app = (

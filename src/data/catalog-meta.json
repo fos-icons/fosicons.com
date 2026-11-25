@@ -1,0 +1,527 @@
+{
+  "license": "MIT",
+  "grid": 24,
+  "strokeWidth": 1.25,
+  "sizes": [
+    16,
+    24,
+    32,
+    48,
+    64
+  ],
+  "strokeWidths": {
+    "16": 1,
+    "24": 1.25,
+    "32": 1.5,
+    "48": 2,
+    "64": 2.5
+  },
+  "styles": [
+    "regular",
+    "filled",
+    "duocolor",
+    "duotone"
+  ],
+  "categories": [
+    {
+      "name": "AI & agents",
+      "count": 18
+    },
+    {
+      "name": "Communication",
+      "count": 111
+    },
+    {
+      "name": "Data & commerce",
+      "count": 108
+    },
+    {
+      "name": "Essentials",
+      "count": 94
+    },
+    {
+      "name": "Files",
+      "count": 111
+    },
+    {
+      "name": "Food & drink",
+      "count": 36
+    },
+    {
+      "name": "Health & medical",
+      "count": 47
+    },
+    {
+      "name": "Interfaces",
+      "count": 149
+    },
+    {
+      "name": "Media & devices",
+      "count": 124
+    },
+    {
+      "name": "Music & instruments",
+      "count": 23
+    },
+    {
+      "name": "Nature & animals",
+      "count": 26
+    },
+    {
+      "name": "Navigation",
+      "count": 176
+    },
+    {
+      "name": "Professions",
+      "count": 27
+    },
+    {
+      "name": "Religion & spirituality",
+      "count": 18
+    },
+    {
+      "name": "Security",
+      "count": 58
+    },
+    {
+      "name": "Shapes",
+      "count": 74
+    },
+    {
+      "name": "Sports & fitness",
+      "count": 74
+    },
+    {
+      "name": "Time & calendar",
+      "count": 64
+    },
+    {
+      "name": "Transport & space",
+      "count": 42
+    },
+    {
+      "name": "Weather",
+      "count": 51
+    },
+    {
+      "name": "Workspace",
+      "count": 158
+    }
+  ],
+  "modifiers": {
+    "24": {
+      "label": "24",
+      "group": "time"
+    },
+    "4k": {
+      "label": "4K",
+      "group": "image-quality"
+    },
+    "add": {
+      "label": "Add",
+      "group": "actions"
+    },
+    "ai": {
+      "label": "AI",
+      "group": "file-types"
+    },
+    "arrow-down": {
+      "label": "Arrow down",
+      "group": "actions"
+    },
+    "arrow-left": {
+      "label": "Arrow left",
+      "group": "actions"
+    },
+    "arrow-right": {
+      "label": "Arrow right",
+      "group": "actions"
+    },
+    "arrow-up": {
+      "label": "Arrow up",
+      "group": "actions"
+    },
+    "block": {
+      "label": "Block",
+      "group": "actions"
+    },
+    "check": {
+      "label": "Check",
+      "group": "status"
+    },
+    "clip": {
+      "label": "Clip",
+      "group": "access-identity"
+    },
+    "code": {
+      "label": "Code",
+      "group": "actions"
+    },
+    "copy": {
+      "label": "Copy",
+      "group": "actions"
+    },
+    "css": {
+      "label": "CSS",
+      "group": "file-types"
+    },
+    "csv": {
+      "label": "CSV",
+      "group": "file-types"
+    },
+    "delete": {
+      "label": "Delete",
+      "group": "actions"
+    },
+    "doc": {
+      "label": "DOC",
+      "group": "file-types"
+    },
+    "dot": {
+      "label": "Dot",
+      "group": "status"
+    },
+    "money": {
+      "label": "Money",
+      "group": "commerce"
+    },
+    "coins": {
+      "label": "Coins",
+      "group": "commerce"
+    },
+    "tag": {
+      "label": "Tag",
+      "group": "commerce"
+    },
+    "download": {
+      "label": "Download",
+      "group": "actions"
+    },
+    "edit": {
+      "label": "Edit",
+      "group": "actions"
+    },
+    "eps": {
+      "label": "EPS",
+      "group": "file-types"
+    },
+    "fig": {
+      "label": "FIG",
+      "group": "file-types"
+    },
+    "gif": {
+      "label": "GIF",
+      "group": "file-types"
+    },
+    "hash": {
+      "label": "Hash",
+      "group": "actions"
+    },
+    "hd": {
+      "label": "HD",
+      "group": "image-quality"
+    },
+    "html": {
+      "label": "HTML",
+      "group": "file-types"
+    },
+    "indent-left": {
+      "label": "Indent left",
+      "group": "image-quality"
+    },
+    "indent-right": {
+      "label": "Indent right",
+      "group": "image-quality"
+    },
+    "jpg": {
+      "label": "JPG",
+      "group": "file-types"
+    },
+    "js": {
+      "label": "JS",
+      "group": "file-types"
+    },
+    "json": {
+      "label": "JSON",
+      "group": "file-types"
+    },
+    "key": {
+      "label": "Key",
+      "group": "access-identity"
+    },
+    "link": {
+      "label": "Link",
+      "group": "actions"
+    },
+    "list": {
+      "label": "List",
+      "group": "actions"
+    },
+    "lock": {
+      "label": "Lock",
+      "group": "access-identity"
+    },
+    "md": {
+      "label": "MD",
+      "group": "file-types"
+    },
+    "mov": {
+      "label": "MOV",
+      "group": "file-types"
+    },
+    "mp3": {
+      "label": "MP3",
+      "group": "file-types"
+    },
+    "mp4": {
+      "label": "MP4",
+      "group": "file-types"
+    },
+    "note": {
+      "label": "Note",
+      "group": "actions"
+    },
+    "pdf": {
+      "label": "PDF",
+      "group": "file-types"
+    },
+    "phone": {
+      "label": "Phone",
+      "group": "actions"
+    },
+    "png": {
+      "label": "PNG",
+      "group": "file-types"
+    },
+    "ppt": {
+      "label": "PPT",
+      "group": "file-types"
+    },
+    "psd": {
+      "label": "PSD",
+      "group": "file-types"
+    },
+    "question": {
+      "label": "Question",
+      "group": "actions"
+    },
+    "record": {
+      "label": "Record",
+      "group": "actions"
+    },
+    "refresh": {
+      "label": "Refresh",
+      "group": "actions"
+    },
+    "remove": {
+      "label": "Remove",
+      "group": "actions"
+    },
+    "reply": {
+      "label": "Reply",
+      "group": "actions"
+    },
+    "forward": {
+      "label": "Forward",
+      "group": "actions"
+    },
+    "chat": {
+      "label": "Chat",
+      "group": "actions"
+    },
+    "search": {
+      "label": "Search",
+      "group": "actions"
+    },
+    "shield": {
+      "label": "Shield",
+      "group": "actions"
+    },
+    "sparkle": {
+      "label": "Sparkle",
+      "group": "actions"
+    },
+    "sql": {
+      "label": "SQL",
+      "group": "file-types"
+    },
+    "svg": {
+      "label": "SVG",
+      "group": "file-types"
+    },
+    "ts": {
+      "label": "TS",
+      "group": "file-types"
+    },
+    "txt": {
+      "label": "TXT",
+      "group": "file-types"
+    },
+    "upload": {
+      "label": "Upload",
+      "group": "actions"
+    },
+    "home": {
+      "label": "Home",
+      "group": "actions"
+    },
+    "user": {
+      "label": "User",
+      "group": "access-identity"
+    },
+    "warning": {
+      "label": "Warning",
+      "group": "status"
+    },
+    "wav": {
+      "label": "WAV",
+      "group": "file-types"
+    },
+    "xls": {
+      "label": "XLS",
+      "group": "file-types"
+    },
+    "xml": {
+      "label": "XML",
+      "group": "file-types"
+    },
+    "zip": {
+      "label": "ZIP",
+      "group": "file-types"
+    }
+  },
+  "animated": [
+    "alert-triangle",
+    "arrow-right",
+    "battery-charging",
+    "bell",
+    "bookmark",
+    "check",
+    "check-circle",
+    "chevron-circle-down",
+    "chevron-circle-left",
+    "chevron-circle-right",
+    "chevron-circle-up",
+    "chevron-down",
+    "chevron-large-down",
+    "chevron-large-left",
+    "chevron-large-right",
+    "chevron-large-up",
+    "chevron-left",
+    "chevron-outline-down",
+    "chevron-outline-left",
+    "chevron-outline-right",
+    "chevron-outline-up",
+    "chevron-right",
+    "chevron-selector-horizontal",
+    "chevron-selector-vertical",
+    "chevron-square-down",
+    "chevron-square-left",
+    "chevron-square-right",
+    "chevron-square-up",
+    "chevron-up",
+    "chevrons-circle-down",
+    "chevrons-collapse-horizontal",
+    "chevrons-collapse-vertical",
+    "chevrons-down",
+    "chevrons-left",
+    "chevrons-right",
+    "chevrons-square-down",
+    "chevrons-square-left",
+    "chevrons-up",
+    "clock",
+    "copy",
+    "download",
+    "eye",
+    "heart",
+    "hourglass",
+    "loader-rays",
+    "loader-spinner",
+    "loading-dots",
+    "lock",
+    "log-out",
+    "mail",
+    "menu",
+    "moon",
+    "plus",
+    "refresh",
+    "search",
+    "send",
+    "settings",
+    "sparkles",
+    "star",
+    "sun",
+    "thumb-up",
+    "trash",
+    "upload",
+    "volume-max",
+    "wifi",
+    "x",
+    "zap"
+  ],
+  "iconCount": 1589,
+  "examples": [
+    "home",
+    "search",
+    "settings",
+    "user",
+    "bell",
+    "calendar",
+    "mail",
+    "heart",
+    "star",
+    "camera",
+    "trash",
+    "edit",
+    "download",
+    "upload",
+    "share",
+    "lock",
+    "map",
+    "clock",
+    "image",
+    "folder",
+    "phone",
+    "globe",
+    "sparkles",
+    "link"
+  ],
+  "sampleChunks": {
+    "home": 8,
+    "search": 13,
+    "settings": 13,
+    "user": 15,
+    "bell": 1,
+    "calendar": 2,
+    "mail": 10,
+    "heart": 8,
+    "star": 14,
+    "camera": 3,
+    "trash": 15,
+    "edit": 6,
+    "download": 5,
+    "upload": 15,
+    "share": 13,
+    "lock": 9,
+    "map": 10,
+    "clock": 4,
+    "image": 8,
+    "folder": 7,
+    "phone": 12,
+    "globe": 7,
+    "sparkles": 14,
+    "link": 9,
+    "calendar-add": 2
+  },
+  "brandNameCollisions": [
+    "apple",
+    "layers",
+    "signal",
+    "x"
+  ],
+  "compositions": {
+    "count": 174,
+    "bases": 28,
+    "modifiers": 64
+  }
+}
