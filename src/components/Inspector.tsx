@@ -7,6 +7,7 @@ import { errorText, LocalizedError } from '../i18n/errors';
 import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
+import { isBlackBrandMark } from '../lib/brands';
 import {
   catalog, FREE_ICON_STYLE, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
@@ -225,6 +226,7 @@ export function Inspector({
               role="img"
               aria-label={t('inspector.preview', { name: icon.name, style: t(`style.${style}`), size: thumbSize })}
               data-artwork
+              data-black-brand={kind === 'brand' && style === 'regular' && isBlackBrandMark(icon.name) ? '' : undefined}
               className="glyph"
               style={{ width: thumbSize, height: thumbSize }}
               dangerouslySetInnerHTML={{ __html: preview.actual }}

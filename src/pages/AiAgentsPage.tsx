@@ -6,7 +6,6 @@ import { LocalLink, useI18n } from '../i18n';
 import { catalog, ICONS_ROUNDED } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
 import { LIBRARY_URL } from '../lib/links';
-export { AGENT_CLIENTS } from '../lib/agents';
 
 /**
  * /ai-agents: how to connect Claude Code, Codex, ChatGPT, Cursor, VS Code, and
@@ -79,7 +78,9 @@ export default function AiAgentsPage() {
   return (
     <div className={`${CONTAINER} pb-24 pt-8 sm:pt-10`}>
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: 'AI agents' }]} />
-      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl">Fos Icons for AI agents</h1>
+      <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+        Fos Icons for <span className="text-brand">AI agents</span>
+      </h1>
       <p className="mt-4 max-w-2xl text-base text-muted sm:text-lg">
         Connect your coding agent to all {count} icons. It searches the real library and writes the exact import for your
         framework, instead of guessing names that don’t exist or drawing SVG paths by hand. Free, read-only, and no sign-in.

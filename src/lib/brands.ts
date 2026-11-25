@@ -72,12 +72,19 @@ export const brandCatalogEntries: IconEntry[] = brands.approved.map((b) => ({
 }));
 
 const brandByCatalogName = new Map(brands.approved.map((b) => [catalogName(b.name), b]));
+const blackBrandMarks = new Set(['angellist', 'apple', 'github', 'layers', 'tumblr', 'x']);
 
 /** Whether a catalog name is a brand mark. */
 export const isBrand = (name: string) => brandByCatalogName.has(name);
 
 /** Whether a mark is drawn in its own colors (true) or as a one-color Solid mark. */
 export const isColorMark = (name: string, style: BrandStyle) => style === 'regular' || !brandByCatalogName.get(name)?.files.filled;
+
+/** Regular marks that need light ink on a dark preview surface. */
+export function isBlackBrandMark(name: string) {
+  const brand = brandByCatalogName.get(name);
+  return !!brand && blackBrandMarks.has(brand.name);
+}
 
 /**
  * The approved brand marks keyed by catalog name. Solid gives each brand's

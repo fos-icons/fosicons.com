@@ -499,6 +499,22 @@ describe('Icons page', () => {
     await waitFor(() => expect(spotify.querySelector('svg[data-brand]')).toBeTruthy());
   });
 
+  it('previews and copies the Facebook brand mark with its colors and clip path', async () => {
+    const user = userEvent.setup();
+    renderAt('/brands?q=facebook&icon=facebook');
+    const preview = await screen.findByRole('img', { name: 'facebook, Regular, preview at 32px' });
+    expect(preview.querySelector('path[fill="#1877F2"]')).toBeTruthy();
+    expect(preview.querySelector('path[fill="white"]')).toBeTruthy();
+    await user.selectOptions(screen.getByLabelText('Copy as'), 'svg');
+    await user.click(screen.getByRole('button', { name: 'Copy' }));
+    const copied = new DOMParser().parseFromString(await navigator.clipboard.readText(), 'image/svg+xml');
+    expect(copied.documentElement.tagName).toBe('svg');
+    expect(copied.documentElement.hasAttribute('data-brand')).toBe(false);
+    const clipId = copied.querySelector('clipPath')?.id;
+    expect(clipId).toBeTruthy();
+    expect(copied.querySelector('[clip-path]')?.getAttribute('clip-path')).toBe(`url(#${clipId})`);
+  });
+
   it('offers only Regular and Solid in the Brands category, and moves duo links to Solid', async () => {
     renderAt('/?category=Brands&style=duotone');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });

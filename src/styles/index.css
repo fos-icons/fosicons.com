@@ -153,12 +153,10 @@
     height: 100%;
     display: block;
   }
-  /* Brand marks keep their own colors; in the dark theme a light tile keeps
-     dark marks (Apple, GitHub, X) visible without recoloring them. */
-  .dark .glyph[data-artwork]:has(> svg[data-brand]) {
-    background: #f2f2f2;
-    border-radius: 22%;
-    box-shadow: 0 0 0 max(3px, 0.15em) #f2f2f2;
+  /* Black-only marks use light ink in dark previews, with a transparent background. */
+  .dark .glyph > svg[data-brand="black"],
+  .dark .glyph[data-black-brand] > svg {
+    filter: invert(1);
   }
   .icon-card-grid {
     --icon-card-glyph-size: min(var(--glyph-size, 32px), 40px);
@@ -397,6 +395,30 @@ dialog.sheet .sheet-close {
   }
   @keyframes feedback-backdrop-out {
     to { opacity: 0; }
+  }
+}
+
+/* Mask the toolbar's backdrop layer so its controls stay crisp. */
+.catalog-toolbar::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 -1rem;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--c-canvas);
+  background: color-mix(in oklab, var(--c-canvas) 85%, transparent);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  mask-image: linear-gradient(to bottom, black 45%, rgb(0 0 0 / 80%) calc(100% - 1.5rem), transparent);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .catalog-toolbar::before {
+    inset-block-end: 0;
+    background: var(--c-canvas);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    mask-image: none;
   }
 }
 

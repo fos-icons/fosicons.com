@@ -55,8 +55,6 @@ const en = {
   'header.browseNav': 'Browse',
   'header.feedback': 'Feedback',
   'header.mcp': 'MCP',
-  'header.mcpSetup': 'Set up your AI agent',
-  'header.mcpOverview': 'All agents',
   'feedback.type': 'Feedback type',
   'feedback.selectType': 'Choose a type',
   'feedback.type.new-icon': 'New icon request',
