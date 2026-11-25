@@ -18,6 +18,8 @@ export interface Look {
   custom: { primary: string; secondary: string } | null;
   /** Modifier (badge) color, or `null` for the default: the library's color in duo styles, the icon's color otherwise. */
   modifierColor: string | null;
+  /** Playback rate for animated icons (1 = as designed); it retimes their CSS, exports included. */
+  speed: number;
 }
 
 export const DEFAULT_LOOK: Look = {
@@ -27,6 +29,7 @@ export const DEFAULT_LOOK: Look = {
   paletteName: 'Ink',
   custom: null,
   modifierColor: null,
+  speed: 1,
 };
 
 /**
@@ -136,7 +139,8 @@ export const isCustomized = (look: Look) =>
   || look.mono !== null
   || look.custom !== null
   || look.modifierColor !== null
-  || look.paletteName !== DEFAULT_LOOK.paletteName;
+  || look.paletteName !== DEFAULT_LOOK.paletteName
+  || look.speed !== DEFAULT_LOOK.speed;
 
 /** CSS variables that restyle inline grid SVGs without rebuilding them. */
 export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'core' | 'brand' = 'core') {

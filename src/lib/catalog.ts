@@ -37,6 +37,8 @@ export const catalog = catalogData as {
   categories: { name: string; count: number }[];
   modifiers: Record<string, { label: string; group: string }>;
   icons: IconEntry[];
+  /** Icons with a curated animated version (public/icons/animated.json). */
+  animated?: string[];
 };
 
 // Chunk membership and SVG content belong to the same snapshot as the catalog.
@@ -48,7 +50,11 @@ export const lock = sourceLock as {
   revision: string | null;
   dirty: boolean | null;
   manifestSha256: string;
+  /** Digests of files that can change without the manifest, such as animated.json. */
+  snapshotSha256?: Record<string, string>;
 };
+
+export const animatedNames: ReadonlySet<string> = new Set(catalog.animated ?? []);
 
 /** Display labels. The library's `filled` style is presented as "Solid". */
 export const STYLE_META: Record<StyleId, { label: string; slug: string; description: string }> = {
@@ -184,7 +190,24 @@ export function loadIconChunk(style: StyleId, chunk: number, size: number = cata
   return chunkCache[key];
 }
 
+let animatedCache: Promise<Record<string, string>> | null = null;
+
+/**
+ * The animated icons, in one small file. They can change without the
+ * manifest changing, and artwork is cached as immutable, so the URL carries
+ * their own digest.
+ */
+export function loadAnimated(): Promise<Record<string, string>> {
+  const version = lock.snapshotSha256?.animated?.slice(0, 12) ?? 'none';
+  animatedCache ??= fetchArtwork(`animated.json?v=${version}`, 'regular').catch((error: unknown) => {
+    animatedCache = null;
+    throw error;
+  });
+  return animatedCache;
+}
+
 export function resetStyleCache() {
+  animatedCache = null;
   cache = {};
   chunkCache = {};
 }

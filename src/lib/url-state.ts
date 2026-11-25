@@ -1,8 +1,10 @@
 import { STYLE_META, styleFromSlug, type StyleId } from './catalog';
 import { CORNERS, type Corner } from './modifiers';
 
-/** The style switcher's options: the four core styles, then Brands. */
-export type View = StyleId | 'brands';
+/** The style switcher's options: the four core styles, Animated, then Brands. */
+export type View = StyleId | 'animated' | 'brands';
+/** Animated is a view of Regular artwork: the curated icons that move. */
+export const ANIMATED_SLUG = 'animated';
 /** Brands offer Regular and Solid only — never the duo styles. */
 export type BrandStyle = 'regular' | 'filled';
 export const BRAND_STYLES: BrandStyle[] = ['regular', 'filled'];
@@ -26,6 +28,8 @@ export interface CollectionConfig {
 
 export interface UrlStateConfig {
   styles: readonly StyleId[];
+  /** Whether the Animated view exists (the library has animated icons). */
+  animated?: boolean;
   core: CollectionConfig;
   brands: CollectionConfig;
 }
@@ -36,7 +40,9 @@ export function parseState(search: string, config: UrlStateConfig, route: Partia
   const slug = params.get('style');
   // Brands used to be a style tab; old links now open the Brands category.
   const legacyBrands = slug === 'brands';
-  const style: View = legacyBrands ? config.styles[0] : styleFromSlug(slug, config.styles) ?? config.styles[0];
+  const style: View = legacyBrands ? config.styles[0]
+    : slug === ANIMATED_SLUG && config.animated ? 'animated'
+      : styleFromSlug(slug, config.styles) ?? config.styles[0];
   const collection = config.core;
   const category = route.category !== undefined ? route.category : legacyBrands ? params.get('category') ?? 'Brands' : params.get('category');
   const icon = route.icon !== undefined ? route.icon : params.get('icon');
@@ -64,6 +70,8 @@ export function serializeState(state: CatalogState, config: Pick<UrlStateConfig,
   if (state.style === 'brands') {
     params.set('style', 'brands');
     if (state.brandStyle !== 'regular') params.set('variant', STYLE_META[state.brandStyle].slug);
+  } else if (state.style === 'animated') {
+    params.set('style', ANIMATED_SLUG);
   } else if (state.style !== config.styles[0]) {
     params.set('style', STYLE_META[state.style].slug);
   }

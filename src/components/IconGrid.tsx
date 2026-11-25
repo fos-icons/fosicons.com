@@ -10,6 +10,8 @@ export interface GridItem {
 
 interface Props {
   items: GridItem[];
+  /** Animated view: cells that play without hover, so the tab shows it moves. */
+  playing?: ReadonlySet<string>;
   svgs: Record<string, string> | null;
   /** Every selected icon (one for the inspector, several for a set). */
   selected: ReadonlySet<string>;
@@ -40,7 +42,7 @@ const GROW_MARGIN = '1200px 0px';
 const NEED_MARGIN = '900px 0px';
 
 const Cell = memo(function Cell({
-  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel,
+  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false,
 }: {
   name: string;
   svg: string | undefined;
@@ -50,9 +52,10 @@ const Cell = memo(function Cell({
   onFocusIndex: (index: number) => void;
   index: number;
   premiumLabel?: string;
+  playing?: boolean;
 }) {
   return (
-    <li className="icon-cell" data-name={name} style={{ '--i': Math.min(index, 40) } as CSSProperties}>
+    <li className="icon-cell" data-name={name} data-playing={playing || undefined} style={{ '--i': Math.min(index, 40) } as CSSProperties}>
       <button
         type="button"
         data-icon={name}
@@ -99,7 +102,7 @@ const Cell = memo(function Cell({
  * Dense, keyboard-navigable icon grid. The grid is one tab stop; arrow keys,
  * Home/End, and PageUp/PageDown move between icons; Enter/Space opens one.
  */
-export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle }: Props) {
+export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle, playing }: Props) {
   const items = allItems;
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -249,6 +252,7 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, pre
             index={index}
             svg={svgs?.[item.name]}
             selected={selected.has(item.name)}
+            playing={playing?.has(item.name)}
             tabbable={index === activeIndex}
             onSelect={onSelect}
             onFocusIndex={onFocusIndex}

@@ -7,6 +7,7 @@ import { artworkSize, exportColors, strokeAdjustable, strokeOf, type Look } from
 import { opticalStroke } from '../lib/catalog';
 import { buildSvg } from '../lib/svg';
 import { useTheme } from '../lib/theme';
+import { svgToGif } from '../lib/gif';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { usePlan } from '../lib/plan';
 import { RailActions } from './QuickTools';
@@ -15,11 +16,11 @@ import { CustomizeControls, Section } from './Customize';
 import { Button, IconButton, Segmented, Select, UiIcon, useToast } from './ui';
 
 const PNG_SCALES = [1, 2, 4] as const;
-type Format = 'svg' | 'png';
+type Format = 'svg' | 'png' | 'gif';
 
 /** The pane when several icons are selected: one look, applied to all of them. */
 export function SelectionPanel({
-  names, style, kind, svgs, look: chosenLook, onLookChange, onRemove, onClear, headingId,
+  names, style, kind, svgs, look: chosenLook, onLookChange, onRemove, onClear, headingId, premiumView = false,
 }: {
   names: string[];
   style: StyleId;
@@ -31,6 +32,8 @@ export function SelectionPanel({
   onRemove: (name: string) => void;
   onClear: () => void;
   headingId: string;
+  /** Animated icons: Regular artwork whose downloads need the `animated` feature (Advanced). */
+  premiumView?: boolean;
 }) {
   const toast = useToast();
   const i18n = useI18n();
@@ -40,14 +43,17 @@ export function SelectionPanel({
   /** Modifier colors are an Advanced feature: without it, files keep the library's. */
   const modifiersUnlocked = can('modifiers');
   const look = useMemo(() => (modifiersUnlocked ? chosenLook : { ...chosenLook, modifierColor: null }), [chosenLook, modifiersUnlocked]);
-  const [format, setFormat] = useState<Format>('svg');
+  const [chosenFormat, setFormat] = useState<Format>('svg');
+  /** Animated icons export as live SVG or baked GIF; still icons as SVG or PNG. */
+  const raster: Format = premiumView ? 'gif' : 'png';
+  const format: Format = chosenFormat === 'svg' ? 'svg' : raster;
   const [scale, setScale] = useState<(typeof PNG_SCALES)[number]>(2);
   const [busy, setBusy] = useState(false);
   const strokeWidth = strokeAdjustable(style, kind) ? strokeOf(look) : undefined;
   const sourceStroke = opticalStroke(artworkSize(look));
-  const slug = STYLE_META[style].slug;
+  const slug = premiumView ? 'animated' : STYLE_META[style].slug;
   const ready = !!svgs && names.every((n) => svgs[n]);
-  const premium = style !== FREE_ICON_STYLE && !can('styles');
+  const premium = premiumView ? !can('animated') : style !== FREE_ICON_STYLE && !can('styles');
   /** A selection downloads as one ZIP: a bulk export. */
   const zipLocked = !can('zip');
   const downloadDisabled = premium || zipLocked || !ready || busy;
@@ -72,15 +78,15 @@ export function SelectionPanel({
     if (downloadDisabled) return;
     setBusy(true);
     try {
-      const px = format === 'png' ? look.size * scale : look.size;
+      const px = format === 'svg' ? look.size : look.size * scale;
       const entries: ZipEntry[] = [];
       for (const name of names) {
         const svg = build(name, px);
         if (format === 'svg') {
           entries.push({ name: `${name}-${slug}.svg`, data: svg });
         } else {
-          const png = await svgToPng(svg, px);
-          entries.push({ name: `${name}-${slug}-${px}px.png`, data: new Uint8Array(await png.arrayBuffer()) });
+          const image = format === 'gif' ? await svgToGif(svg, px) : await svgToPng(svg, px);
+          entries.push({ name: `${name}-${slug}-${px}px.${format}`, data: new Uint8Array(await image.arrayBuffer()) });
         }
       }
       const zipName = `fos-icons-${kind === 'brand' ? 'brands-' : ''}${slug}-${names.length}-${format}.zip`;
@@ -135,7 +141,7 @@ export function SelectionPanel({
         </ul>
       </div>
 
-      <CustomizeControls look={chosenLook} onChange={onLookChange} style={style} kind={kind} />
+      <CustomizeControls look={chosenLook} onChange={onLookChange} style={style} kind={kind} animated={premiumView} />
 
       <Section title={t('export.title')}>
         <div className="space-y-3">
@@ -145,9 +151,9 @@ export function SelectionPanel({
               size="sm"
               value={format}
               onChange={setFormat}
-              options={[{ value: 'svg', label: 'SVG' }, { value: 'png', label: 'PNG' }]}
+              options={[{ value: 'svg', label: 'SVG' }, { value: raster, label: raster.toUpperCase() }]}
             />
-            {format === 'png' && (
+            {format !== 'svg' && (
               <>
                 <label className="sr-only" htmlFor="zip-scale">{t('selection.pngScale')}</label>
                 <Select
@@ -176,10 +182,10 @@ export function SelectionPanel({
             {t('selection.copyNames')}
           </Button>
           {zipLocked ? <UpgradePrompt feature="zip" />
-            : premium ? <UpgradePrompt feature="styles" fallback={t('download.premiumSoon')} className="text-xs leading-relaxed text-faint" />
+            : premium ? <UpgradePrompt feature={premiumView ? 'animated' : 'styles'} fallback={t('download.premiumSoon')} className="text-xs leading-relaxed text-faint" />
               : (
                 <p className="text-xs leading-relaxed text-faint">
-                  {format === 'png' ? t('selection.notePng') : t('selection.noteSvg')}
+                  {format === 'png' ? t('selection.notePng') : format === 'gif' ? t('export.gifNote') : t('selection.noteSvg')}
                 </p>
               )}
         </div>

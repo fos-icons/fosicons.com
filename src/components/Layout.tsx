@@ -3,7 +3,7 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
-import { catalog } from '../lib/catalog';
+import { animatedNames, catalog } from '../lib/catalog';
 import { isCatalogEditor } from '../lib/catalog-location';
 import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
@@ -117,6 +117,9 @@ export function Layout() {
                     {catalog.styles.map((style) => (
                       <li key={style}><LocalLink to={STYLE_PATHS[style]} className={footerLink}>{t('footer.styleIcons', { style: t(`style.${style}`) })}</LocalLink></li>
                     ))}
+                    {animatedNames.size > 0 && (
+                      <li><LocalLink to="/?style=animated" className={footerLink}>{t('footer.styleIcons', { style: t('style.animated') })}</LocalLink></li>
+                    )}
                   </ul>
                 </nav>
                 <nav aria-label={t('footer.categories')}>

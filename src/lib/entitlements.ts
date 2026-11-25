@@ -12,12 +12,14 @@ export const PLAN_LEVEL: Record<Plan, number> = { free: 0, pro: 1, advanced: 2 }
  * - duoColors: separate primary and accent colors for the duo styles
  * - zip: bulk SVG and PNG ZIPs (all icons, a category, or a selection)
  * - modifiers: the modifier picker, placement, badge color, and exports with modifiers
+ * - animated: copy and download animated icons (hover previews stay free)
  */
 export const FEATURE_PLAN = {
   styles: 'pro',
   duoColors: 'pro',
   zip: 'pro',
   modifiers: 'advanced',
+  animated: 'advanced',
 } as const satisfies Record<string, PaidPlan>;
 
 export type Feature = keyof typeof FEATURE_PLAN;

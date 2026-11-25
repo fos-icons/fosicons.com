@@ -5,6 +5,7 @@ import {
   CATEGORIES, FRAMEWORKS, SITE, STYLES, UnknownIconError, checkIconNames, frameworkSetup, iconCode, libraryStats, listIcons,
   searchIcons,
 } from './icons.js';
+import { AnimationSpecError, MOTION_TYPES, animateIcon, getAnimatedIcon, listAnimatedIcons } from './animated.js';
 
 export const SERVER_NAME = 'fos-icons';
 export const SERVER_VERSION = '0.1.0';
@@ -18,7 +19,8 @@ Rules:
 - Never hand-draw or rewrite icon SVG paths. Use the package component, or the SVG that get_icon_code returns.
 - Get imports and usage from get_icon_code, and package setup from get_framework_setup. Only @fos-icons/react and @fos-icons/vue are on npm; the other packages install from a local build.
 - Default to the regular style. Keep one style across a UI unless the user asks otherwise. The website calls the filled style "Solid"; code always uses the Filled suffix.
-- If a project already uses another icon library, keep using it unless the user asks to switch.`;
+- If a project already uses another icon library, keep using it unless the user asks to switch.
+- For an animated icon, use get_animated_icon when list_animated_icons has it; otherwise animate_icon. Never write the animation CSS yourself.`;
 
 const READ_ONLY = { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false } as const;
 
@@ -83,6 +85,24 @@ const SETUP_OUTPUT = {
   example: z.string(),
   accessibility: z.string(),
   docs: z.string(),
+};
+
+const motion = z.object({
+  type: z.enum(MOTION_TYPES as [string, ...string[]]),
+  parts: z.array(z.number().int().min(0).max(63)).min(1).max(64).describe('Part indexes; call with motions: [] to see them'),
+  dur: z.number().positive().max(60).optional().describe('Seconds per loop'),
+  delay: z.number().min(0).max(60).optional(),
+  ease: z.string().max(80).optional().describe('linear, ease-in-out, cubic-bezier(...) or steps(n)'),
+  origin: z.tuple([z.number(), z.number()]).optional().describe('[x, y] on the 24px grid'),
+}).passthrough().describe('One motion; type-specific options (deg, hold, x, y, frames, base, span, stagger, ...) are listed in the fos-icons-animate skill');
+const ANIMATED_SVG_OUTPUT = { name: z.string(), svg: z.string(), notes: z.array(z.string()) };
+const ANIMATE_OUTPUT = {
+  ...ANIMATED_SVG_OUTPUT,
+  parts: z.array(z.object({ index: z.number().int(), box: z.array(z.number()).describe('Approximate [x1, y1, x2, y2] on the 24px grid') })),
+};
+const ANIMATED_LIST_OUTPUT = {
+  icons: z.array(z.object({ name: z.string(), url: z.string() })),
+  motions: z.array(z.string()),
 };
 
 function result(data: object, text?: string): CallToolResult {
@@ -185,6 +205,58 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
   }, ({ category, offset, limit }) => {
     log({ tool: 'list_icons', category: category ?? null });
     return result({ ...listIcons({ category, offset, limit }) });
+  });
+
+  server.registerTool('list_animated_icons', {
+    title: 'List animated icons',
+    description: 'The curated animated icons (check, heart, wifi, bell, refresh, loaders, download, upload, and more), plus the motion types animate_icon accepts.',
+    inputSchema: {},
+    outputSchema: ANIMATED_LIST_OUTPUT,
+    annotations: { title: 'List animated icons', ...READ_ONLY },
+  }, () => {
+    log({ tool: 'list_animated_icons' });
+    return result(listAnimatedIcons());
+  });
+
+  server.registerTool('get_animated_icon', {
+    title: 'Get animated icon',
+    description: 'The SVG of a curated animated icon: Regular artwork with a scoped CSS animation inside. It inherits currentColor and rests as the normal icon under reduced motion.',
+    inputSchema: { name: z.string().trim().min(1).max(100).describe('Name from list_animated_icons') },
+    outputSchema: ANIMATED_SVG_OUTPUT,
+    annotations: { title: 'Get animated icon', ...READ_ONLY },
+  }, ({ name }) => {
+    try {
+      const icon = getAnimatedIcon(name);
+      log({ tool: 'get_animated_icon', found: !!icon });
+      return icon ? result(icon) : failure(`"${name}" has no curated animation. Use animate_icon to animate it.`);
+    } catch (error) {
+      if (error instanceof UnknownIconError) return failure(error.message);
+      throw error;
+    }
+  });
+
+  server.registerTool('animate_icon', {
+    title: 'Animate icon',
+    description: 'Animate any Regular icon with motions (draw, reveal, spin, pulse, swing, nudge, travel, fade, twinkle, blink, flicker, keyframes). Call with motions: [] first to get its numbered parts and their boxes, then choose parts and origins. Returns a self-contained SVG with scoped CSS.',
+    inputSchema: {
+      name: z.string().trim().min(1).max(100).describe('Icon name from search_icons'),
+      split: z.boolean().optional().describe('Treat each subpath as its own part'),
+      cuts: z.record(z.string().regex(/^\d+$/), z.number().int().min(1).max(200)).optional().describe('{ part: commandIndex }: split a stroke in two, such as clock hands'),
+      source: z.string().trim().max(100).optional().describe('Animate another icon\'s artwork under this name'),
+      add: z.array(z.object({ icon: z.string().trim().max(100), parts: z.array(z.number().int().min(0).max(63)).max(16), split: z.boolean().optional() })).max(4).optional(),
+      motions: z.array(motion).max(8),
+    },
+    outputSchema: ANIMATE_OUTPUT,
+    annotations: { title: 'Animate icon', ...READ_ONLY },
+  }, ({ name, ...spec }) => {
+    try {
+      const animated = animateIcon(name, spec as Parameters<typeof animateIcon>[1]);
+      log({ tool: 'animate_icon', motions: spec.motions.map((m) => m.type) });
+      return result(animated);
+    } catch (error) {
+      if (error instanceof UnknownIconError || error instanceof AnimationSpecError) return failure(error.message);
+      throw error;
+    }
   });
 
   server.registerTool('get_framework_setup', {

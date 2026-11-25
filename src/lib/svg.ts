@@ -166,6 +166,17 @@ export function scopeSvg(source: string, idPrefix: string): string {
 }
 
 /**
+ * Play an animated icon at `speed` (2 = twice as fast): every time in its
+ * <style> (durations and delays) is divided by the speed. Icons without a
+ * <style> come back unchanged.
+ */
+export function retimeAnimatedSvg(source: string, speed: number): string {
+  if (speed === 1 || !(speed > 0)) return source;
+  return source.replace(/<style>([\s\S]*?)<\/style>/, (_, css: string) =>
+    `<style>${css.replace(/(?<![\w.-])(\d*\.?\d+)s(?![\w-])/g, (__, n: string) => `${Math.round((Number(n) / speed) * 1000) / 1000}s`)}</style>`);
+}
+
+/**
  * Grid-only variant: lets a `--stroke-scale` CSS variable on an ancestor
  * reweight every stroke live, without re-rendering each SVG. Exports never
  * use this; they go through `buildSvg`.

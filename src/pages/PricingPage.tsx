@@ -24,6 +24,7 @@ const planLevel: Record<PlanId, number> = { free: 0, pro: 1, advanced: 2 };
 const featureGroups = [
   { id: 'library', minimum: 'free', features: ['regular', 'find', 'categories'] },
   { id: 'library', minimum: 'pro', features: ['solid', 'duocolor', 'duotone'] },
+  { id: 'library', minimum: 'advanced', features: ['animated'] },
   { id: 'customize', minimum: 'free', features: ['sizeColor', 'stroke'] },
   { id: 'customize', minimum: 'pro', features: ['duoColors'] },
   { id: 'export', minimum: 'free', features: ['svg', 'png', 'pngScales', 'clipboard'] },
