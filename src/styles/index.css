@@ -161,7 +161,8 @@
   .grid-animated .icon-cell:not(:hover):not(:has(:focus-visible)):not([data-playing]) .glyph * {
     animation: none !important;
   }
-  .animated-preview[data-paused] svg * {
+  .animated-preview[data-paused] svg *,
+  .animated-preview [data-offscreen] svg * {
     animation-play-state: paused !important;
   }
   /* Black-only marks use light ink in dark previews, with a transparent background. */

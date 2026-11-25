@@ -173,6 +173,7 @@ const ACTUAL_SIZES = [
   { px: 20, className: 'size-5' },
   { px: 24, className: 'size-6' },
   { px: 32, className: 'size-8' },
+  { px: 48, className: 'size-12' },
 ] as const;
 /** The large preview's edge on wide screens (size-36); it draws from this size's optical artwork. */
 const STAGE_PIXELS = 144;
@@ -187,12 +188,41 @@ const PAGE_SIZES = [...new Set([catalog.grid, ...[...ACTUAL_SIZES.map((s) => s.p
 
 type PreviewStyle = StyleId | typeof ANIMATED_SLUG;
 
-function AnimatedPreview({ name, still, label }: { name: string; still?: string; label: string }) {
+function ActualSizePreviews({ svgAt, listRef, offscreen }: {
+  svgAt: (px: number) => string | undefined;
+  listRef?: React.Ref<HTMLUListElement>;
+  offscreen?: boolean;
+}) {
+  const { t } = useI18n();
+  return (
+    <div className="flex flex-col gap-2 border-t border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+      <span className="text-xs text-muted">{t('iconPage.actualSize')}</span>
+      <ul ref={listRef} aria-label={t('iconPage.actualSize')} data-offscreen={offscreen || undefined}
+        className="flex items-end gap-3 self-end sm:self-auto sm:gap-4 xl:gap-7">
+        {ACTUAL_SIZES.map(({ px, className }) => (
+          <li key={px} className="flex flex-col items-center gap-1.5">
+            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} />
+            <span className="text-[11px] tabular-nums text-faint">{px}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function AnimatedPreview({ name, svgAt, label }: {
+  name: string;
+  svgAt: (px: number) => string | undefined;
+  label: string;
+}) {
   const i18n = useI18n();
   const { t } = i18n;
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const stage = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
+  const samples = useRef<HTMLUListElement>(null);
+  const [stageVisible, setStageVisible] = useState(false);
+  const [samplesVisible, setSamplesVisible] = useState(false);
+  const [hidden, setHidden] = useState(false);
   const [paused, setPaused] = useState(false);
   const [svg, setSvg] = useState<string>();
   const [error, setError] = useState<unknown>(null);
@@ -209,29 +239,49 @@ function AnimatedPreview({ name, still, label }: { name: string; still?: string;
   }, [name, attempt]);
 
   useEffect(() => {
-    const node = stage.current;
-    if (!node || typeof IntersectionObserver === 'undefined') { setVisible(true); return; }
-    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
-    observer.observe(node);
+    if (typeof IntersectionObserver === 'undefined') {
+      setStageVisible(true);
+      setSamplesVisible(true);
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+      for (const { target, isIntersecting } of entries) {
+        if (target === stage.current) setStageVisible(isIntersecting);
+        if (target === samples.current) setSamplesVisible(isIntersecting);
+      }
+    });
+    if (stage.current) observer.observe(stage.current);
+    if (samples.current) observer.observe(samples.current);
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    const update = () => setHidden(document.hidden);
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+
+  // The main SVG's icon-scoped style also drives the smaller copies.
+  const sampleSvg = svg?.replace(/<style>[\s\S]*?<\/style>/, '');
   return (
-    <div ref={stage} className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-      <div className="animated-preview" data-paused={paused || !visible || undefined}>
-        <Glyph svg={svg ?? still} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+    <div className="animated-preview flex flex-1 flex-col" data-paused={paused || hidden || undefined}>
+      <div ref={stage} data-offscreen={!stageVisible || undefined}
+        className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
+        <Glyph svg={svg ?? svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+        {svg && !reducedMotion && (
+          <Button size="sm" variant="quiet" className="absolute bottom-2 end-2" onClick={() => setPaused(!paused)}>
+            {t(paused ? 'iconPage.playAnimation' : 'iconPage.pauseAnimation')}
+          </Button>
+        )}
+        {error !== null && (
+          <div className="absolute inset-x-3 bottom-2 flex items-center justify-center gap-2 text-sm text-muted">
+            <span role="alert">{errorText(error, i18n, 'iconPage.animationUnavailable')}</span>
+            <Button size="sm" variant="quiet" onClick={() => { setError(null); retry(attempt + 1); }}>{t('icons.tryAgain')}</Button>
+          </div>
+        )}
       </div>
-      {svg && !reducedMotion && (
-        <Button size="sm" variant="quiet" className="absolute bottom-2 end-2" onClick={() => setPaused(!paused)}>
-          {t(paused ? 'iconPage.playAnimation' : 'iconPage.pauseAnimation')}
-        </Button>
-      )}
-      {error !== null && (
-        <div className="absolute inset-x-3 bottom-2 flex items-center justify-center gap-2 text-sm text-muted">
-          <span role="alert">{errorText(error, i18n, 'iconPage.animationUnavailable')}</span>
-          <Button size="sm" variant="quiet" onClick={() => { setError(null); retry(attempt + 1); }}>{t('icons.tryAgain')}</Button>
-        </div>
-      )}
+      <ActualSizePreviews svgAt={(px) => sampleSvg ?? svgAt(px)} listRef={samples} offscreen={!samplesVisible} />
     </div>
   );
 }
@@ -266,22 +316,14 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
           />
         </div>
       </div>
-      {animated ? <AnimatedPreview key={name} name={name} still={svgAt(STAGE_PIXELS)} label={label} /> : (
-        <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-          <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
-        </div>
+      {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} /> : (
+        <>
+          <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
+            <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+          </div>
+          <ActualSizePreviews svgAt={svgAt} />
+        </>
       )}
-      <div className="flex items-center justify-between gap-4 border-t border-line px-4 py-3">
-        <span className="text-xs text-muted">{t(animated ? 'iconPage.regularActualSize' : 'iconPage.actualSize')}</span>
-        <ul className="flex items-end gap-5 sm:gap-7">
-          {ACTUAL_SIZES.map(({ px, className }) => (
-            <li key={px} className="flex flex-col items-center gap-1.5">
-              <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} />
-              <span className="text-[11px] tabular-nums text-faint">{px}</span>
-            </li>
-          ))}
-        </ul>
-      </div>
     </section>
   );
 }
@@ -459,7 +501,7 @@ export default function IconPage() {
         <div>
           <h1 className="text-balance font-display text-4xl font-semibold tracking-tight sm:text-5xl">{t('iconPage.heading', { name: title })}</h1>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
-            {t('iconPage.intro', { name: title.toLowerCase() })}
+            {t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
           </p>
           <KeywordTags icon={icon} className="mt-4" />
         </div>
