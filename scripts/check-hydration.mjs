@@ -8,27 +8,18 @@
 // returning visitors on a desktop with saved settings.
 //
 // Usage: pnpm run build && pnpm run check:hydration
-// Needs Playwright with Chromium (`playwright` installed where Node can find it).
+// Needs Playwright's Chromium: `pnpm exec playwright install chromium` once.
 /* global window, document, localStorage -- used only inside callbacks that run in the page */
 import { createServer } from 'node:http';
-import { createRequire } from 'node:module';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
 if (!existsSync(join(dist, 'index.html'))) {
   console.error('No build in dist/. Run `pnpm run build` first.');
-  process.exit(1);
-}
-
-const require = createRequire(import.meta.url);
-let chromium;
-try {
-  ({ chromium } = require('playwright'));
-} catch {
-  console.error('Playwright is not installed. Install it (with Chromium) to run this check.');
   process.exit(1);
 }
 

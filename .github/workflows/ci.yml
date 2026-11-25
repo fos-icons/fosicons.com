@@ -32,3 +32,9 @@ jobs:
         working-directory: fosicons.com
       - run: pnpm run check
         working-directory: fosicons.com
+      # Loads the built pages in Chromium and fails if any of them doesn't
+      # hydrate cleanly (scripts/check-hydration.mjs).
+      - run: pnpm exec playwright install --with-deps chromium
+        working-directory: fosicons.com
+      - run: pnpm run check:hydration
+        working-directory: fosicons.com

@@ -37,6 +37,7 @@ pnpm run dev          # http://localhost:5173
 | `pnpm test` | Vitest: search, URL state, export fidelity, sync integrity, page behavior |
 | `pnpm run build` | Type check, production build to `dist/`, route entry points |
 | `pnpm run check` | All of the above, in order |
+| `pnpm run check:hydration` | After a build: load the pages in Chromium and fail if any doesn't hydrate cleanly (run `pnpm exec playwright install chromium` once) |
 
 `sync:check` and `pnpm run check` look for the library at `../fos-icons`
 by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
