@@ -1,4 +1,3 @@
-import { applyPalette, GIFEncoder, quantize } from 'gifenc';
 import { LocalizedError } from '../i18n/errors';
 import { svgBlob } from './export';
 
@@ -53,6 +52,9 @@ async function rasterize(svg: string, px: number, context: CanvasRenderingContex
  * frozen into a static copy that is rasterized and encoded.
  */
 export async function svgToGif(svg: string, px: number, background: GifBackground = 'transparent'): Promise<Blob> {
+  // gifenc is CommonJS: take its default export, and load it only when a GIF is made.
+  const gifenc = await import('gifenc');
+  const { applyPalette, GIFEncoder, quantize } = gifenc.default ?? gifenc;
   const host = document.createElement('div');
   host.setAttribute('aria-hidden', 'true');
   host.style.cssText = 'position:fixed;left:-10000px;top:0;pointer-events:none';
