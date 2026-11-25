@@ -42,10 +42,10 @@ export function planAllows(plan: Plan, feature: Feature) {
 }
 
 /**
- * Before paid plans can be bought, only the paid styles are locked, as they
- * were before billing existed. Bulk ZIPs, duo colors, and modifiers stay free
- * until enforcement is on.
+ * Before paid plans can be bought, the paid styles and animated icons are
+ * locked (premium, with the crown). Bulk ZIPs, duo colors, and modifiers stay
+ * free until enforcement is on.
  */
 export function legacyAllows(feature: Feature) {
-  return feature !== 'styles';
+  return feature !== 'styles' && feature !== 'animated';
 }

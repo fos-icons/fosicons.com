@@ -90,7 +90,7 @@ describe('entitlements', () => {
   });
 
   it('keeps today’s free features where billing is off: only the paid styles are locked', () => {
-    expect((['styles', 'duoColors', 'zip', 'modifiers'] as const).map(legacyAllows)).toEqual([false, true, true, true]);
+    expect((['styles', 'duoColors', 'zip', 'modifiers', 'animated'] as const).map(legacyAllows)).toEqual([false, true, true, true, false]);
   });
 });
 

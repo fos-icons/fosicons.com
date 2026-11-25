@@ -549,7 +549,7 @@ export function AnimatedDownloadSection({ look, svgs }: { look: Look; svgs: Reco
         </Button>
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">{t('download.animatedNote', { count: n(names.length) })}</p>
-      {!unlocked && <UpgradePrompt feature="animated" className="mt-1.5 text-xs leading-relaxed text-muted" />}
+      {!unlocked && <UpgradePrompt feature="animated" fallback={t('download.premiumSoon')} className="mt-1.5 text-xs leading-relaxed text-muted" />}
     </section>
   );
 }
