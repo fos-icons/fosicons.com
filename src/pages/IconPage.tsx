@@ -135,6 +135,7 @@ function HeaderIconSearch({
           <input
             ref={ref}
             type="search"
+            name="q"
             aria-label={t('icons.searchIcons')}
             placeholder={modifier ? '' : t('iconPage.searchOther')}
             value={query}

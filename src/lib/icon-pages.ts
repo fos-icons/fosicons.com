@@ -1,5 +1,5 @@
 import { orderBrowseIcons } from './browse-order';
-import { catalog, iconsByName, type IconEntry } from './catalog';
+import { catalog, iconsByName, type IconEntry, type StyleId } from './catalog';
 
 /**
  * Crawlable landing pages: one per icon (/icons/<name>), one per category
@@ -65,6 +65,14 @@ export const FRAMEWORK_PATHS: Record<FrameworkId, string> = {
   react: '/react-icons',
   vue: '/vue-icons',
   figma: '/figma-icons',
+};
+
+/** One landing page per style ("solid icons" and so on); `?style=` stays the catalog filter. */
+export const STYLE_PATHS: Record<StyleId, string> = {
+  regular: '/regular-icons',
+  filled: '/solid-icons',
+  duocolor: '/duocolor-icons',
+  duotone: '/duotone-icons',
 };
 
 /** Well-known icons to show on the framework pages, where the library has them. */

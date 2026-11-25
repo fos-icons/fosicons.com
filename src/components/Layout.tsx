@@ -5,7 +5,7 @@ import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
 import { catalog } from '../lib/catalog';
 import { isCatalogEditor } from '../lib/catalog-location';
-import { categoryPath, FRAMEWORK_PATHS } from '../lib/icon-pages';
+import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { LIBRARY_URL, NPM_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
@@ -94,6 +94,9 @@ export function Layout() {
                     <li><LocalLink to="/docs#flutter" className={footerLink}>{t('footer.flutterIcons')}</LocalLink></li>
                     <li><LocalLink to={FRAMEWORK_PATHS.figma} className={footerLink}>{t('footer.figmaIcons')}</LocalLink></li>
                     <li><LocalLink to="/ai-agents" className={footerLink}>{t('footer.aiAgents')}</LocalLink></li>
+                    {catalog.styles.map((style) => (
+                      <li key={style}><LocalLink to={STYLE_PATHS[style]} className={footerLink}>{t('footer.styleIcons', { style: t(`style.${style}`) })}</LocalLink></li>
+                    ))}
                   </ul>
                 </nav>
                 <nav aria-label={t('footer.categories')}>

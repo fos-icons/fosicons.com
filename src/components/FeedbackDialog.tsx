@@ -144,7 +144,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
           <div className="space-y-5 px-5 py-5 sm:px-6">
             <label className="block text-sm font-semibold">
               {t('feedback.type')} <span aria-hidden="true" className="text-danger">*</span>
-              <Select className="mt-1.5" required disabled={busy} value={type} onChange={(event) => updateDraft({ ...draft, type: event.target.value })}>
+              <Select name="type" className="mt-1.5" required disabled={busy} value={type} onChange={(event) => updateDraft({ ...draft, type: event.target.value })}>
                 <option value="" disabled>{t('feedback.selectType')}</option>
                 {Object.keys(FEEDBACK_TYPES).map((value) => (
                   <option key={value} value={value}>{t(`feedback.type.${value as keyof typeof FEEDBACK_TYPES}`)}</option>
@@ -154,6 +154,7 @@ export default function FeedbackDialog({ onClose }: { onClose: () => void }) {
             <label className="block text-sm font-semibold">
               {t('feedback.description')} <span aria-hidden="true" className="text-danger">*</span>
               <textarea
+                name="description"
                 required
                 rows={5}
                 maxLength={FEEDBACK_MAX_LENGTH}

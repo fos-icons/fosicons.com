@@ -4,6 +4,8 @@ import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
 import { DEFAULT_LOCALE, I18nProvider, localizePath, useI18n, type Translation } from './i18n';
 import { docsPageFor } from './i18n/content';
+import { catalog } from './lib/catalog';
+import { STYLE_PATHS } from './lib/icon-pages';
 import { PlanProvider } from './lib/plan';
 import { ThemeProvider } from './lib/theme';
 import { isCatalogEditor, legacyCatalogDestination } from './lib/catalog-location';
@@ -17,6 +19,7 @@ const AiAgentsPage = lazyPage(() => import('./pages/AiAgentsPage'));
 const FrameworkPage = lazyPage(() => import('./pages/FrameworkPage'));
 const IconPage = lazyPage(() => import('./pages/IconPage'));
 const PricingPage = lazyPage(() => import('./pages/PricingPage'));
+const StylePage = lazyPage(() => import('./pages/StylePage'));
 
 function CatalogRoute({ page }: { page: 'home' | 'brands' | 'category' | 'icon' }) {
   const location = useLocation();
@@ -57,6 +60,9 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
                 <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
                 <Route path="ai-agents" element={<AiAgentsPage />} />
+                {catalog.styles.map((style) => (
+                  <Route key={style} path={STYLE_PATHS[style].slice(1)} element={<StylePage key={style} style={style} />} />
+                ))}
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
               {/* Outside this language's prefix (e.g. a mistyped language): still a 404 page. */}

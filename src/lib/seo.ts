@@ -3,7 +3,7 @@ import { brands } from './brands';
 import { catalog, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type IconEntry } from './catalog';
 import { legacyCatalogDestination } from './catalog-location';
 import {
-  categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, svgFilePath,
+  categoryBySlug, categoryPath, displayAliases, displayName, FRAMEWORK_PATHS, iconPath, STYLE_PATHS, svgFilePath,
 } from './icon-pages';
 import { FIGMA_URL, FLUTTER_PACKAGE, LIBRARY_URL, PLATFORM_NAMES } from './links';
 
@@ -34,7 +34,8 @@ export const facts = {
 };
 
 /** Pages with one fixed URL. */
-export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma' | 'ai-agents';
+export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma' | 'ai-agents'
+  | 'style-regular' | 'style-filled' | 'style-duocolor' | 'style-duotone';
 export type PageId = StaticPageId | 'icon' | 'category';
 
 export interface PageMeta {
@@ -55,6 +56,8 @@ const PATHS: Record<StaticPageId, string> = {
   home: '/', docs: '/docs', pricing: '/pricing', brands: '/brands', 'not-found': '/404',
   react: FRAMEWORK_PATHS.react, vue: FRAMEWORK_PATHS.vue, figma: FRAMEWORK_PATHS.figma,
   'ai-agents': '/ai-agents',
+  'style-regular': STYLE_PATHS.regular, 'style-filled': STYLE_PATHS.filled,
+  'style-duocolor': STYLE_PATHS.duocolor, 'style-duotone': STYLE_PATHS.duotone,
 };
 const META_KEYS = {
   home: ['meta.home.title', 'meta.home.description'],
@@ -66,6 +69,10 @@ const META_KEYS = {
   vue: ['meta.vue.title', 'meta.vue.description'],
   figma: ['meta.figma.title', 'meta.figma.description'],
   'ai-agents': ['meta.aiAgents.title', 'meta.aiAgents.description'],
+  'style-regular': ['meta.style.regular.title', 'meta.style.regular.description'],
+  'style-filled': ['meta.style.filled.title', 'meta.style.filled.description'],
+  'style-duocolor': ['meta.style.duocolor.title', 'meta.style.duocolor.description'],
+  'style-duotone': ['meta.style.duotone.title', 'meta.style.duotone.description'],
 } as const satisfies Record<StaticPageId, readonly [MessageKey, MessageKey]>;
 
 export const PAGE_IDS = Object.keys(PATHS) as StaticPageId[];
@@ -171,7 +178,7 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
   const home = pageMeta('home', i18n);
   const imageUrl = page.icon ? absolute(svgFilePath(catalog.styles[0], page.icon.name)) : null;
   const webPage = {
-    '@type': { docs: 'TechArticle', react: 'TechArticle', vue: 'TechArticle', icon: 'ItemPage', category: 'CollectionPage' }[page.id as string] ?? 'WebPage',
+    '@type': { docs: 'TechArticle', react: 'TechArticle', vue: 'TechArticle', icon: 'ItemPage', category: 'CollectionPage' }[page.id as string] ?? (page.id.startsWith('style-') ? 'CollectionPage' : 'WebPage'),
     '@id': `${url}#webpage`,
     url,
     name: page.title,

@@ -162,6 +162,7 @@ function DocsSearch({ value, onChange }: { value: string; onChange: (v: string) 
       <input
         ref={ref}
         type="search"
+        name="q"
         aria-label="Search the docs"
         placeholder="Search docs"
         value={value}

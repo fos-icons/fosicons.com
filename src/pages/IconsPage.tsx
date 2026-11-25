@@ -79,6 +79,7 @@ export function SearchField({
       <input
         ref={inputRef}
         type="search"
+        name="q"
         aria-label={label}
         value={value}
         autoComplete="off"
