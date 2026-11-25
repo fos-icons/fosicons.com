@@ -1,5 +1,5 @@
 import { UiIcon } from '../components/ui';
-import { DEFAULT_LOCALE, useI18n } from '../i18n';
+import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
@@ -51,6 +51,7 @@ const CONTENTS: { id: string; title: string; sections: readonly (readonly [strin
       ['accessibility', 'Accessibility'],
       ['licensing', 'Licensing'],
       ['privacy', 'Privacy'],
+      ['terms', 'Terms'],
       ['source', 'Source data'],
     ],
   },
@@ -636,6 +637,18 @@ FosIcon(
           <p>Icon searches, customizations, and downloads are processed in your browser. We do not track them as separate analytics events. Links to GitHub, npm, and Figma take you to those services, which have their own privacy policies. Like any website, the server hosting this one may keep standard request logs.</p>
           <p>To clear the stored preferences, clear this site&apos;s data in your browser settings.</p>
           <p>The MCP server at <code>/mcp</code>, used by AI agents and the Fos Icons plugins, needs no account and stores no conversation content. For each tool call it logs the tool name and options such as the framework and style, and, for searches that find no icon, the first 60 characters of the search text, so we can see which icons people need. Requests are rate limited by IP address.</p>
+        </Section>
+
+        {/* Draft terms: review before publishing (see the PR that added them). */}
+        <Section id="terms" title="Terms">
+          <p>These terms cover fosicons.com, the Fos Icons MCP server at <code>/mcp</code>, and the Fos Icons plugins for AI tools. By using them, you agree to these terms.</p>
+          <p><strong>Icons and packages.</strong> The icons and framework packages are open source under the MIT license. That license, not these terms, governs how you use, copy, and change them. See <a href="#licensing">Licensing</a>.</p>
+          <p><strong>Paid plans.</strong> Pro and Advanced unlock features on fosicons.com, as described on the <LocalLink to="/pricing">Pricing</LocalLink> page. Payments are handled by Stripe. Plans renew annually until you cancel; cancelling stops the next renewal, and the plan stays active until the end of the paid period.</p>
+          <p><strong>MCP server and plugins.</strong> The MCP server and the plugins for Claude Code, ChatGPT, and Codex are free and need no account. They return icon names, setup instructions, and code from the public catalog. Requests are rate limited. Don&apos;t try to get around the limits or use the service to copy the catalog in bulk; the library repository and packages are the place for that.</p>
+          <p><strong>AI output.</strong> AI tools decide how to use what the server returns. Check generated code before you ship it.</p>
+          <p><strong>No warranty.</strong> The site, server, and plugins are provided as is, without warranties of any kind. They may change, be unavailable, or stop. To the extent the law allows, Fos Icons is not liable for indirect or consequential damages arising from their use.</p>
+          <p><strong>Changes.</strong> We may update these terms. The current version is always on this page; continuing to use the services after a change means you accept it.</p>
+          <p><strong>Contact.</strong> Questions about these terms: <a href="mailto:icon@fosicons.com">icon@fosicons.com</a>.</p>
         </Section>
 
         <Section id="source" title="Source data">

@@ -27,6 +27,64 @@ const framework = z.enum(FRAMEWORKS);
 const category = z.enum(CATEGORIES as [string, ...string[]]);
 const hex = z.string().regex(/^#[0-9a-fA-F]{6}$/, 'Use a #RRGGBB hex color');
 
+/* Output schemas: what each tool's structuredContent holds. The SDK checks every result against them. */
+const iconSummary = z.object({
+  name: z.string().describe('Canonical icon name'),
+  category: z.string(),
+  tags: z.array(z.string()),
+  components: z.record(style, z.string()).describe('Component name per style, the same in every component framework'),
+  url: z.string().describe('Icon page on fosicons.com'),
+});
+const SEARCH_OUTPUT = {
+  results: z.array(z.object({
+    query: z.string(),
+    total: z.number().int().describe('Matches before the limit'),
+    icons: z.array(iconSummary),
+    suggestions: z.array(z.string()).optional().describe('Close matches, only when nothing matched'),
+  })),
+};
+const CODE_OUTPUT = {
+  name: z.string(),
+  style,
+  framework,
+  package: z.string(),
+  install: z.string().describe('Install command or steps'),
+  identifier: z.string().describe('Component name, Flutter constant, or SVG file path'),
+  code: z.string().describe('Import and usage example'),
+  svg: z.string().optional().describe('Inline Regular SVG markup, framework "svg" only'),
+  url: z.string(),
+  docs: z.string(),
+  notes: z.array(z.string()),
+};
+const CHECK_OUTPUT = {
+  checks: z.array(z.object({
+    input: z.string(),
+    valid: z.boolean(),
+    name: z.string().optional(),
+    style: style.optional(),
+    suggestions: z.array(z.string()).optional(),
+  })),
+};
+const LIST_OUTPUT = {
+  category: z.string().nullable(),
+  total: z.number().int(),
+  offset: z.number().int(),
+  icons: z.array(iconSummary),
+  nextOffset: z.number().int().nullable().describe('Offset of the next page, or null after the last'),
+  categories: z.array(z.object({ name: z.string(), count: z.number().int() })),
+};
+const SETUP_OUTPUT = {
+  framework,
+  package: z.string(),
+  published: z.boolean().describe('False until the package is on its registry'),
+  install: z.string(),
+  naming: z.string(),
+  props: z.string(),
+  example: z.string(),
+  accessibility: z.string(),
+  docs: z.string(),
+};
+
 function result(data: object, text?: string): CallToolResult {
   return {
     content: [{ type: 'text', text: text ?? JSON.stringify(data, null, 2) }],
@@ -60,6 +118,7 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
       category: category.optional().describe('Only search this category'),
       limit: z.number().int().min(1).max(50).default(8).describe('Results per query'),
     },
+    outputSchema: SEARCH_OUTPUT,
     annotations: { title: 'Search icons', ...READ_ONLY },
   }, ({ queries, category, limit }) => {
     const results = searchIcons(queries, { category, limit });
@@ -81,6 +140,7 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
       primaryColor: hex.optional().describe('Duocolor and duotone: main color'),
       secondaryColor: hex.optional().describe('Duocolor: accent color'),
     },
+    outputSchema: CODE_OUTPUT,
     annotations: { title: 'Get icon code', ...READ_ONLY },
   }, ({ name, framework, ...options }) => {
     try {
@@ -103,6 +163,7 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
     inputSchema: {
       names: z.array(z.string().trim().min(1).max(100)).min(1).max(100),
     },
+    outputSchema: CHECK_OUTPUT,
     annotations: { title: 'Check icon names', ...READ_ONLY },
   }, ({ names }) => {
     const checks = checkIconNames(names);
@@ -119,6 +180,7 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
       offset: z.number().int().min(0).default(0),
       limit: z.number().int().min(1).max(200).default(50),
     },
+    outputSchema: LIST_OUTPUT,
     annotations: { title: 'List icons', ...READ_ONLY },
   }, ({ category, offset, limit }) => {
     log({ tool: 'list_icons', category: category ?? null });
@@ -130,6 +192,7 @@ export function createServer(log: ToolLogger = () => {}): McpServer {
     description:
       'How to install and use the Fos Icons package for a framework: install steps, naming rule, props, an example and accessibility guidance.',
     inputSchema: { framework },
+    outputSchema: SETUP_OUTPUT,
     annotations: { title: 'Get framework setup', ...READ_ONLY },
   }, ({ framework }) => {
     log({ tool: 'get_framework_setup', framework });
