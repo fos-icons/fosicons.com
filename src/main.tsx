@@ -28,6 +28,17 @@ window.addEventListener('vite:preloadError', (event) => {
   if (reloadForNewVersion()) event.preventDefault();
 });
 
+// If the stylesheet failed (a deploy or network blip mid-load), the page shows
+// unstyled until a refresh: do that refresh once, as above.
+window.addEventListener('load', () => {
+  const link = document.querySelector<HTMLLinkElement>('link[rel="stylesheet"][href^="/assets/"]');
+  if (!link) return;
+  // A failed load still leaves an empty (or unreadable) sheet in some browsers.
+  let loaded = false;
+  try { loaded = (link.sheet?.cssRules.length ?? 0) > 0; } catch { /* unreadable: it didn't load */ }
+  if (!loaded) reloadForNewVersion();
+});
+
 // The language comes from the URL (/fr/…); load its messages before the first render.
 const { locale } = splitLocale(window.location.pathname);
 loadMessages(locale).then((messages) => {
