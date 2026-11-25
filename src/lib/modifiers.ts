@@ -184,8 +184,8 @@ export function modifierPxRange(iconSize: number): { min: number; max: number } 
 }
 
 /**
- * Size-linked modifier size: 20px on a 48px icon (the default size, as
- * authored) and 11px on a 24px icon, so small icons get a relatively larger,
+ * Size-linked modifier size: the authored 20px on a 48px icon and 11px on
+ * a 24px icon, so small icons get a relatively larger,
  * still legible badge. Linear through the two anchors (px = 0.375 × size + 2),
  * rounded to whole px and held within the scale range, which only binds below
  * 16px (where a quarter of the icon is the limit).

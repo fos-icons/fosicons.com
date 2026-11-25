@@ -98,12 +98,16 @@ it('signs a new customer up from a plan card, then continues to that plan’s Ch
   expect(screen.queryByRole('alert')).toBeNull();
 });
 
-it('lets testers in only with an existing sandbox account and always shows the sandbox notice', async () => {
+it('shows the sandbox notice after a plan is chosen and requires an existing test account', async () => {
   billingApi({ plan: 'free', status: null });
   auth.signInWithOtp.mockResolvedValue({ error: null });
   const user = userEvent.setup();
   await renderPricing('sandbox', null);
 
+  const getPro = card('Pro').getByRole('button', { name: 'Get Pro' });
+  await waitFor(() => expect((getPro as HTMLButtonElement).disabled).toBe(false));
+  expect(screen.queryByRole('heading', { name: 'Test Stripe checkout' })).toBeNull();
+  await user.click(getPro);
   expect(await screen.findByRole('heading', { name: 'Test Stripe checkout' })).toBeTruthy();
   expect(screen.getByText(/No money moves/)).toBeTruthy();
   await user.type(await screen.findByLabelText('Email address'), 'tester@example.test');

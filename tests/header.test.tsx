@@ -51,7 +51,7 @@ describe('Header actions', () => {
     expect(within(screen.getByRole('banner')).queryByRole('button', { name: /^Theme:/ })).toBeNull();
   });
 
-  it('links Figma from the header and Get started from the home page', () => {
+  it('keeps Get started in the home page intro', () => {
     renderAt('/');
     const nav = screen.getByRole('navigation', { name: 'Main' });
     // Get started and Download are buttons under the home intro, not header links.
@@ -60,9 +60,17 @@ describe('Header actions', () => {
     const start = within(screen.getByRole('main')).getByRole('link', { name: /Get started/ });
     expect(start.getAttribute('href')).toBe('https://github.com/fos-icons');
     expect(start.getAttribute('target')).toBe('_blank');
-    const figma = within(nav).getByRole('link', { name: /^Figma/ });
-    expect(figma.getAttribute('href')).toMatch(/^https:\/\/www\.figma\.com\/design\/5zcUV9E4Bu8FSssDfhyOWw\//);
-    expect(figma.getAttribute('target')).toBe('_blank');
+  });
+
+  it.each(['/', '/docs', '/pricing'])('keeps the same header link order and destinations on %s', (url) => {
+    renderAt(url);
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+    const links = nav.getAllByRole('link');
+    expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
+      ['Browse', '/'], ['Docs', '/docs'], ['Pricing', '/pricing'],
+    ]);
+    expect(links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.getAttribute('href'))).toEqual([url]);
+    expect(nav.getByRole('button', { name: 'Feedback' })).toBeTruthy();
   });
 
   it('links Pricing from the header and the menu, closes the menu, and marks Pricing current', async () => {
@@ -72,6 +80,9 @@ describe('Header actions', () => {
     expect(within(nav).getByRole('link', { name: 'Pricing' }).getAttribute('href')).toBe('/pricing');
     const menu = within(nav).getByRole('button', { name: 'Menu' });
     await user.click(menu);
+    const panel = within(document.getElementById(menu.getAttribute('aria-controls')!)!);
+    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'Docs', 'Pricing']);
+    expect(panel.getByRole('button', { name: 'Feedback' })).toBeTruthy();
     const links = within(nav).getAllByRole('link', { name: 'Pricing' });
     await user.click(links[1]);
     expect(await screen.findByRole('heading', { name: 'Pricing plans' })).toBeTruthy();

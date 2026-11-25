@@ -50,7 +50,7 @@ const en = {
   'header.docs': 'Docs',
   'header.pricing': 'Pricing',
   'header.browse': 'Browse icons',
-  'header.figma': 'Figma',
+  'header.browseNav': 'Browse',
   'header.feedback': 'Feedback',
   'feedback.type': 'Feedback type',
   'feedback.selectType': 'Choose a type',

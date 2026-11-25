@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { Fragment, memo, useCallback, useEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { IconCardContent, iconCardClass, iconCardGlyphClass, iconGridClass } from './IconCard';
+import { IconCardContent, iconCardClass, iconCardGlyphClass } from './IconCard';
 import { UiIcon } from './ui';
 
 export interface GridItem {
@@ -60,7 +60,6 @@ const Cell = memo(function Cell({
         tabIndex={tabbable ? 0 : -1}
         aria-label={name}
         aria-description={premiumLabel}
-        title={name.length > 22 ? name : undefined}
         aria-pressed={selected}
         onClick={(e) => onSelect(name, e.shiftKey || e.metaKey || e.ctrlKey)}
         // Shift-click would otherwise extend a text selection across the grid.
@@ -72,14 +71,14 @@ const Cell = memo(function Cell({
           }
         }}
         onFocus={() => onFocusIndex(index)}
-        className={`${iconCardClass(selected)} pt-5 max-sm:min-h-[100px] sm:pt-3`}
+        className={iconCardClass(selected)}
       >
         {premiumLabel && (
-          <span aria-hidden="true" title={premiumLabel} className="absolute start-1 top-1 flex size-[18px] items-center justify-center rounded-full bg-sunken text-muted sm:start-1.5 sm:top-1.5">
-            <UiIcon name="crown-simple" className="size-3.5 [&_path]:[stroke-width:1.75]" />
+          <span aria-hidden="true" title={premiumLabel} className="absolute start-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-sunken text-muted">
+            <UiIcon name="crown-simple" className="size-3 [&_path]:[stroke-width:1.75]" />
           </span>
         )}
-        <IconCardContent name={name} selected={selected}>
+        <IconCardContent name={name}>
           {svg ? (
             <span
               aria-hidden="true"
@@ -235,7 +234,7 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, pre
       aria-label={label}
       aria-describedby="grid-help"
       onKeyDown={onKeyDown}
-      className={iconGridClass}
+      className="icon-card-grid"
     >
       {shown.map((item, index) => (
         <Fragment key={item.name}>

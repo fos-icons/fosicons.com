@@ -143,7 +143,7 @@ describe('landing-page grid previews', () => {
   it('draw the default grid artwork at its designed stroke', async () => {
     const { DEFAULT_ARTWORK_SIZE, DEFAULT_LOOK, defaultGridSvg } = await import('../src/lib/look');
     expect(DEFAULT_ARTWORK_SIZE).toBe(DEFAULT_LOOK.size);
-    const svg = defaultGridSvg('<svg viewBox="0 0 48 48"><path stroke="currentColor" stroke-width="2" d="M4 4H44"/></svg>');
-    expect(svg).toContain('calc(2px * var(--stroke-scale, 1))');
+    const svg = defaultGridSvg('<svg viewBox="0 0 32 32"><path stroke="currentColor" stroke-width="1.5" d="M4 4H28"/></svg>');
+    expect(svg).toContain('calc(1.5px * var(--stroke-scale, 1))');
   });
 });
