@@ -12,7 +12,7 @@ import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
 import { Button, Segmented, Select, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
-import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
+import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBlackBrandMark, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { usePlan } from '../lib/plan';
 import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
@@ -301,19 +301,18 @@ export function IconsPage() {
   // The pane and selection need their artwork even when scrolled out of view.
   useEffect(() => { need([...multi, ...(inspected ? [inspected.name] : [])]); }, [need, multi, inspected]);
   const coreSvgs = svgs[svgKey] ?? null;
-  /** Artwork by name: this style's icons plus the brand marks, which ship in Regular only. */
+  /** Keep the source SVGs valid for the inspector and exports. */
   const styleSvgs = useMemo(
-    () => (coreSvgs || brandMarks ? {
-      ...coreSvgs,
-      // Full-color marks get data-brand (a light tile in the dark theme); one-color
-      // Solid marks use currentColor like the icons around them.
-      ...Object.fromEntries(Object.entries(brandMarks ?? {}).map(([k, v]) => [k, isColorMark(k, brandStyle) ? v.replace('<svg', '<svg data-brand') : v])),
-    } : null),
-    [coreSvgs, brandMarks, brandStyle],
+    () => (coreSvgs || brandMarks ? { ...coreSvgs, ...brandMarks } : null),
+    [coreSvgs, brandMarks],
   );
   const gridSvgs = useMemo(
-    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([k, v]) => [k, isBrand(k) ? v : prepareGridSvg(v)])) : null),
-    [styleSvgs],
+    () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([name, svg]) => {
+      if (!isBrand(name)) return [name, prepareGridSvg(svg)];
+      if (!isColorMark(name, brandStyle)) return [name, svg];
+      return [name, svg.replace('<svg', `<svg data-brand="${isBlackBrandMark(name) ? 'black' : 'color'}"`)];
+    })) : null),
+    [styleSvgs, brandStyle],
   );
 
   const multiActive = multi.length >= 2;
@@ -389,7 +388,7 @@ export function IconsPage() {
         <HeroActions className="mt-5" />
       </div>
 
-      <div className="sticky top-0 z-20 -mx-4 bg-canvas/90 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-canvas/75 sm:-mx-6 sm:px-6">
+      <div className="catalog-toolbar sticky top-0 z-20 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6">
         <SearchField
           inputRef={searchRef}
           label={brandsView ? t('icons.searchBrands') : t('icons.searchIcons')}
@@ -406,43 +405,43 @@ export function IconsPage() {
             })}
           </p>
         )}
-      </div>
 
-      <div className="mt-5 flex flex-wrap items-center gap-3">
-        <Segmented
-          fill
-          label={t('icons.styleSwitcher')}
-          value={drawStyle}
-          onChange={(style) => update({ style })}
-          options={viewOptions}
-        />
-        {(!brandsView || brandEntries.length > 0) && (
-          <p className="sr-only" aria-live="polite" aria-atomic="true">{summary}</p>
-        )}
-        <div className="flex w-full min-w-0 items-center gap-2 sm:ml-auto sm:w-auto sm:gap-3">
-          {!desktop && (
-            <Button icon="settings-sliders" onClick={() => setCustomizeOpen(true)}>{t('icons.customize')}</Button>
-          )}
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Segmented
+            fill
+            label={t('icons.styleSwitcher')}
+            value={drawStyle}
+            onChange={(style) => update({ style })}
+            options={viewOptions}
+          />
           {(!brandsView || brandEntries.length > 0) && (
-            <>
-              <label htmlFor="category" className="sr-only">{t('icons.category')}</label>
-              <Select
-                id="category"
-                value={state.category ?? ''}
-                onChange={(e) => {
-                  const category = e.target.value || null;
-                  // Brands have no duo styles: picking Brands from a duo tab shows Solid.
-                  update({ category, icon: null, ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}) });
-                }}
-                className="min-w-0 flex-1"
-              >
-                <option value="">{t('icons.allCategories')}</option>
-                {categories.map((c) => (
-                  <option key={c.name} value={c.name}>{t('icons.categoryOption', { name: label('category', c.name, c.name), count: c.count })}</option>
-                ))}
-              </Select>
-            </>
+            <p className="sr-only" aria-live="polite" aria-atomic="true">{summary}</p>
           )}
+          <div className="flex w-full min-w-0 items-center gap-2 sm:ml-auto sm:w-auto sm:gap-3">
+            {!desktop && (
+              <Button icon="settings-sliders" onClick={() => setCustomizeOpen(true)}>{t('icons.customize')}</Button>
+            )}
+            {(!brandsView || brandEntries.length > 0) && (
+              <>
+                <label htmlFor="category" className="sr-only">{t('icons.category')}</label>
+                <Select
+                  id="category"
+                  value={state.category ?? ''}
+                  onChange={(e) => {
+                    const category = e.target.value || null;
+                    // Brands have no duo styles: picking Brands from a duo tab shows Solid.
+                    update({ category, icon: null, ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}) });
+                  }}
+                  className="min-w-0 flex-1"
+                >
+                  <option value="">{t('icons.allCategories')}</option>
+                  {categories.map((c) => (
+                    <option key={c.name} value={c.name}>{t('icons.categoryOption', { name: label('category', c.name, c.name), count: c.count })}</option>
+                  ))}
+                </Select>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
