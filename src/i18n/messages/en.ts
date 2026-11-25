@@ -40,6 +40,8 @@ const en = {
   'meta.vue.title': 'Vue Icons — {icons}+ Free SVG Icon Components | Fos Icons',
   'meta.vue.description': '@fos-icons/vue: {icons}+ free, tree-shakeable Vue 3 icon components in {styles}. TypeScript types, server rendering, {license} licensed.',
   'meta.figma.title': 'Figma Icons — {icons}+ Free Icon Components | Fos Icons',
+  'meta.aiAgents.title': 'Icons for AI Agents — MCP Server and Skills | Fos Icons',
+  'meta.aiAgents.description': 'Connect Claude Code, Codex, ChatGPT, Cursor, or VS Code to {icons}+ free icons. A free MCP server and Agent Skills find real icons and write exact imports.',
   'meta.figma.description': 'A free Figma icon library: {icons}+ icon components with {styles} variants, plus modifiers and light and dark themes. {license} licensed.',
   'meta.shareImageAlt': 'Fos Icons: open-source icons in Regular, Solid, Duocolor, and Duotone, shown on a grid.',
 
@@ -52,6 +54,9 @@ const en = {
   'header.browse': 'Browse icons',
   'header.browseNav': 'Browse',
   'header.feedback': 'Feedback',
+  'header.mcp': 'MCP',
+  'header.mcpSetup': 'Set up your AI agent',
+  'header.mcpOverview': 'All agents',
   'feedback.type': 'Feedback type',
   'feedback.selectType': 'Choose a type',
   'feedback.type.new-icon': 'New icon request',

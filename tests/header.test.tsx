@@ -81,7 +81,7 @@ describe('Header actions', () => {
     const menu = within(nav).getByRole('button', { name: 'Menu' });
     await user.click(menu);
     const panel = within(document.getElementById(menu.getAttribute('aria-controls')!)!);
-    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'Docs', 'Pricing']);
+    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'Docs', 'Pricing', 'MCP']);
     expect(panel.getByRole('button', { name: 'Feedback' })).toBeTruthy();
     const links = within(nav).getAllByRole('link', { name: 'Pricing' });
     await user.click(links[1]);

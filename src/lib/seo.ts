@@ -34,7 +34,7 @@ export const facts = {
 };
 
 /** Pages with one fixed URL. */
-export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma';
+export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma' | 'ai-agents';
 export type PageId = StaticPageId | 'icon' | 'category';
 
 export interface PageMeta {
@@ -54,6 +54,7 @@ export interface PageMeta {
 const PATHS: Record<StaticPageId, string> = {
   home: '/', docs: '/docs', pricing: '/pricing', brands: '/brands', 'not-found': '/404',
   react: FRAMEWORK_PATHS.react, vue: FRAMEWORK_PATHS.vue, figma: FRAMEWORK_PATHS.figma,
+  'ai-agents': '/ai-agents',
 };
 const META_KEYS = {
   home: ['meta.home.title', 'meta.home.description'],
@@ -64,6 +65,7 @@ const META_KEYS = {
   react: ['meta.react.title', 'meta.react.description'],
   vue: ['meta.vue.title', 'meta.vue.description'],
   figma: ['meta.figma.title', 'meta.figma.description'],
+  'ai-agents': ['meta.aiAgents.title', 'meta.aiAgents.description'],
 } as const satisfies Record<StaticPageId, readonly [MessageKey, MessageKey]>;
 
 export const PAGE_IDS = Object.keys(PATHS) as StaticPageId[];

@@ -82,6 +82,7 @@ describe('landing pages', () => {
     expect(pageFor('/react-icons').id).toBe('react');
     expect(pageFor('/vue-icons/').id).toBe('vue');
     expect(pageFor('/figma-icons').id).toBe('figma');
+    expect(pageFor('/ai-agents/').id).toBe('ai-agents');
   });
 
   it('gives every icon and category a title that fits search results and a unique description', () => {
