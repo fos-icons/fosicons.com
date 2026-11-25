@@ -160,7 +160,8 @@ export function ExportPanel({
                 <Select
                   id={`${uid}-f${r.id}`}
                   value={r.format}
-                  onChange={(e) => patch(r.id, { format: e.target.value as Format })}
+                  // A GIF is pixels: start it at 2x, since 1x icons look coarse once they move.
+                  onChange={(e) => { const format = e.target.value as Format; patch(r.id, format === 'gif' && r.scale < 2 ? { format, scale: 2 } : { format }); }}
                   className="min-w-0 flex-1"
                 >
                   {formats.map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
@@ -202,9 +203,9 @@ export function ExportPanel({
                       <label htmlFor={`${uid}-b${r.id}`} className="text-xs text-muted">{t('export.gifBackground')}</label>
                       <Select
                         id={`${uid}-b${r.id}`}
-                        value={r.background ?? 'transparent'}
+                        value={r.background ?? 'light'}
                         onChange={(e) => patch(r.id, { background: e.target.value as GifBackground })}
-                        className="w-[112px] shrink-0"
+                        className="w-[136px] shrink-0"
                       >
                         {GIF_BACKGROUNDS.map((b) => <option key={b} value={b}>{t(`export.gifBackground.${b}`)}</option>)}
                       </Select>

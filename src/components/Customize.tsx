@@ -506,7 +506,7 @@ export function DownloadSection({ look }: { look: Look }) {
   );
 }
 
-/** The Animated tab's bulk download: every animated icon as live SVG, in the chosen look and speed. */
+/** The Animated tab's bulk download: every animated icon as live SVG or looping GIF, in the chosen look and speed. */
 export function AnimatedDownloadSection({ look, svgs }: { look: Look; svgs: Record<string, string> | null }) {
   const i18n = useI18n();
   const { t, n } = i18n;
@@ -514,41 +514,64 @@ export function AnimatedDownloadSection({ look, svgs }: { look: Look; svgs: Reco
   const { can } = usePlan();
   const { resolved: theme } = useTheme();
   const uid = useId();
-  const [busy, setBusy] = useState(false);
+  const [format, setFormat] = useState<'svg' | 'gif'>('svg');
+  const [progress, setProgress] = useState<number | null>(null);
+  const busy = progress !== null;
   const unlocked = can('animated');
   const names = svgs ? Object.keys(svgs).sort() : [];
   const disabled = busy || !unlocked || !names.length;
-  const file = 'fos-icons-animated-svg.zip';
+  const file = `fos-icons-animated-${format}.zip`;
   const download = async () => {
     if (disabled || !svgs) return;
-    setBusy(true);
+    setProgress(0);
     try {
       const sourceStroke = opticalStroke(artworkSize(look));
-      const entries = names.map((name) => ({
-        name: `${name}-animated.svg`,
-        data: buildSvg(svgs[name], { ...exportColors(svgs[name], 'regular', look, theme), size: look.size, strokeWidth: strokeOf(look), sourceStroke }),
-      }));
+      // GIFs are pixels: render them at 2x so they stay sharp.
+      const px = format === 'gif' ? look.size * 2 : look.size;
+      const entries: { name: string; data: string | Uint8Array }[] = [];
+      for (const [i, name] of names.entries()) {
+        const svg = buildSvg(svgs[name], { ...exportColors(svgs[name], 'regular', look, theme), size: px, strokeWidth: strokeOf(look), sourceStroke });
+        if (format === 'svg') entries.push({ name: `${name}-animated.svg`, data: svg });
+        else {
+          const { svgToGif } = await import('../lib/gif');
+          entries.push({ name: `${name}-animated-${px}px.gif`, data: new Uint8Array(await (await svgToGif(svg, px)).arrayBuffer()) });
+          setProgress(i + 1);
+        }
+      }
       downloadBlob(await buildZip(entries), file);
       toast('success', t('download.done', { file }));
     } catch (error) {
       toast('error', errorText(error, i18n, 'error.download'));
     } finally {
-      setBusy(false);
+      setProgress(null);
     }
   };
-  const label = busy ? t('download.preparing') : t('download.animated');
+  const label = busy
+    ? (format === 'gif' ? t('download.making', { done: n(progress ?? 0), count: n(names.length) }) : t('download.preparing'))
+    : t(format === 'gif' ? 'download.animatedGif' : 'download.animated');
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
       <RailActions>{() => (
         <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
       )}</RailActions>
       <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
+      <div className="mt-3">
+        <Segmented
+          label={t('download.animatedFormat')}
+          size="sm"
+          value={format}
+          onChange={setFormat}
+          options={[{ value: 'svg', label: 'SVG' }, { value: 'gif', label: 'GIF' }]}
+        />
+      </div>
       <div className="mt-3 flex gap-2">
         <Button variant="primary" icon="download" onClick={download} disabled={disabled} aria-describedby={`${uid}-note`} className="min-w-0 flex-1 disabled:cursor-wait">
           <span className="truncate">{label}</span>
         </Button>
       </div>
-      <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">{t('download.animatedNote', { count: n(names.length) })}</p>
+      <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
+        {t(format === 'gif' ? 'download.animatedGifNote' : 'download.animatedNote', { count: n(names.length) })}
+      </p>
       {!unlocked && <UpgradePrompt feature="animated" fallback={t('download.premiumSoon')} className="mt-1.5 text-xs leading-relaxed text-muted" />}
     </section>
   );
