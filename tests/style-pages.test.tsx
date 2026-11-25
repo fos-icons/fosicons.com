@@ -58,7 +58,10 @@ describe('Style landing pages', () => {
 
   it('shows code with the style suffix and says honestly where the style is free', () => {
     renderPage('filled');
-    expect(screen.getAllByText(/CameraFilled/).length).toBeGreaterThan(0);
+    const usage = screen.getByRole('region', { name: 'Use them in code' });
+    expect(usage.classList.contains('code-stone')).toBe(true);
+    expect(within(usage).getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['React', 'Vue']);
+    expect(usage.textContent).toMatch(/CameraFilled/);
     const availability = screen.getByRole('region', { name: "Where it's free" });
     expect(availability.textContent).toMatch(/free in the @fos-icons\/react and @fos-icons\/vue packages/);
     expect(within(availability).getByRole('link', { name: 'Pro' }).getAttribute('href')).toBe('/pricing');
