@@ -6,6 +6,9 @@
   "outputDirectory": "dist",
   "cleanUrls": true,
   "trailingSlash": false,
+  "rewrites": [
+    { "source": "/mcp", "destination": "/api/mcp" }
+  ],
   "redirects": [
     { "source": "/categories/time-weather", "destination": "/categories/time-calendar", "permanent": true }
   ],
