@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it } from 'vitest';
 import { AppShell } from '../src/App';
@@ -92,13 +92,15 @@ describe('a translated page', () => {
     'header.documentation': 'Charts',
   };
 
-  it('renders the app in the language, with localized links, falling back to English', () => {
-    render(
-      <MemoryRouter initialEntries={['/xp/']}>
-        <AppShell locale="xp" messages={pirate} />
-      </MemoryRouter>,
-    );
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Find ye proper icon, matey.');
+  it('renders the app in the language, with localized links, falling back to English', async () => {
+    await act(async () => {
+      render(
+        <MemoryRouter initialEntries={['/xp/']}>
+          <AppShell locale="xp" messages={pirate} />
+        </MemoryRouter>,
+      );
+    });
+    expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe('Find ye proper icon, matey.');
     expect(screen.getByRole('searchbox', { name: 'Search ye icons' })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Privacy' })).toBeTruthy();
   });

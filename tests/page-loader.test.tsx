@@ -19,7 +19,7 @@ describe('Page loader', () => {
     const css = readFileSync(join(__dirname, '../src/styles/index.css'), 'utf8');
     const motion = css.slice(css.indexOf('prefers-reduced-motion: no-preference'));
     expect(motion).toContain('.page-loader-mark { animation: loader-bounce');
-    expect(css).toContain('.route-enter > :not(.page-loader) > *');
+    expect(motion).toContain('.route-enter[data-enter] > :not(.page-loader) > *');
   });
 });
 
