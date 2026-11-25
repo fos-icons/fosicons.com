@@ -9,7 +9,7 @@ import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, Ui
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork, useSizedArtwork } from '../lib/artwork';
-import { catalog, chunksFor, FREE_ICON_STYLE, iconsByName, opticalSize, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
+import { animatedNames, catalog, chunksFor, FREE_ICON_STYLE, iconsByName, loadAnimated, opticalSize, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
   categoryPath, displayName, editorPath, iconPath, svgFilePath,
@@ -28,6 +28,7 @@ import { useModifiers } from '../components/ModifierPicker';
 import { composeSvg, CORNERS, editablePreset, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
 import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
+import { ANIMATED_SLUG } from '../lib/url-state';
 
 /**
  * A link to the editor on the home page that, on a plain click, opens the
@@ -184,17 +185,72 @@ const PNG_PIXELS = 256;
  */
 const PAGE_SIZES = [...new Set([catalog.grid, ...[...ACTUAL_SIZES.map((s) => s.px), STAGE_PIXELS, PNG_PIXELS].map(opticalSize)])];
 
+type PreviewStyle = StyleId | typeof ANIMATED_SLUG;
+
+function AnimatedPreview({ name, still, label }: { name: string; still?: string; label: string }) {
+  const i18n = useI18n();
+  const { t } = i18n;
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const stage = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const [svg, setSvg] = useState<string>();
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, retry] = useState(0);
+
+  useEffect(() => {
+    let active = true;
+    loadAnimated().then((artwork) => {
+      if (!active) return;
+      if (artwork[name]) setSvg(artwork[name]);
+      else setError(new Error('Missing animated artwork'));
+    }, (cause: unknown) => { if (active) setError(cause); });
+    return () => { active = false; };
+  }, [name, attempt]);
+
+  useEffect(() => {
+    const node = stage.current;
+    if (!node || typeof IntersectionObserver === 'undefined') { setVisible(true); return; }
+    const observer = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting));
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={stage} className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
+      <div className="animated-preview" data-paused={paused || !visible || undefined}>
+        <Glyph svg={svg ?? still} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+      </div>
+      {svg && !reducedMotion && (
+        <Button size="sm" variant="quiet" className="absolute bottom-2 end-2" onClick={() => setPaused(!paused)}>
+          {t(paused ? 'iconPage.playAnimation' : 'iconPage.pauseAnimation')}
+        </Button>
+      )}
+      {error !== null && (
+        <div className="absolute inset-x-3 bottom-2 flex items-center justify-center gap-2 text-sm text-muted">
+          <span role="alert">{errorText(error, i18n, 'iconPage.animationUnavailable')}</span>
+          <Button size="sm" variant="quiet" onClick={() => { setError(null); retry(attempt + 1); }}>{t('icons.tryAgain')}</Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, svgAt, onStyleChange }: {
+function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
   name: string;
-  style: StyleId;
+  style: PreviewStyle;
+  canAnimate: boolean;
   /** The icon drawn from the optical size nearest `px`. */
   svgAt: (px: number) => string | undefined;
-  onStyleChange: (style: StyleId) => void;
+  onStyleChange: (style: PreviewStyle) => void;
 }) {
   const { t } = useI18n();
-  const vars = useStyleVars(style);
-  const title = displayName(name);
+  const animated = style === ANIMATED_SLUG;
+  const vars = useStyleVars(animated ? FREE_ICON_STYLE : style);
+  const label = t('iconPage.preview', { name: displayName(name), style: t(`style.${style}`) });
+  const options = catalog.styles.map((s) => ({ value: s as PreviewStyle, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
+  if (canAnimate) options.push({ value: ANIMATED_SLUG, label: t('style.animated'), badge: undefined });
   return (
     <section aria-labelledby="icon-preview" className="flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
       <h2 id="icon-preview" className="sr-only">{t('iconPage.styles')}</h2>
@@ -202,18 +258,21 @@ function PreviewStage({ name, style, svgAt, onStyleChange }: {
         <div className="min-w-0 flex-1">
           <Segmented
             fill
+            size={canAnimate ? 'sm' : 'md'}
             label={t('icons.styleSwitcher')}
             value={style}
-            options={catalog.styles.map((s) => ({ value: s, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }))}
+            options={options}
             onChange={onStyleChange}
           />
         </div>
       </div>
-      <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-        <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={t('iconPage.preview', { name: title, style: t(`style.${style}`) })} />
-      </div>
+      {animated ? <AnimatedPreview key={name} name={name} still={svgAt(STAGE_PIXELS)} label={label} /> : (
+        <div className="flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
+          <Glyph svg={svgAt(STAGE_PIXELS)} idPrefix="stage-" className="size-28 sm:size-36" label={label} />
+        </div>
+      )}
       <div className="flex items-center justify-between gap-4 border-t border-line px-4 py-3">
-        <span className="text-xs text-muted">{t('iconPage.actualSize')}</span>
+        <span className="text-xs text-muted">{t(animated ? 'iconPage.regularActualSize' : 'iconPage.actualSize')}</span>
         <ul className="flex items-end gap-5 sm:gap-7">
           {ACTUAL_SIZES.map(({ px, className }) => (
             <li key={px} className="flex flex-col items-center gap-1.5">
@@ -248,14 +307,19 @@ export default function IconPage() {
   const previous = location.state as { from?: unknown; catalogBackTo?: unknown } | null;
   const from = previous?.from;
   const backTo = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : null;
-  /** The style shown in the preview, the actions, and the code below; ?style= keeps it in shared links. */
+  const canAnimate = animatedNames.has(name);
+  const animated = canAnimate && params.get('style') === ANIMATED_SLUG;
   const style = styleFromSlug(params.get('style')) ?? catalog.styles[0];
-  const setStyle = (next: StyleId) => setParams((p) => {
-    const q = new URLSearchParams(p);
-    if (next === catalog.styles[0]) q.delete('style');
-    else q.set('style', STYLE_META[next].slug);
-    return q;
-  }, { replace: true, preventScrollReset: true, state: location.state });
+  const setStyle = (next: PreviewStyle) => {
+    if (next === ANIMATED_SLUG) setEditing(null);
+    setParams((p) => {
+      const q = new URLSearchParams(p);
+      if (next === catalog.styles[0]) q.delete('style');
+      else q.set('style', next === ANIMATED_SLUG ? next : STYLE_META[next].slug);
+      if (next === ANIMATED_SLUG) { q.delete('modifier'); q.delete('corner'); }
+      return q;
+    }, { replace: true, preventScrollReset: true, state: location.state });
+  };
   const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES, chunksFor);
   const svg = sized[0][inspected?.name ?? name];
   const navigate = useNavigate();
@@ -280,7 +344,7 @@ export default function IconPage() {
     if (preset) navigate({ pathname: path(iconPath(preset.base.name)), search: next.toString() });
     else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
   };
-  const canModify = !!inspected && !inspected.composition && modifiersUnlocked;
+  const canModify = !animated && !!inspected && !inspected.composition && modifiersUnlocked;
   const modifiers = useModifiers(canModify && (wide || !!badge));
   const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
@@ -341,6 +405,8 @@ export default function IconPage() {
   const react = `import { ${component} } from '@fos-icons/react';\n\nexport function Example() {\n  return <${component} size={24} />;\n}`;
   const vue = `<script setup>\nimport { ${component} } from '@fos-icons/vue';\n</script>\n\n<template>\n  <${component} :size="24" />\n</template>`;
   const svelte = svelteSnippet(icon.name, style, { size: 24, color: null });
+  const image = `<img src="/icons/${icon.name}-animated.svg" width="24" height="24" alt=""`;
+  const jsxExample = `export function Example() {\n  return ${image} />;\n}`;
 
   // Removing the icon from the header search returns to the list it came from
   // (keeping that search and style, without the selection), or to all icons.
@@ -398,11 +464,20 @@ export default function IconPage() {
           <KeywordTags icon={icon} className="mt-4" />
         </div>
 
-        <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <PreviewStage name={icon.name} style={style} svgAt={shownAt} onStyleChange={setStyle} />
+        <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
+          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={shownAt} onStyleChange={setStyle} />
         </div>
 
         <div className="lg:col-start-1 lg:row-start-2">
+          {animated ? (
+              <>
+              <ButtonLink to={`${editorPath(icon.name)}&style=${ANIMATED_SLUG}`} variant="primary" size="lg" icon="palette">
+                {t('iconPage.customizeAnimation')}
+              </ButtonLink>
+              {!can('animated') && <UpgradePrompt feature="animated" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
+              </>
+          ) : (
+          <>
           <div className="flex flex-wrap gap-2">
             {premium || applied ? (
               // With a modifier, the file is composed here rather than the library's published one.
@@ -428,6 +503,8 @@ export default function IconPage() {
           >
             <UiIcon name="palette" className="size-4" /> {t('iconPage.customize')}
           </LocalLink>
+          </>
+          )}
 
           <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 border-t border-line pt-6 text-sm">
             <dt className="text-muted">{t('iconPage.category')}</dt>
@@ -441,17 +518,23 @@ export default function IconPage() {
           <CodeTabs
             label={t('iconPage.framework')}
             tabs={[
-              { id: 'react', label: t('iconPage.react'), code: react, lang: 'tsx' },
-              { id: 'vue', label: t('iconPage.vue'), code: vue, lang: 'vue' },
-              { id: 'svelte', label: t('iconPage.svelte'), code: svelte, lang: 'svelte' },
-              { id: 'solid', label: t('iconPage.solid'), code: solidSnippet(icon.name, style, { size: 24, color: null }), lang: 'tsx' },
-              { id: 'angular', label: t('iconPage.angular'), code: angularSnippet(icon.name, style, { size: 24, color: null }), lang: 'ts' },
+              { id: 'react', label: t('iconPage.react'), code: animated ? jsxExample : react, lang: 'tsx' },
+              { id: 'vue', label: t('iconPage.vue'), code: animated ? `<template>\n  ${image} />\n</template>` : vue, lang: 'vue' },
+              { id: 'svelte', label: t('iconPage.svelte'), code: animated ? `${image} />` : svelte, lang: 'svelte' },
+              { id: 'solid', label: t('iconPage.solid'), code: animated ? jsxExample : solidSnippet(icon.name, style, { size: 24, color: null }), lang: 'tsx' },
+              { id: 'angular', label: t('iconPage.angular'), code: animated
+                ? `import { Component } from '@angular/core';\n\n@Component({\n  selector: 'app-example',\n  template: \`${image}>\`,\n})\nexport class ExampleComponent {}`
+                : angularSnippet(icon.name, style, { size: 24, color: null }), lang: 'ts' },
             ]}
           />
-          <p className="mt-3 text-sm text-muted">
-            {t('iconPage.componentNames')}{' '}
-            {components.map((c, i) => <span key={c}>{i > 0 && ', '}<code className="rounded bg-sunken px-1 py-0.5 text-ink">{c}</code></span>)}
-          </p>
+          {animated ? (
+            <p className="mt-3 text-sm text-muted">{t('iconPage.animatedExample', { file: `${icon.name}-animated.svg` })}</p>
+          ) : (
+            <p className="mt-3 text-sm text-muted">
+              {t('iconPage.componentNames')}{' '}
+              {components.map((c, i) => <span key={c}>{i > 0 && ', '}<code className="rounded bg-sunken px-1 py-0.5 text-ink">{c}</code></span>)}
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
             <span className="text-muted">{t('iconPage.figmaBody', { name: icon.name })}</span>
             {FIGMA_URL && (
