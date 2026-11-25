@@ -83,9 +83,9 @@ describe('Icons page', () => {
     expect(headings.slice(0, 4).map((heading) => heading.textContent)).toEqual(['Essentials', 'AI & agents', 'Time & calendar', 'Interfaces']);
     await screen.findAllByRole('button', { name: 'search' });
     const artwork = fetchMock.mock.calls.map(([url]) => String(url)).filter((url) => !url.includes('brands/'));
-    // The default 48px grid draws the 48px artwork, which ships as chunks only.
+    // The default 32px grid draws the 32px artwork, which ships as chunks only.
     const chunks = Math.ceil(catalog.icons.length / ICON_CHUNK);
-    expect(artwork).toEqual(Array.from({ length: chunks }, (_, n) => `/${artworkDirectory}/48/regular/${n}.json`));
+    expect(artwork).toEqual(Array.from({ length: chunks }, (_, n) => `/${artworkDirectory}/32/regular/${n}.json`));
   });
 
   it('keeps the active grid available when another style’s artwork request fails', async () => {
@@ -185,7 +185,7 @@ describe('Icons page', () => {
     expect(await screen.findByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
     expect(screen.getAllByRole('radio', { name: 'Solid', checked: true })).toHaveLength(2);
     expect((screen.getByLabelText('Category') as HTMLSelectElement).value).toBe('Essentials');
-    expect(fetchMock.mock.calls[0][0]).toMatch(/\/48\/filled\/0\.json$/);
+    expect(fetchMock.mock.calls[0][0]).toMatch(/\/32\/filled\/0\.json$/);
   });
 
   it('closes the mobile sheet with its handle or a swipe down, not an X', async () => {
@@ -242,7 +242,7 @@ describe('Icons page', () => {
     expect(location).toContain('style=duotone');
     expect(pathname).toBe('/icons/user-add');
     await act(async () => {});
-    expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /\/48\/duotone\/\d+\.json$/.test(u))).toBe(true);
+    expect(fetchMock.mock.calls.map((c) => c[0]).some((u) => /\/32\/duotone\/\d+\.json$/.test(u))).toBe(true);
     expect(screen.getByRole('button', { name: 'Download user' }).hasAttribute('disabled')).toBe(true);
     expect(screen.getByRole('button', { name: 'Copy' }).hasAttribute('disabled')).toBe(true);
     expect(screen.getByRole('button', { name: 'arrow-up' }).getAttribute('aria-description')).toBe('Premium');
@@ -320,9 +320,11 @@ describe('Icons page', () => {
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     const modifierSize = () => screen.getByRole('slider', { name: 'Modifier size' });
     const iconSize = () => screen.getByRole('slider', { name: 'Size' });
-    // 48px (the default) draws the badge as authored.
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('14px on a 32px icon');
+    // 48px draws the badge as authored.
+    fireEvent.change(iconSize(), { target: { value: '48' } });
     expect(modifierSize().getAttribute('aria-valuetext')).toBe('20px on a 48px icon');
-    expect(preview.innerHTML).not.toContain('scale(');
+    await waitFor(() => expect(preview.innerHTML).not.toContain('scale('));
 
     fireEvent.change(iconSize(), { target: { value: '24' } });
     expect(modifierSize().getAttribute('aria-valuetext')).toBe('11px on a 24px icon');
@@ -345,7 +347,7 @@ describe('Icons page', () => {
     await waitFor(() => expect(screen.getByRole('button', { name: /^Sparkle modifier/ }).getAttribute('aria-pressed')).toBe('true'), { timeout: 8000 });
     expect(screen.getByText(/Opening clock with the Sparkle modifier/)).toBeTruthy();
     const preview = screen.getByRole('img', { name: /clock, Regular, preview/ });
-    expect(preview.innerHTML).toContain('clip-path');
+    expect(preview.querySelector('svg svg')).toBeTruthy();
   });
 
   it('reads "edit clock" the same as "clock with edit"', async () => {
@@ -453,7 +455,7 @@ describe('Icons page', () => {
     expect(ex.getByRole('button', { name: 'Download search (4)' })).toBeTruthy();
 
     await user.click(ex.getByRole('button', { name: 'Options, row 4' }));
-    expect((ex.getByLabelText('Suffix') as HTMLInputElement).placeholder).toBe('-72px');
+    expect((ex.getByLabelText('Suffix') as HTMLInputElement).placeholder).toBe('-48px');
 
     for (const n of [4, 3, 1]) await user.click(ex.getByRole('button', { name: `Remove row ${n}` }));
     expect(within(list).getAllByRole('listitem')).toHaveLength(1);
@@ -534,8 +536,8 @@ describe('Side pane (desktop)', () => {
     expect(within(pane).getByRole('heading', { name: 'Customize' })).toBeTruthy();
     await screen.findAllByRole('button', { name: 'search' });
     const grid = screen.getByRole('list', { name: 'Regular icons' }).parentElement!;
-    // Default: 48px, drawn from the 48px artwork at its own 2px stroke.
-    expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
+    // Default: 32px, drawn from the 32px artwork at its own 1.5px stroke.
+    expect(grid.style.getPropertyValue('--glyph-size')).toBe('32px');
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
     expect(within(pane).getByText('Auto')).toBeTruthy();
     expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
@@ -559,11 +561,12 @@ describe('Side pane (desktop)', () => {
     // Auto at an optical size is its designed stroke.
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
 
+    fireEvent.change(within(pane).getByRole('slider', { name: 'Size' }), { target: { value: '48' } });
     await user.click(within(pane).getByRole('button', { name: /Reset to defaults/ }));
     expect(within(pane).queryByRole('button', { name: 'Reset to defaults' })).toBeNull();
     expect(document.activeElement).toBe(within(pane).getByRole('heading', { name: 'Customize' }));
     expect(grid.style.getPropertyValue('--stroke-scale')).toBe('1');
-    expect(grid.style.getPropertyValue('--glyph-size')).toBe('48px');
+    expect(grid.style.getPropertyValue('--glyph-size')).toBe('32px');
   });
 
   it('resizes with the keyboard, remembers the width, and resets', async () => {
@@ -617,7 +620,7 @@ describe('Side pane (desktop)', () => {
     await waitFor(() => expect((copy as HTMLButtonElement).disabled).toBe(false));
     expect(within(pane).getByRole('button', { name: 'Download SVG' })).toBeTruthy();
     await user.click(copy);
-    expect(await navigator.clipboard.readText()).toContain('width="48"');
+    expect(await navigator.clipboard.readText()).toContain('width="32"');
 
     await user.click(within(pane).getByRole('button', { name: 'Open code snippets' }));
     expect(document.getElementById('side-pane-body')!.hidden).toBe(false);
@@ -635,20 +638,20 @@ describe('Side pane (desktop)', () => {
     renderAt('/');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
-    // Strokes read in real pixels at the icon size: Auto at 48px is 2px.
-    expect(slider.getAttribute('aria-valuetext')).toBe('2px, automatic for this size');
+    // Strokes read in real pixels at the icon size: Auto at 32px is 1.5px.
+    expect(slider.getAttribute('aria-valuetext')).toBe('1.5px, automatic for this size');
     expect(within(pane).getByText(/1px at 16px, 1\.25px at 24px, 1\.5px at 32px, 2px at 48px, 2\.5px at 64px/)).toBeTruthy();
     fireEvent.change(slider, { target: { value: '2' } });
-    expect(slider.getAttribute('aria-valuetext')).toBe('4px');
+    expect(slider.getAttribute('aria-valuetext')).toBe('2.67px');
     expect(within(pane).getByText('Your stroke scales with the icon: 2px at 24px.')).toBeTruthy();
     await user.click((await screen.findAllByRole('button', { name: 'search' }))[0]);
     const preview = await within(pane).findByRole('img', { name: /search, Regular, preview/ });
-    // 2 grid units on the 48px artwork's own grid.
-    expect(preview.innerHTML).toContain('stroke-width="4"');
+    // 2 grid units on the 32px artwork's own grid.
+    expect(preview.innerHTML).toContain('stroke-width="2.667"');
     await user.click(within(pane).getByRole('button', { name: 'Code' }));
-    // Real pixels at 48px: the packages scale the 24px design (1.25 → 2.5px).
+    // Real pixels at 32px: the packages scale the 24px design.
     expect(within(pane).getByText(
-      'These examples scale the 24px design to 48px, with 2.5px lines. Download the SVG to keep the 48px design with 4px lines.',
+      'These examples scale the 24px design to 32px, with 1.67px lines. Download the SVG to keep the 32px design with 2.67px lines.',
     )).toBeTruthy();
   });
 });
@@ -773,14 +776,14 @@ describe('Inspector sections (desktop)', () => {
     await user.click(within(section).getByRole('tab', { name: 'Svelte' }));
     expect(code()).toMatch(/^<script lang="ts">/);
     expect(code()).toMatch(/import \{ SearchRegular \} from '@fos-icons\/svelte';/);
-    expect(code()).toContain('size={48}');
+    expect(code()).toContain('size={32}');
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
     expect(await navigator.clipboard.readText()).toBe(code());
     expect(localStorage.getItem('fos:code-tab')).toBe('svelte');
     const solid = within(section).getByRole('tab', { name: 'SolidJS' });
     await user.click(solid);
     expect(code()).toContain("import { SearchRegular } from '@fos-icons/solid';");
-    expect(code()).toContain('<SearchRegular size={48} />');
+    expect(code()).toContain('<SearchRegular size={32} />');
     expect(solid.getAttribute('aria-selected')).toBe('true');
     expect(section.querySelector('.code-block')!.getAttribute('data-lang')).toBe('tsx');
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
@@ -788,7 +791,7 @@ describe('Inspector sections (desktop)', () => {
     expect(localStorage.getItem('fos:code-tab')).toBe('solid');
     await user.click(within(section).getByRole('tab', { name: 'Angular' }));
     expect(code()).toContain("import { SearchRegular } from '@fos-icons/angular';");
-    expect(code()).toContain('<svg fos-search-regular [size]="48"></svg>');
+    expect(code()).toContain('<svg fos-search-regular [size]="32"></svg>');
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
     expect(await navigator.clipboard.readText()).toBe(code());
     expect(localStorage.getItem('fos:code-tab')).toBe('angular');

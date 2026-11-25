@@ -122,8 +122,7 @@ export default function PricingPage() {
       });
     return () => controller.abort();
   }, []);
-  /** Live billing shows the account panel only once it's needed; the sandbox always shows it to testers. */
-  const showAccount = available === true && (billingMode === 'sandbox' || !!session || !!chosen || returned);
+  const showAccount = available === true && (!!session || !!chosen || returned);
   const currency = (amount: number) => n(amount, {
     style: 'currency', currency: 'USD', maximumFractionDigits: 0, minimumFractionDigits: 0,
   });
@@ -150,8 +149,8 @@ export default function PricingPage() {
           {plans.map(({ id, highlights }) => (
             <article key={id} className={`pricing-plan pricing-plan--${id}`} aria-labelledby={`pricing-${id}`}>
               <div className="pricing-plan-name">
-                <PlanArtwork plan={id} />
                 <h3 id={`pricing-${id}`}>{t(`pricing.plan.${id}`)}</h3>
+                <PlanArtwork plan={id} />
               </div>
               <p className="pricing-price">
                 <span className="pricing-price-amount">

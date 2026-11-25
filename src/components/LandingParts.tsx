@@ -7,7 +7,7 @@ import { gridPreviewPath, iconKeywords, iconPath } from '../lib/icon-pages';
 import { DEFAULT_LOOK, gridVars } from '../lib/look';
 import { useTheme } from '../lib/theme';
 import { CodeBlock } from './CodeBlock';
-import { IconCardContent, iconCardClass, iconCardGlyphClass, iconGridClass } from './IconCard';
+import { IconCardContent, iconCardClass, iconCardGlyphClass } from './IconCard';
 import { Tag, useToast } from './ui';
 
 /** Shared pieces of the crawlable landing pages (icon, category, React/Vue/Figma). */
@@ -35,13 +35,12 @@ export function Glyph({ svg, idPrefix, className = 'size-6', label }: { svg?: st
  */
 export function IconLinkGrid({ icons }: { icons: IconEntry[] }) {
   return (
-    <ul className={iconGridClass}>
+    <ul className="icon-card-grid">
       {icons.map((icon) => (
         <li key={icon.name}>
           <LocalLink
             to={iconPath(icon.name)}
             aria-label={icon.name}
-            title={icon.name.length > 22 ? icon.name : undefined}
             className={iconCardClass()}
           >
             <IconCardContent name={icon.name}>

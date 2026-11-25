@@ -21,7 +21,7 @@ export interface Look {
 }
 
 export const DEFAULT_LOOK: Look = {
-  size: 48,
+  size: 32,
   strokeWidth: null,
   mono: null,
   paletteName: 'Ink',
@@ -100,7 +100,7 @@ const scaleText = (value: number) => String(Math.round(value * 10000) / 10000);
 /** Grid stroke scale for the artwork drawing this look (its own optical size). */
 const gridStrokeScale = (look: Look) => scaleText(strokeOf(look) / opticalStroke(artworkSize(look)));
 
-/** The optical size the default grid draws from (48px artwork at 48px). */
+/** The optical size the default grid draws from. */
 export const DEFAULT_ARTWORK_SIZE = artworkSize(DEFAULT_LOOK);
 
 /**
@@ -143,8 +143,6 @@ export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'co
   const r = resolveLook(look, theme);
   const vars: Record<string, string> = {
     '--glyph-size': `${Math.min(look.size, GRID_MAX_SIZE)}px`,
-    // Tall enough for the glyph plus a two-line name (only matters on desktop).
-    '--cell-min-h': `${Math.max(0, Math.min(look.size, GRID_MAX_SIZE) + 48)}px`,
     '--stroke-scale': strokeAdjustable(style, kind) ? gridStrokeScale(look) : '1',
   };
   if (isDuo(style)) {

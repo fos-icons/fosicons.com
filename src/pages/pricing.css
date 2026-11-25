@@ -4,7 +4,6 @@
   /* Advanced is the complete tier: a faint brand wash runs down its whole column. */
   --pricing-wash: color-mix(in oklab, var(--c-brand) 6%, var(--c-surface));
   --pricing-board-radius: 1.5rem;
-  --pricing-label: 36%;
   padding-block: 2rem var(--pricing-section);
 }
 
@@ -84,16 +83,17 @@
 .pricing-plan + .pricing-plan { border-block-start: 1px solid var(--c-line); }
 .pricing-plan--advanced { background: var(--pricing-wash); }
 
-/* Name row: the plan's calendar (one style, four styles, or with a modifier) beside its name */
+/* Name row: the plan's calendar sits at the far edge. */
 
 .pricing-plan-name {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.6rem;
   min-block-size: 1.75rem;
 }
 
-.pricing-specimen { display: flex; align-items: center; }
+.pricing-specimen { display: flex; flex: none; align-items: center; }
 .pricing-specimen-one { inline-size: 1.75rem; block-size: 1.75rem; }
 .pricing-specimen-styles { display: flex; align-items: center; gap: 0.25rem; }
 .pricing-specimen-styles .glyph { inline-size: 1.25rem; block-size: 1.25rem; }
@@ -134,18 +134,22 @@
 
 .pricing-action {
   display: flex;
+  flex-wrap: wrap;
+  align-content: start;
   align-items: center;
+  gap: 0.5rem;
   min-block-size: 2.75rem;
   margin-block-start: 1.25rem;
 }
 
-.pricing-action {
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
 .pricing-action a,
-.pricing-action button { min-block-size: 2.75rem; }
+.pricing-action button {
+  block-size: auto;
+  min-block-size: 2.75rem;
+  max-inline-size: 100%;
+  padding-block: 0.5rem;
+  white-space: normal;
+}
 
 .pricing-action-error {
   flex-basis: 100%;
@@ -303,8 +307,6 @@
 
 @media (min-width: 48rem) {
   .pricing-faq { grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: var(--pricing-gutter); }
-  .pricing-plan--free .pricing-price { padding-block-end: calc(0.8125rem * 1.5 + 0.25rem); }
-
   /* Medium: the lede heads the board, the plans share a row, the matrix keeps its headings. */
   .pricing-board-head { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
@@ -323,16 +325,28 @@
 
   .pricing-plan,
   .pricing-plan + .pricing-plan { border-block-start: 0; }
+  /* Share tracks for the name, price, summary, action, and highlights. */
+  .pricing-plan {
+    grid-row: 2 / span 5;
+    grid-template-rows: subgrid;
+  }
   .pricing-plan + .pricing-plan { border-inline-start: 1px solid var(--c-line); }
 
 }
 
 /* Wide: the lede and three plans share the matrix's columns. */
 @media (min-width: 72rem) {
+  .pricing-board {
+    container-type: inline-size;
+    /* Leave room for the longest plan button at its standard padding. */
+    --pricing-label: min(36cqi, calc(100cqi - 3 * (12.75rem + 2 * var(--pricing-gutter) + 1px)));
+  }
+
   .pricing-board-head { grid-template-columns: var(--pricing-label) repeat(3, minmax(0, 1fr)); }
 
   .pricing-lede {
-    grid-column: auto;
+    grid-column: 1;
+    grid-row: 1 / span 5;
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: auto auto 1fr;
     align-items: start;
@@ -342,6 +356,7 @@
 
   .pricing-lede h2 { grid-column: auto; }
   .pricing-launch { align-self: end; padding-block-start: 1.5rem; }
+  .pricing-plan { grid-row-start: 1; }
   .pricing-lede + .pricing-plan { border-inline-start: 1px solid var(--c-line); }
   .pricing-matrix-label { inline-size: var(--pricing-label); }
 

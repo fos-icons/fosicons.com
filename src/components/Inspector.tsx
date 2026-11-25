@@ -494,7 +494,7 @@ export function SidePane({
         aria-label={t('pane.label')}
         onKeyDown={(e) => { if (e.key === 'Escape' && !collapsed) { e.stopPropagation(); onDismiss(); } }}
         style={{ width: collapsed ? undefined : width }}
-        className={`sticky top-0 flex h-dvh shrink-0 flex-col overflow-hidden border-l border-line bg-surface ${
+        className={`sticky top-[var(--inspector-top,0px)] flex h-[calc(100dvh-var(--inspector-top,0px))] shrink-0 flex-col overflow-hidden border-l border-line bg-surface ${
           resizing ? '' : 'transition-[width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
         } ${collapsed ? 'w-14' : ''}`}
       >
