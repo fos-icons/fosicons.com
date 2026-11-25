@@ -77,12 +77,18 @@ describe('animated icon pages', () => {
     const user = userEvent.setup();
     renderAs('free', '/icons/download');
     expect(screen.getByText('Download Regular SVG')).toBeTruthy();
+    expect(screen.getByText('The download icon comes in five styles. Regular is free.')).toBeTruthy();
+    const sizes = () => within(screen.getByRole('list', { name: 'Actual size' })).getAllByRole('listitem');
+    expect(sizes().map((sample) => sample.textContent)).toEqual(['16', '20', '24', '32', '48']);
+    await waitFor(() => expect(sizes()[4].querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 48 48'));
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/animated.json?'))).toBe(false);
 
     await user.click(screen.getByRole('radio', { name: 'Animated' }));
     expect((await screen.findByRole('img', { name: 'Download icon, Animated style' })).querySelector('.fa-download style')).not.toBeNull();
+    expect(sizes().every((sample) => sample.querySelector('svg.fa-download'))).toBe(true);
     await user.click(screen.getByRole('button', { name: 'Pause animation' }));
     expect(screen.getByRole('button', { name: 'Play animation' })).toBeTruthy();
+    expect(sizes()[0].closest('.animated-preview')?.hasAttribute('data-paused')).toBe(true);
     expect(screen.queryByText('Download Regular SVG')).toBeNull();
     expect(screen.getByRole('link', { name: 'Customize animation' }).getAttribute('href')).toBe('/icons/download?view=editor&style=animated');
     expect(screen.getByText('Copy and download animated icons with Advanced.', { exact: false })).toBeTruthy();
@@ -101,6 +107,7 @@ describe('animated icon pages', () => {
 
   it('keeps an icon without animated artwork in Regular, even with an Animated URL', () => {
     renderAs(null, '/icons/accordion?style=animated');
+    expect(screen.getByText('The accordion icon comes in four styles. Regular is free.')).toBeTruthy();
     expect(screen.queryByRole('radio', { name: 'Animated' })).toBeNull();
     expect(screen.getByRole('img', { name: 'Accordion icon, Regular style' })).toBeTruthy();
   });
