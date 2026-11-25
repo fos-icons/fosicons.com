@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useActiveSection } from '../hooks/useActiveSection';
 import { Breadcrumbs, CopyCode, LandingSection } from '../components/LandingParts';
@@ -57,26 +57,114 @@ function Points({ items }: { items: ReactNode[] }) {
   );
 }
 
-/** The right-hand "On this page" list: every setup card, then the reference sections. */
-export const PAGE_SECTIONS: { id: string; label: string; install?: boolean }[] = [
-  { id: 'claude-code', label: 'Claude Code', install: true },
-  { id: 'codex', label: 'Codex', install: true },
-  { id: 'chatgpt', label: 'ChatGPT', install: true },
-  { id: 'cursor', label: 'Cursor', install: true },
-  { id: 'vscode', label: 'VS Code', install: true },
-  { id: 'other', label: 'Any MCP client', install: true },
-  { id: 'skills', label: 'Agent Skills', install: true },
-  { id: 'rules', label: 'Cursor rule', install: true },
+/** Numbered setup steps, joined by a dotted line. */
+function Steps({ items }: { items: ReactNode[] }) {
+  return (
+    <ol className="grid gap-6">
+      {items.map((item, i) => (
+        <li key={i} className="relative grid grid-cols-[2rem_minmax(0,1fr)] gap-3 sm:gap-4">
+          {i < items.length - 1 && (
+            <span aria-hidden="true" className="absolute bottom-[-1.5rem] left-4 top-9 border-l border-dashed border-line-strong" />
+          )}
+          <span aria-hidden="true" className="flex size-8 items-center justify-center rounded-full border border-line-strong text-sm font-medium tabular-nums text-ink">
+            {i + 1}
+          </span>
+          <div className="flex min-w-0 flex-col gap-3 pt-1 text-sm leading-relaxed">{item}</div>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/**
+ * The agents as tabs (WAI-ARIA tabs: arrow keys, Home and End move between
+ * them). Every panel is in the page, hidden but for the chosen one, so the
+ * prerendered HTML still carries each agent's instructions.
+ */
+function AgentTabs({ chosen, onChoose, panels }: {
+  chosen: AgentId;
+  onChoose: (id: AgentId) => void;
+  panels: Record<AgentId, ReactNode>;
+}) {
+  const uid = useId();
+  const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const index = AGENTS.findIndex((agent) => agent.id === chosen);
+  const select = (i: number) => {
+    onChoose(AGENTS[i].id);
+    refs.current[i]?.focus();
+  };
+  const onKeyDown = (e: KeyboardEvent) => {
+    const next = { ArrowRight: index + 1, ArrowLeft: index - 1, Home: 0, End: AGENTS.length - 1 }[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    select((next + AGENTS.length) % AGENTS.length);
+  };
+  return (
+    <div className="max-w-4xl rounded-2xl border border-line bg-sunken p-1.5">
+      <div role="tablist" aria-label="Your agent" onKeyDown={onKeyDown} className="flex flex-wrap gap-1 p-0.5">
+        {AGENTS.map((agent, i) => (
+          <button
+            key={agent.id}
+            ref={(el) => { refs.current[i] = el; }}
+            type="button"
+            role="tab"
+            id={`${uid}-${agent.id}-tab`}
+            aria-selected={i === index}
+            aria-controls={`${uid}-${agent.id}`}
+            tabIndex={i === index ? 0 : -1}
+            onClick={() => select(i)}
+            className={`min-h-10 shrink-0 rounded-xl px-3.5 text-sm font-medium transition ${
+              i === index ? 'bg-surface text-ink shadow-sm ring-1 ring-line' : 'text-muted hover:text-ink'
+            }`}
+          >
+            {agent.label}
+          </button>
+        ))}
+      </div>
+      {AGENTS.map((agent) => (
+        <div
+          key={agent.id}
+          role="tabpanel"
+          id={`${uid}-${agent.id}`}
+          aria-labelledby={`${uid}-${agent.id}-tab`}
+          hidden={agent.id !== chosen}
+          tabIndex={0}
+          className="mt-1.5 rounded-xl border border-line bg-surface px-3 py-5 sm:p-8"
+        >
+          {panels[agent.id]}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** The right-hand "On this page" list. */
+export const PAGE_SECTIONS: { id: string; label: string }[] = [
+  { id: 'clients', label: 'Install' },
+  { id: 'skills', label: 'Skills and rules' },
   { id: 'tools', label: 'Tools' },
   { id: 'try', label: 'Try asking' },
   { id: 'faq', label: 'Questions' },
 ];
+/** One tab per agent in the Install card; a link to #<id> opens that tab. */
+export const AGENTS = [
+  { id: 'claude-code', label: 'Claude Code' },
+  { id: 'codex', label: 'Codex' },
+  { id: 'chatgpt', label: 'ChatGPT' },
+  { id: 'cursor', label: 'Cursor' },
+  { id: 'vscode', label: 'VS Code' },
+  { id: 'other', label: 'Other' },
+] as const;
+export type AgentId = (typeof AGENTS)[number]['id'];
+const isAgent = (id: string): id is AgentId => AGENTS.some((agent) => agent.id === id);
+/** Older links pointed at the cards that are now in "Skills and rules". */
+const SECTION_ALIASES: Record<string, string> = { rules: 'skills' };
 const SECTION_IDS = PAGE_SECTIONS.map(({ id }) => id);
 
 function PageContents({ active, onChoose }: { active: string; onChoose: (id: string) => void }) {
   const listId = useId();
   const [open, setOpen] = useState(false);
-  const item = (id: string, label: string, nested = false) => (
+  const item = (id: string, label: string) => (
     <li key={id}>
       <a
         href={`#${id}`}
@@ -87,7 +175,7 @@ function PageContents({ active, onChoose }: { active: string; onChoose: (id: str
           onChoose(id);
           setOpen(false);
         }}
-        className={`flex min-h-11 items-center rounded-md px-2 text-sm lg:min-h-8 ${nested ? 'ml-3' : ''} ${active === id ? 'bg-brand-soft font-medium text-brand' : 'text-muted hover:bg-sunken hover:text-ink'}`}
+        className={`flex min-h-11 items-center rounded-md px-2 text-sm lg:min-h-8 ${active === id ? 'bg-brand-soft font-medium text-brand' : 'text-muted hover:bg-sunken hover:text-ink'}`}
       >
         {label}
       </a>
@@ -108,12 +196,8 @@ function PageContents({ active, onChoose }: { active: string; onChoose: (id: str
         </button>
         <div id={listId} className={`${open ? 'block' : 'hidden'} pt-2 lg:block lg:pt-0`}>
           <p aria-hidden="true" className="mb-2 hidden pl-2 text-xs font-semibold uppercase tracking-[0.08em] text-muted lg:block">On this page</p>
-          <p className="px-2 py-1 text-sm font-medium text-ink">Install</p>
-          <ul className="space-y-0.5 pb-2">
-            {PAGE_SECTIONS.filter((s) => s.install).map(({ id, label }) => item(id, label, true))}
-          </ul>
-          <ul className="space-y-0.5 border-t border-line pt-2">
-            {PAGE_SECTIONS.filter((s) => !s.install).map(({ id, label }) => item(id, label))}
+          <ul className="space-y-0.5">
+            {PAGE_SECTIONS.map(({ id, label }) => item(id, label))}
           </ul>
         </div>
       </nav>
@@ -166,21 +250,87 @@ export default function AiAgentsPage() {
   const landed = useRef(false);
   const [active, setActive] = useActiveSection(SECTION_IDS);
   const [missed, watchOpen] = useOpenCheck();
-  // A link to a card (#codex) lands after the page renders, so scroll here.
+  const [agent, setAgent] = useState<AgentId>('claude-code');
+  /** A link to an agent (#codex) opens its tab in the Install card. */
+  const sectionFor = (id: string) => (isAgent(id) ? 'clients' : SECTION_ALIASES[id] ?? id);
+  // A link to a section lands after the page renders, so scroll here.
   useEffect(() => {
     const id = decodeURIComponent(hash.slice(1));
     if (!id) { landed.current = true; return; }
-    if (SECTION_IDS.includes(id)) setActive(id);
-    scrollToSection(id, landed.current);
+    if (isAgent(id)) setAgent(id);
+    const section = sectionFor(id);
+    if (SECTION_IDS.includes(section)) setActive(section);
+    scrollToSection(section, landed.current);
     landed.current = true;
   }, [hash, setActive]);
   const choose = (id: string) => {
     if (`#${id}` !== hash) {
       navigate({ hash: `#${id}` }, { replace: true, preventScrollReset: true });
     } else {
-      setActive(id);
-      scrollToSection(id);
+      if (isAgent(id)) setAgent(id);
+      setActive(sectionFor(id));
+      scrollToSection(sectionFor(id));
     }
+  };
+  const ask = (prompt: string) => <p>Ask your agent <strong className="font-medium text-ink">“{prompt}”</strong></p>;
+  const serverOnly = (command: string) => (
+    <>
+      <Note>Only want the server?</Note>
+      <CopyCode lang="sh" what="Server-only command" code={command} />
+    </>
+  );
+
+  const panels: Record<AgentId, ReactNode> = {
+    'claude-code': <Steps items={[
+      <>
+        <p>Run these in Claude Code. The plugin adds the MCP server and two skills: one for using the icons, one for switching a project from another icon library.</p>
+        <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />
+        {serverOnly(`claude mcp add --transport http ${SERVER} ${MCP_URL}`)}
+      </>,
+      ask('Use Fos Icons to add a settings icon to the navbar.'),
+    ]} />,
+    codex: <Steps items={[
+      <>
+        <p>Run these in a terminal. The plugin bundles the server and the skills.</p>
+        <CopyCode lang="sh" what="Codex plugin commands" code={'codex plugin marketplace add fos-icons/fos-icons\ncodex plugin add fos-icons@fos-icons'} />
+        {serverOnly(`codex mcp add ${SERVER} --url ${MCP_URL}`)}
+      </>,
+      ask('Use Fos Icons to add a settings icon to the navbar.'),
+    ]} />,
+    chatgpt: <Steps items={[
+      <p>On a paid plan, turn on developer mode in Settings → Apps → Advanced settings. A listing in the ChatGPT app directory is on the way.</p>,
+      <>
+        <p>Create an app and paste this URL, with no authentication.</p>
+        <CopyCode lang="text" what="MCP server URL" code={MCP_URL} />
+      </>,
+      ask('Which Fos icons would work for an empty inbox state?'),
+    ]} />,
+    cursor: <Steps items={[
+      <>
+        <p>Add the server in one click, or paste this into {code('.cursor/mcp.json')} ({code('~/.cursor/mcp.json')} for every project).</p>
+        <div><ButtonAnchor href={CURSOR_INSTALL} onClick={() => watchOpen('cursor')} variant="primary">Add to Cursor</ButtonAnchor></div>
+        <CopyCode lang="json" what="Cursor MCP config" code={JSON.stringify({ mcpServers: { [SERVER]: { url: MCP_URL } } }, null, 2)} />
+      </>,
+      ask('Use Fos Icons to add a settings icon to the navbar.'),
+    ]} />,
+    vscode: <Steps items={[
+      <>
+        <p>Add the server in one click, or paste this into {code('.vscode/mcp.json')}.</p>
+        <div><ButtonAnchor href={VSCODE_INSTALL} onClick={() => watchOpen('vscode')} variant="primary">Add to VS Code</ButtonAnchor></div>
+        <CopyCode lang="json" what="VS Code MCP config" code={JSON.stringify({ servers: { [SERVER]: { type: 'http', url: MCP_URL } } }, null, 2)} />
+      </>,
+      <>
+        <p>Open Copilot Chat in agent mode.</p>
+        {ask('Use Fos Icons to add a settings icon to the navbar.')}
+      </>,
+    ]} />,
+    other: <Steps items={[
+      <>
+        <p>Windsurf, Zed, Gemini CLI, Cline, and any other MCP client: add a remote server with the Streamable HTTP transport and no authentication.</p>
+        <CopyCode lang="text" what="MCP server URL" code={MCP_URL} />
+      </>,
+      ask('Use Fos Icons to add a settings icon to the navbar.'),
+    ]} />,
   };
 
   const faq: [string, ReactNode][] = [
@@ -204,7 +354,7 @@ export default function AiAgentsPage() {
       <div className="mt-6 flex flex-wrap gap-2">
         <ButtonAnchor href={CURSOR_INSTALL} onClick={() => watchOpen('cursor')} variant="primary" size="lg">Add to Cursor</ButtonAnchor>
         <ButtonAnchor href={VSCODE_INSTALL} onClick={() => watchOpen('vscode')} size="lg">Add to VS Code</ButtonAnchor>
-        <ButtonAnchor href="#clients" onClick={(event) => { event.preventDefault(); choose('claude-code'); }} size="lg">Other agents</ButtonAnchor>
+        <ButtonAnchor href="#clients" onClick={(event) => { event.preventDefault(); choose('clients'); }} size="lg">Other agents</ButtonAnchor>
       </div>
       <p id="install-status" role="status" className="mt-3 min-h-5 text-sm text-muted">
         {missed && (<>
@@ -217,44 +367,23 @@ export default function AiAgentsPage() {
       <PageContents active={active} onChoose={choose} />
       <div className="min-w-0 lg:col-start-1 lg:row-start-1">
       <LandingSection id="clients" title="Install">
+        <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">Pick your agent. Free, with no account or key.</p>
+        <AgentTabs chosen={agent} onChoose={setAgent} panels={panels} />
+        <p className="mt-4 text-sm text-muted">
+          Stuck, or building your own client? Read the <LocalLink to="/docs#ai-agents" className={link}>docs</LocalLink>.
+        </p>
+      </LandingSection>
+
+      <LandingSection id="skills" title="Skills and rules" className="mt-12">
         <div className="grid max-w-4xl gap-8">
-          <Client id="claude-code" title="Claude Code">
-            <Note>The plugin adds the MCP server and two skills: one for using the icons, one for switching a project from another icon library. Run these in Claude Code:</Note>
-            <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />
-            <Note>Only want the server? {code(`claude mcp add --transport http ${SERVER} ${MCP_URL}`)}</Note>
-          </Client>
-          <Client id="codex" title="Codex">
-            <Note>The plugin bundles the server and the skills:</Note>
-            <CopyCode lang="sh" what="Codex plugin commands" code={'codex plugin marketplace add fos-icons/fos-icons\ncodex plugin add fos-icons@fos-icons'} />
-            <Note>Server only: {code(`codex mcp add ${SERVER} --url ${MCP_URL}`)}</Note>
-          </Client>
-          <Client id="chatgpt" title="ChatGPT">
-            <Note>
-              A listing in the ChatGPT app directory is on the way. Until then, on a paid plan, turn on developer mode
-              (Settings → Apps → Advanced settings), create an app, and paste this URL with no authentication:
-            </Note>
-            <CopyCode lang="text" what="MCP server URL" code={MCP_URL} />
-          </Client>
-          <Client id="cursor" title="Cursor">
-            <Note>Use the one-click install above, or add this to {code('.cursor/mcp.json')} (or {code('~/.cursor/mcp.json')} for every project):</Note>
-            <CopyCode lang="json" what="Cursor MCP config" code={JSON.stringify({ mcpServers: { [SERVER]: { url: MCP_URL } } }, null, 2)} />
-          </Client>
-          <Client id="vscode" title="VS Code">
-            <Note>Use the one-click install above, or add this to {code('.vscode/mcp.json')}, then use it from Copilot Chat in agent mode:</Note>
-            <CopyCode lang="json" what="VS Code MCP config" code={JSON.stringify({ servers: { [SERVER]: { type: 'http', url: MCP_URL } } }, null, 2)} />
-          </Client>
-          <Client id="other" title="Any MCP client">
-            <Note>Windsurf, Zed, Gemini CLI, Cline, and others: add a remote server with the Streamable HTTP transport and no authentication.</Note>
-            <CopyCode lang="text" what="MCP server URL" code={MCP_URL} />
-          </Client>
-          <Client id="skills" title="Agent Skills">
+          <Client id="agent-skills" title="Agent Skills">
             <Note>
               The skills work in any agent that reads {code('SKILL.md')} files, with or without the server. Install them into
               your project with the skills CLI, or copy them from {external(`${LIBRARY_URL}/tree/main/skills`, 'GitHub')}:
             </Note>
             <CopyCode lang="sh" what="Skills install command" code={'npx skills add fos-icons/fos-icons'} />
           </Client>
-          <Client id="rules" title="Cursor rule">
+          <Client id="cursor-rule" title="Cursor rule">
             <Note>
               For agents without MCP, a rule file teaches the naming scheme and the packages. Save{' '}
               {external(`${LIBRARY_URL}/blob/main/plugins/cursor/fos-icons.mdc`, 'fos-icons.mdc')} in {code('.cursor/rules/')}.

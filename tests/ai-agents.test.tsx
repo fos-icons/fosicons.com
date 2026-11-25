@@ -3,12 +3,12 @@ import { MemoryRouter } from 'react-router-dom';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { handleMcp } from '../api/mcp';
 import { ToastProvider } from '../src/components/ui';
-import AiAgentsPage, { AGENT_TOOLS, CURSOR_INSTALL, MCP_URL, PAGE_SECTIONS, VSCODE_INSTALL } from '../src/pages/AiAgentsPage';
+import AiAgentsPage, { AGENT_TOOLS, AGENTS, CURSOR_INSTALL, MCP_URL, PAGE_SECTIONS, VSCODE_INSTALL } from '../src/pages/AiAgentsPage';
 import { pageFor } from '../src/lib/seo';
 
 afterEach(() => { cleanup(); vi.useRealTimers(); vi.restoreAllMocks(); });
 
-const renderPage = () => render(<ToastProvider><MemoryRouter><AiAgentsPage /></MemoryRouter></ToastProvider>);
+const renderPage = (url = '/ai-agents') => render(<ToastProvider><MemoryRouter initialEntries={[url]}><AiAgentsPage /></MemoryRouter></ToastProvider>);
 
 describe('AI agents page', () => {
   it('is a routed page with metadata that fits search results', () => {
@@ -28,15 +28,36 @@ describe('AI agents page', () => {
     expect(MCP_URL).toBe('https://www.fosicons.com/mcp');
   });
 
-  it('shows a card for each client and links the install buttons', () => {
+  it('shows a tab for each agent, Claude Code first, and links the install buttons', () => {
     renderPage();
-    for (const name of ['Claude Code', 'Codex', 'ChatGPT', 'Cursor', 'VS Code', 'Any MCP client', 'Agent Skills', 'Cursor rule']) {
-      expect(screen.getByRole('region', { name })).toBeTruthy();
-    }
+    const tabs = within(screen.getByRole('tablist', { name: 'Your agent' })).getAllByRole('tab');
+    expect(tabs.map((tab) => tab.textContent)).toEqual(AGENTS.map(({ label }) => label));
+    expect(tabs[0].getAttribute('aria-selected')).toBe('true');
+    const panel = screen.getByRole('tabpanel');
+    expect(panel.getAttribute('aria-labelledby')).toBe(tabs[0].id);
+    expect(within(panel).getByText(/\/plugin install fos-icons@fos-icons/)).toBeTruthy();
+    // Every agent's steps are in the page (for the prerender), one shown at a time.
+    expect(document.querySelectorAll('[role="tabpanel"]').length).toBe(AGENTS.length);
+    for (const name of ['Agent Skills', 'Cursor rule']) expect(screen.getByRole('region', { name })).toBeTruthy();
     expect(screen.getByRole('link', { name: 'Add to Cursor' }).getAttribute('href')).toBe(CURSOR_INSTALL);
     expect(screen.getByRole('link', { name: 'Add to VS Code' }).getAttribute('href')).toBe(VSCODE_INSTALL);
-    const claude = within(screen.getByRole('region', { name: 'Claude Code' }));
-    expect(claude.getByText(/\/plugin install fos-icons@fos-icons/)).toBeTruthy();
+  });
+
+  it('switches agents by click and by arrow keys', () => {
+    renderPage();
+    fireEvent.click(screen.getByRole('tab', { name: 'Codex' }));
+    expect(within(screen.getByRole('tabpanel')).getByText(/codex plugin add fos-icons@fos-icons/)).toBeTruthy();
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Codex' }), { key: 'ArrowRight' });
+    expect(screen.getByRole('tab', { name: 'ChatGPT' }).getAttribute('aria-selected')).toBe('true');
+    expect(document.activeElement).toBe(screen.getByRole('tab', { name: 'ChatGPT' }));
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'ChatGPT' }), { key: 'End' });
+    expect(screen.getByRole('tab', { name: 'Other' }).getAttribute('aria-selected')).toBe('true');
+  });
+
+  it('opens the tab a link names (#codex)', () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    renderPage('/ai-agents#codex');
+    expect(screen.getByRole('tab', { name: 'Codex' }).getAttribute('aria-selected')).toBe('true');
   });
 
   it('documents exactly the tools the server registers', async () => {
@@ -75,9 +96,9 @@ describe('AI agents page navigation', () => {
       expect(nav.getByRole('link', { name: label }).getAttribute('href')).toBe(`#${id}`);
       expect(document.getElementById(id)).not.toBeNull();
     }
-    fireEvent.click(nav.getByRole('link', { name: 'Cursor' }));
+    fireEvent.click(nav.getByRole('link', { name: 'Tools' }));
     expect(scroll).toHaveBeenLastCalledWith({ behavior: 'smooth' });
-    expect(nav.getByRole('link', { name: 'Cursor' }).getAttribute('aria-current')).toBe('location');
+    expect(nav.getByRole('link', { name: 'Tools' }).getAttribute('aria-current')).toBe('location');
   });
 
   it('says when an editor did not open and points to the manual steps', () => {
