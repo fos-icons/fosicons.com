@@ -27,7 +27,7 @@ const en = {
   'meta.brands.description': '{brands} brand logos, including social networks, Google Chrome, and Microsoft Edge, Teams, and Windows, shown as their owners provide them. Not covered by the {license} license.',
   'meta.notFound.title': 'Page not found — Fos Icons',
   'meta.notFound.description': 'That page does not exist. Browse Fos Icons instead.',
-  'meta.library.description': '{icons}+ open-source SVG icons in {styles}, drawn at five optical sizes from 16 to 64px, with {modifiers} reusable modifiers and the {flutterPackage} package for Flutter.',
+  'meta.library.description': '{icons}+ open-source SVG icons in {styles}, drawn at five optical sizes from 16 to 64px, plus {animated} animated SVG icons, with {modifiers} reusable modifiers and the {flutterPackage} package for Flutter.',
   'meta.icon.title': '{name} Icon — Free SVG Downloads | Fos Icons',
   'meta.icon.titleShort': '{name} Icon — Free SVG | Fos Icons',
   'meta.icon.titleShortest': '{name} Icon | Fos Icons',

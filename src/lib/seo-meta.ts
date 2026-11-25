@@ -29,6 +29,8 @@ export const facts = {
   styles: catalog.styles.map((s) => STYLE_META[s].label),
   categories: catalog.categories,
   modifiers: Object.keys(catalog.modifiers).length,
+  /** Curated animated icons: Regular artwork with a CSS animation inside the SVG. */
+  animated: catalog.animated.length,
   brands: brands.approved.length,
   license: catalog.license,
 };
@@ -226,13 +228,14 @@ export function structuredData(page: PageMeta, i18n: I18n = createI18n(DEFAULT_L
         styles: i18n.list(catalog.styles.map((s) => i18n.t(`style.${s}`))),
         modifiers: facts.modifiers,
         flutterPackage: FLUTTER_PACKAGE.name,
+        animated: facts.animated,
       }),
       codeRepository: LIBRARY_URL,
       programmingLanguage: ['SVG', 'TypeScript', 'Dart'],
       license: 'https://opensource.org/licenses/MIT',
       isAccessibleForFree: true,
       author: { '@id': `${SITE_URL}/#organization` },
-      keywords: ['icons', 'SVG icons', 'icon library', ...platformKeywords, ...facts.styles.map((s) => `${s.toLowerCase()} icons`)].join(', '),
+      keywords: ['icons', 'SVG icons', 'icon library', ...platformKeywords, ...facts.styles.map((s) => `${s.toLowerCase()} icons`), 'animated icons', 'animated SVG icons'].join(', '),
     });
   } else if (!page.noindex) {
     const crumbs: [string, string][] = [[SITE_NAME, pageUrl(home, lang)]];
