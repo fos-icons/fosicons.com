@@ -89,6 +89,10 @@ try {
       }, storage);
       const page = await context.newPage();
       const problems = [];
+      let requestedCatalog = false;
+      page.on('request', (request) => {
+        if (/^\/assets\/catalog-data-[\w-]+\.js$/.test(new URL(request.url()).pathname)) requestedCatalog = true;
+      });
       page.on('console', (message) => { if (MISMATCH.test(message.text())) problems.push(message.text()); });
       page.on('pageerror', (error) => { if (MISMATCH.test(error.message)) problems.push(error.message); });
       // Remember a prerendered element, to confirm hydration kept the DOM.
@@ -104,6 +108,10 @@ try {
       }));
       if (!state.stamped) problems.push('The page is not stamped as prerendered, so it does not hydrate.');
       else if (!state.kept) problems.push('The prerendered DOM was replaced instead of hydrated.');
+      const needsCatalog = route === '/' || route === '/brands' || /^\/(icons|categories)\//.test(route);
+      if (requestedCatalog !== needsCatalog) {
+        problems.push(needsCatalog ? 'The full catalog was not requested.' : 'The route unnecessarily requested the full catalog.');
+      }
       console.log(`${problems.length ? '✗' : '✓'} ${route} (${visitor})`);
       if (problems.length) failures.push({ route, visitor, problems });
       await context.close();

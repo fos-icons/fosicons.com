@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useI18n } from '../i18n';
 import { ButtonLink, Chip, UiIcon, type UiIconName } from '../components/ui';
-import { catalog, ICONS_ROUNDED } from '../lib/catalog';
+import { catalogMeta as catalog, ICONS_ROUNDED } from '../lib/catalog-meta';
 import { CONTAINER } from '../lib/layout';
 import { categoryPath } from '../lib/icon-pages';
 

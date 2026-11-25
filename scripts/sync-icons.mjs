@@ -38,8 +38,47 @@ const BRAND_META = {
   'social/x.svg': { aliases: ['twitter'] },
 };
 
-/** Icons per artwork chunk. Must match ICON_CHUNK in src/lib/catalog.ts. */
+/** Icons per artwork chunk. Must match ICON_CHUNK in src/lib/artwork-files.ts. */
 export const ICON_CHUNK = 96;
+
+const POPULAR = [
+  'home', 'search', 'settings', 'user', 'bell', 'calendar', 'mail', 'heart', 'star', 'camera',
+  'trash', 'edit', 'download', 'upload', 'share', 'lock', 'cart', 'chat', 'map', 'clock',
+  'image', 'folder', 'phone', 'globe', 'sparkles', 'link', 'filter', 'bookmark',
+];
+
+/** The app shell and sample pages need facts and a few icons, not the searchable catalog. */
+export function catalogMetadata({ icons, animated = [], ...metadata }, brandNames = []) {
+  const byName = new Map(icons.map((icon, index) => [icon.name, { icon, index }]));
+  const popular = POPULAR.filter((name) => {
+    const entry = byName.get(name);
+    return entry && !entry.icon.composition;
+  });
+  for (const category of metadata.categories) {
+    if (popular.length >= 24) break;
+    const first = icons.find((icon) => icon.category === category.name && !icon.composition && !popular.includes(icon.name));
+    if (first) popular.push(first.name);
+  }
+  const examples = popular.slice(0, 24);
+  const sampleChunks = Object.fromEntries([...new Set([...examples, 'calendar', 'calendar-add'])].flatMap((name) => {
+    const entry = byName.get(name);
+    return entry ? [[name, Math.floor(entry.index / ICON_CHUNK)]] : [];
+  }));
+  const compositions = icons.flatMap(({ composition }) => composition ? [composition] : []);
+  return {
+    ...metadata,
+    animated,
+    iconCount: icons.length,
+    examples,
+    sampleChunks,
+    brandNameCollisions: brandNames.filter((name) => byName.has(name)),
+    compositions: {
+      count: compositions.length,
+      bases: new Set(compositions.map(({ base }) => base)).size,
+      modifiers: new Set(compositions.flatMap(({ modifiers }) => modifiers.map(({ name }) => name))).size,
+    },
+  };
+}
 
 const sha256 = (data) => createHash('sha256').update(data).digest('hex');
 const json = (value) => JSON.stringify(value, null, 2) + '\n';
@@ -277,7 +316,7 @@ export function buildOutputs(source) {
     snapshotSha256: snapshotDigests,
   };
 
-  outputs['src/data/catalog.json'] = json({
+  const catalog = {
     license: manifest.license,
     grid: manifest.grid,
     strokeWidth: manifest.regularStrokeWidth,
@@ -289,7 +328,9 @@ export function buildOutputs(source) {
     modifiers: modifierLabels,
     icons: catalogIcons,
     animated: animatedNames,
-  });
+  };
+  outputs['src/data/catalog.json'] = json(catalog);
+  outputs['src/data/catalog-meta.json'] = json(catalogMetadata(catalog, brandEntries.map(({ name }) => name)));
   outputs['src/data/palettes.json'] = json({
     defaultPalette: colors.defaultPalette,
     palettes: colors.palettes.map(({ name, light, dark }) => ({ name, light, dark })),

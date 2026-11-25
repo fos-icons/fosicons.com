@@ -4,7 +4,7 @@ import { useActiveSection } from '../hooks/useActiveSection';
 import { Breadcrumbs, CopyCode, LandingSection } from '../components/LandingParts';
 import { ButtonAnchor, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';
-import { catalog, ICONS_ROUNDED } from '../lib/catalog';
+import { catalogMeta as catalog, ICONS_ROUNDED } from '../lib/catalog-meta';
 import { CONTAINER } from '../lib/layout';
 import { LIBRARY_URL } from '../lib/links';
 

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useArtwork } from '../lib/artwork';
-import { catalog, iconsByName, type StyleId } from '../lib/catalog';
+import { catalog, chunksFor, iconsByName, type StyleId } from '../lib/catalog';
 import uiIcons from '../data/ui-icons.json';
 import { Glyph, IconLinkGrid, useStyleVars } from './LandingParts';
 import { UiIcon, type UiIconName } from './ui';
@@ -18,7 +18,7 @@ type Story = StoryObj<typeof meta>;
 export const LinkGrid: Story = {};
 
 function StyleRow({ style }: { style: StyleId }) {
-  const svg = useArtwork(style, ['annotation']).annotation;
+  const svg = useArtwork(style, ['annotation'], chunksFor).annotation;
   return (
     <div className="flex items-end gap-6" style={useStyleVars(style)}>
       <span className="w-20 text-sm text-muted">{style}</span>

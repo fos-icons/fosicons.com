@@ -1,15 +1,15 @@
-import { lazyPage } from './lib/lazy-page';
+import { use } from 'react';
+import { lazyPage, loadPage } from './lib/lazy-page';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
-import { DEFAULT_LOCALE, I18nProvider, localizePath, useI18n, type Translation } from './i18n';
+import { DEFAULT_LOCALE, I18nProvider, localizePath, type Translation } from './i18n';
 import { docsPageFor } from './i18n/content';
-import { catalog } from './lib/catalog';
+import { catalogMeta } from './lib/catalog-meta';
 import { STYLE_PATHS } from './lib/icon-pages';
 import { PlanProvider } from './lib/plan';
 import { ThemeProvider } from './lib/theme';
-import { isCatalogEditor, legacyCatalogDestination } from './lib/catalog-location';
-import { IconsPage } from './pages/IconsPage';
+import { isCatalogEditor, type CatalogLocation } from './lib/catalog-routing';
 import NotFoundPage from './pages/NotFoundPage';
 // The prerenderer reuses the app shell's styles before lazy routes load.
 import './pages/pricing.css';
@@ -20,13 +20,22 @@ const FrameworkPage = lazyPage(() => import('./pages/FrameworkPage'));
 const IconPage = lazyPage(() => import('./pages/IconPage'));
 const PricingPage = lazyPage(() => import('./pages/PricingPage'));
 const StylePage = lazyPage(() => import('./pages/StylePage'));
+let editorModule: typeof import('./pages/IconsPage') | undefined;
+let pendingEditor: Promise<typeof import('./pages/IconsPage')> | undefined;
+const loadEditor = () => pendingEditor ??= loadPage(() => import('./pages/IconsPage')).then((module) => (editorModule = module));
+
+export function preloadCatalogEditor(location: CatalogLocation) {
+  return isCatalogEditor(location) ? loadEditor() : undefined;
+}
+
+function CatalogEditor() {
+  const { default: Editor } = editorModule ?? use(loadEditor());
+  return <Editor />;
+}
 
 function CatalogRoute({ page }: { page: 'home' | 'brands' | 'category' | 'icon' }) {
   const location = useLocation();
-  const { path } = useI18n();
-  const legacy = page === 'home' ? legacyCatalogDestination(location.search) : null;
-  if (legacy) return <Navigate to={`${path(legacy)}${location.hash}`} replace />;
-  if (page === 'home' || page === 'brands' || isCatalogEditor(location)) return <IconsPage />;
+  if (page === 'home' || page === 'brands' || isCatalogEditor(location)) return <CatalogEditor />;
   return page === 'category' ? <CategoryPage /> : <IconPage />;
 }
 
@@ -60,7 +69,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 <Route path="vue-icons" element={<FrameworkPage framework="vue" />} />
                 <Route path="figma-icons" element={<FrameworkPage framework="figma" />} />
                 <Route path="ai-agents" element={<AiAgentsPage />} />
-                {catalog.styles.map((style) => (
+                {catalogMeta.styles.map((style) => (
                   <Route key={style} path={STYLE_PATHS[style].slice(1)} element={<StylePage key={style} style={style} />} />
                 ))}
                 <Route path="*" element={<NotFoundPage />} />

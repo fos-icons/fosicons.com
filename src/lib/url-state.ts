@@ -1,4 +1,4 @@
-import { STYLE_META, styleFromSlug, type StyleId } from './catalog';
+import { STYLE_META, styleFromSlug, type StyleId } from './catalog-meta';
 import { CORNERS, type Corner } from './modifiers';
 
 /** The style switcher's options: the four core styles, Animated, then Brands. */
@@ -7,7 +7,7 @@ export type View = StyleId | 'animated' | 'brands';
 export const ANIMATED_SLUG = 'animated';
 /** Brands offer Regular and Solid only — never the duo styles. */
 export type BrandStyle = 'regular' | 'filled';
-export const BRAND_STYLES: BrandStyle[] = ['regular', 'filled'];
+export { BRAND_STYLES } from './brands';
 
 export interface CatalogState {
   q: string;

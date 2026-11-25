@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { HeroActions } from '../components/HeaderActions';
@@ -15,7 +15,9 @@ import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBlackBrandMark, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { usePlan } from '../lib/plan';
 import { animatedNames, artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadAnimated, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
-import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
+import { catalogEditorLocation, catalogRouteFilters, legacyCatalogDestination } from '../lib/catalog-location';
+import { catalogRoute } from '../lib/catalog-routing';
+import NotFoundPage from './NotFoundPage';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
@@ -33,8 +35,9 @@ import {
 
 /** Core icons and brand marks share one catalog; marks are the Brands category. */
 const allEntries = [...catalog.icons, ...brandCatalogEntries];
-const coreIndex = createIndex(allEntries);
-const browseIndex = createIndex(orderBrowseIcons(allEntries));
+const browseEntries = orderBrowseIcons(allEntries);
+let coreIndex: ReturnType<typeof createIndex> | undefined;
+const searchIndex = () => (coreIndex ??= createIndex(allEntries));
 const browseCategories = [...catalog.categories, ...(brandCatalogEntries.length ? [{ name: BRANDS_CATEGORY, count: brandCatalogEntries.length }] : [])]
   .sort((a, b) => compareBrowseCategories(a.name, b.name));
 const brandsByName = new Map(brandCatalogEntries.map((b) => [b.name, b]));
@@ -139,6 +142,16 @@ function BrandsEmpty() {
   );
 }
 
+export default function CatalogEditorRoute() {
+  const { path } = useI18n();
+  const { pathname, search, hash } = useLocation();
+  const route = catalogRoute(pathname);
+  const legacy = route?.kind === 'home' ? legacyCatalogDestination(search) : null;
+  if (legacy) return <Navigate to={`${path(legacy)}${hash}`} replace />;
+  if (route?.kind === 'icon' && !iconsByName.has(route.icon)) return <NotFoundPage />;
+  return <IconsPage />;
+}
+
 export function IconsPage() {
   const i18n = useI18n();
   const { t, rich, label, list, path } = i18n;
@@ -238,30 +251,30 @@ export function IconsPage() {
   // "clock with sparkle": search for the icon part and open the best match with that modifier.
   // The modifier list is large: load it only for a connector, or a multi-word search with no plain match ("edit clock").
   const bareCandidate = useMemo(
-    () => !brandsView && /\S\s+\S/.test(state.q) && search(coreIndex, state.q, state.category).length === 0,
+    () => !brandsView && /\S\s+\S/.test(state.q) && search(searchIndex(), state.q, state.category).length === 0,
     [brandsView, state.q, state.category],
   );
   const phraseModifiers = useModifiers(!brandsView && (hasConnector(state.q) || bareCandidate));
   const phrase = useMemo(
     () => (!brandsView && phraseModifiers.list
-      ? parseModifierPhrase(state.q, phraseModifiers.list, (q) => search(coreIndex, q, state.category).length)
+      ? parseModifierPhrase(state.q, phraseModifiers.list, (q) => search(searchIndex(), q, state.category).length)
       : null),
     [brandsView, phraseModifiers.list, state.q, state.category],
   );
   const searchQ = phrase?.iconQuery ?? state.q;
 
   const browsingCore = !brandsView && !searchQ.trim();
-  const index = browsingCore ? browseIndex : coreIndex;
   const results = useMemo(() => {
-    const found = search(index, searchQ, state.category);
+    const found = searchQ.trim() ? search(searchIndex(), searchQ, state.category)
+      : (brandsView ? allEntries : browseEntries).filter((icon) => !state.category || icon.category === state.category);
     return animatedView ? found.filter((icon) => animatedNames.has(icon.name)) : found;
-  }, [index, searchQ, state.category, animatedView]);
+  }, [brandsView, searchQ, state.category, animatedView]);
   const elsewhere = useMemo(
-    () => (state.category && searchQ && results.length === 0 ? search(index, searchQ).length : 0),
-    [index, searchQ, state.category, results.length],
+    () => (state.category && searchQ.trim() && results.length === 0 ? search(searchIndex(), searchQ).length : 0),
+    [searchQ, state.category, results.length],
   );
   const noResults = !!searchQ.trim() && results.length === 0;
-  const suggestions = useMemo(() => (noResults ? suggest(index, searchQ) : []), [noResults, index, searchQ]);
+  const suggestions = useMemo(() => (noResults ? suggest(searchIndex(), searchQ) : []), [noResults, searchQ]);
   const otherCatalog = 0;
 
   /** The icon a modifier phrase opens: the best result that can take that modifier. */

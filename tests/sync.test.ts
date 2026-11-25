@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 // @ts-expect-error plain ESM script without types
-import { buildOutputs, UI_ICONS } from '../scripts/sync-icons.mjs';
+import { buildOutputs, catalogMetadata, ICON_CHUNK, UI_ICONS } from '../scripts/sync-icons.mjs';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const STYLES = ['regular', 'filled', 'duocolor', 'duotone'];
@@ -47,6 +47,17 @@ describe('asset synchronization', () => {
 
   it('rejects an asset whose digest does not match the manifest', () => {
     expect(() => buildOutputs(fakeLibrary(true))).toThrow(/SHA-256 mismatch/);
+  });
+
+  it('ships only summary data and locates preview artwork in the synced chunks', () => {
+    const catalog = JSON.parse(readFileSync(join(__dirname, '../src/data/catalog.json'), 'utf8'));
+    const brands = JSON.parse(readFileSync(join(__dirname, '../src/data/brands.json'), 'utf8'));
+    const summary = JSON.parse(readFileSync(join(__dirname, '../src/data/catalog-meta.json'), 'utf8'));
+    expect(summary).toEqual(catalogMetadata(catalog, brands.approved.map(({ name }: { name: string }) => name)));
+    expect(summary).not.toHaveProperty('icons');
+    for (const name of [...summary.examples, 'calendar-add']) {
+      expect(summary.sampleChunks[name]).toBe(Math.floor(catalog.icons.findIndex((icon: { name: string }) => icon.name === name) / ICON_CHUNK));
+    }
   });
 
   it('matches the committed snapshot lock', () => {
