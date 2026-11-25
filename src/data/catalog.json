@@ -37,7 +37,7 @@
     },
     {
       "name": "Essentials",
-      "count": 94
+      "count": 93
     },
     {
       "name": "Files",
@@ -19931,12 +19931,15 @@
         "forward slash",
         "divide",
         "division",
-        "or",
         "separator",
-        "stroke",
-        "line"
+        "line",
+        "breadcrumb",
+        "path",
+        "delimiter"
       ],
-      "aliases": []
+      "aliases": [
+        "slash-divider"
+      ]
     },
     {
       "name": "slash-circle",
@@ -19949,20 +19952,6 @@
         "disabled",
         "block",
         "ban"
-      ],
-      "aliases": []
-    },
-    {
-      "name": "slash-divider",
-      "category": "Essentials",
-      "tags": [
-        "separator",
-        "breadcrumb",
-        "divide",
-        "path",
-        "forward slash",
-        "or",
-        "delimiter"
       ],
       "aliases": []
     },
@@ -23521,5 +23510,8 @@
     "wifi",
     "x",
     "zap"
-  ]
+  ],
+  "iconAliases": {
+    "slash-divider": "slash"
+  }
 }

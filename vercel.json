@@ -11,7 +11,10 @@
     { "source": "/.well-known/openai-apps-challenge", "destination": "/api/openai-apps-challenge" }
   ],
   "redirects": [
-    { "source": "/categories/time-weather", "destination": "/categories/time-calendar", "permanent": true }
+    { "source": "/categories/time-weather", "destination": "/categories/time-calendar", "permanent": true },
+    { "source": "/icons/slash-divider", "destination": "/icons/slash", "permanent": true },
+    { "source": "/svg/regular/slash-divider.svg", "destination": "/svg/regular/slash.svg", "permanent": true },
+    { "source": "/svg/preview/slash-divider.svg", "destination": "/svg/preview/slash.svg", "permanent": true }
   ],
   "headers": [
     {

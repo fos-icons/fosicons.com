@@ -37,7 +37,7 @@
     },
     {
       "name": "Essentials",
-      "count": 94
+      "count": 93
     },
     {
       "name": "Files",
@@ -390,6 +390,9 @@
       "group": "file-types"
     }
   },
+  "iconAliases": {
+    "slash-divider": "slash"
+  },
   "animated": [
     "alert-triangle",
     "arrow-right",
@@ -459,7 +462,7 @@
     "x",
     "zap"
   ],
-  "iconCount": 1589,
+  "iconCount": 1588,
   "examples": [
     "home",
     "search",
