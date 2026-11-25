@@ -483,6 +483,9 @@ describe('Icons page', () => {
     const npm = within(footer).getByRole('link', { name: /^npm/ });
     expect(npm.getAttribute('href')).toBe('https://www.npmjs.com/org/fos-icons');
     expect(npm.getAttribute('target')).toBe('_blank');
+    const x = within(footer).getByRole('link', { name: /^X/ });
+    expect(x.getAttribute('href')).toBe('https://x.com/fosicons');
+    expect(x.getAttribute('target')).toBe('_blank');
     expect(footer.textContent).not.toMatch(/Library [0-9a-f]{7}|licensed separately|MIT licensed/);
   });
 

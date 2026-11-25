@@ -226,6 +226,14 @@
     }
   }
 
+  /* A brand logo (BrandLink) painted in the current text color. */
+  .brand-mark {
+    display: block;
+    background-color: currentColor;
+    -webkit-mask: var(--brand-mark) center / contain no-repeat;
+    mask: var(--brand-mark) center / contain no-repeat;
+  }
+
   /* Page loader (PageLoader): an oval shadow under the bouncing mark. */
   .page-loader-shadow {
     display: block;

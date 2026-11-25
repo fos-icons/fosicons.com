@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useRef, useState } from 'react';
+import { Suspense, useEffect, useRef, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import { splitLocale } from '../i18n/config';
@@ -7,13 +7,33 @@ import { catalog } from '../lib/catalog';
 import { isCatalogEditor } from '../lib/catalog-location';
 import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
 import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
-import { LIBRARY_URL, NPM_URL } from '../lib/links';
+import { LIBRARY_URL, NPM_URL, X_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
 import { LanguageMenu } from './LanguageMenu';
 import { PageBoundary } from './PageBoundary';
 import { PageLoader } from './PageLoader';
 import { UiIcon } from './ui';
+
+/**
+ * A link drawn as the library's brand logo (public/brands, synced from the
+ * library). A CSS mask paints the file in the text color, so it follows the
+ * theme and hover like the text links beside it.
+ */
+function BrandLink({ href, brand, label, newTab }: { href: string; brand: string; label: string; newTab: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer"
+      title={label}
+      className="inline-flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-sunken hover:text-ink"
+    >
+      <span aria-hidden="true" className="brand-mark size-[18px]" style={{ '--brand-mark': `url(/brands/${brand}-filled.svg)` } as CSSProperties} />
+      <span className="sr-only">{label}{newTab}</span>
+    </a>
+  );
+}
 
 const footerLink = 'inline-flex items-center gap-1 rounded text-muted underline-offset-2 transition hover:text-ink hover:underline';
 
@@ -116,15 +136,15 @@ export function Layout() {
                   <LanguageMenu />
                 </nav>
                 <nav aria-label={t('footer.elsewhere')} className="flex items-center gap-3">
-                  <a href={LIBRARY_URL} target="_blank" rel="noreferrer" className={footerLink}>
-                    {t('footer.github')} <UiIcon name="link-external" className="size-3.5" />
-                    <span className="sr-only">{t('site.newTab')}</span>
-                  </a>
-                  <span aria-hidden="true" className="text-line-strong">|</span>
                   <a href={NPM_URL} target="_blank" rel="noreferrer" className={footerLink}>
                     {t('footer.npm')} <UiIcon name="link-external" className="size-3.5" />
                     <span className="sr-only">{t('site.newTab')}</span>
                   </a>
+                  <span aria-hidden="true" className="text-line-strong">|</span>
+                  <div className="flex items-center gap-1">
+                    <BrandLink href={LIBRARY_URL} brand="github" label={t('footer.github')} newTab={t('site.newTab')} />
+                    <BrandLink href={X_URL} brand="x" label={t('footer.x')} newTab={t('site.newTab')} />
+                  </div>
                 </nav>
               </div>
             </footer>

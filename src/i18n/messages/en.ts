@@ -93,6 +93,7 @@ const en = {
   'footer.github': 'GitHub',
   'footer.license': 'License',
   'footer.npm': 'npm',
+  'footer.x': 'X',
   'footer.flutterIcons': 'Flutter icons',
   'footer.elsewhere': 'Fos Icons elsewhere',
   'footer.language': 'Language',

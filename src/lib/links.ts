@@ -25,3 +25,4 @@ export const FIGMA_URL: string = 'https://www.figma.com/design/5zcUV9E4Bu8FSssDf
 
 /** The Fos Icons npm organization page. */
 export const NPM_URL = 'https://www.npmjs.com/org/fos-icons';
+export const X_URL = 'https://x.com/fosicons';
