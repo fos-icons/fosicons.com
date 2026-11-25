@@ -12,12 +12,12 @@ const menuItem = 'min-h-11 w-full justify-start';
 /** Plain text links for the header bar. */
 const linkBase = 'whitespace-nowrap rounded text-sm font-medium underline-offset-4 transition hover:underline disabled:cursor-wait disabled:opacity-60';
 const textLink = `${linkBase} text-muted hover:text-ink`;
-const currentLink = 'aria-[current=page]:text-ink aria-[current=page]:underline';
+const currentLink = 'aria-[current=page]:text-brand';
 const mainLinks = [
   { to: '/', label: 'header.browseNav' },
-  { to: '/docs', label: 'header.docs' },
-  { to: '/pricing', label: 'header.pricing' },
   { to: '/ai-agents', label: 'header.mcp' },
+  { to: '/pricing', label: 'header.pricing' },
+  { to: '/docs', label: 'header.docs' },
 ] as const;
 
 /**
