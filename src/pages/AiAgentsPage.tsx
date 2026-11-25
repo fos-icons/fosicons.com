@@ -35,7 +35,7 @@ const external = (href: string, children: ReactNode) => (
 
 function Client({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 scroll-mt-6 flex-col gap-3 rounded-2xl border border-line bg-surface p-5">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 scroll-mt-6 flex-col gap-3 border-t border-line pt-8 first:border-t-0 first:pt-0">
       <h3 id={`${id}-title`} className="font-display text-lg font-semibold">{title}</h3>
       {children}
     </section>
@@ -46,9 +46,9 @@ const Note = ({ children }: { children: ReactNode }) => <p className="text-sm le
 
 function Points({ items }: { items: ReactNode[] }) {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2">
+    <ul className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
       {items.map((item, i) => (
-        <li key={i} className="flex gap-3 rounded-xl border border-line bg-surface p-4 text-sm leading-relaxed">
+        <li key={i} className="flex gap-3 text-sm leading-relaxed">
           <UiIcon name="check" className="mt-0.5 size-4 shrink-0 text-brand" />
           <span>{item}</span>
         </li>
@@ -217,7 +217,7 @@ export default function AiAgentsPage() {
       <PageContents active={active} onChoose={choose} />
       <div className="min-w-0 lg:col-start-1 lg:row-start-1">
       <LandingSection id="clients" title="Install">
-        <div className="grid max-w-4xl gap-4">
+        <div className="grid max-w-4xl gap-8">
           <Client id="claude-code" title="Claude Code">
             <Note>The plugin adds the MCP server and two skills: one for using the icons, one for migrating from lucide or Heroicons. Run these in Claude Code:</Note>
             <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />
@@ -267,9 +267,9 @@ export default function AiAgentsPage() {
         <p className="mb-4 max-w-2xl text-sm leading-relaxed text-muted">
           Every tool is read-only: the server looks things up in the icon catalog and changes nothing.
         </p>
-        <dl className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+        <dl className="divide-y divide-line border-y border-line">
           {AGENT_TOOLS.map(([name, does]) => (
-            <div key={name} className="grid gap-1 p-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
+            <div key={name} className="grid gap-1 py-4 sm:grid-cols-[14rem_1fr] sm:gap-4">
               <dt><code className="text-sm font-medium text-ink">{name}</code></dt>
               <dd className="text-sm leading-relaxed text-muted">{does}</dd>
             </div>

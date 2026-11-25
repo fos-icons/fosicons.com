@@ -28,6 +28,8 @@ export function Layout() {
   const pagePath = splitLocale(pathname).path;
   const iconPage = !editor && pagePath.startsWith('/icons/');
   const docsPage = pagePath.replace(/\/$/, '') === '/docs';
+  // Long reading pages sit on the surface color, so their content needs no cards.
+  const readingPage = docsPage || pagePath.replace(/\/$/, '') === '/ai-agents';
   const navigationType = useNavigationType();
   const mainRef = useRef<HTMLElement>(null);
   // A link to another page starts at its top (the router keeps the old scroll
@@ -45,7 +47,7 @@ export function Layout() {
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
-      <div className="flex min-h-dvh flex-col [--site-header-height:calc(3.5rem+1px)]">
+      <div className={`flex min-h-dvh flex-col [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
         <a href="#main" className="sr-only z-50 rounded-lg bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
           {t('site.skipToContent')}
         </a>
