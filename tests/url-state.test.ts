@@ -33,6 +33,14 @@ describe('URL state', () => {
     expect(legacyCatalogDestination('?icon=missing&q=copy')).toBeNull();
   });
 
+  it('round-trips the Animated view only when the catalog has animated icons', () => {
+    const state = { q: '', category: null, style: 'animated' as const, brandStyle: 'regular' as const, icon: null, modifier: null, corner: null };
+    const url = serializeState(state, config);
+    expect(url).toBe('?style=animated');
+    expect(parseState(url, { ...config, animated: true })).toEqual(state);
+    expect(parseState(url, { ...config, animated: false }).style).toBe('regular');
+  });
+
   it('round-trips search, category, style, and icon', () => {
     const state = { q: 'arrow up', category: 'Navigation', style: 'filled' as const, brandStyle: 'regular' as const, icon: 'arrow-up', modifier: null, corner: null };
     const url = serializeState(state, config);

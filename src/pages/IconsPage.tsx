@@ -14,7 +14,7 @@ import { Button, Segmented, Select, SlashHint, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBlackBrandMark, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { usePlan } from '../lib/plan';
-import { artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
+import { animatedNames, artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadAnimated, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters } from '../lib/catalog-location';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
@@ -24,7 +24,7 @@ import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from
 import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
-import { prepareGridSvg } from '../lib/svg';
+import { prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
 import { useClientValue } from '../lib/hydration';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
@@ -40,6 +40,7 @@ const browseCategories = [...catalog.categories, ...(brandCatalogEntries.length 
 const brandsByName = new Map(brandCatalogEntries.map((b) => [b.name, b]));
 const config: UrlStateConfig = {
   styles: catalog.styles,
+  animated: animatedNames.size > 0,
   core: { categories: browseCategories.map((c) => c.name), icons: new Set([...iconsByName.keys(), ...brandsByName.keys()]) },
   /** Brand names, so URL parsing can refuse modifiers on a mark. */
   brands: { categories: [], icons: new Set(brandsByName.keys()) },
@@ -167,11 +168,13 @@ export function IconsPage() {
   /** Brand marks come in Regular and a one-color Solid only, so the Brands category has no duo styles. */
   const brandsOnly = state.category === BRANDS_CATEGORY;
   const isDuo = (style: string) => style === 'duocolor' || style === 'duotone';
-  const requested: StyleId = state.style === 'brands' ? catalog.styles[0] : state.style;
+  /** Animated is Regular artwork that moves: the curated icons, at the 24px design size. */
+  const animatedView = state.style === 'animated' && !brandsOnly;
+  const requested: StyleId = state.style === 'brands' || state.style === 'animated' ? catalog.styles[0] : state.style;
   const drawStyle: StyleId = brandsOnly && isDuo(requested) ? 'filled' : requested;
   /** Artwork comes from the optical size nearest the chosen size (16, 24, 32, 48 or 64). */
   const opticalPx = artworkSize(look);
-  const svgKey = artworkKey(drawStyle, opticalPx);
+  const svgKey = animatedView ? 'animated' : artworkKey(drawStyle, opticalPx);
 
   const error = artworkErrors[svgKey];
   const reportArtworkError = useCallback((key: string, cause: unknown) => {
@@ -195,7 +198,7 @@ export function IconsPage() {
   // Core artwork loads in chunks as icons near the viewport (see IconGrid's
   // onNeed); brands are few and load at once. Without IntersectionObserver
   // (old browsers, tests) the whole style loads in one request instead.
-  const lazyArtwork = !brandsView && typeof IntersectionObserver !== 'undefined';
+  const lazyArtwork = !brandsView && !animatedView && typeof IntersectionObserver !== 'undefined';
   const mergedChunks = useRef(new Set<string>());
   const [brandsInView, setBrandsInView] = useState(false);
   const need = useCallback((names: Iterable<string>) => {
@@ -218,11 +221,11 @@ export function IconsPage() {
   useEffect(() => {
     if (lazyArtwork) return;
     let cancelled = false;
-    loadStyle(drawStyle, opticalPx)
+    (animatedView ? loadAnimated() : loadStyle(drawStyle, opticalPx))
       .then((data) => { if (!cancelled) setSvgs((s) => ({ ...s, [svgKey]: data })); })
       .catch((e: unknown) => { if (!cancelled) reportArtworkError(svgKey, e); });
     return () => { cancelled = true; };
-  }, [lazyArtwork, drawStyle, opticalPx, svgKey, attempt, reportArtworkError]);
+  }, [lazyArtwork, animatedView, drawStyle, opticalPx, svgKey, attempt, reportArtworkError]);
 
   /** A new deploy replaced this page's artwork: only a reload can fetch it. */
   const artworkUpdated = error === t('error.artworkUpdated');
@@ -249,7 +252,10 @@ export function IconsPage() {
 
   const browsingCore = !brandsView && !searchQ.trim();
   const index = browsingCore ? browseIndex : coreIndex;
-  const results = useMemo(() => search(index, searchQ, state.category), [index, searchQ, state.category]);
+  const results = useMemo(() => {
+    const found = search(index, searchQ, state.category);
+    return animatedView ? found.filter((icon) => animatedNames.has(icon.name)) : found;
+  }, [index, searchQ, state.category, animatedView]);
   const elsewhere = useMemo(
     () => (state.category && searchQ && results.length === 0 ? search(index, searchQ).length : 0),
     [index, searchQ, state.category, results.length],
@@ -305,7 +311,25 @@ export function IconsPage() {
   }, [brandsNeeded, brandMarks, brandStyle, svgKey, attempt, reportArtworkError]);
   // The pane and selection need their artwork even when scrolled out of view.
   useEffect(() => { need([...multi, ...(inspected ? [inspected.name] : [])]); }, [need, multi, inspected]);
-  const coreSvgs = svgs[svgKey] ?? null;
+  /**
+   * Opening the Animated tab plays three icons from its first rows, picked at
+   * random each visit, so it's clear the icons move. The rest play on hover.
+   */
+  const [teasers, setTeasers] = useState<{ on: boolean; names: ReadonlySet<string> }>({ on: false, names: new Set() });
+  if (teasers.on !== animatedView) {
+    const pool = results.slice(0, 14).map((icon) => icon.name);
+    const names = new Set<string>();
+    while (animatedView && names.size < Math.min(3, pool.length)) names.add(pool[Math.floor(Math.random() * pool.length)]);
+    setTeasers({ on: animatedView, names });
+  }
+  const loadedSvgs = svgs[svgKey] ?? null;
+  /** Animated icons play at the chosen speed in the grid, the pane, and downloads. */
+  const coreSvgs = useMemo(
+    () => (animatedView && loadedSvgs && look.speed !== 1
+      ? Object.fromEntries(Object.entries(loadedSvgs).map(([name, svg]) => [name, retimeAnimatedSvg(svg, look.speed)]))
+      : loadedSvgs),
+    [animatedView, loadedSvgs, look.speed],
+  );
   /** Keep the source SVGs valid for the inspector and exports. */
   const styleSvgs = useMemo(
     () => (coreSvgs || brandMarks ? { ...coreSvgs, ...brandMarks } : null),
@@ -369,9 +393,15 @@ export function IconsPage() {
     : query ? t('icons.summaryFor', { results: counted, query })
       : categoryName ? t('icons.summaryIn', { results: counted, category: categoryName })
         : counted;
-  const viewOptions = catalog.styles
-    .filter((s) => !brandsOnly || !isDuo(s))
-    .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
+  const viewOptions = [
+    ...catalog.styles
+      .filter((s) => !brandsOnly || !isDuo(s))
+      .map((s) => ({ value: s as View, label: t(`style.${s}`), title: t(`style.${s}.description`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined })),
+    ...(animatedNames.size && !brandsOnly
+      ? [{ value: 'animated' as View, label: t('style.animated'), title: t('style.animated.description') }]
+      : []),
+  ];
+  const viewValue: View = animatedView ? 'animated' : drawStyle;
   const tips = brandsView
     ? [t('icons.searchBrands')]
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
@@ -415,7 +445,7 @@ export function IconsPage() {
           <Segmented
             fill
             label={t('icons.styleSwitcher')}
-            value={drawStyle}
+            value={viewValue}
             onChange={(style) => update({ style })}
             options={viewOptions}
           />
@@ -435,7 +465,11 @@ export function IconsPage() {
                   onChange={(e) => {
                     const category = e.target.value || null;
                     // Brands have no duo styles: picking Brands from a duo tab shows Solid.
-                    update({ category, icon: null, ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}) });
+                    update({
+                      category, icon: null,
+                      ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}),
+                      ...(category === BRANDS_CATEGORY && animatedView ? { style: catalog.styles[0] } : {}),
+                    });
                   }}
                   className="min-w-0 flex-1"
                 >
@@ -467,16 +501,24 @@ export function IconsPage() {
             <Button className="mt-4" onClick={retryArtwork}>{t(artworkUpdated ? 'icons.reload' : 'icons.tryAgain')}</Button>
           </div>
         ) : results.length ? (
-          <div className="grid-colors" style={gridVars(look, drawStyle, theme, kind) as CSSProperties}>
+          <div
+            className={`grid-colors${animatedView ? ' grid-animated' : ''}`}
+            style={gridVars(look, drawStyle, theme, kind) as CSSProperties}
+            // Once someone starts hovering icons, the three previews have done their job: stop them.
+            onPointerOver={animatedView && teasers.names.size ? (e) => {
+              if ((e.target as Element).closest('.icon-cell')) setTeasers({ on: true, names: new Set() });
+            } : undefined}
+          >
             <IconGrid
-              label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(`style.${drawStyle}`) })}
-              premiumLabel={drawStyle === FREE_ICON_STYLE || plan.can('styles') ? undefined : t('icons.premium')}
+              label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(animatedView ? 'style.animated' : `style.${drawStyle}`) })}
+              premiumLabel={(animatedView ? plan.can('animated') : drawStyle === FREE_ICON_STYLE || plan.can('styles')) ? undefined : t('icons.premium')}
               items={results}
-              categoryTitle={browsingCore && !state.category ? (category) => label('category', category, category) : undefined}
+              categoryTitle={browsingCore && !state.category && !animatedView ? (category) => label('category', category, category) : undefined}
               svgs={gridSvgs}
               selected={selectedSet}
               onSelect={select}
               onNeed={lazyArtwork ? need : undefined}
+              playing={animatedView ? teasers.names : undefined}
             />
           </div>
         ) : (
@@ -534,6 +576,7 @@ export function IconsPage() {
             onRemove={(name) => select(name, true)}
             onClear={() => setMulti([])}
             headingId="pane-heading"
+            premiumView={animatedView}
           />
         ) : selected && inspected ? (
           <Inspector
@@ -548,6 +591,7 @@ export function IconsPage() {
             onStyleChange={(style) => update({ style })}
             onClose={close}
             headingId="pane-heading"
+            premiumView={animatedView && !selectedBrand}
             badgeRequest={badgeRequest}
             onBadgeChange={(choice) => update({
               ...(selectedPreset ? { icon: selectedPreset.base.name } : {}),
@@ -561,6 +605,8 @@ export function IconsPage() {
             onChange={changeLook}
             onReset={() => setLook(DEFAULT_LOOK)}
             onClose={desktop ? undefined : () => setCustomizeOpen(false)}
+            animated={animatedView}
+            animatedSvgs={animatedView ? coreSvgs : null}
             style={drawStyle}
             kind={kind}
             headingId="pane-heading"

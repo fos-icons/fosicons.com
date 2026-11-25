@@ -70,11 +70,13 @@ beforeEach(() => {
 afterEach(() => { cleanup(); resetSectionState(); resetExportRows(); vi.unstubAllGlobals(); vi.restoreAllMocks(); localStorage.clear(); });
 
 describe('entitlements', () => {
-  it('follows the pricing matrix: styles, duo colors, and ZIPs with Pro; modifiers with Advanced', () => {
-    expect(FEATURE_PLAN).toEqual({ styles: 'pro', duoColors: 'pro', zip: 'pro', modifiers: 'advanced' });
+  it('follows the pricing matrix: styles, duo colors, and ZIPs with Pro; modifiers and animated icons with Advanced', () => {
+    expect(FEATURE_PLAN).toEqual({ styles: 'pro', duoColors: 'pro', zip: 'pro', modifiers: 'advanced', animated: 'advanced' });
     expect((['styles', 'duoColors', 'zip', 'modifiers'] as const).map((f) => planAllows('free', f))).toEqual([false, false, false, false]);
     expect((['styles', 'duoColors', 'zip', 'modifiers'] as const).map((f) => planAllows('pro', f))).toEqual([true, true, true, false]);
     expect((['styles', 'duoColors', 'zip', 'modifiers'] as const).map((f) => planAllows('advanced', f))).toEqual([true, true, true, true]);
+    // Animated icons come with Advanced only.
+    expect((['free', 'pro', 'advanced'] as const).map((p) => planAllows(p, 'animated'))).toEqual([false, false, true]);
   });
 
   it('grants a paid plan only for an active or trialing subscription', () => {

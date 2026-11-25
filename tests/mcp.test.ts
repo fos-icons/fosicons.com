@@ -30,10 +30,10 @@ describe('MCP endpoint', () => {
     expect(body.result.instructions).toMatch(/Never guess or invent an icon name/);
   });
 
-  it('lists five read-only tools', async () => {
+  it('lists eight read-only tools', async () => {
     const { body } = await rpc('tools/list');
     const tools = body.result.tools as { name: string; annotations: Record<string, boolean> }[];
-    expect(tools.map((t) => t.name).sort()).toEqual(['check_icon_names', 'get_framework_setup', 'get_icon_code', 'list_icons', 'search_icons']);
+    expect(tools.map((t) => t.name).sort()).toEqual(['animate_icon', 'check_icon_names', 'get_animated_icon', 'get_framework_setup', 'get_icon_code', 'list_animated_icons', 'list_icons', 'search_icons']);
     for (const tool of tools) {
       expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, openWorldHint: false });
       expect((tool as { outputSchema?: { type: string } }).outputSchema?.type).toBe('object');
@@ -56,6 +56,21 @@ describe('MCP endpoint', () => {
     expect(camera.icons.length).toBeLessThanOrEqual(3);
     expect(miss.total).toBe(0);
     expect(Array.isArray(miss.suggestions)).toBe(true);
+  });
+
+  it('serves curated animated icons and animates any icon', async () => {
+    const list = await call('list_animated_icons', {});
+    expect(list.structuredContent.icons.map((i: { name: string }) => i.name)).toContain('check');
+    const check = await call('get_animated_icon', { name: 'check' });
+    expect(check.structuredContent.svg).toContain('@keyframes fa-check-');
+    expect((await call('get_animated_icon', { name: 'accordion' })).isError).toBe(true);
+    const parts = await call('animate_icon', { name: 'wifi', split: true, motions: [] });
+    expect(parts.structuredContent.parts).toHaveLength(4);
+    const spun = await call('animate_icon', { name: 'plus', motions: [{ type: 'spin', parts: [0], deg: 90, hold: 0.4 }] });
+    expect(spun.structuredContent.svg).toContain('fa-plus-m0');
+    const injected = await call('animate_icon', { name: 'plus', motions: [{ type: 'keyframes', parts: [0], frames: { '50%': 'opacity:0}</style><script>' } }] });
+    expect(injected.isError).toBe(true);
+    expect((await call('animate_icon', { name: 'plus', motions: [{ type: 'spin', parts: [9] }] })).isError).toBe(true);
   });
 
   it('returns icon code, and an error with suggestions for unknown names', async () => {

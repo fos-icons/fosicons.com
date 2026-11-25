@@ -153,6 +153,14 @@
     height: 100%;
     display: block;
   }
+  /*
+   * Animated icons rest until their cell is hovered or focused. Their still
+   * frame is the normal icon, so stopping them never shows a half-drawn one.
+   * A few cells ([data-playing]) keep playing to show the tab moves.
+   */
+  .grid-animated .icon-cell:not(:hover):not(:has(:focus-visible)):not([data-playing]) .glyph * {
+    animation: none !important;
+  }
   /* Black-only marks use light ink in dark previews, with a transparent background. */
   .dark .glyph > svg[data-brand="black"],
   .dark .glyph[data-black-brand] > svg {

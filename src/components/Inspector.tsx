@@ -45,6 +45,8 @@ export interface InspectorProps {
   badgeRequest?: { name: string; corner: Corner | null } | null;
   /** Called when the user picks or clears a modifier, or moves it. */
   onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
+  /** Animated icons: Regular artwork whose exports need the `animated` feature (Advanced). */
+  premiumView?: boolean;
 }
 
 
@@ -53,7 +55,7 @@ const THUMB_MAX = 64;
 
 export function Inspector({
   icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
-  badgeRequest = null, onBadgeChange,
+  badgeRequest = null, onBadgeChange, premiumView = false,
 }: InspectorProps) {
   const toast = useToast();
   const i18n = useI18n();
@@ -111,7 +113,7 @@ export function Inspector({
   /** The artwork every preview and export uses: the library icon, plus any modifier being tried. */
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
-  const premium = style !== FREE_ICON_STYLE && !can('styles');
+  const premium = premiumView ? !can('animated') : style !== FREE_ICON_STYLE && !can('styles');
   const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
@@ -141,7 +143,7 @@ export function Inspector({
     }
   }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke]);
 
-  const slug = STYLE_META[style].slug;
+  const slug = premiumView ? 'animated' : STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
   const family = kind === 'core' ? modifierFamily(icon.name) : null;
   /** Modifiers the library authored on this base, by corner (single-modifier compositions). */
@@ -400,8 +402,9 @@ export function Inspector({
         size={size}
         build={(px) => build(px)}
         disabled={exportDisabled}
-        locked={premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} />}
+        locked={premium && <UpgradePrompt feature={premiumView ? 'animated' : 'styles'} fallback={t('export.premiumSoon')} />}
         run={run}
+        animated={premiumView}
       />
 
       {snippets && (

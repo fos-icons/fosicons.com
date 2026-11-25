@@ -1,15 +1,16 @@
 import { useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
-import { catalog, FREE_ICON_STYLE, type StyleId } from '../lib/catalog';
+import { catalog, FREE_ICON_STYLE, opticalStroke, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
+import { buildZip } from '../lib/zip';
 import { errorText } from '../i18n/errors';
 import {
   DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
-  strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
+  artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
 } from '../lib/look';
 import { usePlan } from '../lib/plan';
-import { isDuo, isHexColor } from '../lib/svg';
+import { buildSvg, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
 import { TeachingTip } from './TeachingTip';
 import { UpgradePrompt } from './UpgradePrompt';
@@ -177,6 +178,34 @@ export function SizeControl({ look, onChange, compact = false }: { look: Look; o
   );
 }
 
+const SPEED_MARKS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
+const SPEED_LABELS = [0.25, 1, 2] as const;
+
+/** Animated icons only: how fast they play, from a quarter to double speed. */
+export function SpeedControl({ look, onChange }: { look: Look; onChange: (patch: Partial<Look>) => void }) {
+  const { t } = useI18n();
+  const uid = useId();
+  const format = (v: number) => t('customize.speedValue', { value: v });
+  return (
+    <Section title={t('customize.speed')} aside={<span className="font-mono text-xs tabular-nums text-muted">{format(look.speed)}</span>}>
+      <RangeSlider
+        id={`${uid}-speed`}
+        label={t('customize.speed')}
+        min={0.25}
+        max={2}
+        step={0.25}
+        value={look.speed}
+        valueText={format(look.speed)}
+        onChange={(speed) => onChange({ speed })}
+        marks={SPEED_MARKS}
+        labels={SPEED_LABELS}
+        format={format}
+      />
+      <p className="mt-2 text-xs leading-relaxed text-faint">{t('customize.speedNote')}</p>
+    </Section>
+  );
+}
+
 /** Stroke width: Auto follows the size; the slider pins a width. Explains why solid and brand icons have none. */
 export function StrokeControl({ look, onChange, style, kind = 'core', footnote, compact = false }: {
   look: Look;
@@ -240,7 +269,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
 
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true,
+  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -254,6 +283,8 @@ export function CustomizeControls({
   showSize?: boolean;
   /** Off when the caller places StrokeControl itself (the inspector keeps it under Size). */
   showStroke?: boolean;
+  /** The Animated tab: adds the speed control under Stroke. */
+  animated?: boolean;
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
@@ -266,6 +297,8 @@ export function CustomizeControls({
       {showSize && <SizeControl look={look} onChange={onChange} />}
 
       {showStroke && <StrokeControl look={look} onChange={onChange} style={style} kind={kind} footnote={strokeFootnote} />}
+
+      {animated && <SpeedControl look={look} onChange={onChange} />}
 
       <Section
         title={t('customize.color')}
@@ -344,7 +377,7 @@ export function CustomizeControls({
 
 /** The pane's content when no icon is selected. */
 export function CustomizePanel({
-  look, onChange, onReset, onClose, style, kind, headingId,
+  look, onChange, onReset, onClose, style, kind, headingId, animated = false, animatedSvgs = null,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -354,6 +387,10 @@ export function CustomizePanel({
   style: StyleId;
   kind: 'core' | 'brand';
   headingId: string;
+  /** The Animated tab: adds the speed control. */
+  animated?: boolean;
+  /** The Animated tab's artwork (already at the chosen speed), for its bulk download. */
+  animatedSvgs?: Record<string, string> | null;
 }) {
   const { t } = useI18n();
   const heading = useRef<HTMLHeadingElement>(null);
@@ -377,8 +414,8 @@ export function CustomizePanel({
         </div>
         <p className="mt-1 text-sm text-muted">{t('customize.intro')}</p>
       </div>
-      <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} />
-      {kind === 'core' && <DownloadSection look={look} />}
+      <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} animated={animated} />
+      {kind === 'core' && (animated ? <AnimatedDownloadSection look={look} svgs={animatedSvgs} /> : <DownloadSection look={look} />)}
     </div>
   );
 }
@@ -465,6 +502,54 @@ export function DownloadSection({ look }: { look: Look }) {
         {enforced || can('styles') ? null : <> {t('download.premiumSoon')}</>}
       </p>
       {!zip && <UpgradePrompt feature="zip" className="mt-1.5 text-xs leading-relaxed text-muted" />}
+    </section>
+  );
+}
+
+/** The Animated tab's bulk download: every animated icon as live SVG, in the chosen look and speed. */
+export function AnimatedDownloadSection({ look, svgs }: { look: Look; svgs: Record<string, string> | null }) {
+  const i18n = useI18n();
+  const { t, n } = i18n;
+  const toast = useToast();
+  const { can } = usePlan();
+  const { resolved: theme } = useTheme();
+  const uid = useId();
+  const [busy, setBusy] = useState(false);
+  const unlocked = can('animated');
+  const names = svgs ? Object.keys(svgs).sort() : [];
+  const disabled = busy || !unlocked || !names.length;
+  const file = 'fos-icons-animated-svg.zip';
+  const download = async () => {
+    if (disabled || !svgs) return;
+    setBusy(true);
+    try {
+      const sourceStroke = opticalStroke(artworkSize(look));
+      const entries = names.map((name) => ({
+        name: `${name}-animated.svg`,
+        data: buildSvg(svgs[name], { ...exportColors(svgs[name], 'regular', look, theme), size: look.size, strokeWidth: strokeOf(look), sourceStroke }),
+      }));
+      downloadBlob(await buildZip(entries), file);
+      toast('success', t('download.done', { file }));
+    } catch (error) {
+      toast('error', errorText(error, i18n, 'error.download'));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const label = busy ? t('download.preparing') : t('download.animated');
+  return (
+    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
+      <RailActions>{() => (
+        <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
+      )}</RailActions>
+      <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
+      <div className="mt-3 flex gap-2">
+        <Button variant="primary" icon="download" onClick={download} disabled={disabled} aria-describedby={`${uid}-note`} className="min-w-0 flex-1 disabled:cursor-wait">
+          <span className="truncate">{label}</span>
+        </Button>
+      </div>
+      <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">{t('download.animatedNote', { count: n(names.length) })}</p>
+      {!unlocked && <UpgradePrompt feature="animated" className="mt-1.5 text-xs leading-relaxed text-muted" />}
     </section>
   );
 }

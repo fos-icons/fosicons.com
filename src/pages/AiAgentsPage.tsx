@@ -26,6 +26,9 @@ export const AGENT_TOOLS: [string, string][] = [
   ['check_icon_names', 'Checks names your code already uses and suggests real icons for any that don’t exist.'],
   ['list_icons', 'Pages through every icon alphabetically, optionally within one category.'],
   ['get_framework_setup', 'Package install steps, the naming rule, props, an example, and accessibility guidance.'],
+  ['list_animated_icons', 'Lists the curated animated icons and the motions animate_icon accepts.'],
+  ['get_animated_icon', 'Returns a curated animated SVG: Regular artwork with scoped CSS that rests under reduced motion.'],
+  ['animate_icon', 'Animates any icon with motions such as draw, spin, swing, or fade, and returns a self-contained SVG.'],
 ];
 
 const code = (text: string) => <code className="rounded bg-sunken px-1 py-0.5 text-ink">{text}</code>;
@@ -283,7 +286,7 @@ export default function AiAgentsPage() {
   const panels: Record<AgentId, ReactNode> = {
     'claude-code': <Steps items={[
       <>
-        <p>Run these in Claude Code. The plugin adds the MCP server and two skills: one for using the icons, one for switching a project from another icon library.</p>
+        <p>Run these in Claude Code. The plugin adds the MCP server and three skills: one for using the icons, one for animating them, and one for switching a project from another icon library.</p>
         <CopyCode lang="sh" what="Claude Code plugin commands" code={'/plugin marketplace add fos-icons/fos-icons\n/plugin install fos-icons@fos-icons'} />
         {serverOnly(`claude mcp add --transport http ${SERVER} ${MCP_URL}`)}
       </>,

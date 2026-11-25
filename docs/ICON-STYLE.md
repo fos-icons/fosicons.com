@@ -198,6 +198,68 @@ plugin data (`gridSpec`).
 - Keep color and stroke controls editable so users can adapt icons without
   manually changing individual paths.
 
+## Animated icons
+
+Animated icons are Regular icons that move. They are generated, never drawn
+by hand: add a spec to `metadata/animated.json` in `fos-icons`, then run
+`npm run animate`. The motions are documented in
+`skills/fos-icons-animate/SKILL.md`. Don't run SVGO on these files.
+
+**The motion tells the icon's story.** Show what the object does in real life,
+not a generic wiggle:
+
+- Things that point move where they point: arrows and chevrons nudge in their
+  direction. Double chevrons ripple one after the other; selectors spread
+  outward; collapse icons move inward.
+- Things that fill go from empty to full and hold. A battery adds its bars
+  one by one (0 → 5, borrowed from `battery-full`). An hourglass starts with
+  the top full and the bottom empty. The top drains quickly toward the neck
+  while the bottom fills from the top down. Then the whole glass turns over
+  (180°), so the full sand ends on top and the loop starts again seamlessly.
+- Things that open, open upward. A trash lid lifts from its right-hand hinge,
+  just enough to read: about 9°, never past the icon's edge.
+- Parts that move at different rates in real life do so here too. A clock's
+  minute hand turns 12× faster than its hour hand (3 s and 36 s).
+- Signals and progress reveal in order. Wi-Fi arcs light from the dot outward,
+  sound waves fade from the speaker, and checks and crosses draw their strokes
+  in writing order.
+- Attention icons (bell, alert) swing from their natural pivot, with a decay.
+- When a motion "doesn't look right", replace it; don't tune it. A mail flap
+  flipping read as broken, so mail hops and wiggles instead.
+
+**Rest pose.** With the animation off (reduced motion, or a grid cell that
+isn't hovered), the icon must look like its normal still drawing. Parts that
+only exist during the motion, such as the hourglass's bottom sand, are hidden
+at rest (`base` in the spec).
+
+**Bounds.** Every frame stays inside the 24 px icon: 2–22 live area,
+stroke included. Check the extreme frames, not just the rest pose. In SVG's
+y-down space, a positive rotation lifts the left side of a part hinged on
+its right.
+
+**Timing.** Loops of 1–3 s, with small moves (under 3 px or 15°) and the
+library easing `cubic-bezier(.65,0,.35,1)`. Only a slow secondary part, like
+an hour hand, takes longer. Loops restart from the rest pose, or from a
+symmetric angle (90° for a plus, 72° for a star, 45° for sun rays), so they
+never visibly jump.
+
+**Scope.** Animate the icons people use most (status, loading, actions,
+navigation), not the whole library. When one icon in a family is animated,
+animate the whole family (every chevron, not just one).
+
+**Code rules** (the generator enforces these):
+
+- Class and keyframe names are prefixed `fa-<name>-`. An inline `<style>`
+  applies to the whole page, so a bare `.c` once moved the page's own cards.
+- Moving parts are top-level groups with no transformed ancestor, so their
+  origins are plain 24px-grid coordinates.
+- Every icon stops under `prefers-reduced-motion`.
+
+**Review.** Render frames across the loop, at rest and at about 250, 500 and
+800 ms (plus later frames for long loops), with the 24 px boundary drawn.
+Check the story, the rest pose, the bounds, and that the loop has no jump.
+Hover-test on the site's Animated tab before calling it done.
+
 ## Brand marks
 
 - Keep third-party logos authentic and unmodified, separate from the custom core
@@ -251,3 +313,5 @@ plugin data (`gridSpec`).
 - Are its stroke weight, rounding, and optical balance consistent with the set?
 - Are all internal details contained and free of accidental overlaps?
 - Do its style variants preserve the same recognizable structure?
+- If it's animated: does the motion tell the icon's story, does it rest as the
+  still icon, and does every frame stay inside the icon?

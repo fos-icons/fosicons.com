@@ -2,7 +2,7 @@ import { SlashHint, UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
+import { animatedNames, catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog';
 import { copyText } from '../lib/export';
 import { editorPath } from '../lib/icon-pages';
 import { angularSnippet, solidSnippet } from '../lib/react-snippet';
@@ -29,6 +29,7 @@ const CONTENTS: { id: string; title: string; sections: readonly (readonly [strin
       ['colors', 'Colors'],
       ['sizes', 'Sizes'],
       ['modifiers', 'Modifiers'],
+      ['animated', 'Animated'],
     ],
   },
   {
@@ -414,6 +415,20 @@ export default function DocsPage() {
           <p>The library currently includes <strong>{compositions.length} authored compositions</strong> across {new Set(compositions.map((c) => c.composition!.base)).size} base icons, using {modifierNames.size} modifiers. In the inspector, open a base icon such as <a href={path(editorPath('user'))}>user</a> or <a href={path(editorPath('file'))}>file</a> and choose from the <strong>Modifier</strong> menu.</p>
           <p>Opening an icon with one modifier starts with the base icon and that modifier selected. You can also choose a modifier and corner in the inspector, or compose the SVG with the Python tool.</p>
           <Code lang="sh">{`python3 scripts/compose_svg.py home-smile --modifier key --position bottom-right --output home-key.svg`}</Code>
+        </Section>
+
+        <Section id="animated" title="Animated">
+          <p><strong>{animatedNames.size} common icons</strong> also come animated: check, heart, wifi, loaders, the hourglass, every chevron, and more. Browse them in the <a href={path('/?style=animated')}>Animated</a> tab, where each one plays on hover. Copying and downloading them comes with the Advanced plan.</p>
+          <p>Each file is a plain SVG built from the Regular artwork, with its CSS animation inside a <code>&lt;style&gt;</code> block. No JavaScript or runtime is needed, so it plays in an <code>&lt;img&gt;</code> tag, inline in HTML, or as a CSS background. The library files are in <code>icons/animated/</code>.</p>
+          <Code lang="html">{`<img src="./icons/animated/check.svg" width="24" height="24" alt="Done">`}</Code>
+          <ul className="list-disc space-y-1 pl-5">
+            <li><strong>Rest pose.</strong> When the animation is stopped, the icon shows its normal drawing, so it is safe to pause or turn off.</li>
+            <li><strong>Reduced motion.</strong> Each file stops its own animation when the visitor has <code>prefers-reduced-motion</code> turned on.</li>
+            <li><strong>Inline safely.</strong> Every class and keyframe is prefixed with <code>fa-&lt;name&gt;-</code>, so several animated icons can share a page without clashing. To play on hover only, set <code>animation: none</code> on <code>.fa-&lt;name&gt; *</code> until hover.</li>
+            <li><strong>Color and stroke.</strong> Inline icons follow <code>currentColor</code> like Regular ones. Website downloads use your size, color, stroke, and <strong>Animation speed</strong> from Customize.</li>
+            <li><strong>GIF.</strong> Where SVG isn&apos;t supported (email, some chat apps), export a GIF from the inspector. It loops the animation as frames. GIF transparency is on or off, so pick a solid background for the smoothest edges.</li>
+          </ul>
+          <p>To animate any other icon, use the <code>fos-icons-animate</code> skill or the <code>animate_icon</code> tool in the <a href={path('/ai-agents')}>MCP server</a>: describe which parts move and how, and it returns the SVG. The library builds its set the same way, with <code>npm run animate</code>.</p>
         </Section>
 
         <Section id="svg" title="SVG">

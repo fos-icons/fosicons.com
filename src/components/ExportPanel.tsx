@@ -1,14 +1,19 @@
 import { useI18n } from '../i18n';
 import { useId, useState, type ReactNode } from 'react';
 import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng } from '../lib/export';
+import { GIF_BACKGROUNDS, svgToGif, type GifBackground } from '../lib/gif';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { Section } from './Customize';
 import { Button, IconButton, Select, UiIcon } from './ui';
 
 export const EXPORT_SCALES = [0.5, 1, 1.5, 2, 3, 4] as const;
 type Scale = (typeof EXPORT_SCALES)[number];
-type Format = 'png' | 'jpg' | 'svg';
-const MIME: Record<Format, string> = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg' };
+type Format = 'png' | 'jpg' | 'gif' | 'svg';
+const MIME: Record<Format, string> = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', gif: 'image/gif' };
+const FORMAT_LABEL: Record<Format, string> = { png: 'PNG', jpg: 'JPG', gif: 'GIF', svg: 'SVG' };
+/** Animated icons can't be still images: they export as GIF (baked frames) or SVG (live CSS). */
+const STILL_FORMATS = ['png', 'jpg', 'svg'] as const satisfies readonly Format[];
+const ANIMATED_FORMATS = ['gif', 'svg'] as const satisfies readonly Format[];
 
 export interface ExportRow {
   id: number;
@@ -16,6 +21,8 @@ export interface ExportRow {
   format: Format;
   /** Appended to the file name. Empty means the default for the row. */
   suffix: string;
+  /** GIF only: transparency is on/off, so a solid background gives smoother edges. */
+  background?: GifBackground;
 }
 
 let nextId = 1;
@@ -48,7 +55,7 @@ let rememberedCopy: { kind: CopyKind; scale: Scale } = { kind: 'svg', scale: 2 }
  * the same shape: pick what to copy, and the scale for images.
  */
 export function ExportPanel({
-  name, baseName, size, build, disabled, locked, run,
+  name, baseName, size, build, disabled, locked, run, animated = false,
 }: {
   /** Icon name, for the button label and Copy name. */
   name: string;
@@ -61,12 +68,19 @@ export function ExportPanel({
   /** Why exporting is locked (an upgrade prompt), shown in place of the download notes. */
   locked?: ReactNode;
   run: (action: () => Promise<void> | void, success: string) => Promise<void>;
+  /** Animated icons: GIF and SVG rows, no PNG copy. */
+  animated?: boolean;
 }) {
   const uid = useId();
   const { t } = useI18n();
-  const [rows, setRowsState] = useState<ExportRow[]>(remembered);
+  const [stored, setRowsState] = useState<ExportRow[]>(remembered);
+  const formats: readonly Format[] = animated ? ANIMATED_FORMATS : STILL_FORMATS;
+  // Rows are shared with still icons: raster rows read as GIF here, and GIF as PNG there.
+  const rows = stored.map((r) => (formats.includes(r.format) ? r : { ...r, format: r.format === 'svg' ? r.format : animated ? 'gif' as const : 'png' as const }));
+  const copyKinds = COPY_KINDS.filter((k) => !animated || k.value !== 'png');
   const [openRow, setOpenRow] = useState<number | null>(null);
-  const [copy, setCopyState] = useState(rememberedCopy);
+  const [copyStored, setCopyState] = useState(rememberedCopy);
+  const copy = animated && copyStored.kind === 'png' ? { ...copyStored, kind: 'svg' as const } : copyStored;
   const setRows = (next: ExportRow[]) => { remembered = next; setRowsState(next); };
   const setCopy = (next: typeof copy) => { rememberedCopy = next; setCopyState(next); };
   const patch = (id: number, change: Partial<ExportRow>) => setRows(rows.map((r) => (r.id === id ? { ...r, ...change } : r)));
@@ -75,7 +89,8 @@ export function ExportPanel({
     // A new row adds the next format not in the list yet (PNG, then JPG); after
     // that, another PNG one scale up from the largest PNG, like Figma.
     const used = new Set(rows.map((r) => r.format));
-    const format: Format = (['png', 'jpg'] as const).find((f) => !used.has(f)) ?? 'png';
+    const raster = formats.filter((f) => f !== 'svg');
+    const format: Format = raster.find((f) => !used.has(f)) ?? raster[0];
     const same = rows.filter((r) => r.format === format).map((r) => r.scale);
     const scale = same.length ? (EXPORT_SCALES.find((s) => s > Math.max(...same)) ?? EXPORT_SCALES[EXPORT_SCALES.length - 1]) : 1;
     setRows([...rows, row(format, scale)]);
@@ -92,7 +107,7 @@ export function ExportPanel({
       names.add(fname);
       const px = pxOf(size, effectiveScale(r));
       const svg = build(px);
-      const image = r.format === 'png' ? svgToPng(svg, px) : r.format === 'jpg' ? svgToJpg(svg, px) : null;
+      const image = r.format === 'png' ? svgToPng(svg, px) : r.format === 'jpg' ? svgToJpg(svg, px) : r.format === 'gif' ? svgToGif(svg, px, r.background) : null;
       files.push({ name: fname, data: image ? new Uint8Array(await (await image).arrayBuffer()) : svg });
     }
     if (files.length === 1) {
@@ -114,6 +129,7 @@ export function ExportPanel({
   const downloadNote = [
     rows.length > 1 && t('export.zipNote'),
     rows.some((r) => r.format === 'jpg') && t('export.jpgNote'),
+    rows.some((r) => r.format === 'gif') && t('export.gifNote'),
   ].filter(Boolean).join(' ');
 
   return (
@@ -147,9 +163,7 @@ export function ExportPanel({
                   onChange={(e) => patch(r.id, { format: e.target.value as Format })}
                   className="min-w-0 flex-1"
                 >
-                  <option value="png">PNG</option>
-                  <option value="jpg">JPG</option>
-                  <option value="svg">SVG</option>
+                  {formats.map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
                 </Select>
                 <button
                   type="button"
@@ -183,6 +197,19 @@ export function ExportPanel({
                     onChange={(e) => patch(r.id, { suffix: e.target.value.replace(/[\\/:*?"<>|]/g, '') })}
                     className={`${field} min-w-0 flex-1 font-mono text-xs`}
                   />
+                  {r.format === 'gif' && (
+                    <>
+                      <label htmlFor={`${uid}-b${r.id}`} className="text-xs text-muted">{t('export.gifBackground')}</label>
+                      <Select
+                        id={`${uid}-b${r.id}`}
+                        value={r.background ?? 'transparent'}
+                        onChange={(e) => patch(r.id, { background: e.target.value as GifBackground })}
+                        className="w-[112px] shrink-0"
+                      >
+                        {GIF_BACKGROUNDS.map((b) => <option key={b} value={b}>{t(`export.gifBackground.${b}`)}</option>)}
+                      </Select>
+                    </>
+                  )}
                 </div>
               )}
             </li>
@@ -215,7 +242,7 @@ export function ExportPanel({
             onChange={(e) => setCopy({ ...copy, kind: e.target.value as CopyKind })}
             className="min-w-0 flex-1"
           >
-            {COPY_KINDS.map((k) => <option key={k.value} value={k.value}>{t(k.label)}</option>)}
+            {copyKinds.map((k) => <option key={k.value} value={k.value}>{t(k.label)}</option>)}
           </Select>
           <Button icon="copy" className="h-8 px-2.5" disabled={disabled && copy.kind !== 'name'} onClick={doCopy}>
             {t('export.copy')}
