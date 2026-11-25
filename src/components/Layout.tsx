@@ -84,6 +84,7 @@ export function Layout() {
                     <li><LocalLink to={FRAMEWORK_PATHS.vue} className={footerLink}>{t('footer.vueIcons')}</LocalLink></li>
                     <li><LocalLink to="/docs#flutter" className={footerLink}>{t('footer.flutterIcons')}</LocalLink></li>
                     <li><LocalLink to={FRAMEWORK_PATHS.figma} className={footerLink}>{t('footer.figmaIcons')}</LocalLink></li>
+                    <li><LocalLink to="/ai-agents" className={footerLink}>{t('footer.aiAgents')}</LocalLink></li>
                   </ul>
                 </nav>
                 <nav aria-label={t('footer.categories')}>
