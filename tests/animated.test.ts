@@ -50,3 +50,23 @@ describe('gifTimeline', () => {
     expect(gifTimeline([1370, 1930]).cycle).toBe(1930);
   });
 });
+
+describe('gifFrame', () => {
+  it('mattes soft edges at full color precision and keeps a clear background', async () => {
+    const { gifFrame } = await import('../src/lib/gif');
+    const lib = await import('gifenc');
+    const { quantize, applyPalette } = typeof lib.quantize === 'function' ? lib : lib.default;
+    // Three pixels: solid blue, a half-transparent blue edge, and nothing.
+    const rgba = new Uint8ClampedArray([36, 91, 158, 255, 36, 91, 158, 128, 0, 0, 0, 0]);
+    const light = gifFrame(rgba, 'light', { quantize, applyPalette });
+    expect(light.transparentIndex).toBe(light.palette.length - 1);
+    expect(light.index[2]).toBe(light.transparentIndex);
+    // The edge is blended toward white, not cut off or kept at full strength.
+    const edge = light.palette[light.index[1]];
+    expect(edge[0]).toBeGreaterThan(120);
+    expect(edge[0]).toBeLessThan(160);
+    const white = gifFrame(rgba, 'white', { quantize, applyPalette });
+    expect(white.transparentIndex).toBeUndefined();
+    expect(white.palette[white.index[2]].slice(0, 3)).toEqual([255, 255, 255]);
+  });
+});

@@ -24,7 +24,7 @@ import { usePlan } from '../lib/plan';
 import {
   authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
-import { ColorField, CustomizeControls, Section, SizeControl, StrokeControl } from './Customize';
+import { ColorField, CustomizeControls, Section, SizeControl, SpeedControl, StrokeControl } from './Customize';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 
@@ -263,6 +263,7 @@ export function Inspector({
         style={style}
         kind={kind}
       />
+      {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>

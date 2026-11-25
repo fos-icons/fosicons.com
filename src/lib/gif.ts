@@ -1,10 +1,49 @@
 import { LocalizedError } from '../i18n/errors';
 import { svgBlob } from './export';
 
-/** GIF has on/off transparency only, so a solid background gives smoother edges. */
-export const GIF_BACKGROUNDS = ['transparent', 'white', 'black'] as const;
+/**
+ * GIF transparency is on or off, so soft (anti-aliased) edges are blended onto
+ * a matte color: `light` and `dark` keep a transparent background with edges
+ * matted for light or dark pages; `white` and `black` fill the background.
+ */
+export const GIF_BACKGROUNDS = ['light', 'dark', 'white', 'black'] as const;
 export type GifBackground = (typeof GIF_BACKGROUNDS)[number];
-const FILL: Record<Exclude<GifBackground, 'transparent'>, string> = { white: '#FFFFFF', black: '#000000' };
+const MATTE: Record<GifBackground, [number, number, number]> = { light: [255, 255, 255], dark: [0, 0, 0], white: [255, 255, 255], black: [0, 0, 0] };
+const transparentBackground = (b: GifBackground) => b === 'light' || b === 'dark';
+/** Pixels more transparent than this stay transparent; the rest are matted and kept. */
+const ALPHA_CUTOFF = 24;
+
+/**
+ * One frame for the GIF: soft edges blended onto the matte at full color
+ * precision, a palette of up to 255 colors, and (on a transparent
+ * background) one extra index for transparent pixels.
+ */
+export function gifFrame(
+  rgba: Uint8ClampedArray,
+  background: GifBackground,
+  lib: Pick<typeof import('gifenc'), 'quantize' | 'applyPalette'>,
+) {
+  const [mr, mg, mb] = MATTE[background];
+  const transparent = transparentBackground(background);
+  const out = new Uint8ClampedArray(rgba.length);
+  const clear: boolean[] = [];
+  for (let i = 0; i < rgba.length; i += 4) {
+    const a = rgba[i + 3] / 255;
+    const hidden = transparent && rgba[i + 3] < ALPHA_CUTOFF;
+    clear.push(hidden);
+    out[i] = Math.round(rgba[i] * a + mr * (1 - a));
+    out[i + 1] = Math.round(rgba[i + 1] * a + mg * (1 - a));
+    out[i + 2] = Math.round(rgba[i + 2] * a + mb * (1 - a));
+    out[i + 3] = 255;
+  }
+  const palette = lib.quantize(out, transparent ? 255 : 256, { format: 'rgb565' });
+  const index = lib.applyPalette(out, palette, 'rgb565');
+  if (!transparent) return { palette, index, transparentIndex: undefined };
+  const transparentIndex = palette.length;
+  palette.push([...MATTE[background]]);
+  clear.forEach((hidden, k) => { if (hidden) index[k] = transparentIndex; });
+  return { palette, index, transparentIndex };
+}
 
 const MAX_FRAMES = 300;
 const FRAME_MS = 40; // 25 fps
@@ -27,17 +66,13 @@ export function gifTimeline(durationsMs: readonly number[]): { cycle: number; fr
   return { cycle, frames, delay: cycle / frames };
 }
 
-async function rasterize(svg: string, px: number, context: CanvasRenderingContext2D, background: GifBackground) {
+async function rasterize(svg: string, px: number, context: CanvasRenderingContext2D) {
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const image = new Image();
     image.src = url;
     await image.decode().catch(() => { throw new LocalizedError('error.render'); });
     context.clearRect(0, 0, px, px);
-    if (background !== 'transparent') {
-      context.fillStyle = FILL[background];
-      context.fillRect(0, 0, px, px);
-    }
     context.drawImage(image, 0, 0, px, px);
     return context.getImageData(0, 0, px, px).data;
   } finally {
@@ -51,7 +86,7 @@ async function rasterize(svg: string, px: number, context: CanvasRenderingContex
  * the loop, and each step's computed transform, opacity and dash offset is
  * frozen into a static copy that is rasterized and encoded.
  */
-export async function svgToGif(svg: string, px: number, background: GifBackground = 'transparent'): Promise<Blob> {
+export async function svgToGif(svg: string, px: number, background: GifBackground = 'light'): Promise<Blob> {
   // Loaded only when a GIF is made. The browser gets gifenc's ES build (named
   // exports; its default is GIFEncoder alone); Node gets CommonJS, whose
   // functions sit on the default export.
@@ -83,8 +118,7 @@ export async function svgToGif(svg: string, px: number, background: GifBackgroun
     const context = canvas.getContext('2d', { willReadFrequently: true });
     if (!context) throw new LocalizedError('error.canvas');
 
-    const transparent = background === 'transparent';
-    const format = transparent ? 'rgba4444' : 'rgb565';
+    const transparent = transparentBackground(background);
     const gif = GIFEncoder();
     for (let i = 0; i < frames; i += 1) {
       const t = start + i * delay;
@@ -98,10 +132,8 @@ export async function svgToGif(svg: string, px: number, background: GifBackgroun
       });
       const style = still.querySelector('style');
       if (style) style.textContent += '*{animation:none!important}';
-      const rgba = await rasterize(new XMLSerializer().serializeToString(still), px, context, background);
-      const palette = quantize(rgba, 256, { format, oneBitAlpha: transparent });
-      const index = applyPalette(rgba, palette, format);
-      const transparentIndex = transparent ? Math.max(0, palette.findIndex((c) => c[3] === 0)) : undefined;
+      const rgba = await rasterize(new XMLSerializer().serializeToString(still), px, context);
+      const { palette, index, transparentIndex } = gifFrame(rgba, background, { quantize, applyPalette });
       gif.writeFrame(index, px, px, { palette, delay, repeat: 0, transparent, transparentIndex, dispose: transparent ? 2 : -1 });
     }
     gif.finish();
