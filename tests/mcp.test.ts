@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { handleMcp } from '../api/mcp';
+import { challengeResponse } from '../api/openai-apps-challenge';
 import { canonicalName, checkIconNames, flutterName, iconCode, listIcons, searchIcons } from '../server/mcp/icons';
 import catalog from '../src/data/catalog.json';
 
@@ -33,7 +34,10 @@ describe('MCP endpoint', () => {
     const { body } = await rpc('tools/list');
     const tools = body.result.tools as { name: string; annotations: Record<string, boolean> }[];
     expect(tools.map((t) => t.name).sort()).toEqual(['check_icon_names', 'get_framework_setup', 'get_icon_code', 'list_icons', 'search_icons']);
-    for (const tool of tools) expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false });
+    for (const tool of tools) {
+      expect(tool.annotations).toMatchObject({ readOnlyHint: true, destructiveHint: false, openWorldHint: false });
+      expect((tool as { outputSchema?: { type: string } }).outputSchema?.type).toBe('object');
+    }
   });
 
   it('answers CORS preflight and refuses GET', async () => {
@@ -62,6 +66,22 @@ describe('MCP endpoint', () => {
     const bad = await call('get_icon_code', { name: 'camra', framework: 'react' });
     expect(bad.isError).toBe(true);
     expect(bad.content[0].text).toMatch(/No icon named "camra"\. Closest: .*camera/);
+  });
+
+  it('returns results that match every output schema', async () => {
+    const calls: [string, Record<string, unknown>][] = [
+      ['search_icons', { queries: ['camera', 'zzqx'] }],
+      ['get_icon_code', { name: 'camera', framework: 'svg' }],
+      ['get_icon_code', { name: 'telescope', framework: 'flutter', style: 'duocolor' }],
+      ['check_icon_names', { names: ['CameraFilled', 'camra'] }],
+      ['list_icons', { category: 'Files', limit: 2 }],
+      ['get_framework_setup', { framework: 'angular' }],
+    ];
+    for (const [name, args] of calls) {
+      const result = await call(name, args);
+      expect(result.isError, `${name} ${JSON.stringify(result.content)}`).toBeFalsy();
+      expect(result.structuredContent).toBeTypeOf('object');
+    }
   });
 
   it('rejects invalid arguments', async () => {
@@ -128,5 +148,15 @@ describe('icon lookups', () => {
 
   it('ranks exact names first', () => {
     expect(searchIcons(['trash'])[0].icons[0].name).toBe('trash');
+  });
+});
+
+describe('OpenAI domain verification', () => {
+  it('serves the token as plain text, and 404 without one', async () => {
+    const ok = challengeResponse(' abc123 '.trim());
+    expect(ok.status).toBe(200);
+    expect(ok.headers.get('content-type')).toMatch(/^text\/plain/);
+    expect(await ok.text()).toBe('abc123');
+    expect(challengeResponse('').status).toBe(404);
   });
 });

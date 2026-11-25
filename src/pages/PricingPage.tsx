@@ -12,8 +12,8 @@ import { billingMode, hasOpenSubscription, usePlan } from '../lib/plan';
 
 const plans = [
   { id: 'free', highlights: ['regular', 'find', 'customize', 'singleExport'] },
-  { id: 'pro', highlights: ['styles', 'duoColors', 'zip', 'agents'] },
-  { id: 'advanced', highlights: ['modifiers', 'placement', 'modifierExports', 'modifierAgents'] },
+  { id: 'pro', highlights: ['styles', 'duoColors', 'zip'] },
+  { id: 'advanced', highlights: ['modifiers', 'placement', 'modifierExports'] },
 ] as const;
 
 const BillingAccount = billingMode ? lazy(() => import('./BillingAccount')) : null;
@@ -28,8 +28,7 @@ const featureGroups = [
   { id: 'export', minimum: 'free', features: ['svg', 'png', 'pngScales', 'clipboard'] },
   { id: 'export', minimum: 'pro', features: ['svgZip', 'pngZip'] },
   { id: 'modifiers', minimum: 'advanced', features: ['modifierPicker', 'modifierPlacement', 'modifierColor', 'modifierSingle', 'modifierZip'] },
-  { id: 'agents', minimum: 'pro', features: ['agentLookup', 'agentSnippets'] },
-  { id: 'agents', minimum: 'advanced', features: ['modifierAgents'] },
+  { id: 'agents', minimum: 'free', features: ['agentLookup', 'agentSnippets'] },
 ] as const satisfies readonly { id: string; minimum: PlanId; features: readonly string[] }[];
 const groups = [...new Set(featureGroups.map(({ id }) => id))];
 

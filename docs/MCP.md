@@ -42,6 +42,15 @@ needed: `/mcp` is a rewrite, and the function also answers at `/api/mcp` directl
 Rule edits only take effect after Review Changes → Publish.
 It's not in code, so blocked requests don't count against function invocations.
 
+## OpenAI domain verification
+
+OpenAI's plugin portal verifies the MCP domain by fetching
+`https://www.fosicons.com/.well-known/openai-apps-challenge` and expecting the
+token it shows you, as plain text. Set the token as the `OPENAI_APPS_CHALLENGE`
+environment variable for Production in Vercel, redeploy, then click Verify in
+the portal. The URL returns 404 while the variable is unset
+([`api/openai-apps-challenge.ts`](../api/openai-apps-challenge.ts)).
+
 ## Logs
 
 Each tool call logs one JSON line, `{"mcp": {...}}`, with the tool name and

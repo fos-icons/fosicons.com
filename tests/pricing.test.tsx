@@ -37,7 +37,7 @@ it('shows the annual launch plans without offering checkout', () => {
   expect(screen.queryByRole('heading', { name: 'Test Stripe checkout' })).toBeNull();
 });
 
-it('compares styles, exports, modifiers, and planned integrations by tier', () => {
+it('compares styles, exports, modifiers, and integrations by tier', () => {
   render(<MemoryRouter><PricingPage /></MemoryRouter>);
   const table = within(screen.getByRole('table', { name: 'Compare plans' }));
   const statuses = (name: string) => within(table.getByRole('row', { name: new RegExp(`^${name}`) }))
@@ -53,9 +53,9 @@ it('compares styles, exports, modifiers, and planned integrations by tier', () =
   expect(statuses('Duotone icons')).toEqual(paid);
   expect(statuses('Bulk ZIP exports for SVG')).toEqual(paid);
   expect(statuses('Bulk ZIP exports for PNG')).toEqual(paid);
-  expect(statuses('Look up base icons in Claude Code and Codex')).toEqual(paid);
+  expect(statuses('Find icons from Claude Code, ChatGPT, and Codex')).toEqual(all);
+  expect(statuses('Get icon names and code for all four styles')).toEqual(all);
   expect(statuses('Export individual icons with modifiers')).toEqual(advanced);
   expect(statuses('Export icons with modifiers in bulk')).toEqual(advanced);
-  expect(statuses('Look up icons with modifiers in Claude Code and Codex')).toEqual(advanced);
   expect(screen.getByRole('link', { name: 'Figma library' }).getAttribute('href')).toBe('/docs#figma');
 });
