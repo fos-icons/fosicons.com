@@ -5,7 +5,7 @@ import { Inspector, SidePane, type InspectorProps } from '../components/Inspecto
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection, useStyleVars,
 } from '../components/LandingParts';
-import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useArtwork, useSizedArtwork } from '../lib/artwork';
@@ -148,7 +148,7 @@ function HeaderIconSearch({
             }}
             className="h-full min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-faint [&::-webkit-search-cancel-button]:hidden"
           />
-          {!query && <kbd aria-hidden="true" className="hidden shrink-0 rounded border border-line bg-sunken px-1.5 text-xs text-muted md:inline">/</kbd>}
+          {!query && <SlashHint className="max-md:hidden" />}
         </div>
         {suggestion && (
           <button

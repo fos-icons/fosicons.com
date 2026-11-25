@@ -354,3 +354,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 export function VisuallyHidden({ children }: { children: ReactNode }) {
   return <span className="sr-only">{children}</span>;
 }
+
+/**
+ * The "/" shortcut hint at the end of a search box: a square key centered in
+ * its slot, so it mirrors the search icon at the other end.
+ */
+export function SlashHint({ size = 'sm', className = '' }: { size?: 'sm' | 'md'; className?: string }) {
+  const box = size === 'md' ? 'size-6 rounded-md text-xs' : 'size-5 rounded-[5px] text-[11px]';
+  return (
+    <kbd aria-hidden="true" className={`inline-flex shrink-0 items-center justify-center border border-line bg-sunken font-sans font-medium leading-none text-muted ${box} ${className}`}>/</kbd>
+  );
+}

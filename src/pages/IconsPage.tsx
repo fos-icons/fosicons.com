@@ -10,7 +10,7 @@ import { Inspector, SidePane } from '../components/Inspector';
 import { useModifiers } from '../components/ModifierPicker';
 import { NoResults } from '../components/NoResults';
 import { SelectionPanel } from '../components/SelectionPanel';
-import { Button, Segmented, Select, UiIcon } from '../components/ui';
+import { Button, Segmented, Select, SlashHint, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBlackBrandMark, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { usePlan } from '../lib/plan';
@@ -99,13 +99,14 @@ export function SearchField({
           <span className="truncate">{tip}</span>
         </span>
       )}
-      <div className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+      {/* A 32px slot centered 26px from the right edge, mirroring the search icon. */}
+      <div className="absolute right-2.5 top-1/2 flex w-8 -translate-y-1/2 items-center justify-center">
         {value ? (
           <button type="button" aria-label={t('icons.clearSearch')} onClick={() => { onChange(''); inputRef.current?.focus(); }} className="inline-flex size-8 items-center justify-center rounded-lg text-muted hover:bg-sunken hover:text-ink">
             <UiIcon name="x" className="size-[18px]" />
           </button>
         ) : (
-          <kbd aria-hidden="true" className="hidden rounded-md border border-line bg-sunken px-1.5 py-0.5 text-xs text-muted sm:inline">/</kbd>
+          <SlashHint size="md" className="max-sm:hidden" />
         )}
       </div>
     </div>

@@ -12,6 +12,7 @@ import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
 import { LanguageMenu } from './LanguageMenu';
 import { PageBoundary } from './PageBoundary';
+import { PageLoader } from './PageLoader';
 import { UiIcon } from './ui';
 
 const footerLink = 'inline-flex items-center gap-1 rounded text-muted underline-offset-2 transition hover:text-ink hover:underline';
@@ -44,33 +45,39 @@ export function Layout() {
       mainRef.current?.focus({ preventScroll: true });
     }
   }, [pageKey, navigationType, hash]);
+  // On Browse the side pane runs the full height beside the page, so the header
+  // sits in the page column and lines up with the catalog. Elsewhere (icon pages)
+  // the header spans the window and the pane starts below it.
+  const paneBesideHeader = !iconPage && (editor || pagePath === '/' || pagePath.replace(/\/$/, '') === '/brands');
+  const header = (
+    <header className={`col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
+      <div className={`${CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
+        <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
+          <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
+          <span className="whitespace-nowrap font-display text-[20px] font-semibold tracking-tight">{t('site.name')}</span>
+        </LocalLink>
+        <div ref={setHeaderSlot} className={`hidden min-w-0 empty:hidden md:flex ${docsPage ? 'md:col-start-2' : 'flex-1 justify-center px-2 lg:px-6'}`} />
+        <div className={`ml-auto flex items-center gap-2 md:gap-5 ${docsPage ? 'md:col-start-3' : ''}`}>
+          <HeaderActions />
+        </div>
+      </div>
+    </header>
+  );
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
-      <div className={`flex min-h-dvh flex-col [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
+      {/* Header, page column, and side pane share one grid, so the header never remounts when the layout changes. */}
+      <div className={`grid min-h-dvh grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_1fr] [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
         <a href="#main" className="sr-only z-50 rounded-lg bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
           {t('site.skipToContent')}
         </a>
-        {/* The inspector sits below the shared header so it cannot move the navigation. */}
-        <header className={`h-[var(--site-header-height)] shrink-0 border-b border-line ${iconPage ? 'header-glass' : ''}`}>
-          <div className={`${CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
-            <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
-              <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
-              <span className="whitespace-nowrap font-display text-[20px] font-semibold tracking-tight">{t('site.name')}</span>
-            </LocalLink>
-            <div ref={setHeaderSlot} className={`hidden min-w-0 empty:hidden md:flex ${docsPage ? 'md:col-start-2' : 'flex-1 justify-center px-2 lg:px-6'}`} />
-            <div className={`ml-auto flex items-center gap-2 md:gap-5 ${docsPage ? 'md:col-start-3' : ''}`}>
-              <HeaderActions />
-            </div>
-          </div>
-        </header>
-        <div className="flex flex-1">
-          <div className="flex min-w-0 flex-1 flex-col">
+        {header}
+          <div className="col-start-1 row-start-2 flex min-w-0 flex-col">
             <main ref={mainRef} id="main" tabIndex={-1} className="flex-1 outline-none">
               {/* Re-keyed per page so moving between pages eases in (see .route-enter). */}
               <div key={pageKey} className="route-enter page-enter">
                 <PageBoundary>
-                  <Suspense fallback={<p role="status" className={`${CONTAINER} py-8 text-muted`}>{t('site.pageLoading')}</p>}>
+                  <Suspense fallback={<PageLoader />}>
                     <Outlet />
                   </Suspense>
                 </PageBoundary>
@@ -119,8 +126,7 @@ export function Layout() {
               </div>
             </footer>
           </div>
-          <div ref={setPaneHost} className={`hidden shrink-0 lg:block ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
-        </div>
+          <div ref={setPaneHost} className={`col-start-2 hidden lg:block ${paneBesideHeader ? 'row-span-2 row-start-1' : 'row-start-2'} ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
       </div>
     </HeaderSlotContext.Provider>
     </PaneHostContext.Provider>

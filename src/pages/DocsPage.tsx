@@ -1,4 +1,4 @@
-import { UiIcon } from '../components/ui';
+import { SlashHint, UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -171,13 +171,14 @@ function DocsSearch({ value, onChange }: { value: string; onChange: (v: string) 
         onKeyDown={(e) => { if (e.key === 'Escape' && value) { e.preventDefault(); onChange(''); } }}
         className="h-11 w-full rounded-lg border border-line-strong bg-surface pl-9 pr-9 text-base text-ink outline-none transition placeholder:text-muted focus:border-brand focus:ring-4 focus:ring-brand/15 md:h-9 md:text-sm [&::-webkit-search-cancel-button]:hidden"
       />
-      <div className="absolute right-1.5 top-1/2 -translate-y-1/2">
+      {/* A 32px slot centered 20px from the right edge, mirroring the search icon. */}
+      <div className="absolute right-1 top-1/2 flex w-8 -translate-y-1/2 justify-center">
         {value ? (
           <button type="button" aria-label="Clear search" onClick={() => { onChange(''); ref.current?.focus(); }} className="inline-flex size-8 items-center justify-center rounded-md text-muted hover:bg-sunken hover:text-ink md:size-6">
             <UiIcon name="x" className="size-4" />
           </button>
         ) : (
-          <kbd aria-hidden="true" className="hidden rounded border border-line bg-sunken px-1.5 text-xs text-muted md:inline">/</kbd>
+          <SlashHint className="max-md:hidden" />
         )}
       </div>
     </div>

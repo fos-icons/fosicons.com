@@ -3,7 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useI18n } from '../i18n';
 import { ORG_URL } from '../lib/links';
 import { lazyPage } from '../lib/lazy-page';
-import { Button, ButtonAnchor, ButtonLink, UiIcon } from './ui';
+import { Button, ButtonAnchor, ButtonLink, IconButton, UiIcon } from './ui';
 
 const FeedbackDialog = lazyPage(() => import('./FeedbackDialog'));
 
@@ -76,9 +76,8 @@ export function HeaderActions() {
             {t(label)}
           </NavLink>
         ))}
-        <button type="button" aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className={textLink}>
-          {t('header.feedback')}
-        </button>
+        {/* An icon, so the text links stay about the site; its label shows on hover and to screen readers. */}
+        <IconButton icon="message-smile-square" label={t('header.feedback')} aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className="-mx-2 text-muted hover:text-ink" />
       </div>
 
       <div ref={wrapRef} className="relative md:hidden"
