@@ -35,12 +35,16 @@ async function networkFirst(request) {
   }
 }
 
+// Only keep real files: a server's HTML fallback for a missing asset would
+// otherwise be served in place of the script or data until the next deploy.
+const cacheable = (response) => response.ok && !(response.headers.get('content-type') ?? '').includes('text/html');
+
 async function cacheFirst(request) {
   const cache = await caches.open(ASSETS);
   const hit = await cache.match(request);
   if (hit) return hit;
   const response = await fetch(request);
-  if (response.ok) cache.put(request, response.clone());
+  if (cacheable(response)) cache.put(request, response.clone());
   return response;
 }
 
@@ -48,7 +52,7 @@ async function staleWhileRevalidate(request, event) {
   const cache = await caches.open(DATA);
   const hit = await cache.match(request);
   const refresh = fetch(request).then((response) => {
-    if (response.ok) cache.put(request, response.clone());
+    if (cacheable(response)) cache.put(request, response.clone());
     return response;
   });
   if (hit) {

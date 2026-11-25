@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { prepareAnalyticsEvent } from './lib/analytics';
 import { primeArtwork } from './lib/artwork';
+import { reloadForNewVersion } from './lib/lazy-page';
 import { loadMessages, splitLocale } from './i18n';
 import './styles/index.css';
 
@@ -19,6 +20,12 @@ const embedded = document.getElementById('fos-artwork');
 if (embedded?.textContent) {
   try { primeArtwork(JSON.parse(embedded.textContent)); } catch { /* fetched on demand instead */ }
 }
+
+// A preloaded chunk or stylesheet from an older build is gone after a deploy:
+// reload once for the current build instead of failing (see lib/lazy-page).
+window.addEventListener('vite:preloadError', (event) => {
+  if (reloadForNewVersion()) event.preventDefault();
+});
 
 // The language comes from the URL (/fr/…); load its messages before the first render.
 const { locale } = splitLocale(window.location.pathname);

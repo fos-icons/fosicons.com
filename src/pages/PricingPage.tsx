@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useId, useState } from 'react';
+import { Suspense, useEffect, useId, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Glyph } from '../components/LandingParts';
 import { Button, ButtonLink, UiIcon } from '../components/ui';
@@ -8,6 +8,7 @@ import { useHostedBilling } from '../lib/billing-actions';
 import { isPaidPlan, PAID_PLANS, type PaidPlan } from '../lib/billing-plans';
 import type { StyleId } from '../lib/catalog';
 import { CONTAINER } from '../lib/layout';
+import { lazyPage } from '../lib/lazy-page';
 import { billingMode, hasOpenSubscription, usePlan } from '../lib/plan';
 
 const plans = [
@@ -16,7 +17,7 @@ const plans = [
   { id: 'advanced', highlights: ['modifiers', 'placement', 'modifierExports'] },
 ] as const;
 
-const BillingAccount = billingMode ? lazy(() => import('./BillingAccount')) : null;
+const BillingAccount = billingMode ? lazyPage(() => import('./BillingAccount')) : null;
 
 type PlanId = (typeof plans)[number]['id'];
 const planLevel: Record<PlanId, number> = { free: 0, pro: 1, advanced: 2 };

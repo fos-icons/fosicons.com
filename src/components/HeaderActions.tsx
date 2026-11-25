@@ -1,11 +1,12 @@
-import { lazy, Suspense, useEffect, useId, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LocalLink, useI18n } from '../i18n';
 import { AGENT_CLIENTS } from '../lib/agents';
 import { ORG_URL } from '../lib/links';
+import { lazyPage } from '../lib/lazy-page';
 import { Button, ButtonAnchor, ButtonLink, UiIcon } from './ui';
 
-const FeedbackDialog = lazy(() => import('./FeedbackDialog'));
+const FeedbackDialog = lazyPage(() => import('./FeedbackDialog'));
 
 /** Phone menu rows: full-width controls, with labels aligned left. */
 const menuItem = 'min-h-11 w-full justify-start';

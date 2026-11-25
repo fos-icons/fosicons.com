@@ -1,4 +1,4 @@
-import { lazy } from 'react';
+import { lazyPage } from './lib/lazy-page';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
@@ -12,11 +12,11 @@ import NotFoundPage from './pages/NotFoundPage';
 // The prerenderer reuses the app shell's styles before lazy routes load.
 import './pages/pricing.css';
 
-const CategoryPage = lazy(() => import('./pages/CategoryPage'));
-const AiAgentsPage = lazy(() => import('./pages/AiAgentsPage'));
-const FrameworkPage = lazy(() => import('./pages/FrameworkPage'));
-const IconPage = lazy(() => import('./pages/IconPage'));
-const PricingPage = lazy(() => import('./pages/PricingPage'));
+const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
+const AiAgentsPage = lazyPage(() => import('./pages/AiAgentsPage'));
+const FrameworkPage = lazyPage(() => import('./pages/FrameworkPage'));
+const IconPage = lazyPage(() => import('./pages/IconPage'));
+const PricingPage = lazyPage(() => import('./pages/PricingPage'));
 
 function CatalogRoute({ page }: { page: 'home' | 'brands' | 'category' | 'icon' }) {
   const location = useLocation();
