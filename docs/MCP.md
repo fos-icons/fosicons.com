@@ -35,9 +35,12 @@ the packages, or the website export.
 
 ## Rate limiting
 
-Add a Vercel Firewall rate-limit rule (Project → Firewall → Rules):
-path equals `/mcp`, 300 requests per 60 seconds per IP, action **Too Many Requests (429)**.
-It's not in code, so it doesn't count against function invocations.
+A Vercel Firewall rule named **MCP limit** (Project → Firewall → Rules) does this:
+request path equals `/mcp` **or** `/api/mcp`, fixed window of 300 requests per
+60 seconds keyed by IP address, action **Too Many Requests (429)**. Both paths are
+needed: `/mcp` is a rewrite, and the function also answers at `/api/mcp` directly.
+Rule edits only take effect after Review Changes → Publish.
+It's not in code, so blocked requests don't count against function invocations.
 
 ## Logs
 
