@@ -21,6 +21,7 @@ import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { UpgradePrompt } from './UpgradePrompt';
 import { usePlan } from '../lib/plan';
+import { ANIMATED_SLUG } from '../lib/url-state';
 import {
   authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
@@ -143,7 +144,7 @@ export function Inspector({
     }
   }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke]);
 
-  const slug = premiumView ? 'animated' : STYLE_META[style].slug;
+  const slug = premiumView ? ANIMATED_SLUG : STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
   const family = kind === 'core' ? modifierFamily(icon.name) : null;
   /** Modifiers the library authored on this base, by corner (single-modifier compositions). */
@@ -248,7 +249,7 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
-            {kind === 'core' && <> · <LocalLink to={iconPath(icon.name)} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
+            {kind === 'core' && <> · <LocalLink to={`${iconPath(icon.name)}${premiumView ? `?style=${ANIMATED_SLUG}` : ''}`} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
           </p>
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="sheet-close -mr-2 self-start" />

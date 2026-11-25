@@ -30,7 +30,7 @@ import { prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
 import { useClientValue } from '../lib/hydration';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
-  parseState, type CatalogState, type UrlStateConfig, type View,
+  ANIMATED_SLUG, parseState, type CatalogState, type UrlStateConfig, type View,
 } from '../lib/url-state';
 
 /** Core icons and brand marks share one catalog; marks are the Brands category. */
@@ -415,6 +415,7 @@ export function IconsPage() {
       : []),
   ];
   const viewValue: View = animatedView ? 'animated' : drawStyle;
+  const pageStyle = animatedView ? ANIMATED_SLUG : drawStyle === catalog.styles[0] ? null : STYLE_META[drawStyle].slug;
   const tips = brandsView
     ? [t('icons.searchBrands')]
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
@@ -574,7 +575,7 @@ export function IconsPage() {
           </>
         )}
         expandTo={selected && !selectedBrand && !multiActive
-          ? `${iconPath(selected.name)}${drawStyle === catalog.styles[0] ? '' : `?style=${STYLE_META[drawStyle].slug}`}`
+          ? `${iconPath(selected.name)}${pageStyle ? `?style=${pageStyle}` : ''}`
           : undefined}
         expandBackTo={path(catalogEditorLocation({ ...state, icon: null, modifier: null, corner: null }).href)}
       >

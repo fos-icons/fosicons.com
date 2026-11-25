@@ -67,4 +67,11 @@ describe('asset synchronization', () => {
       expect(sha(body)).toBe(lock.snapshotSha256[style]);
     }
   });
+
+  it('ships the curated check separately for success toasts', () => {
+    const icons = JSON.parse(readFileSync(join(__dirname, '../public/icons/animated.json'), 'utf8'));
+    const toast = JSON.parse(readFileSync(join(__dirname, '../src/data/ui-animated-check.json'), 'utf8'));
+    expect(toast.check).toContain('@keyframes');
+    expect(toast).toEqual({ check: icons.check });
+  });
 });
