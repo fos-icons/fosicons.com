@@ -37,7 +37,7 @@ export const animatedNames: ReadonlySet<string> = new Set(catalogMeta.animated);
 /** Display labels and URL slugs, one per style. */
 export const STYLE_META: Record<StyleId, { label: string; slug: string; description: string }> = {
   regular: { label: 'Regular', slug: 'regular', description: '1.25px line on a 24px grid' },
-  filled: { label: 'Filled', slug: 'filled', description: 'Filled silhouettes with transparent cutouts' },
+  filled: { label: 'Filled', slug: 'filled', description: 'Silhouettes with transparent cutouts' },
   duocolor: { label: 'Duocolor', slug: 'duocolor', description: 'Primary structure with secondary details' },
   duotone: { label: 'Duotone', slug: 'duotone', description: 'Line with a 16% interior tint' },
 };

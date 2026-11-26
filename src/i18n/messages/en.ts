@@ -117,7 +117,7 @@ const en = {
   'style.duocolor': 'Duocolor',
   'style.duotone': 'Duotone',
   'style.regular.description': '1.25px line on a 24px grid',
-  'style.filled.description': 'Filled silhouettes with transparent cutouts',
+  'style.filled.description': 'Silhouettes with transparent cutouts',
   'style.duocolor.description': 'Primary structure with secondary details',
   'style.duotone.description': 'Line with a 16% interior tint',
   'style.animated': 'Animated',

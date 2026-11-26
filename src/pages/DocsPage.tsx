@@ -347,7 +347,7 @@ export default function DocsPage() {
         <Section id="styles" title="Styles">
           <ul className="list-disc space-y-1 pl-5">
             {catalog.styles.map((s) => (
-              <li key={s}><strong>{STYLE_META[s].label}</strong>{s === 'filled' && <> (<code>filled</code> in files and code)</>} — {STYLE_META[s].description}.</li>
+              <li key={s}><strong>{STYLE_META[s].label}</strong> — {STYLE_META[s].description}.</li>
             ))}
             <li><strong>Animated</strong> — {animatedNames.size} common icons, drawn in Regular with a CSS animation inside the SVG (see <a href="#animated">Animated</a>).</li>
           </ul>
