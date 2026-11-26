@@ -41,7 +41,7 @@
     },
     {
       "name": "Files",
-      "count": 111
+      "count": 112
     },
     {
       "name": "Food & drink",
@@ -53,7 +53,7 @@
     },
     {
       "name": "Interfaces",
-      "count": 149
+      "count": 150
     },
     {
       "name": "Media & devices",
@@ -69,7 +69,7 @@
     },
     {
       "name": "Navigation",
-      "count": 176
+      "count": 177
     },
     {
       "name": "Professions",
@@ -93,7 +93,7 @@
     },
     {
       "name": "Time & calendar",
-      "count": 64
+      "count": 65
     },
     {
       "name": "Transport & space",
@@ -109,6 +109,10 @@
     }
   ],
   "modifiers": {
+    "12": {
+      "label": "12",
+      "group": "time"
+    },
     "24": {
       "label": "24",
       "group": "time"
@@ -145,6 +149,14 @@
       "label": "Block",
       "group": "actions"
     },
+    "bug": {
+      "label": "Bug",
+      "group": "actions"
+    },
+    "chat": {
+      "label": "Chat",
+      "group": "actions"
+    },
     "check": {
       "label": "Check",
       "group": "status"
@@ -156,6 +168,10 @@
     "code": {
       "label": "Code",
       "group": "actions"
+    },
+    "coins": {
+      "label": "Coins",
+      "group": "commerce"
     },
     "copy": {
       "label": "Copy",
@@ -181,18 +197,6 @@
       "label": "Dot",
       "group": "status"
     },
-    "money": {
-      "label": "Money",
-      "group": "commerce"
-    },
-    "coins": {
-      "label": "Coins",
-      "group": "commerce"
-    },
-    "tag": {
-      "label": "Tag",
-      "group": "commerce"
-    },
     "download": {
       "label": "Download",
       "group": "actions"
@@ -209,6 +213,10 @@
       "label": "FIG",
       "group": "file-types"
     },
+    "forward": {
+      "label": "Forward",
+      "group": "actions"
+    },
     "gif": {
       "label": "GIF",
       "group": "file-types"
@@ -220,6 +228,10 @@
     "hd": {
       "label": "HD",
       "group": "image-quality"
+    },
+    "home": {
+      "label": "Home",
+      "group": "actions"
     },
     "html": {
       "label": "HTML",
@@ -264,6 +276,10 @@
     "md": {
       "label": "MD",
       "group": "file-types"
+    },
+    "money": {
+      "label": "Money",
+      "group": "commerce"
     },
     "mov": {
       "label": "MOV",
@@ -321,21 +337,21 @@
       "label": "Reply",
       "group": "actions"
     },
-    "forward": {
-      "label": "Forward",
-      "group": "actions"
-    },
-    "chat": {
-      "label": "Chat",
-      "group": "actions"
-    },
     "search": {
       "label": "Search",
+      "group": "actions"
+    },
+    "settings": {
+      "label": "Settings",
       "group": "actions"
     },
     "shield": {
       "label": "Shield",
       "group": "actions"
+    },
+    "sms": {
+      "label": "SMS",
+      "group": "file-types"
     },
     "sparkle": {
       "label": "Sparkle",
@@ -349,6 +365,10 @@
       "label": "SVG",
       "group": "file-types"
     },
+    "tag": {
+      "label": "Tag",
+      "group": "commerce"
+    },
     "ts": {
       "label": "TS",
       "group": "file-types"
@@ -359,10 +379,6 @@
     },
     "upload": {
       "label": "Upload",
-      "group": "actions"
-    },
-    "home": {
-      "label": "Home",
       "group": "actions"
     },
     "user": {
@@ -391,7 +407,8 @@
     }
   },
   "iconAliases": {
-    "slash-divider": "slash"
+    "slash-divider": "slash",
+    "code-browser": "browser-code"
   },
   "animated": [
     "activity",
@@ -526,7 +543,7 @@
     "zoom-in",
     "zoom-out"
   ],
-  "iconCount": 1588,
+  "iconCount": 1592,
   "examples": [
     "home",
     "search",
@@ -587,8 +604,8 @@
     "x"
   ],
   "compositions": {
-    "count": 175,
-    "bases": 29,
-    "modifiers": 64
+    "count": 185,
+    "bases": 35,
+    "modifiers": 69
   }
 }
