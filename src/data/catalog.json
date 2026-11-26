@@ -41,7 +41,7 @@
     },
     {
       "name": "Files",
-      "count": 111
+      "count": 112
     },
     {
       "name": "Food & drink",
@@ -53,7 +53,7 @@
     },
     {
       "name": "Interfaces",
-      "count": 149
+      "count": 150
     },
     {
       "name": "Media & devices",
@@ -69,7 +69,7 @@
     },
     {
       "name": "Navigation",
-      "count": 176
+      "count": 177
     },
     {
       "name": "Professions",
@@ -93,7 +93,7 @@
     },
     {
       "name": "Time & calendar",
-      "count": 64
+      "count": 65
     },
     {
       "name": "Transport & space",
@@ -109,6 +109,10 @@
     }
   ],
   "modifiers": {
+    "12": {
+      "label": "12",
+      "group": "time"
+    },
     "24": {
       "label": "24",
       "group": "time"
@@ -145,6 +149,14 @@
       "label": "Block",
       "group": "actions"
     },
+    "bug": {
+      "label": "Bug",
+      "group": "actions"
+    },
+    "chat": {
+      "label": "Chat",
+      "group": "actions"
+    },
     "check": {
       "label": "Check",
       "group": "status"
@@ -156,6 +168,10 @@
     "code": {
       "label": "Code",
       "group": "actions"
+    },
+    "coins": {
+      "label": "Coins",
+      "group": "commerce"
     },
     "copy": {
       "label": "Copy",
@@ -181,18 +197,6 @@
       "label": "Dot",
       "group": "status"
     },
-    "money": {
-      "label": "Money",
-      "group": "commerce"
-    },
-    "coins": {
-      "label": "Coins",
-      "group": "commerce"
-    },
-    "tag": {
-      "label": "Tag",
-      "group": "commerce"
-    },
     "download": {
       "label": "Download",
       "group": "actions"
@@ -209,6 +213,10 @@
       "label": "FIG",
       "group": "file-types"
     },
+    "forward": {
+      "label": "Forward",
+      "group": "actions"
+    },
     "gif": {
       "label": "GIF",
       "group": "file-types"
@@ -220,6 +228,10 @@
     "hd": {
       "label": "HD",
       "group": "image-quality"
+    },
+    "home": {
+      "label": "Home",
+      "group": "actions"
     },
     "html": {
       "label": "HTML",
@@ -264,6 +276,10 @@
     "md": {
       "label": "MD",
       "group": "file-types"
+    },
+    "money": {
+      "label": "Money",
+      "group": "commerce"
     },
     "mov": {
       "label": "MOV",
@@ -321,21 +337,21 @@
       "label": "Reply",
       "group": "actions"
     },
-    "forward": {
-      "label": "Forward",
-      "group": "actions"
-    },
-    "chat": {
-      "label": "Chat",
-      "group": "actions"
-    },
     "search": {
       "label": "Search",
+      "group": "actions"
+    },
+    "settings": {
+      "label": "Settings",
       "group": "actions"
     },
     "shield": {
       "label": "Shield",
       "group": "actions"
+    },
+    "sms": {
+      "label": "SMS",
+      "group": "file-types"
     },
     "sparkle": {
       "label": "Sparkle",
@@ -349,6 +365,10 @@
       "label": "SVG",
       "group": "file-types"
     },
+    "tag": {
+      "label": "Tag",
+      "group": "commerce"
+    },
     "ts": {
       "label": "TS",
       "group": "file-types"
@@ -359,10 +379,6 @@
     },
     "upload": {
       "label": "Upload",
-      "group": "actions"
-    },
-    "home": {
-      "label": "Home",
       "group": "actions"
     },
     "user": {
@@ -3575,6 +3591,21 @@
       "aliases": []
     },
     {
+      "name": "browser-code",
+      "category": "Interfaces",
+      "tags": [
+        "web development",
+        "devtools",
+        "frontend",
+        "html",
+        "programming",
+        "window"
+      ],
+      "aliases": [
+        "code-browser"
+      ]
+    },
+    {
       "name": "brush",
       "category": "Workspace",
       "tags": [
@@ -3612,7 +3643,16 @@
         "exploit",
         "patch"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "shield",
+        "modifiers": [
+          {
+            "name": "bug",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "building",
@@ -5869,6 +5909,28 @@
       ]
     },
     {
+      "name": "clock-12",
+      "category": "Time & calendar",
+      "tags": [
+        "hour",
+        "noon",
+        "midday",
+        "midnight",
+        "twelve",
+        "schedule"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "clock",
+        "modifiers": [
+          {
+            "name": "12",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
       "name": "clock-24",
       "category": "Time & calendar",
       "tags": [
@@ -6268,19 +6330,6 @@
         "angle brackets",
         "markup",
         "dev"
-      ],
-      "aliases": []
-    },
-    {
-      "name": "code-browser",
-      "category": "Interfaces",
-      "tags": [
-        "web development",
-        "devtools",
-        "frontend",
-        "html",
-        "programming",
-        "window"
       ],
       "aliases": []
     },
@@ -9810,7 +9859,16 @@
       ],
       "aliases": [
         "interface/file-settings"
-      ]
+      ],
+      "composition": {
+        "base": "file",
+        "modifiers": [
+          {
+            "name": "settings",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "file-shield",
@@ -9824,7 +9882,38 @@
         "safe",
         "privacy"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "file",
+        "modifiers": [
+          {
+            "name": "shield",
+            "position": "bottom-right"
+          }
+        ]
+      }
+    },
+    {
+      "name": "file-sms",
+      "category": "Files",
+      "tags": [
+        "text message",
+        "short message",
+        "mobile",
+        "chat",
+        "export",
+        "format"
+      ],
+      "aliases": [],
+      "composition": {
+        "base": "file",
+        "modifiers": [
+          {
+            "name": "sms",
+            "position": "bottom-left"
+          }
+        ]
+      }
     },
     {
       "name": "file-sparkles",
@@ -12123,6 +12212,19 @@
       "aliases": [
         "interface/home-profile"
       ]
+    },
+    {
+      "name": "home-signal",
+      "category": "Navigation",
+      "tags": [
+        "house",
+        "signal bars",
+        "reception",
+        "smart home",
+        "connectivity",
+        "network"
+      ],
+      "aliases": []
     },
     {
       "name": "home-smile",
@@ -15412,7 +15514,16 @@
         "dot",
         "chat bubble"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "message-circle",
+        "modifiers": [
+          {
+            "name": "dot",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "message-unread-square",
@@ -15426,7 +15537,16 @@
         "dot",
         "chat bubble"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "message-square",
+        "modifiers": [
+          {
+            "name": "dot",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "microphone",
@@ -16269,7 +16389,16 @@
         "dot",
         "indicator"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "square-rounded",
+        "modifiers": [
+          {
+            "name": "dot",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "notification-message",
@@ -16283,7 +16412,16 @@
         "alert",
         "dot"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "message-text-square",
+        "modifiers": [
+          {
+            "name": "dot",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "notification-text",
@@ -16297,7 +16435,16 @@
         "dot",
         "indicator"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "text-square",
+        "modifiers": [
+          {
+            "name": "dot",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "number-1",
@@ -21235,6 +21382,19 @@
       "aliases": []
     },
     {
+      "name": "text-square",
+      "category": "Interfaces",
+      "tags": [
+        "paragraph",
+        "lines",
+        "note",
+        "block",
+        "content",
+        "body copy"
+      ],
+      "aliases": []
+    },
+    {
       "name": "thermometer",
       "category": "Weather",
       "tags": [
@@ -23585,6 +23745,7 @@
     "zoom-out"
   ],
   "iconAliases": {
-    "slash-divider": "slash"
+    "slash-divider": "slash",
+    "code-browser": "browser-code"
   }
 }
