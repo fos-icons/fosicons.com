@@ -10,7 +10,13 @@ export default tseslint.config(
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: { ecmaVersion: 2022, globals: globals.browser },
     plugins: { 'react-hooks': reactHooks },
-    rules: { ...reactHooks.configs.recommended.rules },
+    // The React Compiler rules new in eslint-plugin-react-hooks 7 flag existing
+    // patterns (setState in effects, manual memoization); adopting them is a
+    // separate refactor. Until then, keep the two rules v5 enforced.
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+    },
   },
   {
     files: ['scripts/**/*.mjs', 'eslint.config.js'],

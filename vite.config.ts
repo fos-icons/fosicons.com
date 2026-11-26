@@ -4,9 +4,9 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { readFileSync } from 'node:fs';
 import type { Plugin } from 'vite';
-import { handleFeedbackRequest } from './api/feedback';
-import { FEEDBACK_PATH } from './src/lib/feedback';
-import sourceLock from './src/data/source-lock.json';
+import { handleFeedbackRequest } from './api/feedback.ts';
+import { FEEDBACK_PATH } from './src/lib/feedback.ts';
+import sourceLock from './src/data/source-lock.json' with { type: 'json' };
 
 function versionedArtwork(): Plugin {
   return {
