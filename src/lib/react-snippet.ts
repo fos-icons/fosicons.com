@@ -9,7 +9,7 @@ export function componentName(name: string, style: StyleId): string {
 
 export interface SnippetOptions {
   size: number;
-  /** Regular/Solid color, or `null` to inherit `currentColor`. */
+  /** Regular/Filled color, or `null` to inherit `currentColor`. */
   color: string | null;
   primary?: string;
   secondary?: string;

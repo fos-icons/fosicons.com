@@ -184,7 +184,7 @@ export function Inspector({
   const plainFallback = !!badge && !packaged;
   const snippetOptions: SnippetOptions = {
     size,
-    // Regular/Solid: name a color only when it isn't simply the site's ink.
+    // Regular/Filled: name a color only when it isn't simply the site's ink.
     color: duo || r.monoFollowsSite ? null : r.mono,
     primary: duo ? colors.primary : undefined,
     secondary: colors.secondary,

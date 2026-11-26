@@ -11,7 +11,7 @@ export interface Look {
   size: number;
   /** Stroke in 24px grid units, or `null` to follow the size (see `autoStroke`). */
   strokeWidth: number | null;
-  /** Regular/Solid color chosen by hand, or `null` to take it from the color theme. */
+  /** Regular/Filled color chosen by hand, or `null` to take it from the color theme. */
   mono: string | null;
   /** The color theme: `INK_THEME` or a library palette name. */
   paletteName: string;
@@ -34,8 +34,8 @@ export const DEFAULT_LOOK: Look = {
 
 /**
  * Color themes. Each sets every style at once: a main color for Regular and
- * Solid, plus primary and secondary for Duocolor and Duotone. "Ink" keeps
- * Regular and Solid in the site's ink (following light/dark) with the
+ * Filled, plus primary and secondary for Duocolor and Duotone. "Ink" keeps
+ * Regular and Filled in the site's ink (following light/dark) with the
  * library's default duo palette; every other theme is a library palette
  * whose primary is also the main color.
  */
@@ -115,7 +115,7 @@ export const defaultGridSvg = (source: string) => prepareGridSvg(source, gridStr
 
 export const INK = { light: '#212121', dark: '#F2F2F2' } as const;
 
-/** Solid silhouettes and brand marks are drawn as authored: no stroke control. */
+/** Filled silhouettes and brand marks are drawn as authored: no stroke control. */
 export const strokeAdjustable = (style: StyleId, kind: 'core' | 'brand' = 'core') =>
   kind === 'core' && style !== 'filled';
 
@@ -125,7 +125,7 @@ export function resolveLook(look: Look, theme: SiteTheme) {
   const colors = themeColors(look.paletteName, mode);
   return {
     mono: look.mono ?? colors.main,
-    /** True when Regular/Solid simply follow the site's ink (Ink theme, no hand-picked color). */
+    /** True when Regular/Filled simply follow the site's ink (Ink theme, no hand-picked color). */
     monoFollowsSite: look.mono === null && look.paletteName === INK_THEME,
     mode,
     themeName: THEME_NAMES.includes(look.paletteName) ? look.paletteName : INK_THEME,

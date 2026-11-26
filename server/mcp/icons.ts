@@ -176,7 +176,7 @@ export interface FrameworkSetup {
 
 const SAMPLE: SnippetOptions = { size: 32, color: null, primary: '#245B9E', secondary: '#60A5FA' };
 const COMPONENT_NAMING =
-  'Each style is its own component: the icon name in PascalCase plus the style suffix. fuel-pump → FuelPumpRegular, FuelPumpFilled, FuelPumpDuocolor, FuelPumpDuotone. The style shown as "Solid" on the website uses the Filled suffix. Names starting with a digit get an Icon prefix.';
+  'Each style is its own component: the icon name in PascalCase plus the style suffix. fuel-pump → FuelPumpRegular, FuelPumpFilled, FuelPumpDuocolor, FuelPumpDuotone. Names starting with a digit get an Icon prefix.';
 const COMPONENT_PROPS =
   'size (default 24, scales the 24px artwork), color for Regular and Filled (defaults to currentColor), primaryColor and secondaryColor for Duocolor and Duotone, modifierColor for named presets with a badge glyph, title for meaningful icons.';
 const DECORATIVE =
@@ -245,7 +245,7 @@ export function frameworkSetup(framework: Framework): FrameworkSetup {
       return {
         framework, package: 'none (plain SVG)', published: true,
         install: `No package. Regular SVGs are served at ${SITE}/svg/regular/<name>.svg; every style is in the library repository under icons/<style>/<name>.svg (${LIBRARY}).`,
-        naming: 'Files use the canonical kebab-case name: icons/regular/fuel-pump.svg. The Solid style lives in icons/filled/.',
+        naming: 'Files use the canonical kebab-case name: icons/regular/fuel-pump.svg. The Filled style lives in icons/filled/.',
         props: 'Inline the markup to theme with CSS: strokes and fills use currentColor, so they follow the parent element\'s color. Do not override fill globally; Filled icons rely on transparent cutouts.',
         example: `<img src="${SITE}/svg/regular/camera.svg" width="24" height="24" alt="Camera">`,
         accessibility: 'Give a meaningful <img> an alt text; use alt="" or aria-hidden="true" for decorative icons.',
@@ -310,7 +310,6 @@ export function iconCode(
   const setup = frameworkSetup(framework);
   const notes: string[] = [];
   if (!setup.published) notes.push(`${setup.package} is not published to its registry yet; see install.`);
-  if (style === 'filled') notes.push('The website calls this style "Solid"; code uses the Filled suffix.');
   if (options.size && !catalog.sizes.includes(options.size)) {
     notes.push(`Packages scale the 24px artwork. Optically tuned artwork exists at ${catalog.sizes.join(', ')}px on the website.`);
   }

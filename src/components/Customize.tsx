@@ -318,7 +318,7 @@ export function CustomizeControls({
         )}
       >
         <div className="space-y-3">
-          {/* One theme sets every style: a main color for Regular and Solid, primary and secondary for the duo styles. */}
+          {/* One theme sets every style: a main color for Regular and Filled, primary and secondary for the duo styles. */}
           <div role="radiogroup" aria-label={t('customize.colorTheme')} className="grid grid-cols-[auto_repeat(8,minmax(0,2rem))] items-start justify-start gap-1">
             {THEME_NAMES.map((name) => {
               const c = themeColors(name, r.mode);

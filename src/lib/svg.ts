@@ -4,11 +4,11 @@ export const DUO_STYLES: readonly StyleId[] = ['duocolor', 'duotone'];
 export const isDuo = (style: StyleId) => DUO_STYLES.includes(style);
 
 export interface SvgColorOptions {
-  /** Foreground for Regular/Solid; primary for the duo styles. */
+  /** Foreground for Regular/Filled; primary for the duo styles. */
   primary: string;
   /** Duocolor accents. Ignored by styles that have no secondary role. */
   secondary?: string;
-  /** Solid glyph color for named presets that expose `--fos-modifier`. */
+  /** Filled glyph color for named presets that expose `--fos-modifier`. */
   modifier?: string;
 }
 

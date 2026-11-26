@@ -10,7 +10,7 @@ import { CONTAINER } from '../lib/layout';
 import { componentName } from '../lib/react-snippet';
 
 /**
- * Landing pages for each style: /regular-icons, /solid-icons,
+ * Landing pages for each style: /regular-icons, /filled-icons,
  * /duocolor-icons, /duotone-icons. They show real artwork in that style and
  * say plainly where it is free. `?style=` on the catalog stays the filter;
  * these are the pages search engines index. Long-form English, like Docs.
@@ -41,16 +41,16 @@ const COPY: Record<StyleId, StyleCopy> = {
       <>One stroke weight across the set, with rounded joins and caps, so icons from different categories sit together.</>,
       <>Change the stroke width and size on the site before you copy or download; other optical sizes are drawn for 16, 32, 48, and 64px.</>,
       <>Copy SVG, PNG, or framework code from any icon page, or download every Regular icon as a ZIP.</>,
-      <>Use Regular for navigation, toolbars, and body text; switch to Solid for selected or active states.</>,
+      <>Use Regular for navigation, toolbars, and body text; switch to Filled for selected or active states.</>,
     ],
     react: 'size={24}',
     vue: ':size="24"',
   },
   filled: {
-    lead: (count) => <>{count} solid icons: filled silhouettes with transparent cutouts, matched shape for shape to Regular. Solid reads well at small sizes and marks what is selected or active.</>,
+    lead: (count) => <>{count} filled icons: silhouettes with transparent cutouts, matched shape for shape to Regular. Filled reads well at small sizes and marks what is selected or active.</>,
     points: [
-      <>Inner details are real cutouts, not white shapes, so Solid icons work on any background, including images and dark mode.</>,
-      <>Every Solid icon has a Regular twin with the same name. Pair them for tab bars and toggles: Regular at rest, Solid when active.</>,
+      <>Inner details are real cutouts, not white shapes, so Filled icons work on any background, including images and dark mode.</>,
+      <>Every Filled icon has a Regular twin with the same name. Pair them for tab bars and toggles: Regular at rest, Filled when active.</>,
       <>One color that inherits {code('currentColor')}, like Regular.</>,
       <>Component names end in {code('Filled')}: {code('camera')} becomes {code(componentName('camera', 'filled'))}.</>,
     ],

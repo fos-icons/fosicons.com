@@ -165,7 +165,7 @@ describe('Header actions', () => {
     const regular = main.getByRole<HTMLInputElement>('checkbox', { name: 'Regular' });
     expect(regular.getAttribute('aria-description')).toBe('Free');
     expect(regular.checked).toBe(true);
-    for (const style of ['Solid', 'Duocolor', 'Duotone']) {
+    for (const style of ['Filled', 'Duocolor', 'Duotone']) {
       const option = main.getByRole<HTMLInputElement>('checkbox', { name: style });
       expect(option.disabled).toBe(true);
       expect(option.checked).toBe(false);

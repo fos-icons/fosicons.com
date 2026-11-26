@@ -4,7 +4,7 @@ import { Segmented } from './ui';
 
 const STYLES = [
   { value: 'regular', label: 'Regular' },
-  { value: 'filled', label: 'Solid' },
+  { value: 'filled', label: 'Filled' },
   { value: 'duocolor', label: 'Duocolor' },
   { value: 'duotone', label: 'Duotone' },
 ];

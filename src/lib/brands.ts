@@ -15,7 +15,7 @@ export interface BrandEntry {
   officialSource: string | { fileKey: string; setNodeId: string; componentNodeId: string };
   retrieved: string;
   terms: string;
-  /** Paths under public/, per style. Solid (`filled`) is optional. */
+  /** Paths under public/, per style. Filled (`filled`) is optional. */
   files: Partial<Record<BrandStyle, string>>;
 }
 
@@ -29,7 +29,7 @@ export const brandEntries: IconEntry[] = brands.approved.map((b) => ({
 export const brandCategories = [...new Set(brandEntries.map((e) => e.category))].sort()
   .map((name) => ({ name, count: brandEntries.filter((e) => e.category === name).length }));
 
-/** Brand styles at least one approved brand ships (Solid only once a Solid source exists). */
+/** Brand styles at least one approved brand ships (Filled only once a Filled source exists). */
 export const availableBrandStyles: BrandStyle[] = BRAND_STYLES.filter((s) => brands.approved.some((b) => b.files[s]));
 
 export const hasBrandStyle = (name: string, style: BrandStyle) =>
@@ -80,7 +80,7 @@ const blackBrandMarks = new Set(['angellist', 'apple', 'github', 'layers', 'tumb
 /** Whether a catalog name is a brand mark. */
 export const isBrand = (name: string) => brandByCatalogName.has(name);
 
-/** Whether a mark is drawn in its own colors (true) or as a one-color Solid mark. */
+/** Whether a mark is drawn in its own colors (true) or as a one-color Filled mark. */
 export const isColorMark = (name: string, style: BrandStyle) => style === 'regular' || !brandByCatalogName.get(name)?.files.filled;
 
 /** Regular marks that need light ink on a dark preview surface. */
@@ -90,7 +90,7 @@ export function isBlackBrandMark(name: string) {
 }
 
 /**
- * The approved brand marks keyed by catalog name. Solid gives each brand's
+ * The approved brand marks keyed by catalog name. Filled gives each brand's
  * one-color mark where its kit has one; marks without one (the Google and
  * Microsoft product icons) keep their original colors in every style.
  */

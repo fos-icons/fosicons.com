@@ -67,5 +67,5 @@ library files as provided. Figma reference drawings (for example `figma`,
 added.
 
 Brands never get Duocolor or Duotone styles, and they are not part of the MIT
-core or the React and Vue packages. A Solid style appears only once a brand
-ships a Solid source.
+core or the React and Vue packages. A Filled style appears only once a brand
+ships a Filled source.
