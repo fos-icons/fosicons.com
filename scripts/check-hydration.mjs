@@ -9,7 +9,7 @@
 //
 // Usage: pnpm run build && pnpm run check:hydration
 // Needs Playwright's Chromium: `pnpm exec playwright install chromium` once.
-/* global window, document, localStorage -- used only inside callbacks that run in the page */
+/* global window, document -- used only inside callbacks that run in the page */
 import { createServer } from 'node:http';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
