@@ -39,7 +39,9 @@ export function legacyCatalogDestination(search: string, hasIcon: (name: string)
   const legacyBrands = params.get('style') === 'brands';
   const category = categoryParam === BRANDS_CATEGORY || (legacyBrands && !categoryParam)
     ? BRANDS_CATEGORY : catalogMeta.categories.find((entry) => entry.name === categoryParam)?.name ?? null;
-  const coreIcon = icon && hasIcon(icon) ? icon : null;
+  const canonical = icon && Object.hasOwn(catalogMeta.iconAliases, icon)
+    ? (catalogMeta.iconAliases as Record<string, string>)[icon] : icon;
+  const coreIcon = canonical && hasIcon(canonical) ? canonical : null;
   const brand = icon && isBrand(icon);
   if (!coreIcon && !brand && !category) return null;
 

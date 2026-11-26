@@ -25,6 +25,7 @@ describe('URL state', () => {
   it('migrates old share URLs and preserves search and modifier options', () => {
     expect(legacyCatalogDestination('?category=Music+%26+instruments')).toBe('/categories/music-instruments');
     expect(legacyCatalogDestination('?icon=copy')).toBe('/icons/copy');
+    expect(legacyCatalogDestination('?icon=slash-divider&style=solid')).toBe('/icons/slash?style=solid&view=editor');
     expect(legacyCatalogDestination('?category=Essentials&icon=copy&modifier=dot&corner=top-right')).toBe(
       '/icons/copy?modifier=dot&corner=top-right&view=editor&from=essentials',
     );
