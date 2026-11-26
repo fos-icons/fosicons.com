@@ -41,6 +41,10 @@ the committed files. CI runs it against the revision recorded in the lock.
 Counts, categories, and names in the UI always come from these files. Nothing
 is hard-coded.
 
+When a published icon becomes a library alias, sync the canonical entry and
+its search aliases, and keep permanent redirects in `vercel.json` for the
+old icon page and public SVG URLs.
+
 ## Brands
 
 Brand marks come from the library's `brand-assets/`, not from this repo. The

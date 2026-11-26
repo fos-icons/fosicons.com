@@ -330,6 +330,7 @@ export function buildOutputs(source) {
     modifiers: modifierLabels,
     icons: catalogIcons,
     animated: animatedNames,
+    iconAliases: manifest.iconAliases ?? {},
   };
   outputs['src/data/catalog.json'] = json(catalog);
   outputs['src/data/catalog-meta.json'] = json(catalogMetadata(catalog, brandEntries.map(({ name }) => name)));
