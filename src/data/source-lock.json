@@ -1,6 +1,6 @@
 {
   "repository": "fos-icons/fos-icons",
-  "revision": "80a87276cf0961348a4a774839589adbe88f8427",
+  "revision": "87023fad5806acb438cbcf02a45cb919ebc666ce",
   "dirty": false,
   "manifestSha256": "e3661a96087441db84d79d84e17c17db61b5f7db44a7440c4822da94fcedd507",
   "brandManifestSha256": "a2d2dedb32275e15a76c5d92913001327643593200753f7936ef2b6bb9f2cddf",
@@ -25,6 +25,6 @@
     "64/filled": "58ffc3efea9c87edda427026975d16f2dc469cdc7d2d487dda2c8b66986f11d7",
     "64/duocolor": "39ccde8fda9a5e05ae530e87d8cfde83c214d768ef835a9de2ef3c77bdca6e8c",
     "64/duotone": "b344cd182015a64541060a1a86689f4053252eaa82055213fa0e823b28638498",
-    "animated": "7d8c7d35f444fe2a4e923d89c7902543c9ec554d395f350ec45885e1f5322c0d"
+    "animated": "4e21247bc7876203bac93eb82bddbaa990f241d34ee542ab2db3cf7960fd3db0"
   }
 }
