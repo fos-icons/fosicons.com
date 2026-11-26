@@ -11488,7 +11488,16 @@
       ],
       "aliases": [
         "interface/hand-lock"
-      ]
+      ],
+      "composition": {
+        "base": "hand",
+        "modifiers": [
+          {
+            "name": "lock",
+            "position": "bottom-right"
+          }
+        ]
+      }
     },
     {
       "name": "hand-off",
