@@ -8,7 +8,7 @@ export const PLAN_LEVEL: Record<Plan, number> = { free: 0, pro: 1, advanced: 2 }
 /**
  * The lowest plan for each gated feature, matching the pricing page's
  * `featureGroups`. Anything not listed here is free.
- * - styles: copy and download Solid, Duocolor, and Duotone artwork (previews stay free)
+ * - styles: copy and download Filled, Duocolor, and Duotone artwork (previews stay free)
  * - duoColors: separate primary and accent colors for the duo styles
  * - zip: bulk SVG and PNG ZIPs (all icons, a category, or a selection)
  * - modifiers: the modifier picker, placement, badge color, and exports with modifiers

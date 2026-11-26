@@ -7,7 +7,7 @@ import { isDuo } from './svg';
  * (fos-icons `scripts/compose_svg.py`, as used for its authored presets):
  * the base is clipped by the modifier's transparent clearance, the glyph is
  * cut out of the badge as a transparent stencil, and the badge follows the
- * icon color in Regular/Solid and the `--fos-modifier` role in the duo
+ * icon color in Regular/Filled and the `--fos-modifier` role in the duo
  * styles. Unlike authored presets, the base is never refitted.
  */
 
@@ -215,7 +215,7 @@ export const modifierScaleFor = (iconSize: number, px: number) => px / authoredM
  * SVG with the same CSS color roles as authored compositions, ready for
  * `buildSvg`. `scale` resizes the badge and the gap cut around it together,
  * anchored at the badge's outer corner; at 1 the output matches the library's
- * own compositions exactly. `modifierRole` gives Regular and Solid badges the
+ * own compositions exactly. `modifierRole` gives Regular and Filled badges the
  * `--fos-modifier` color role too (falling back to the icon's color), so the
  * badge can be recolored on its own; the duo styles always have it.
  */

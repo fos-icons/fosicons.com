@@ -34,16 +34,21 @@ export const palettes = paletteData as { defaultPalette: string; palettes: Palet
 export const lock = sourceLock as typeof sourceLock & { snapshotSha256?: Record<string, string> };
 export const animatedNames: ReadonlySet<string> = new Set(catalogMeta.animated);
 
-/** Display labels. The library's `filled` style is presented as "Solid". */
+/** Display labels and URL slugs, one per style. */
 export const STYLE_META: Record<StyleId, { label: string; slug: string; description: string }> = {
   regular: { label: 'Regular', slug: 'regular', description: '1.25px line on a 24px grid' },
-  filled: { label: 'Solid', slug: 'solid', description: 'Filled silhouettes with transparent cutouts' },
+  filled: { label: 'Filled', slug: 'filled', description: 'Filled silhouettes with transparent cutouts' },
   duocolor: { label: 'Duocolor', slug: 'duocolor', description: 'Primary structure with secondary details' },
   duotone: { label: 'Duotone', slug: 'duotone', description: 'Line with a 16% interior tint' },
 };
 
-export const styleFromSlug = (slug: string | null, allowed: readonly StyleId[] = catalogMeta.styles) =>
-  allowed.find((s) => STYLE_META[s].slug === slug) ?? null;
+/** Old style slugs still accepted in links: Filled was called Solid until 2026-11-26. */
+const LEGACY_STYLE_SLUGS: Record<string, string> = { solid: 'filled' };
+
+export const styleFromSlug = (slug: string | null, allowed: readonly StyleId[] = catalogMeta.styles) => {
+  const current = slug && (LEGACY_STYLE_SLUGS[slug] ?? slug);
+  return allowed.find((s) => STYLE_META[s].slug === current) ?? null;
+};
 
 export const ICONS_ROUNDED = Math.floor(catalogMeta.iconCount / 100) * 100;
 export const ICON_VARIANTS_ROUNDED = Math.floor(catalogMeta.iconCount * catalogMeta.styles.length / 100) * 100;

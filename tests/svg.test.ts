@@ -128,7 +128,7 @@ describe('color themes', () => {
     // Ink (the default) leaves Regular to the site's ink, so light/dark keep working.
     expect(DEFAULT_LOOK.paletteName).toBe(INK_THEME);
     expect(gridVars(DEFAULT_LOOK, 'regular', 'light')['--glyph-color']).toBeUndefined();
-    // Any other theme sets Regular/Solid to its main color, and its duo colors for the duo styles.
+    // Any other theme sets Regular/Filled to its main color, and its duo colors for the duo styles.
     const blue = { ...DEFAULT_LOOK, paletteName: 'Blue' };
     expect(gridVars(blue, 'regular', 'light')['--glyph-color']).toBe(themeColors('Blue', 'light').main);
     expect(gridVars(blue, 'duocolor', 'dark')['--fos-primary']).toBe(themeColors('Blue', 'dark').primary);

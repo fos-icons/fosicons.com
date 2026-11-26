@@ -49,7 +49,7 @@ describe('React snippet', () => {
 });
 
 describe('SolidJS snippet', () => {
-  it('uses named Solid exports and carries the selected icon settings', () => {
+  it('uses named Filled exports and carries the selected icon settings', () => {
     expect(solidSnippet('binoculars', 'regular', { size: 24, color: null })).toBe(
       "import { BinocularsRegular } from '@fos-icons/solid';\n\n<BinocularsRegular />",
     );
@@ -81,7 +81,7 @@ describe('Angular snippet', () => {
     expect(code).toContain('<svg fos-user-add-duocolor [size]="32" primaryColor="#111111" secondaryColor="#222222" modifierColor="#333333"></svg>');
   });
 
-  it('uses the canonical selector for Solid and omits the default size', () => {
+  it('uses the canonical selector for Filled and omits the default size', () => {
     const code = angularSnippet('pie-clock', 'filled', { size: 24, color: null });
     expect(code).toContain('PieClockFilled');
     expect(code).toContain('<svg fos-pie-clock-filled></svg>');

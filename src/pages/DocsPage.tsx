@@ -371,7 +371,7 @@ export default function DocsPage() {
         </Section>
 
         <Section id="colors" title="Colors">
-          <p>Regular and Solid are single-color icons. Duocolor and Duotone use two CSS custom properties with blue defaults:</p>
+          <p>Regular and Filled are single-color icons. Duocolor and Duotone use two CSS custom properties with blue defaults:</p>
           <Code lang="css">{`.toolbar svg {
   --fos-primary: #245B9E;
   --fos-secondary: #5B87B7;
@@ -407,7 +407,7 @@ export default function DocsPage() {
               ))}
             </tbody>
           </table>
-          <p>Solid icons have no stroke: at every size they are the 24px design scaled. For other sizes, use the nearest optical size and scale it. The site does this for you: the grid, the inspector, and every download draw from the nearest size, and <strong>Auto</strong> stroke follows each size&apos;s weight.</p>
+          <p>Filled icons have no stroke: at every size they are the 24px design scaled. For other sizes, use the nearest optical size and scale it. The site does this for you: the grid, the inspector, and every download draw from the nearest size, and <strong>Auto</strong> stroke follows each size&apos;s weight.</p>
           <p>The framework packages ship the 24px design only; their <code>size</code> prop scales it. For a crisp 16px or a lighter 48px, use the matching SVG.</p>
         </Section>
 
@@ -436,14 +436,14 @@ export default function DocsPage() {
         <Section id="svg" title="SVG">
           <p>Download a Regular icon from the inspector or find SVG files in the <a target="_blank" rel="noreferrer" href={LIBRARY_URL}>library repository</a>. The 24px files are organized by style under <code>icons/</code>, and other sizes are in <code>icons/&lt;size&gt;/&lt;style&gt;/</code>. There is no runtime dependency or icon font.</p>
           <Code lang="html">{`<img src="./icons/regular/text-align-left.svg" width="24" height="24" alt="Align text left">`}</Code>
-          <p>To theme with CSS, inline the markup instead: the library&apos;s <code>currentColor</code> follows the parent element&apos;s <code>color</code>. Don&apos;t globally override <code>fill</code> on paths — Solid icons rely on real transparent cutouts.</p>
+          <p>To theme with CSS, inline the markup instead: the library&apos;s <code>currentColor</code> follows the parent element&apos;s <code>color</code>. Don&apos;t globally override <code>fill</code> on paths — Filled icons rely on real transparent cutouts.</p>
           <p><strong>Website downloads are standalone.</strong> Files exported here have every color resolved to a concrete value, so they render the same in any viewer or design tool. Masks, clip paths, and the Duotone tint are kept intact. If you want live theming, use the library SVGs.</p>
         </Section>
 
         <Section id="react" title="React">
           <p><a target="_blank" rel="noreferrer" href="https://www.npmjs.com/package/@fos-icons/react"><code>@fos-icons/react</code></a> is on npm. It supports React 18 and 19, ships TypeScript types, and tree-shakes to the icons you import. Source: <a target="_blank" rel="noreferrer" href={packageSource('react')}>packages/react</a>.</p>
           <Code lang="sh">{`npm install @fos-icons/react\n# or\npnpm add @fos-icons/react`}</Code>
-          <p>Each style is a separate component: the canonical name in PascalCase plus a style suffix. <code>fuel-pump</code> becomes <code>FuelPumpRegular</code>, <code>FuelPumpFilled</code>, <code>FuelPumpDuocolor</code>, and <code>FuelPumpDuotone</code>. Solid icons use the <code>Filled</code> suffix. Names starting with a digit get an <code>Icon</code> prefix.</p>
+          <p>Each style is a separate component: the canonical name in PascalCase plus a style suffix. <code>fuel-pump</code> becomes <code>FuelPumpRegular</code>, <code>FuelPumpFilled</code>, <code>FuelPumpDuocolor</code>, and <code>FuelPumpDuotone</code>. Names starting with a digit get an <code>Icon</code> prefix.</p>
           <Code lang="tsx">{`import { CameraRegular, CameraDuocolor } from '@fos-icons/react';
 
 <CameraRegular size={24} />
@@ -557,13 +557,13 @@ FosIcon(
 )`}</Code>
           <ul className="list-disc space-y-1 pl-5">
             <li>Each constant is the icon name in camelCase plus its style: <code>fuel-pump</code> becomes <code>FosIcons.fuelPumpRegular</code>, <code>fuelPumpFilled</code>, <code>fuelPumpDuocolor</code>, and <code>fuelPumpDuotone</code>. Names that start with a digit get an <code>icon</code> prefix.</li>
-            <li>Regular and Solid icons follow the ambient <code>IconTheme</code> size and color. Duocolor and Duotone keep their palette unless you set <code>primaryColor</code>, <code>secondaryColor</code>, or <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
+            <li>Regular and Filled icons follow the ambient <code>IconTheme</code> size and color. Duocolor and Duotone keep their palette unless you set <code>primaryColor</code>, <code>secondaryColor</code>, or <code>modifierColor</code>. <code>strokeWidth</code> adjusts existing strokes.</li>
             <li>Icons are decorative by default. Pass <code>semanticLabel</code> for a meaningful standalone icon.</li>
           </ul>
         </Section>
 
         <Section id="framer" title="Framer">
-          <p>The Fos Icons plugin lets you search the library in the Framer editor. Pick Regular, Solid, Duocolor, or Duotone, then adjust the size, colors, and stroke weight where supported.</p>
+          <p>The Fos Icons plugin lets you search the library in the Framer editor. Pick Regular, Filled, Duocolor, or Duotone, then adjust the size, colors, and stroke weight where supported.</p>
           <p>Select an icon and choose <strong>Insert icon</strong> to add it to the canvas as an SVG. With one SVG selected on the canvas, <strong>Replace selected SVG</strong> swaps in the new icon.</p>
           <p>To run the plugin locally, follow the <a target="_blank" rel="noreferrer" href={`${LIBRARY_URL}/tree/main/plugins/framer#development`}>Framer plugin setup guide</a>.</p>
         </Section>

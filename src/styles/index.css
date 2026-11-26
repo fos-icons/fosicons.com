@@ -697,7 +697,7 @@ html:has(.docs-page) {
   :root[data-motion] .grid-colors {
     transition: --fos-primary 280ms ease-out, --fos-secondary 280ms ease-out;
   }
-  /* Regular and Solid take their color from `color`, which transitions as is. */
+  /* Regular and Filled take their color from `color`, which transitions as is. */
   :root[data-motion] .grid-colors .glyph {
     transition-property: color, transform;
     transition-duration: 280ms, 200ms;

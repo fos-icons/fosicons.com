@@ -5,7 +5,7 @@ import { CORNERS, type Corner } from './modifiers';
 export type View = StyleId | 'animated' | 'brands';
 /** Animated is a view of Regular artwork: the curated icons that move. */
 export const ANIMATED_SLUG = 'animated';
-/** Brands offer Regular and Solid only — never the duo styles. */
+/** Brands offer Regular and Filled only — never the duo styles. */
 export type BrandStyle = 'regular' | 'filled';
 export { BRAND_STYLES } from './brands';
 
@@ -13,7 +13,7 @@ export interface CatalogState {
   q: string;
   category: string | null;
   style: View;
-  /** Regular or Solid within Brands; ignored for core styles. */
+  /** Regular or Filled within Brands; ignored for core styles. */
   brandStyle: BrandStyle;
   icon: string | null;
   /** A modifier tried on the open icon (library name), and where; only with `icon`. */

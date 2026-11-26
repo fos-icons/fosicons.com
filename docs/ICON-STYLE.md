@@ -119,7 +119,7 @@ plugin data (`gridSpec`).
   Then make optical fixes where the thinner stroke opens gaps (dots, short
   ticks, tight counters).
 - Filled: rebuild at 48 px so cut-outs are 2 px wide, not a scaled 2.5 px.
-  Solid line-only icons (no closed container) use an outline at 2× the
+  Filled line-only icons (no closed container) use an outline at 2× the
   Regular stroke: 2.5 px at 24 px and 4 px at 48 px. Where the 24 px Filled is a
   designed solid shape (thumbs, pencil, ring, rotated half shapes), the 48 px
   Filled keeps that design.

@@ -78,9 +78,9 @@ async function buildIconSet(
       `Source: https://github.com/${lock.repository}${lock.revision ? ` at ${lock.revision}` : ''}`,
       `License: ${catalog.license} (see LICENSE.txt). Brand icons are not included.`,
       '',
-      `Size: ${look.size}px, drawn from the ${artworkSize(look)}px optical size. Stroke: ${Number(stroke.toFixed(3))}px on the 24px grid (Regular, Duocolor, Duotone; Solid has none).`,
+      `Size: ${look.size}px, drawn from the ${artworkSize(look)}px optical size. Stroke: ${Number(stroke.toFixed(3))}px on the 24px grid (Regular, Duocolor, Duotone; Filled has none).`,
       keepColors
-        ? 'Colors: as authored. Regular and Solid use currentColor; Duocolor and Duotone use --fos-primary and --fos-secondary.'
+        ? 'Colors: as authored. Regular and Filled use currentColor; Duocolor and Duotone use --fos-primary and --fos-secondary.'
         : `Colors: ${look.paletteName === INK_THEME ? 'Ink' : look.paletteName} theme${look.mono || look.custom ? ' with your own colors' : ''} (${theme}).`,
       '',
     ].join('\n'),

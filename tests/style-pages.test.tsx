@@ -21,7 +21,7 @@ const renderPage = (style: StyleId) =>
 describe('Style landing pages', () => {
   it('gives each style its own path and metadata that fits search results', () => {
     expect(STYLE_PATHS).toEqual({
-      regular: '/regular-icons', filled: '/solid-icons', duocolor: '/duocolor-icons', duotone: '/duotone-icons',
+      regular: '/regular-icons', filled: '/filled-icons', duocolor: '/duocolor-icons', duotone: '/duotone-icons',
     });
     const titles = new Set<string>();
     const descriptions = new Set<string>();
@@ -37,23 +37,23 @@ describe('Style landing pages', () => {
     }
     expect(titles.size).toBe(catalog.styles.length);
     expect(descriptions.size).toBe(catalog.styles.length);
-    expect(PAGES['style-filled'].title).toMatch(/^Solid Icons/);
+    expect(PAGES['style-filled'].title).toMatch(/^Filled Icons/);
     // The catalog filter stays a query string that canonicalizes to home.
     expect(pageFor('/', '?style=solid').id).toBe('home');
   });
 
   it('draws the popular icons in the page style and links each to its icon page in that style', () => {
     renderPage('filled');
-    expect(screen.getByRole('heading', { level: 1, name: 'Solid icons' })).toBeTruthy();
-    const grid = within(screen.getByRole('region', { name: 'Popular Solid icons' }));
+    expect(screen.getByRole('heading', { level: 1, name: 'Filled icons' })).toBeTruthy();
+    const grid = within(screen.getByRole('region', { name: 'Popular Filled icons' }));
     const links = grid.getAllByRole('link');
     expect(links).toHaveLength(POPULAR_ICONS.length);
     const first = POPULAR_ICONS[0].name;
-    expect(links[0].getAttribute('href')).toBe(`/icons/${first}?style=solid`);
-    // Inline Solid artwork, not the Regular preview image.
+    expect(links[0].getAttribute('href')).toBe(`/icons/${first}?style=filled`);
+    // Inline Filled artwork, not the Regular preview image.
     expect(links[0].querySelector('img')).toBeNull();
     expect(links[0].querySelector('svg')).toBeTruthy();
-    expect(screen.getByRole('link', { name: /Browse Solid icons/ }).getAttribute('href')).toBe('/?style=solid');
+    expect(screen.getByRole('link', { name: /Browse Filled icons/ }).getAttribute('href')).toBe('/?style=filled');
   });
 
   it('shows code with the style suffix and says honestly where the style is free', () => {
@@ -76,6 +76,6 @@ describe('Style landing pages', () => {
   it('links to the other three styles', () => {
     renderPage('duotone');
     const others = within(screen.getByRole('region', { name: 'Other styles' }));
-    expect(others.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/regular-icons', '/solid-icons', '/duocolor-icons']);
+    expect(others.getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual(['/regular-icons', '/filled-icons', '/duocolor-icons']);
   });
 });

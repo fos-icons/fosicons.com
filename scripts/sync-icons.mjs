@@ -290,7 +290,7 @@ export function buildOutputs(source) {
       brandNames.add(name);
       const publicPath = `brands/${name}-regular.svg`;
       outputs[`public/${publicPath}`] = readVerified(join(source, 'brand-assets'), asset.path, asset.sha256) + '\n';
-      // A one-color Solid mark, where the brand's kit provides one.
+      // A one-color Filled mark, where the brand's kit provides one.
       const solidPath = asset.solid ? `brands/${name}-filled.svg` : null;
       if (asset.solid) outputs[`public/${solidPath}`] = readVerified(join(source, 'brand-assets'), asset.solid.path, asset.solid.sha256) + '\n';
       brandEntries.push({

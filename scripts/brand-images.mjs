@@ -30,7 +30,7 @@ const LINE = '#E7E7E4';
 
 /** One row per style; the same icons across, so the styles read side by side. */
 const SHOWCASE = ['rocket', 'calendar', 'message-smile-square', 'camera', 'sparkles'];
-const STYLES = [['regular', 'Regular'], ['filled', 'Solid'], ['duocolor', 'Duocolor'], ['duotone', 'Duotone']];
+const STYLES = [['regular', 'Regular'], ['filled', 'Filled'], ['duocolor', 'Duocolor'], ['duotone', 'Duotone']];
 
 const page = (width, height, body) => `<!doctype html><html><head><meta charset="utf-8"><style>
 @font-face { font-family: 'Funnel Display'; src: url('${font('funnel-display', 'funnel-display-latin-wght-normal.woff2')}') format('woff2'); font-weight: 300 800; }

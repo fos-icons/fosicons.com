@@ -13,7 +13,7 @@ describe('URL state', () => {
   it('uses clean paths for catalog navigation without losing editor state', () => {
     const original = parseState('?category=Essentials&icon=copy&style=solid&modifier=dot&corner=top-right', config);
     const editor = catalogEditorLocation(original);
-    expect(editor.href).toBe('/icons/copy?style=solid&modifier=dot&corner=top-right');
+    expect(editor.href).toBe('/icons/copy?style=filled&modifier=dot&corner=top-right');
     const { pathname, search } = new URL(editor.href, 'http://localhost');
     const location = { pathname, search, state: editor.state };
     expect(isCatalogEditor(location)).toBe(true);
@@ -45,7 +45,7 @@ describe('URL state', () => {
   it('round-trips search, category, style, and icon', () => {
     const state = { q: 'arrow up', category: 'Navigation', style: 'filled' as const, brandStyle: 'regular' as const, icon: 'arrow-up', modifier: null, corner: null };
     const url = serializeState(state, config);
-    expect(url).toContain('style=solid');
+    expect(url).toContain('style=filled');
     expect(parseState(url, config)).toEqual(state);
   });
 

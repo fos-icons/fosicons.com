@@ -75,7 +75,7 @@ export function Toolbar() {
         <div className="mt-6">
           <Points items={[
             <>Component names are the icon name in PascalCase plus a style: {code('fuel-pump')} becomes {code('FuelPumpRegular')}, {code('FuelPumpFilled')}, {code('FuelPumpDuocolor')}, or {code('FuelPumpDuotone')}.</>,
-            <>{code('size')} sets width and height (default 24). Regular and Solid inherit {code('currentColor')}, so they follow your text color.</>,
+            <>{code('size')} sets width and height (default 24). Regular and Filled inherit {code('currentColor')}, so they follow your text color.</>,
             <>Duocolor and Duotone take {code('primaryColor')} and {code('secondaryColor')} for two-tone designs.</>,
             <>Icons are hidden from screen readers by default; pass {code('title')} or {code('aria-label')} when an icon carries meaning.</>,
           ]} />
@@ -111,7 +111,7 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
             <>Names match {code('@fos-icons/react')}: {code('fuel-pump')} becomes {code('FuelPumpRegular')}, {code('FuelPumpFilled')}, {code('FuelPumpDuocolor')}, or {code('FuelPumpDuotone')}.</>,
             <>Supports Vue 3.3 and later, with ESM and CommonJS builds; Vue itself is not bundled.</>,
             <>Render functions and JSX work too: {code("h(CameraRegular, { size: 32, title: 'Camera' })")}.</>,
-            <>Regular and Solid inherit {code('currentColor')}; give icon-only buttons an {code('aria-label')}.</>,
+            <>Regular and Filled inherit {code('currentColor')}; give icon-only buttons an {code('aria-label')}.</>,
           ]} />
         </div>
       </LandingSection>

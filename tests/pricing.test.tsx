@@ -48,7 +48,7 @@ it('compares styles, exports, modifiers, and integrations by tier', () => {
   expect(table.getAllByRole('rowgroup')).toHaveLength(6);
   expect(statuses('Regular icons')).toEqual(all);
   expect(statuses('Individual transparent PNG downloads')).toEqual(all);
-  expect(statuses('Solid icons')).toEqual(paid);
+  expect(statuses('Filled icons')).toEqual(paid);
   expect(statuses('Duocolor icons')).toEqual(paid);
   expect(statuses('Duotone icons')).toEqual(paid);
   expect(statuses('Bulk ZIP exports for SVG')).toEqual(paid);

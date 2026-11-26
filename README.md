@@ -146,7 +146,7 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
 ## What the site does
 
 - **Catalog**: searches icon names, library paths, tags, and categories; filters
-  by category; switches Regular, Solid (`filled`), Duocolor, Duotone, and
+  by category; switches Regular, Filled (`filled`), Duocolor, Duotone, and
   Brands. Search, category, style, and selected icon are kept in the URL. The
   search field stays pinned while scrolling; `/` focuses it. The grid is one
   tab stop with arrow-key navigation.
@@ -167,7 +167,7 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   between in 0.05px steps (so 48px is 1px) and held at 0.85px above 64px. Moving the slider (0.5–2.5px) fixes a
   value until "Use auto". Every authored stroke is scaled by the same factor,
   so intentionally heavier strokes keep their proportions.
-  Solid and brand artwork have no stroke control. `@fos-icons/react` cannot
+  Filled and brand artwork have no stroke control. `@fos-icons/react` cannot
   change stroke weight, and the React panel says so.
 - **Icon sets**: Shift-click (or ⌘/Ctrl-click, or Shift+Enter) adds or removes
   icons from a set. The pane then applies one size, stroke, and color to the
@@ -203,11 +203,11 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
 - **Brands**: the last option in the style switcher (`/?style=brands`; the old
   `/brands` URL redirects). The 32 approved third-party marks (social, Google,
   Microsoft) synced from the library's `brand-assets/`, shown unmodified in
-  Regular; the Solid switch appears once a brand ships a Solid source.
+  Regular; the Filled switch appears once a brand ships a Filled source.
 - **Header**: Docs, Pricing, the Feedback popup, and a link to the Figma library.
   The Docs header links back to Browse icons and puts the Figma library link in its Figma section.
 - **Bulk downloads**: The customize panel builds a ZIP of Regular icons with the selected look,
-  plus LICENSE and README. Solid, Duocolor, and Duotone are available for preview.
+  plus LICENSE and README. Filled, Duocolor, and Duotone are available for preview.
 - **Pricing** (`/pricing`): Free, Pro ($49 USD first year, then $69 USD/year),
   and Advanced ($99 USD first year, then $129 USD/year).
   Plan highlights and a grouped comparison cover icon styles, customization, exports, modifiers, and planned AI integrations.

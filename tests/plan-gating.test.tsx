@@ -170,7 +170,7 @@ describe('Free plan', () => {
     const panel = await pane();
     expect(within(panel).getByRole('button', { name: 'Download all icons' }).hasAttribute('disabled')).toBe(true);
     pricingLink(panel, 'Bulk ZIP downloads come with Pro.');
-    expect(within(panel).getByRole('checkbox', { name: /Solid/ }).hasAttribute('disabled')).toBe(true);
+    expect(within(panel).getByRole('checkbox', { name: /Filled/ }).hasAttribute('disabled')).toBe(true);
   });
 
   it('locks paid-style exports and custom duo colors in the inspector', async () => {
@@ -178,7 +178,7 @@ describe('Free plan', () => {
     const panel = await pane();
     await within(panel).findByRole('img', { name: /search, Duocolor, preview/ });
     expect(within(panel).getByRole('button', { name: 'Download search' }).hasAttribute('disabled')).toBe(true);
-    pricingLink(panel, 'Copy and download Solid, Duocolor, and Duotone icons with Pro.');
+    pricingLink(panel, 'Copy and download Filled, Duocolor, and Duotone icons with Pro.');
     pricingLink(panel, 'Choose your own primary and accent colors with Pro.');
     expect(within(panel).queryByLabelText('Primary')).toBeNull();
   });
@@ -223,10 +223,10 @@ describe('Pro plan', () => {
     const user = userEvent.setup();
     renderAs('pro', '/');
     const panel = await pane();
-    const solid = within(panel).getByRole('checkbox', { name: /Solid/ });
+    const solid = within(panel).getByRole('checkbox', { name: /Filled/ });
     expect(solid.hasAttribute('disabled')).toBe(false);
     await user.click(solid);
-    expect(within(panel).getByText(/SVGs in Regular and Solid, in one ZIP/)).toBeTruthy();
+    expect(within(panel).getByText(/SVGs in Regular and Filled, in one ZIP/)).toBeTruthy();
     expect(within(panel).getByRole('button', { name: 'Download all icons' }).hasAttribute('disabled')).toBe(false);
     expect(within(panel).queryByText('Bulk ZIP downloads come with Pro.')).toBeNull();
   });

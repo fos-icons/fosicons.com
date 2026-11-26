@@ -198,7 +198,7 @@ describe('Icons page', () => {
   it('restores style, category, and the selected icon from a shared URL', async () => {
     renderAt('/?category=Essentials&style=solid&icon=search');
     expect(await screen.findByRole('heading', { name: 'search', level: 2 })).toBeTruthy();
-    expect(screen.getAllByRole('radio', { name: 'Solid', checked: true })).toHaveLength(2);
+    expect(screen.getAllByRole('radio', { name: 'Filled', checked: true })).toHaveLength(2);
     expect((screen.getByLabelText('Category') as HTMLSelectElement).value).toBe('Essentials');
     expect(fetchMock.mock.calls[0][0]).toMatch(/\/32\/filled\/0\.json$/);
   });
@@ -504,7 +504,7 @@ describe('Icons page', () => {
     expect(footer.textContent).not.toMatch(/Library [0-9a-f]{7}|licensed separately|MIT licensed/);
   });
 
-  it('shows one-color Solid brand marks off Regular', async () => {
+  it('shows one-color Filled brand marks off Regular', async () => {
     renderAt('/?category=Brands&style=solid');
     const spotify = await screen.findByRole('button', { name: 'spotify' });
     await waitFor(() => expect(spotify.querySelector('svg')).toBeTruthy());
@@ -535,19 +535,19 @@ describe('Icons page', () => {
     expect(copied.querySelector('[clip-path]')?.getAttribute('clip-path')).toBe(`url(#${clipId})`);
   });
 
-  it('offers only Regular and Solid in the Brands category, and moves duo links to Solid', async () => {
+  it('offers only Regular and Filled in the Brands category, and moves duo links to Filled', async () => {
     renderAt('/?category=Brands&style=duotone');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
-    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Solid'].map((name) => within(switcher).getByRole('radio', { name })));
-    expect(within(switcher).getByRole('radio', { name: 'Solid' }).getAttribute('aria-checked')).toBe('true');
-    expect(screen.getByRole('list', { name: /Solid icons/ })).toBeTruthy();
+    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Filled'].map((name) => within(switcher).getByRole('radio', { name })));
+    expect(within(switcher).getByRole('radio', { name: 'Filled' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('list', { name: /Filled icons/ })).toBeTruthy();
   });
 
   it('lists Brands as the last category, not a style, and opens old Brands links there', async () => {
     renderAt('/?style=brands');
     const [switcher] = screen.getAllByRole('radiogroup', { name: 'Icon style' });
-    // Brands come in Regular and Solid only.
-    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Solid'].map((name) => within(switcher).getByRole('radio', { name })));
+    // Brands come in Regular and Filled only.
+    expect(within(switcher).getAllByRole('radio')).toEqual(['Regular', 'Filled'].map((name) => within(switcher).getByRole('radio', { name })));
     const category = screen.getByRole('combobox', { name: 'Category' }) as HTMLSelectElement;
     expect(category.value).toBe('Brands');
     expect([...category.options].at(-1)?.value).toBe('Brands');
@@ -623,7 +623,7 @@ describe('Side pane (desktop)', () => {
     expect(localStorage.getItem('fos-pane-width')).toBeNull();
   });
 
-  it('has no stroke control for Solid', async () => {
+  it('has no stroke control for Filled', async () => {
     renderAt('/?style=solid');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     expect(within(pane).queryByRole('slider', { name: 'Stroke width' })).toBeNull();
@@ -891,10 +891,10 @@ describe('Icon page header search (desktop)', () => {
     expect(document.querySelector('.code-block[data-lang="svg"]')).toBeNull();
     await user.click(copy);
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
-    await user.click(within(screen.getByRole('radiogroup', { name: 'Icon style' })).getByRole('radio', { name: 'Solid' }));
+    await user.click(within(screen.getByRole('radiogroup', { name: 'Icon style' })).getByRole('radio', { name: 'Filled' }));
     await waitFor(() => expect(copy.hasAttribute('disabled')).toBe(true));
     expect(png.hasAttribute('disabled')).toBe(true);
-    expect(screen.getByRole('button', { name: 'Download Solid SVG' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Download Filled SVG' }).hasAttribute('disabled')).toBe(true);
     await user.click(copy);
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
   });
@@ -911,7 +911,7 @@ describe('Icon page header search (desktop)', () => {
     await user.click(within(section).getAllByRole('button', { name: 'Copy' })[0]);
     expect(await navigator.clipboard.readText()).toBe(code());
     const preview = screen.getByRole('radiogroup', { name: 'Icon style' });
-    await user.click(within(preview).getByRole('radio', { name: 'Solid' }));
+    await user.click(within(preview).getByRole('radio', { name: 'Filled' }));
     expect(code()).toContain('TriangleRightFilled');
     expect(code()).not.toContain('TriangleRightRegular');
     expect(tab.getAttribute('aria-selected')).toBe('true');
@@ -927,7 +927,7 @@ describe('Icon page header search (desktop)', () => {
     expect(solidCode()).toContain('TriangleRightDuocolor');
     expect(solidCode()).not.toContain('TriangleRightFilled');
     expect(solid.getAttribute('aria-selected')).toBe('true');
-    await user.click(within(preview).getByRole('radio', { name: 'Solid' }));
+    await user.click(within(preview).getByRole('radio', { name: 'Filled' }));
 
     const angular = within(section).getByRole('tab', { name: 'Angular' });
     await user.click(angular);

@@ -18,7 +18,7 @@ Rules:
 - Never guess or invent an icon name. Find icons with search_icons, and run check_icon_names on any name you didn't get from these tools (including names already in the user's code).
 - Never hand-draw or rewrite icon SVG paths. Use the package component, or the SVG that get_icon_code returns.
 - Get imports and usage from get_icon_code, and package setup from get_framework_setup. Only @fos-icons/react and @fos-icons/vue are on npm; the other packages install from a local build.
-- Default to the regular style. Keep one style across a UI unless the user asks otherwise. The website calls the filled style "Solid"; code always uses the Filled suffix.
+- Default to the regular style. Keep one style across a UI unless the user asks otherwise.
 - If a project already uses another icon library, keep using it unless the user asks to switch.
 - For an animated icon, use get_animated_icon when list_animated_icons has it; otherwise animate_icon. Never write the animation CSS yourself.`;
 

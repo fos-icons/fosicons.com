@@ -178,7 +178,7 @@ export function IconsPage() {
   /** Brands are a category of the one catalog now, not a separate view. */
   const brandsView = false;
   const kind = 'core' as const;
-  /** Brand marks come in Regular and a one-color Solid only, so the Brands category has no duo styles. */
+  /** Brand marks come in Regular and a one-color Filled only, so the Brands category has no duo styles. */
   const brandsOnly = state.category === BRANDS_CATEGORY;
   const isDuo = (style: string) => style === 'duocolor' || style === 'duotone';
   /** Animated is Regular artwork that moves: the curated icons, at the 24px design size. */
@@ -309,7 +309,7 @@ export function IconsPage() {
   const selectedBrand = !!selected && isBrand(selected.name);
 
   // Brand marks load the first time one is on screen or open: their own colors
-  // on Regular, and the one-color Solid marks on the other styles.
+  // on Regular, and the one-color Filled marks on the other styles.
   const brandStyle = drawStyle === catalog.styles[0] ? 'regular' as const : 'filled' as const;
   const [brandMarkSets, setBrandMarkSets] = useState<Partial<Record<'regular' | 'filled', Record<string, string>>>>({});
   const brandMarks = brandMarkSets[brandStyle] ?? null;
@@ -478,7 +478,7 @@ export function IconsPage() {
                   value={state.category ?? ''}
                   onChange={(e) => {
                     const category = e.target.value || null;
-                    // Brands have no duo styles: picking Brands from a duo tab shows Solid.
+                    // Brands have no duo styles: picking Brands from a duo tab shows Filled.
                     update({
                       category, icon: null,
                       ...(category === BRANDS_CATEGORY && isDuo(drawStyle) ? { style: 'filled' } : {}),

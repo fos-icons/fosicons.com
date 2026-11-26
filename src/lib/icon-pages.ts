@@ -47,10 +47,10 @@ export const FRAMEWORK_PATHS: Record<FrameworkId, string> = {
   figma: '/figma-icons',
 };
 
-/** One landing page per style ("solid icons" and so on); `?style=` stays the catalog filter. */
+/** One landing page per style ("filled icons" and so on); `?style=` stays the catalog filter. */
 export const STYLE_PATHS: Record<StyleId, string> = {
   regular: '/regular-icons',
-  filled: '/solid-icons',
+  filled: '/filled-icons',
   duocolor: '/duocolor-icons',
   duotone: '/duotone-icons',
 };
