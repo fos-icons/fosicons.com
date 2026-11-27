@@ -6,7 +6,7 @@ import { downloadBlob } from '../lib/export';
 import { buildZip } from '../lib/zip';
 import { errorText } from '../i18n/errors';
 import {
-  DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
+  DEFAULT_LOOK, INK_THEME, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
   artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, type Look,
 } from '../lib/look';
 import { usePlan } from '../lib/plan';
@@ -253,11 +253,12 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
 }) {
   const { t } = useI18n();
   const id = useId();
+  if (style === 'filled') return null;
   if (!strokeAdjustable(style, kind)) {
     return (
       <Section title={t('customize.stroke')} divider={false}>
         <p className="text-xs leading-relaxed text-faint">
-          {kind === 'brand' ? t('customize.strokeBrand') : t('customize.strokeSolid')}
+          {t('customize.strokeBrand')}
         </p>
       </Section>
     );
@@ -268,7 +269,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
   const pixelRatio = look.size / catalog.grid;
   const strokeText = fmtStroke(stroke, look.size);
   const tooltip = auto
-    ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
+    ? t('customize.strokeAutoHelp')
     : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) });
 
   return (
@@ -311,7 +312,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
 
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false, defaultTint = 16, collapsible = true,
+  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false, defaultTint = 16, collapsible = true, colorDivider = true,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -331,6 +332,7 @@ export function CustomizeControls({
   pairedColors?: boolean;
   defaultTint?: number;
   collapsible?: boolean;
+  colorDivider?: boolean;
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
@@ -355,6 +357,7 @@ export function CustomizeControls({
       <Section
         title={t('customize.color')}
         collapsible={collapsible}
+        divider={colorDivider}
         aside={(
           <Segmented
             label={t('customize.paletteVariant')}
@@ -505,7 +508,7 @@ export function CustomizePanel({
         </div>
         <p className="mt-1 text-sm text-muted">{t('customize.intro')}</p>
       </div>
-      <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} animated={animated} />
+      <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} animated={animated} colorDivider={false} />
       {kind === 'core' && (animated ? <AnimatedDownloadSection look={look} svgs={animatedSvgs} /> : <DownloadSection look={look} />)}
     </div>
   );
@@ -547,7 +550,7 @@ export function DownloadSection({ look }: { look: Look }) {
   const label = busy ? t('download.preparing') : styles.length ? t('download.all') : t('download.none');
   const onlyFree = styles.length === 1 && styles[0] === FREE_ICON_STYLE;
   return (
-    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
+    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 pb-4 pt-5">
       <RailActions>{() => (
         <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
       )}</RailActions>
@@ -640,7 +643,7 @@ export function AnimatedDownloadSection({ look, svgs }: { look: Look; svgs: Reco
     ? (format === 'gif' ? t('download.making', { done: n(progress ?? 0), count: n(names.length) }) : t('download.preparing'))
     : t(format === 'gif' ? 'download.animatedGif' : 'download.animated');
   return (
-    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
+    <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 pb-4 pt-5">
       <RailActions>{() => (
         <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
       )}</RailActions>

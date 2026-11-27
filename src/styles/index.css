@@ -180,20 +180,8 @@
     width: var(--preview-edge);
     height: var(--preview-edge);
   }
-  .icon-preview-grid {
-    --grid-step: calc(var(--preview-edge) / var(--grid-units));
-    --major-step: calc(var(--grid-step) * 4);
-    --minor-line: color-mix(in srgb, var(--c-ink) 3%, transparent);
-    --major-line: color-mix(in srgb, var(--c-ink) 4%, transparent);
-    background-image:
-      linear-gradient(90deg, transparent calc(50% - .25px), var(--minor-line) 0 calc(50% + .25px), transparent 0),
-      linear-gradient(0deg, transparent calc(50% - .25px), var(--minor-line) 0 calc(50% + .25px), transparent 0),
-      linear-gradient(90deg, transparent calc(50% - .375px), var(--major-line) 0 calc(50% + .375px), transparent 0),
-      linear-gradient(0deg, transparent calc(50% - .375px), var(--major-line) 0 calc(50% + .375px), transparent 0);
-    background-size: var(--grid-step) 100%, 100% var(--grid-step), var(--major-step) 100%, 100% var(--major-step);
-    /* The artwork is centered below the toolbar, but the grid extends behind it. */
-    background-position: center, center calc(50% + var(--preview-toolbar-height) / 2),
-      center, center calc(50% + var(--preview-toolbar-height) / 2);
+  .icon-page-preview-artwork {
+    scale: var(--preview-flip-x, 1) var(--preview-flip-y, 1);
   }
   /* Black-only marks use light ink in dark previews, with a transparent background. */
   .dark .glyph > svg[data-brand="black"],
@@ -305,7 +293,13 @@
     mask: var(--brand-mark) center / contain no-repeat;
   }
 
-  /* Page loader (PageLoader): an oval shadow under the bouncing mark. */
+  /* Hide the page shell while the portaled loader is present. */
+  body:has(> .page-loader) > #root,
+  body:has(> .page-loader) dialog,
+  body:has(> .page-loader) dialog::backdrop,
+  body:has(> .page-loader) :popover-open { visibility: hidden; }
+
+  /* An oval shadow under the bouncing mark. */
   .page-loader-shadow {
     display: block;
     inline-size: 1.75rem;
@@ -337,8 +331,8 @@
     .route-enter[data-enter] > :not(.page-loader) > :nth-child(5) { animation-delay: 160ms; }
     .route-enter[data-enter] > :not(.page-loader) > :nth-child(6) { animation-delay: 200ms; }
     .route-enter[data-enter] > :not(.page-loader) > :nth-child(7) { animation-delay: 240ms; }
-    /* The loader (not part of the cascade) only appears if loading takes a moment. */
-    .page-loader { animation: fade-in 240ms ease-out 180ms both; }
+    /* The opaque cover stays visible while the mark fades in. */
+    .page-loader-visual { animation: fade-in 240ms ease-out 180ms both; }
     .page-loader-mark { animation: loader-bounce 720ms cubic-bezier(0.33, 0, 0.67, 1) infinite; transform-origin: 50% 100%; }
     .page-loader-shadow { animation: loader-shadow 720ms cubic-bezier(0.33, 0, 0.67, 1) infinite; }
     /* Icons that join the grid as you search or filter settle into place, in reading order. */
@@ -393,12 +387,17 @@
   .compact-range-value::-webkit-outer-spin-button { appearance: none; margin: 0; }
 
   @media (forced-colors: none) {
+    .compact-range-track {
+      background: repeating-linear-gradient(to right, transparent 0 11px, var(--c-line) 11px 12px) left center / 100% 4px no-repeat;
+    }
     .compact-range-fill {
       position: absolute;
       inset-block: 0;
       inset-inline-start: 0;
       max-width: 100%;
-      background: var(--c-brand-soft);
+      background:
+        repeating-linear-gradient(to right, transparent 0 11px, color-mix(in srgb, var(--c-brand) 38%, var(--c-brand-soft)) 11px 12px) left center / 100% 4px no-repeat,
+        var(--c-brand-soft);
     }
     .compact-range-default {
       position: absolute;
@@ -409,10 +408,13 @@
       border-radius: 1px;
       background: var(--c-line-strong);
     }
+    .compact-range-default[data-filled] {
+      background: color-mix(in srgb, var(--c-brand) 62%, var(--c-brand-soft));
+    }
     .compact-range {
       appearance: none;
       cursor: grab;
-      background: repeating-linear-gradient(to right, transparent 0 11px, var(--c-line) 11px 12px) center / 100% 4px no-repeat;
+      background: transparent;
     }
     .compact-range:active { cursor: grabbing; }
     .compact-range::-webkit-slider-runnable-track { height: 100%; }
@@ -659,19 +661,14 @@ dialog.sheet .sheet-close {
 .code-block .hljs-tag,
 .code-block .hljs-punctuation { color: #b9b9c0; }
 
-/*
- * Stone code blocks (icon-page usage and the inspector): a near-neutral stone
- * gray in the light theme, stone charcoal in the dark one. Each token keeps its color role (red
- * keywords, blue strings and attributes, purple names, green tags), deepened
- * to read on ivory.
- */
+/* Code snippets use neutral surfaces with syntax colors tuned for each theme. */
 .code-stone .code-block {
-  --code-bg: #f5f5f4;
-  --code-bar: #ecebe9;
-  --code-ink: #292524;
-  --code-muted: #5f5a55;
-  --code-hover: rgb(41 37 36 / 0.07);
-  border-color: #e2e0dd;
+  --code-bg: #f5f5f5;
+  --code-bar: #ebebeb;
+  --code-ink: #262626;
+  --code-muted: #595959;
+  --code-hover: rgb(38 38 38 / 0.07);
+  border-color: #e0e0e0;
 }
 .code-stone .code-block .hljs-keyword,
 .code-stone .code-block .hljs-selector-tag,
@@ -691,17 +688,16 @@ dialog.sheet .sheet-close {
 .code-stone .code-block .hljs-number,
 .code-stone .code-block .hljs-literal { color: #0b66a8; }
 .code-stone .code-block .hljs-comment,
-.code-stone .code-block .hljs-meta { color: #75695c; }
+.code-stone .code-block .hljs-meta { color: #6b6b6b; }
 .code-stone .code-block .hljs-tag,
-.code-stone .code-block .hljs-punctuation { color: #6b6156; }
-/* Dark theme: warm charcoal with the regular dark-block syntax colors. */
+.code-stone .code-block .hljs-punctuation { color: #626262; }
 .dark .code-stone .code-block {
-  --code-bg: #1c1917;
-  --code-bar: #252220;
-  --code-ink: #f5f5f4;
-  --code-muted: #a8a29e;
-  --code-hover: rgb(245 245 244 / 0.08);
-  border-color: #33302d;
+  --code-bg: #1c1c1c;
+  --code-bar: #242424;
+  --code-ink: #f5f5f5;
+  --code-muted: #a3a3a3;
+  --code-hover: rgb(245 245 245 / 0.08);
+  border-color: #303030;
 }
 .dark .code-stone .code-block .hljs-keyword,
 .dark .code-stone .code-block .hljs-selector-tag,
@@ -721,9 +717,9 @@ dialog.sheet .sheet-close {
 .dark .code-stone .code-block .hljs-number,
 .dark .code-stone .code-block .hljs-literal { color: #79c0ff; }
 .dark .code-stone .code-block .hljs-comment,
-.dark .code-stone .code-block .hljs-meta { color: #a8a09a; }
+.dark .code-stone .code-block .hljs-meta { color: #a3a3a3; }
 .dark .code-stone .code-block .hljs-tag,
-.dark .code-stone .code-block .hljs-punctuation { color: #c9c0b4; }
+.dark .code-stone .code-block .hljs-punctuation { color: #c2c2c2; }
 
 /* Docs: in-page anchor links scroll smoothly. */
 html:has(.docs-page) {

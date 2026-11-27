@@ -232,6 +232,7 @@ export function Inspector({
       showStroke={false}
       pairedColors={inlineControls}
       collapsible={!inlineControls}
+      colorDivider={!inlineControls}
       defaultTint={style === 'duotone' && source ? authoredDuotoneTint(source) : undefined}
       style={style}
       kind={kind}
@@ -297,7 +298,7 @@ export function Inspector({
       {inlineControls && colorControls}
 
       {kind === 'core' && (
-        <Section title={t('inspector.modifier')} collapsible={!inlineControls}>
+        <Section title={t('inspector.modifier')} collapsible={!inlineControls} divider={!inlineControls}>
           {!canTryModifiers ? null : !modifiersUnlocked ? (
             <UpgradePrompt feature="modifiers" />
           ) : modifiers.error ? (
@@ -376,7 +377,7 @@ export function Inspector({
 
       {/* On desktop the grid's own style switcher sits beside the pane; the phone sheet covers it. */}
       {!inlineControls && !desktop && (
-        <Section title={t('inspector.style')}>
+        <Section title={t('inspector.style')} divider={!inlineControls}>
           <Segmented
             label={t('icons.styleSwitcher')}
             size="sm"

@@ -191,6 +191,23 @@ export function buildSvg(source: string, options: SvgBuildOptions): string {
   return new XMLSerializer().serializeToString(root);
 }
 
+/** Reflect the artwork in its own viewBox while preserving paint references. */
+export function flipSvg(source: string, horizontal: boolean, vertical: boolean): string {
+  if (!horizontal && !vertical) return source;
+  const root = parse(source);
+  const viewBox = root.getAttribute('viewBox')?.trim().split(/[\s,]+/).map(Number);
+  if (viewBox?.length !== 4 || !viewBox.every(Number.isFinite)) return source;
+
+  const [x, y, width, height] = viewBox;
+  const tx = horizontal ? 2 * x + width : 0;
+  const ty = vertical ? 2 * y + height : 0;
+  const group = root.ownerDocument.createElementNS(SVG_NS, 'g');
+  group.setAttribute('transform', `translate(${tx} ${ty}) scale(${horizontal ? -1 : 1} ${vertical ? -1 : 1})`);
+  group.append(...Array.from(root.children).filter((child) => !['defs', 'style', 'title', 'desc', 'metadata'].includes(child.localName)));
+  root.append(group);
+  return new XMLSerializer().serializeToString(root);
+}
+
 /** Inline-only variant: keeps the CSS roles live, only namespacing IDs. */
 export function scopeSvg(source: string, idPrefix: string): string {
   const root = parse(source);

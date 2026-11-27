@@ -12,6 +12,7 @@ describe('Page loader', () => {
     render(<PageLoader />);
     const status = screen.getByRole('status');
     expect(status.textContent?.trim()).toBe('Loading page…');
+    expect(status.parentElement).toBe(document.body);
     expect(status.querySelector('.page-loader-mark svg')).not.toBeNull();
   });
 

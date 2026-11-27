@@ -33,12 +33,25 @@ export async function fetchArtwork(file: string, style: StyleId, label = STYLE_M
 
 let chunkCache: Record<string, Promise<Record<string, string>>> = {};
 
+/** The pinned swatchbook redraw kept its 24px mask bounds in larger artwork. */
+export function repairOpticalArtwork(artwork: Record<string, string>, size: number): Record<string, string> {
+  const svg = artwork.swatchbook;
+  if (!svg || size <= catalogMeta.grid) return artwork;
+  const corrected = svg.replace(
+    /<mask\b[^>]*\bid="fos-swatchbook-[^"]+"[^>]*>\s*<rect\b[^>]*\/>/g,
+    (mask) => mask.replace(/\b(width|height)="24"/g, (_, dimension: string) => `${dimension}="${size}"`),
+  );
+  return corrected === svg ? artwork : { ...artwork, swatchbook: corrected };
+}
+
 export function loadIconChunk(style: StyleId, chunk: number, size: number = catalogMeta.grid): Promise<Record<string, string>> {
   const key = `${size === catalogMeta.grid ? '' : `${size}/`}${style}/${chunk}`;
-  chunkCache[key] ??= fetchArtwork(`${key}.json`, style).catch((error: unknown) => {
-    delete chunkCache[key];
-    throw error;
-  });
+  chunkCache[key] ??= fetchArtwork(`${key}.json`, style)
+    .then((artwork) => repairOpticalArtwork(artwork, size))
+    .catch((error: unknown) => {
+      delete chunkCache[key];
+      throw error;
+    });
   return chunkCache[key];
 }
 
