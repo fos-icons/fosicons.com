@@ -34,7 +34,7 @@ export function ColorSwatch({ value, label, onChange, tooltip }: {
         popover="auto"
         role="group"
         aria-label={label}
-        className="color-popover w-64 max-w-[calc(100vw-1.5rem)] overflow-auto rounded-xl border border-line bg-surface p-3 text-ink shadow-lg"
+        className="color-popover w-color-picker max-w-[calc(100vw-1.5rem)] overflow-auto rounded-xl border border-line bg-surface p-3 text-ink shadow-lg"
       >
         <HexAlphaColorPicker color={value} onChange={(color) => onChange(color.toUpperCase())} />
         <p className="mt-2 flex justify-between gap-2 text-xs font-medium text-muted">

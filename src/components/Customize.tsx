@@ -448,12 +448,14 @@ export function CustomizeControls({
               </div>
             </>
           ) : (
-            <ColorField
-              label={t('customize.foreground')}
-              value={r.mono}
-              onChange={(v) => onChange({ mono: v })}
-              hint={look.mono ? undefined : r.monoFollowsSite ? t('customize.followTheme') : t('customize.fromTheme', { theme: r.themeName })}
-            />
+            <div className="max-w-color-picker">
+              <ColorField
+                label={t('customize.foreground')}
+                value={r.mono}
+                onChange={(v) => onChange({ mono: v })}
+                hint={look.mono ? undefined : r.monoFollowsSite ? t('customize.followTheme') : t('customize.fromTheme', { theme: r.themeName })}
+              />
+            </div>
           )}
           {footnote}
         </div>

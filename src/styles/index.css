@@ -58,6 +58,8 @@
  * default duo primary (#245B9E light / #93C5FD dark).
  */
 @theme {
+  --container-color-picker: 16rem;
+
   --font-display: 'Funnel Display Variable', ui-sans-serif, system-ui, sans-serif;
   --font-sans: 'Asta Sans Variable', ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, Consolas, monospace;
