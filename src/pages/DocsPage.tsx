@@ -376,7 +376,7 @@ export default function DocsPage() {
   --fos-primary: #245B9E;
   --fos-secondary: #5B87B7;
 }`}</Code>
-          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with the primary color, usually at 16%. Adjust the tint percentage in the color controls. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
+          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Click a color swatch in the editor to adjust its opacity, or enter a hex color with alpha, such as <code>#245B9E80</code>. Duotone tints closed shapes with the primary color, usually at 16%; its tint has a separate control. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
           <p>The {palettes.palettes.length} library palettes each have Light and Dark pairs.</p>
           <ul className="grid grid-cols-2 gap-2 !pl-0 sm:grid-cols-3" role="list">
             {palettes.palettes.map((p) => (

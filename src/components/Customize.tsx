@@ -12,6 +12,7 @@ import {
 import { usePlan } from '../lib/plan';
 import { buildSvg, isDuo, isHexColor } from '../lib/svg';
 import { useTheme } from '../lib/theme';
+import { ColorSwatch } from './ColorSwatch';
 import { TeachingTip } from './TeachingTip';
 import { UpgradePrompt } from './UpgradePrompt';
 import { RailActions } from './QuickTools';
@@ -58,14 +59,7 @@ export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
     >
       <label htmlFor={id} className="block pl-11 text-xs font-medium text-muted">{label}</label>
       <div className="mt-0.5 flex items-center gap-3">
-        <input
-          type="color"
-          name={`${id}-picker`}
-          aria-label={t('customize.colorInput', { label })}
-          value={value.length === 7 ? value : '#000000'}
-          onChange={(e) => onChange(e.target.value.toUpperCase())}
-          className="size-8 shrink-0 cursor-pointer rounded-lg border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
-        />
+        <ColorSwatch value={value} label={t('customize.colorInput', { label })} onChange={onChange} />
         <input
           id={id}
           value={text}
@@ -74,7 +68,7 @@ export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
           aria-describedby={hint ? `${id}-hint` : undefined}
           onChange={(e) => {
             setText(e.target.value);
-            if (isHexColor(e.target.value)) onChange(e.target.value.toUpperCase());
+            if (isHexColor(e.target.value)) onChange(e.target.value.trim().toUpperCase());
           }}
           onBlur={() => setText(value)}
           className={`h-8 min-w-0 flex-1 rounded-md border bg-surface px-2 font-mono text-sm uppercase ${valid ? 'border-line' : 'border-danger'}`}
