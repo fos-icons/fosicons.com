@@ -5,7 +5,7 @@ import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,
 } from '../components/LandingParts';
-import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, UiAnimatedCheck, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
@@ -30,6 +30,36 @@ import { composeSvg, CORNERS, editablePreset, initialCorner, modifierPx, modifie
 import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
 import { ANIMATED_SLUG } from '../lib/url-state';
+
+function CopyIconName({ name }: { name: string }) {
+  const i18n = useI18n();
+  const toast = useToast();
+  const [copied, setCopied] = useState(0);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(0), 1800);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  return (
+    <>
+      <button
+        type="button"
+        aria-label={i18n.t('iconPage.copyName')}
+        title={i18n.t(copied ? 'code.copied' : 'iconPage.copyName')}
+        className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-sunken hover:text-ink"
+        onClick={() => copyText(name).then(
+          () => setCopied((count) => count + 1),
+          (error) => toast('error', errorText(error, i18n, 'error.copy')),
+        )}
+      >
+        {copied ? <UiAnimatedCheck key={copied} className="size-5 text-success" /> : <UiIcon name="copy" />}
+      </button>
+      <span role="status" className="sr-only">{copied ? i18n.t('export.copiedName', { name }) : ''}</span>
+    </>
+  );
+}
 
 /**
  * A link to the editor on the home page that, on a plain click, opens the
@@ -543,7 +573,10 @@ export default function IconPage() {
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-6">
         <div>
-          <h1 className="text-balance font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t('iconPage.heading', { name: title })}</h1>
+          <div className="flex items-center gap-1 sm:gap-2">
+            <h1 className="min-w-0 wrap-anywhere font-display text-3xl font-semibold tracking-tight sm:text-4xl">{icon.name}</h1>
+            <CopyIconName key={icon.name} name={icon.name} />
+          </div>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
             {t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
           </p>

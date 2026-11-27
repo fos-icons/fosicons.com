@@ -99,7 +99,7 @@ export function Inspector({
     onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
   };
   /**
-   * Badge size follows the icon size (20px at 48px, 11px at 24px; see
+   * Badge size follows the icon size (20px at 48px, 10px at 24px; see
    * `autoModifierPx`). The slider adjusts it in whole px; the adjustment is kept
    * as a ratio of the linked size (1 = linked), so it carries across icon sizes
    * and modifiers.

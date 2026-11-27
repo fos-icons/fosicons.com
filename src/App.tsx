@@ -15,6 +15,7 @@ import NotFoundPage from './pages/NotFoundPage';
 import './pages/pricing.css';
 
 const CategoryPage = lazyPage(() => import('./pages/CategoryPage'));
+const ChangelogPage = lazyPage(() => import('./pages/ChangelogPage'));
 const AiAgentsPage = lazyPage(() => import('./pages/AiAgentsPage'));
 const FrameworkPage = lazyPage(() => import('./pages/FrameworkPage'));
 const IconPage = lazyPage(() => import('./pages/IconPage'));
@@ -60,6 +61,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
                 <Route index element={<CatalogRoute page="home" />} />
                 <Route path="brands" element={<CatalogRoute page="brands" />} />
                 <Route path="docs" element={<DocsPage />} />
+                <Route path="changelog" element={<ChangelogPage />} />
                 <Route path="pricing" element={<PricingPage />} />
                 {/* Crawlable landing pages (src/lib/icon-pages.ts); prerendered by scripts/postbuild.mjs. */}
                 <Route path="icons/:name" element={<CatalogRoute page="icon" />} />

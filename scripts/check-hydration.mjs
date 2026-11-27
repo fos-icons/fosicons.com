@@ -24,7 +24,7 @@ if (!existsSync(join(dist, 'index.html'))) {
 }
 
 const ROUTES = [
-  '/', '/brands', '/docs', '/pricing', '/ai-agents',
+  '/', '/brands', '/docs', '/pricing', '/ai-agents', '/changelog',
   '/react-icons', '/vue-icons', '/figma-icons', '/regular-icons', '/duotone-icons',
   '/categories/time-calendar', '/icons/home', '/icons/calendar',
 ];

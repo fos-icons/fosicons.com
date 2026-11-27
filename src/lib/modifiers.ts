@@ -176,19 +176,10 @@ export function modifierPxRange(iconSize: number): { min: number; max: number } 
   };
 }
 
-/**
- * Size-linked modifier size: the authored 20px on a 48px icon and 11px on
- * a 24px icon, so small icons get a relatively larger,
- * still legible badge. Linear through the two anchors (px = 0.375 × size + 2),
- * rounded to whole px and held within the scale range, which only binds below
- * 16px (where a quarter of the icon is the limit).
- */
-export const MODIFIER_ANCHORS = [{ size: 24, px: 11 }, { size: 48, px: 20 }] as const;
+/** Default to the library's authored proportions, rounded to a whole pixel. */
 export function autoModifierPx(iconSize: number): number {
-  const [a, b] = MODIFIER_ANCHORS;
-  const value = a.px + ((iconSize - a.size) * (b.px - a.px)) / (b.size - a.size);
   const { min, max } = modifierPxRange(iconSize);
-  return Math.min(max, Math.max(min, Math.round(value)));
+  return Math.min(max, Math.max(min, Math.round(authoredModifierPx(iconSize))));
 }
 
 /**

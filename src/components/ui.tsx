@@ -11,6 +11,11 @@ export function UiIcon({ name, className = 'size-5' }: { name: UiIconName; class
   return <span aria-hidden="true" className={`glyph inline-block shrink-0 ${className}`} dangerouslySetInnerHTML={{ __html: uiIcons[name] }} />;
 }
 
+/** The library's checkmark, drawn once on mount. */
+export function UiAnimatedCheck({ className = 'size-5' }: { className?: string }) {
+  return <span aria-hidden="true" className={`animated-check glyph inline-block shrink-0 ${className}`} dangerouslySetInnerHTML={{ __html: animatedCheck.check ?? uiIcons.check }} />;
+}
+
 /** Native select with the same border and arrow across the catalog and inspectors. */
 export function Select({ className = '', disabled, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return (
@@ -344,8 +349,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             className="pointer-events-auto flex max-w-md items-center gap-2 rounded-xl border border-white/15 bg-black px-4 py-2.5 text-sm text-white shadow-lg"
           >
             {toast.tone === 'success' ? (
-              <span aria-hidden="true" className="toast-check glyph inline-block size-[18px] shrink-0"
-                dangerouslySetInnerHTML={{ __html: animatedCheck.check ?? uiIcons.check }} />
+              <UiAnimatedCheck className="size-[18px]" />
             ) : <UiIcon name="x-circle" className="size-[18px]" />}
             <span>{toast.message}</span>
           </div>

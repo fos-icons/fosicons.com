@@ -327,7 +327,7 @@ describe('Icons page', () => {
     expect(preview.innerHTML).not.toContain('clip-path');
   });
 
-  it('sizes the modifier with the icon: 20px at 48px, 11px at 24px', async () => {
+  it('sizes the modifier with the icon: 20px at 48px, 10px at 24px', async () => {
     const user = userEvent.setup();
     renderAt('/?icon=agent');
     const preview = await screen.findByRole('img', { name: /agent, Regular, preview/ });
@@ -335,21 +335,22 @@ describe('Icons page', () => {
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     const modifierSize = () => screen.getByRole('slider', { name: 'Modifier size' });
     const iconSize = () => screen.getByRole('slider', { name: 'Size' });
-    expect(modifierSize().getAttribute('aria-valuetext')).toBe('14px on a 32px icon');
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('13px on a 32px icon');
     // 48px draws the badge as authored.
     fireEvent.change(iconSize(), { target: { value: '48' } });
     expect(modifierSize().getAttribute('aria-valuetext')).toBe('20px on a 48px icon');
     await waitFor(() => expect(preview.innerHTML).not.toContain('scale('));
 
     fireEvent.change(iconSize(), { target: { value: '24' } });
-    expect(modifierSize().getAttribute('aria-valuetext')).toBe('11px on a 24px icon');
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('10px on a 24px icon');
     expect([modifierSize().getAttribute('min'), modifierSize().getAttribute('max')]).toEqual(['8', '12']);
-    // 24px draws from the 24px artwork, which loads on demand.
-    await waitFor(() => expect(screen.getByRole('img', { name: /agent, Regular, preview/ }).innerHTML).toContain('scale(1.1'));
+    await waitFor(() => expect(preview.querySelector('svg svg[x][y]')).toBeTruthy());
+    expect(preview.innerHTML).not.toContain('scale(');
 
-    // An adjustment carries across sizes in proportion, until reset.
-    fireEvent.change(modifierSize(), { target: { value: '12' } });
-    expect(modifierSize().getAttribute('aria-valuetext')).toBe('12px on a 24px icon');
+    // The previous default is still selectable and carries across icon sizes.
+    fireEvent.change(modifierSize(), { target: { value: '11' } });
+    expect(modifierSize().getAttribute('aria-valuetext')).toBe('11px on a 24px icon');
+    await waitFor(() => expect(preview.innerHTML).toContain('scale(1.1'));
     fireEvent.change(iconSize(), { target: { value: '48' } });
     expect(modifierSize().getAttribute('aria-valuetext')).toBe('22px on a 48px icon');
     await user.click(screen.getByRole('button', { name: 'Reset' }));
@@ -967,6 +968,17 @@ describe('Icon page header search (desktop)', () => {
     expect(location).toBe('');
   });
 
+  it('copies the canonical icon name from beside the page heading and shows an animated check', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/bar-chart-square');
+    expect(screen.getByRole('heading', { level: 1, name: 'bar-chart-square' })).toBeTruthy();
+    const copy = screen.getByRole('button', { name: 'Copy icon name' });
+    await user.click(copy);
+    expect(await navigator.clipboard.readText()).toBe('bar-chart-square');
+    expect(await screen.findByText('Copied “bar-chart-square”')).toBeTruthy();
+    expect(copy.querySelector('svg.fa-check')).toBeTruthy();
+  });
+
   it('puts a modifier on the icon when its name is typed, as a second tag', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/bell');
@@ -980,6 +992,6 @@ describe('Icon page header search (desktop)', () => {
     // Backspace removes the last tag first: the modifier, not the icon.
     await user.keyboard('{Backspace}');
     await waitFor(() => expect(location).toBe(''));
-    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Bell icon');
+    expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('bell');
   });
 });
