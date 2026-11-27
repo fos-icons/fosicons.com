@@ -85,21 +85,24 @@ export function Inspector({
 
   /** Chosen modifier (badge) color, kept with the rest of the look so it carries across icons. */
   const { can } = usePlan();
-  /** Modifiers, their placement, and badge colors are Advanced: without it, a modifier from a link is ignored. */
+  /**
+   * Anyone can try modifiers, their placement, and badge colors in the preview.
+   * Exporting an icon with one (copy, download, PNG) is Advanced.
+   */
   const modifiersUnlocked = can('modifiers');
-  const modifier = modifiersUnlocked ? look.modifierColor : null;
+  const modifier = look.modifierColor;
   const setModifierPalette = (paletteName: string) => onLookChange({ modifierColor: { paletteName, role: duo ? 'primary' : 'main' } });
-  const modifierDrop = usePaletteDrop(modifiersUnlocked ? setModifierPalette : undefined);
+  const modifierDrop = usePaletteDrop(setModifierPalette);
   const canTryModifiers = kind === 'core' && !icon.composition;
-  const modifiers = useModifiers(canTryModifiers && modifiersUnlocked && !!librarySource);
+  const modifiers = useModifiers(canTryModifiers && !!librarySource);
   const available = useMemo(() => modifiers.list ? modifiersFor(icon.name, modifiers.list) : [], [icon.name, modifiers.list]);
   const badge = useMemo<ModifierChoice | null>(() => {
-    if (!badgeRequest || !modifiersUnlocked) return null;
+    if (!badgeRequest) return null;
     const modifier = available.find((m) => m.name === badgeRequest.name);
     if (!modifier) return null;
     const { corner } = badgeRequest;
     return { modifier, corner: corner && modifier.positions[corner] ? corner : initialCorner(modifier) };
-  }, [available, badgeRequest, modifiersUnlocked]);
+  }, [available, badgeRequest]);
   const setBadge = (choice: ModifierChoice | null) => {
     onBadgeChange?.(choice && { name: choice.modifier.name, corner: choice.corner });
   };
@@ -130,13 +133,18 @@ export function Inspector({
   const source = composed.svg;
   const [busy, setBusy] = useState(false);
   const premium = premiumView ? !can('animated') : style !== FREE_ICON_STYLE && !can('styles');
-  const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
   const showModifier = !!source && hasModifierRole(source);
+  /** A modifier is being tried (a badge, or a recolored one): previewable by anyone, exportable with Advanced. */
+  const modifierLocked = !modifiersUnlocked && (!!badge || (showModifier && !!modifier));
+  const exportDisabled = premium || modifierLocked || !source || busy;
   const colors = useMemo(() => exportColors(source ?? '', style, look, theme, modifier),
     [source, style, look, theme, modifier]);
   const modifierSwatch = colors.modifier ?? colors.primary;
+  /** Modifiers this icon can take (still loading counts), or a modifier color to edit: otherwise the section is left out. */
+  const pickable = canTryModifiers && !(modifiers.list && available.length === 0);
+  const modifierSection = kind === 'core' && (pickable || showModifier);
   const modifierHint = modifier ? undefined : duo ? t('inspector.modifierFollowsPrimary')
     : colors.modifier ? t('inspector.libraryDefault', { color: colors.modifier }) : t('inspector.modifierSameAsIcon');
 
@@ -302,11 +310,9 @@ export function Inspector({
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
       {inlineControls && colorControls}
 
-      {kind === 'core' && (
+      {modifierSection && (
         <Section title={t('inspector.modifier')} collapsible={!inlineControls} divider={!inlineControls}>
-          {!canTryModifiers ? null : !modifiersUnlocked ? (
-            <UpgradePrompt feature="modifiers" />
-          ) : modifiers.error ? (
+          {!pickable ? null : modifiers.error ? (
             <p className="text-sm text-danger">{modifiers.error}</p>
           ) : !modifiers.list ? (
             <div className="h-24 animate-pulse rounded-xl bg-sunken" />
@@ -363,8 +369,9 @@ export function Inspector({
               {composed.error && <p role="status" className="mt-3 text-xs text-danger">{composed.error}</p>}
             </>
           )}
+          {pickable && !modifiersUnlocked && <UpgradePrompt feature="modifiers" className="mt-3 text-xs leading-relaxed text-muted" />}
           {/* Library icons that already carry a modifier have no picker: a full color field instead. */}
-          {showModifier && modifiersUnlocked && (!modifiers.list || !badge) && (
+          {showModifier && (!modifiers.list || !badge) && (
             <div className="mt-4">
               <ColorField
                 label={t('inspector.modifierColor')}
@@ -425,7 +432,8 @@ export function Inspector({
         size={size}
         build={(px) => build(px)}
         disabled={exportDisabled}
-        locked={premium && <UpgradePrompt feature={premiumView ? 'animated' : 'styles'} fallback={t('export.premiumSoon')} />}
+        locked={premium ? <UpgradePrompt feature={premiumView ? 'animated' : 'styles'} fallback={t('export.premiumSoon')} />
+          : modifierLocked && <UpgradePrompt feature="modifiers" />}
         run={run}
         animated={premiumView}
       />

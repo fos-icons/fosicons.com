@@ -60,6 +60,11 @@ function renderAs(plan: Plan | null, url: string) {
 }
 
 const pane = () => screen.findByRole('complementary', { name: 'Icon panel' });
+/** Shows the download split button's style menu (JSDOM does not open a native popover from its trigger). */
+const openStyleMenu = (scope: HTMLElement) => {
+  const trigger = within(scope).getByRole('button', { name: 'Styles to include' });
+  document.getElementById(trigger.getAttribute('popovertarget') ?? '')?.removeAttribute('popover');
+};
 const pricingLink = (scope: HTMLElement, text: string) => {
   const prompt = within(scope).getByText(text);
   expect(within(prompt).getByRole('link', { name: 'See plans' }).getAttribute('href')).toBe('/pricing');
@@ -254,14 +259,20 @@ describe('entitlements', () => {
 });
 
 describe('Free plan', () => {
-  it('locks the modifier picker, ignores a modifier in the link, and links to Pricing', async () => {
+  it('previews a modifier from the link but locks exporting it, linking to Pricing', async () => {
     renderAs('free', '/?icon=agent&modifier=lock&corner=top-left');
     const panel = await pane();
     const preview = await within(panel).findByRole('img', { name: /agent, Regular, preview/ });
-    pricingLink(panel, 'Add modifiers like Add, Lock, or PDF with Advanced.');
-    expect(within(panel).queryByRole('tablist', { name: 'Modifier categories' })).toBeNull();
-    expect(preview.innerHTML).not.toMatch(/x="1.25" y="1.25"/);
-    // Regular single exports stay free.
+    expect(await within(panel).findByRole('tablist', { name: 'Modifier categories' }, { timeout: 8000 })).toBeTruthy();
+    await waitFor(() => expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/));
+    expect(within(panel).getAllByText('Try any modifier here. Copy and download icons with modifiers with Advanced.').length).toBeGreaterThan(0);
+    expect(within(panel).getByRole('button', { name: 'Download agent' }).hasAttribute('disabled')).toBe(true);
+  });
+
+  it('keeps plain Regular exports free while the picker is open', async () => {
+    renderAs('free', '/?icon=agent');
+    const panel = await pane();
+    expect(await within(panel).findByRole('tablist', { name: 'Modifier categories' }, { timeout: 8000 })).toBeTruthy();
     expect(within(panel).getByRole('button', { name: 'Download agent' }).hasAttribute('disabled')).toBe(false);
   });
 
@@ -277,6 +288,9 @@ describe('Free plan', () => {
     const panel = await pane();
     expect(within(panel).getByRole('button', { name: 'Download all icons' }).hasAttribute('disabled')).toBe(true);
     pricingLink(panel, 'Bulk ZIP downloads come with Pro.');
+    // The split button's menu still shows what's included, with the paid styles locked.
+    openStyleMenu(panel);
+    expect(within(panel).getByRole('checkbox', { name: /Regular/ }).hasAttribute('disabled')).toBe(false);
     expect(within(panel).getByRole('checkbox', { name: /Filled/ }).hasAttribute('disabled')).toBe(true);
   });
 
@@ -309,9 +323,11 @@ describe('Free plan', () => {
     pricingLink(document.body, 'Bulk ZIP downloads come with Pro.');
   });
 
-  it('says how to get a modifier from a shared icon-page link', async () => {
+  it('previews a modifier from a shared icon-page link but locks its download', async () => {
     renderAs('free', '/icons/clock?modifier=sparkle');
-    pricingLink(document.body, 'Add modifiers like Add, Lock, or PDF with Advanced.');
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Download Regular/ }).hasAttribute('disabled')).toBe(true), { timeout: 8000 });
+    expect(screen.getByRole('button', { name: 'Download PNG' }).hasAttribute('disabled')).toBe(true);
+    expect(screen.getAllByText('Try any modifier here. Copy and download icons with modifiers with Advanced.').length).toBeGreaterThan(0);
   });
 });
 
@@ -323,7 +339,7 @@ describe('Pro plan', () => {
     await waitFor(() => expect(within(panel).getByRole('button', { name: 'Download search' }).hasAttribute('disabled')).toBe(false));
     expect(within(panel).getByLabelText('Primary')).toBeTruthy();
     expect(within(panel).queryByText(/with Pro\./)).toBeNull();
-    pricingLink(panel, 'Add modifiers like Add, Lock, or PDF with Advanced.');
+    pricingLink(panel, 'Try any modifier here. Copy and download icons with modifiers with Advanced.');
   });
 
   it('swaps the two Duocolor fields and restores them when pressed again', async () => {
@@ -350,6 +366,7 @@ describe('Pro plan', () => {
     const user = userEvent.setup();
     renderAs('pro', '/');
     const panel = await pane();
+    openStyleMenu(panel);
     const solid = within(panel).getByRole('checkbox', { name: /Filled/ });
     expect(solid.hasAttribute('disabled')).toBe(false);
     await user.click(solid);
@@ -367,6 +384,7 @@ describe('Advanced plan', () => {
     expect(await within(panel).findByRole('tablist', { name: 'Modifier categories' }, { timeout: 8000 })).toBeTruthy();
     await waitFor(() => expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/));
     expect(within(panel).queryByText(/with Advanced\./)).toBeNull();
+    expect(within(panel).getByRole('button', { name: 'Download agent' }).hasAttribute('disabled')).toBe(false);
   });
 });
 

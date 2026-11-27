@@ -25,7 +25,7 @@ export function ColorSwatch({ value, label, onChange, tooltip }: {
         data-tooltip={tooltip}
         className="size-8 shrink-0 rounded-lg border border-line-strong bg-surface p-1 hover:border-muted"
       >
-        <span aria-hidden="true" className="checkerboard block size-full overflow-hidden rounded-sm">
+        <span aria-hidden="true" className="checkerboard button-inset-corners block size-full overflow-hidden">
           <span className="block size-full" style={{ backgroundColor: value }} />
         </span>
       </button>

@@ -30,7 +30,7 @@ function renderAt(url: string) {
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<DownloadSection look={downloadLook} />} />
+              <Route path="/" element={<DownloadSection look={downloadLook} style="regular" />} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
               <Route path="/pricing" element={<h1>Pricing plans</h1>} />
               <Route path="/ai-agents" element={<h1>Fos Icons for AI agents</h1>} />
@@ -150,6 +150,9 @@ describe('Header actions', () => {
     const user = userEvent.setup();
     renderAt('/');
     const main = within(screen.getByRole('main'));
+    // JSDOM does not open a native popover from its trigger: show the style menu directly.
+    const trigger = main.getByRole('button', { name: 'Styles to include' });
+    document.getElementById(trigger.getAttribute('popovertarget') ?? '')?.removeAttribute('popover');
     const regular = main.getByRole<HTMLInputElement>('checkbox', { name: 'Regular' });
     expect(regular.getAttribute('aria-description')).toBe('Free');
     expect(regular.checked).toBe(true);

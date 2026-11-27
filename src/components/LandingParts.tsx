@@ -35,9 +35,14 @@ export function Glyph({ svg, idPrefix, className = 'size-6', label, style }: { s
  * The catalog cards as links to individual icon pages, with standalone
  * previews that use the catalog's default stroke and load lazily.
  */
-export function IconLinkGrid({ icons }: { icons: readonly Pick<IconEntry, 'name'>[] }) {
+export function IconLinkGrid({ icons, label, className = '' }: {
+  icons: readonly Pick<IconEntry, 'name'>[];
+  /** Names the list for screen readers. */
+  label?: string;
+  className?: string;
+}) {
   return (
-    <ul className="icon-card-grid">
+    <ul aria-label={label} className={`icon-card-grid ${className}`.trim()}>
       {icons.map((icon) => (
         <li key={icon.name}>
           <LocalLink
@@ -130,13 +135,35 @@ export function CodeTabs({ tabs, label }: {
   const uid = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
   const groupRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [picked, setPicked] = useState<string | null>(null);
   // After hydration, so the prerendered page and the first render agree.
   useEffect(() => { setPicked((p) => p ?? readTab()); }, []);
   const index = Math.max(0, tabs.findIndex((tab) => tab.id === picked));
   const active = tabs[index];
   const pill = useSlidingPill(groupRef, refs, index);
+  // A tab the visitor picks reveals its code top to bottom (not the remembered tab on load).
+  const revealNext = useRef(false);
+  const reveal = useRef<Animation | null>(null);
+  useEffect(() => {
+    if (!revealNext.current) return;
+    revealNext.current = false;
+    const pre = panelRef.current?.querySelector('pre');
+    if (!pre || typeof pre.animate !== 'function' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    reveal.current?.cancel();
+    pre.classList.add('code-reveal');
+    const animation = pre.animate(
+      [{ maskPosition: '0 100%' }, { maskPosition: '0 0' }],
+      { duration: 520, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+    reveal.current = animation;
+    const done = () => { if (reveal.current === animation) { pre.classList.remove('code-reveal'); reveal.current = null; } };
+    animation.onfinish = done;
+    animation.oncancel = done;
+  }, [active.id]);
+  useEffect(() => () => reveal.current?.cancel(), []);
   const choose = (i: number) => {
+    if (i !== index) revealNext.current = true;
     setPicked(tabs[i].id);
     saveTab(tabs[i].id);
     refs.current[i]?.focus();
@@ -148,7 +175,7 @@ export function CodeTabs({ tabs, label }: {
     choose((next + tabs.length) % tabs.length);
   };
   return (
-    <div role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-${active.id}`}>
+    <div ref={panelRef} role="tabpanel" id={`${uid}-panel`} aria-labelledby={`${uid}-${active.id}`}>
       <CopyCode
         code={active.code}
         lang={active.lang}

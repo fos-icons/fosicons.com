@@ -69,8 +69,11 @@ export function Layout() {
   }, [pageKey, navigationType, hash]);
   // Catalog views keep the full-height inspector beside the header.
   const paneBesideHeader = editor;
+  // Every page but the catalog (which pins its own toolbar) keeps the frosted header in view;
+  // sticky side navs and #section targets sit below it (--site-header-height).
+  const stickyHeader = !editor;
   const header = (
-    <header className={`@container/site-header relative z-30 col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
+    <header className={`@container/site-header relative z-30 col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${stickyHeader ? 'header-glass' : ''}`}>
       <div className={`${editor ? CATALOG_CONTAINER : CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
         <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
           <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />

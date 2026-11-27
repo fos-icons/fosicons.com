@@ -301,7 +301,7 @@ describe('Icons page', () => {
     expect(tablist.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Actions', 'General', 'File']);
     await user.click(tablist.getByRole('tab', { name: 'General' }));
     const general = within(screen.getByRole('tabpanel', { name: 'General' }));
-    for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield', 'Home']) {
+    for (const label of ['Dot', 'Lock', 'Coins', '24', 'Search', 'Phone', 'Shield', 'Home', 'Bug', 'Code']) {
       expect(general.getByRole('button', { name: new RegExp(`^${label} modifier`) })).toBeTruthy();
     }
     expect(general.queryByRole('button', { name: /^(PDF|4K) modifier/ })).toBeNull();
@@ -315,10 +315,15 @@ describe('Icons page', () => {
     // Switching modifiers keeps the chosen corner.
     await user.click(screen.getByRole('tab', { name: 'Actions' }));
     const actions = within(screen.getByRole('tabpanel', { name: 'Actions' }));
-    expect(actions.queryByRole('button', { name: /^(Search|Phone|Shield|Home) modifier/ })).toBeNull();
-    // Add and remove lead, then the arrows, then everything else.
+    expect(actions.queryByRole('button', { name: /^(Search|Phone|Shield|Home|Bug|Code) modifier/ })).toBeNull();
+    // Squared modifiers lead (add and remove first), the arrows run in a row, bold shapes follow,
+    // and the light download and upload come last, side by side.
     const order = actions.getAllByRole('button', { name: / modifier/ }).map((b) => b.getAttribute('data-tooltip'));
-    expect(order.slice(0, 8)).toEqual(['Add', 'Remove', 'Arrow up', 'Arrow down', 'Arrow left', 'Arrow right', 'Reply', 'Forward']);
+    expect(order.slice(0, 3)).toEqual(['Add', 'Remove', 'Delete']);
+    expect(order.indexOf('Record')).toBeLessThan(order.indexOf('Edit'));
+    const up = order.indexOf('Arrow up');
+    expect(order.slice(up, up + 4)).toEqual(['Arrow up', 'Arrow down', 'Arrow left', 'Arrow right']);
+    expect(order.slice(-2)).toEqual(['Download', 'Upload']);
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
     expect(preview.innerHTML).toMatch(/x="1.25" y="1.25"/);

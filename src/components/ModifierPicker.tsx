@@ -28,15 +28,57 @@ export function useModifiers(enabled: boolean) {
 }
 
 const tile = 'relative flex h-9 w-full items-center justify-center rounded-lg border text-ink transition-colors';
-const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality'];
-const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield', 'home']);
-const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_ACTIONS.has(modifier.name);
+/*
+ * Each tab runs from heaviest to lightest: modifiers drawn on a square plate,
+ * then the bold standalone shapes, then the light outlines. Within each band,
+ * related modifiers sit side by side. A modifier the library adds later and
+ * these lists don't name yet goes at the end of its tab.
+ */
+const ACTIONS_ORDER = [
+  // On a square: create and remove, documents and references, arrows, conversation, recording.
+  'add', 'remove', 'delete', 'block',
+  'copy', 'note', 'list', 'hash', 'link', 'question',
+  'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right',
+  'reply', 'forward', 'record',
+  // Bold shapes.
+  'edit', 'refresh', 'settings', 'chat', 'sparkle',
+  // Light outlines, download beside upload.
+  'download', 'upload',
+];
+const GENERAL_ORDER = [
+  // On a square.
+  'check', 'warning', 'code',
+  // Bold shapes: development, security and identity, places and tools, commerce, status dot.
+  'bug',
+  'lock', 'key', 'shield', 'user',
+  'home', 'phone', 'search', 'clip',
+  'money', 'coins', 'tag',
+  'dot',
+  // Numerals, quality, and layout.
+  '12', '24',
+  'hd', '4k',
+  'indent-left', 'indent-right',
+];
+/** Documents, images and design files, audio and video, code and data, then archives and messages. */
+const FILE_ORDER = [
+  'doc', 'pdf', 'txt', 'md', 'ppt', 'xls', 'csv',
+  'jpg', 'png', 'gif', 'svg', 'psd', 'ai', 'eps', 'fig',
+  'mp3', 'wav', 'mp4', 'mov',
+  'html', 'css', 'js', 'ts', 'json', 'xml', 'sql',
+  'zip', 'sms',
+];
+const GENERAL_NAMES = new Set(GENERAL_ORDER);
 const isFileType = (modifier: ModifierAsset) => modifier.group === 'file-types';
-/** Actions lead with add/remove, then the arrows; the rest keep their library order. */
-const ACTIONS_ORDER = ['add', 'remove', 'arrow-up', 'arrow-down', 'arrow-left', 'arrow-right', 'reply', 'forward'];
-const actionRank = (modifier: ModifierAsset) => {
-  const rank = ACTIONS_ORDER.indexOf(modifier.name);
-  return rank < 0 ? ACTIONS_ORDER.length : rank;
+/** Library actions stay in Actions unless General names them (bug, code, home, phone, search, shield). */
+const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_NAMES.has(modifier.name);
+const inGeneral = (modifier: ModifierAsset) => !inActions(modifier) && !isFileType(modifier);
+/** Sort by `order`; names it doesn't list keep their library order after it (the sort is stable). */
+const byOrder = (order: readonly string[]) => {
+  const rank = (m: ModifierAsset) => {
+    const i = order.indexOf(m.name);
+    return i < 0 ? order.length : i;
+  };
+  return (a: ModifierAsset, b: ModifierAsset) => rank(a) - rank(b);
 };
 
 export function ModifierPicker({
@@ -57,15 +99,9 @@ export function ModifierPicker({
   const baseId = useId();
   const tiles = useMemo(() => new Map(modifiers.map((m) => [m.name, modifierTileSvg(m)])), [modifiers]);
   const groups = [
-    { id: 'actions', items: modifiers.filter(inActions).sort((a, b) => actionRank(a) - actionRank(b)) },
-    {
-      id: 'general',
-      items: [
-        ...GENERAL_GROUPS.flatMap((group) => modifiers.filter((m) => m.group === group)),
-        ...modifiers.filter((m) => !inActions(m) && !isFileType(m) && !GENERAL_GROUPS.includes(m.group)),
-      ],
-    },
-    { id: 'file-types', items: modifiers.filter(isFileType) },
+    { id: 'actions', items: modifiers.filter(inActions).sort(byOrder(ACTIONS_ORDER)) },
+    { id: 'general', items: modifiers.filter(inGeneral).sort(byOrder(GENERAL_ORDER)) },
+    { id: 'file-types', items: modifiers.filter(isFileType).sort(byOrder(FILE_ORDER)) },
   ] as const;
   const [tab, setTab] = useState(() => groups.find((g) => g.items.some((m) => m.name === value?.modifier.name))?.id ?? groups[0]?.id);
   const current = groups.find((g) => g.id === tab) ?? groups[0];

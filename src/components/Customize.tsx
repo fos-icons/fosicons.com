@@ -16,7 +16,7 @@ import { ColorSwatch } from './ColorSwatch';
 import { TeachingTip } from './TeachingTip';
 import { UpgradePrompt } from './UpgradePrompt';
 import { RailActions } from './QuickTools';
-import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
+import { Button, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 const VISIBLE_COLOR_THEMES = [INK_THEME, 'Slate', 'Blue', 'Teal', 'Green', 'Violet', 'Amber', 'Orange', 'Red'];
 
@@ -515,27 +515,31 @@ export function CustomizePanel({
         <p className="mt-1 text-sm text-muted">{t('customize.intro')}</p>
       </div>
       <CustomizeControls look={look} onChange={onChange} style={style} kind={kind} animated={animated} colorDivider={false} />
-      {kind === 'core' && (animated ? <AnimatedDownloadSection look={look} svgs={animatedSvgs} /> : <DownloadSection look={look} />)}
+      {kind === 'core' && (animated ? <AnimatedDownloadSection look={look} svgs={animatedSvgs} /> : <DownloadSection look={look} style={style} />)}
     </div>
   );
 }
 
 /**
- * Download every icon in the chosen styles with the look set above, as one ZIP.
+ * Download every icon with the look set above, as one ZIP. It follows the
+ * grid's style; the split button's menu shows which styles are included and,
+ * on a plan that unlocks them, lets the visitor pick several.
  * Bulk ZIPs need Pro; the paid styles need Pro too where billing is off.
  */
-export function DownloadSection({ look }: { look: Look }) {
+export function DownloadSection({ look, style }: { look: Look; style: StyleId }) {
   const { t, list } = useI18n();
   const i18n = useI18n();
   const toast = useToast();
   const { can, enforced } = usePlan();
   const { resolved: theme } = useTheme();
   const uid = useId();
-  const [chosen, setChosen] = useState<readonly StyleId[]>([FREE_ICON_STYLE]);
+  const open = (s: StyleId) => s === FREE_ICON_STYLE || can('styles');
+  /** Styles the visitor picked in the menu; until then, the grid's style (or Regular when it's locked). */
+  const [picked, setPicked] = useState<readonly StyleId[] | null>(null);
+  const chosen = picked ?? [open(style) ? style : FREE_ICON_STYLE];
   const [busy, setBusy] = useState(false);
   const zip = can('zip');
-  const open = (style: StyleId) => style === FREE_ICON_STYLE || can('styles');
-  const styles = catalog.styles.filter((style) => chosen.includes(style) && open(style));
+  const styles = catalog.styles.filter((s) => chosen.includes(s) && open(s));
   const disabled = busy || !zip || styles.length === 0;
   const download = async () => {
     if (disabled) return;
@@ -552,37 +556,17 @@ export function DownloadSection({ look }: { look: Look }) {
       setBusy(false);
     }
   };
-  const toggle = (style: StyleId, on: boolean) => setChosen(on ? [...chosen, style] : chosen.filter((s) => s !== style));
+  const toggle = (s: StyleId, on: boolean) => setPicked(on ? [...chosen, s] : chosen.filter((c) => c !== s));
   const label = busy ? t('download.preparing') : styles.length ? t('download.all') : t('download.none');
   const onlyFree = styles.length === 1 && styles[0] === FREE_ICON_STYLE;
+  const menuId = `${uid}-styles`;
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 pb-4 pt-5">
       <RailActions>{() => (
         <IconButton icon="download" label={label} onClick={download} disabled={disabled} />
       )}</RailActions>
       <h3 id={`${uid}-title`} className="font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted">{t('download.title')}</h3>
-      <fieldset className="mt-4">
-        <legend className="sr-only">{t('download.styles')}</legend>
-        <div className="flex flex-wrap gap-1">
-          {catalog.styles.map((style) => {
-            const free = style === FREE_ICON_STYLE;
-            const available = open(style);
-            const checked = available && chosen.includes(style);
-            return (
-              <label key={style} className={`button-corners relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 bg-sunken px-2 text-xs font-medium text-muted ${
-                available ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
-              }`}>
-                <input type="checkbox" name="download-style" value={style} className="sr-only" disabled={!available} checked={checked}
-                  aria-description={free ? t('icons.free') : available ? undefined : t(enforced ? 'upgrade.styles' : 'download.premiumSoon')} onChange={(event) => toggle(style, event.target.checked)} />
-                <UiIcon name={available ? (checked ? 'check' : 'plus') : 'crown-simple'} className="size-3" />
-                {t(`style.${style}`)}
-                {free && <span aria-hidden="true" className={freeBadgeClass}>{t('icons.free')}</span>}
-              </label>
-            );
-          })}
-        </div>
-      </fieldset>
-      <div className="mt-3 flex gap-2">
+      <div className="split-button mt-4 flex">
         <Button
           variant="primary"
           icon="download"
@@ -593,12 +577,54 @@ export function DownloadSection({ look }: { look: Look }) {
         >
           <span className="truncate">{label}</span>
         </Button>
+        <Button
+          variant="primary"
+          popoverTarget={menuId}
+          aria-label={t('download.styles')}
+          className="shrink-0 px-2.5"
+        >
+          <UiIcon name="chevron-down" className="size-4" />
+        </Button>
+        <div
+          id={menuId}
+          popover="auto"
+          role="group"
+          aria-label={t('download.styles')}
+          className="menu-popover w-60 max-w-[calc(100vw-1.5rem)] rounded-xl border border-line bg-surface p-1.5 text-ink shadow-lg"
+        >
+          <p className="px-2 pb-1 pt-1 text-xs font-semibold text-muted">{t('download.styles')}</p>
+          <fieldset>
+            <legend className="sr-only">{t('download.styles')}</legend>
+            {catalog.styles.map((s) => {
+              const free = s === FREE_ICON_STYLE;
+              const available = open(s);
+              const checked = available && chosen.includes(s);
+              return (
+                <label key={s} className={`flex h-9 items-center gap-2 rounded-lg px-2 text-sm ${
+                  available ? 'cursor-pointer hover:bg-sunken has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed text-muted'
+                }`}>
+                  <input type="checkbox" name="download-style" value={s} className="sr-only" disabled={!available} checked={checked}
+                    aria-description={free ? t('icons.free') : available ? undefined : t(enforced ? 'upgrade.styles' : 'download.premiumSoon')} onChange={(event) => toggle(s, event.target.checked)} />
+                  <span aria-hidden="true" className={`flex size-4 shrink-0 items-center justify-center rounded border ${
+                    checked ? 'border-brand bg-brand text-canvas' : 'border-line-strong'
+                  }`}>
+                    {checked && <UiIcon name="check" className="size-3" />}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{t(`style.${s}`)}</span>
+                  {free
+                    ? <span aria-hidden="true" className="rounded-full bg-green-100 px-1.5 text-[10px] font-semibold leading-4 text-green-900 dark:bg-green-950 dark:text-green-200">{t('icons.free')}</span>
+                    : !available && <span aria-hidden="true" className="inline-flex items-center gap-0.5 text-[11px] font-medium text-muted"><UiIcon name="crown-simple" className="size-3" />{t('download.pro')}</span>}
+                </label>
+              );
+            })}
+          </fieldset>
+          {!can('styles') && <UpgradePrompt feature="styles" fallback={t('download.premiumSoon')} className="border-t border-line px-2 pb-1 pt-2 mt-1 text-xs leading-relaxed text-muted" />}
+        </div>
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
         {onlyFree || !styles.length
           ? t('download.note')
           : t('download.noteStyles', { styles: list(styles.map((s) => t(`style.${s}`))) })}
-        {enforced || can('styles') ? null : <> {t('download.premiumSoon')}</>}
       </p>
       {!zip && <UpgradePrompt feature="zip" className="mt-1.5 text-xs leading-relaxed text-muted" />}
     </section>

@@ -73,6 +73,8 @@
 
 .pricing-plan + .pricing-plan { border-block-start: 1px solid var(--c-line); }
 .pricing-plan--advanced { background: var(--pricing-wash); }
+/* The featured plan's price in the brand color. */
+.pricing-plan--advanced .pricing-price-amount { color: var(--c-brand); }
 
 /* Name row: the plan's calendar sits at the far edge. */
 
@@ -308,7 +310,8 @@
     align-items: end;
     column-gap: var(--pricing-gutter);
     padding-block-end: var(--pricing-gutter);
-    border-block: 0 1px solid var(--c-line);
+    border-block-start: 0;
+    border-block-end: 1px solid var(--c-line);
   }
 
   .pricing-lede h2 { grid-column: 1 / -1; }

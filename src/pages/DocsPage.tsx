@@ -17,7 +17,16 @@ import { useActiveSection } from '../hooks/useActiveSection';
 
 const nf = new Intl.NumberFormat('en-US');
 
-const CONTENTS: { id: string; title: string; sections: readonly (readonly [string, string])[] }[] = [
+/**
+ * The docs menu. `sections` link to sections on this page (and are searched);
+ * `pages` link to other site pages, listed after them while not searching.
+ */
+const CONTENTS: {
+  id: string;
+  title: string;
+  sections: readonly (readonly [string, string])[];
+  pages?: readonly (readonly [string, string])[];
+}[] = [
   {
     id: 'design',
     title: 'Design',
@@ -54,6 +63,7 @@ const CONTENTS: { id: string; title: string; sections: readonly (readonly [strin
       ['terms', 'Terms'],
       ['source', 'Source data'],
     ],
+    pages: [['/changelog', 'Changelog']],
   },
 ];
 
@@ -65,7 +75,8 @@ function Code({ children, lang }: { children: string; lang: string }) {
     <CodeBlock
       code={children}
       lang={lang}
-      className="my-4"
+      // Room between code and text; consecutive blocks stay close.
+      className="my-8 [&:has(+.code-block)]:mb-4 [&+.code-block]:mt-4"
       action={(
         <button
           type="button"
@@ -81,7 +92,7 @@ function Code({ children, lang }: { children: string; lang: string }) {
 
 function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-6 border-t border-line pt-10">
+    <section id={id} aria-labelledby={`${id}-title`} className="scroll-mt-[calc(var(--site-header-height)+1.5rem)] border-t border-line pt-10">
       <h2 id={`${id}-title`} tabIndex={-1} className="rounded text-2xl font-semibold">{title}</h2>
       <div className="prose-docs mt-4 space-y-4">{children}</div>
     </section>
@@ -207,7 +218,7 @@ function DocsContents({ shown, active, section, searching, desktop, onChoose }: 
   }, [readingGroup, searching, section]);
 
   return (
-    <aside className="min-w-0 self-start md:sticky md:top-8 md:col-start-1 md:row-span-2 md:row-start-1 md:max-h-[calc(100dvh-4rem)] md:overflow-y-auto md:p-1">
+    <aside className="min-w-0 self-start md:sticky md:top-[calc(var(--site-header-height)+2rem)] md:col-start-1 md:row-span-2 md:row-start-1 md:max-h-[calc(100dvh-var(--site-header-height)-4rem)] md:overflow-y-auto md:p-1">
       <nav aria-label="Documentation">
         <button
           type="button"
@@ -224,7 +235,8 @@ function DocsContents({ shown, active, section, searching, desktop, onChoose }: 
           {shown.length === 0 && <p className="px-2 py-2 text-sm text-muted">No matches</p>}
           {CONTENTS.map((group) => {
             const links = group.sections.filter(([id]) => shown.includes(id));
-            if (!links.length) return null;
+            const pages = searching ? [] : group.pages ?? [];
+            if (!links.length && !pages.length) return null;
             const expanded = groups[group.id] ?? (searching || (section ? group.sections.some(([id]) => id === section) : desktop && group.id === 'design'));
             const groupId = `${contentsId}-${group.id}`;
             return (
@@ -255,6 +267,16 @@ function DocsContents({ shown, active, section, searching, desktop, onChoose }: 
                       >
                         {label}
                       </a>
+                    </li>
+                  ))}
+                  {pages.map(([to, label]) => (
+                    <li key={to}>
+                      <LocalLink
+                        to={to}
+                        className="flex min-h-11 items-center rounded-md px-2 text-sm text-muted hover:bg-sunken hover:text-ink md:min-h-8"
+                      >
+                        {label}
+                      </LocalLink>
                     </li>
                   ))}
                 </ul>
