@@ -151,6 +151,9 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   search field stays pinned while scrolling; `/` focuses it. The grid is one
   tab stop with arrow-key navigation. Grid settings let visitors choose a
   column count and show icon names on cards. Both choices are saved locally.
+- **Back and forward**: press Option + Left/Right on Mac outside editing
+  controls and dialogs. On Windows, use the browser's Alt + Left/Right.
+  Both navigate browser history; the browser's other shortcuts still work.
 - **Examples menu**: add published apps that use Fos Icons to
   [the app examples list](src/data/app-examples.ts). Each entry has a name and
   URL and can include a short description.
@@ -291,7 +294,9 @@ The site is built for several languages; it ships in English today.
   near the end (or all at once for keyboard jumps and deep selections), so
   a phone never lays out 1,458 cells up front.
 - Icon artwork loads in 96-icon chunks (`public/icons/<style>/<n>.json`) as
-  cells approach the viewport; the first chunk is preloaded with the page.
+  cells approach the viewport. The chunks follow catalog browse order, so
+  the preloaded first chunk covers the first rows without also fetching
+  artwork from later categories.
   Off-screen cells skip rendering (`content-visibility`).
 - The two Latin text fonts are preloaded. The catalog ships as JSON.parse
   data; highlight.js and the ZIP library load on demand.

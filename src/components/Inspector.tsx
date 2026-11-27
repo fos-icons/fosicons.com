@@ -26,6 +26,7 @@ import { ANIMATED_SLUG } from '../lib/url-state';
 import {
   authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
+import { ColorSwatch } from './ColorSwatch';
 import { ColorField, CustomizeControls, Section, SizeControl, SpeedControl, StrokeControl, usePaletteDrop } from './Customize';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
@@ -318,21 +319,22 @@ export function Inspector({
                 authored={authored.map}
                 accessory={showModifier && (
                   // Compact modifier color beside None: a swatch, plus a reset once a color is picked.
-                  <span className="flex items-center gap-1">
-                    <input
-                      type="color"
-                      name="modifier-color"
-                      aria-label={t('inspector.modifierColor')}
-                      data-tooltip={modifierHint ?? t('inspector.modifierColor')}
-                      value={modifierSwatch.length === 7 ? modifierSwatch : '#000000'}
-                      onChange={(e) => onLookChange({ modifierColor: e.target.value.toUpperCase() })}
+                  <div className="flex items-center gap-1">
+                    <div
+                      className={`flex rounded-lg ${modifierDrop.over ? 'ring-2 ring-brand ring-offset-2 ring-offset-surface' : ''}`}
                       {...modifierDrop.handlers}
-                      className={`squircle size-8 shrink-0 cursor-pointer border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0 ${modifierDrop.over ? 'ring-2 ring-brand ring-offset-2 ring-offset-surface' : ''}`}
-                    />
+                    >
+                      <ColorSwatch
+                        label={t('inspector.modifierColor')}
+                        tooltip={modifierHint ?? t('inspector.modifierColor')}
+                        value={modifierSwatch}
+                        onChange={(modifierColor) => onLookChange({ modifierColor })}
+                      />
+                    </div>
                     {modifier && (
                       <IconButton icon="undo" label={t('inspector.modifierColorReset')} onClick={() => onLookChange({ modifierColor: null })} className="size-8 text-muted" />
                     )}
-                  </span>
+                  </div>
                 )}
                 inlineSize={inlineControls}
                 sizeControl={badge && (

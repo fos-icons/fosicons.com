@@ -3,8 +3,10 @@ import { mkdtempSync, mkdirSync, writeFileSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { catalog, chunksFor, ICON_CHUNK } from '../src/lib/catalog';
+import { orderBrowseIcons } from '../src/lib/browse-order';
 // @ts-expect-error plain ESM script without types
-import { buildOutputs, catalogMetadata, ICON_CHUNK, UI_ICONS } from '../scripts/sync-icons.mjs';
+import { buildOutputs, catalogMetadata, UI_ICONS } from '../scripts/sync-icons.mjs';
 
 const sha = (s: string) => createHash('sha256').update(s).digest('hex');
 const STYLES = ['regular', 'filled', 'duocolor', 'duotone'];
@@ -56,7 +58,24 @@ describe('asset synchronization', () => {
     expect(summary).toEqual(catalogMetadata(catalog, brands.approved.map(({ name }: { name: string }) => name)));
     expect(summary).not.toHaveProperty('icons');
     for (const name of [...summary.examples, 'calendar-add']) {
-      expect(summary.sampleChunks[name]).toBe(Math.floor(catalog.icons.findIndex((icon: { name: string }) => icon.name === name) / ICON_CHUNK));
+      const chunk = JSON.parse(readFileSync(join(__dirname, '../public/icons/regular', `${summary.sampleChunks[name]}.json`), 'utf8'));
+      expect(chunk).toHaveProperty(name);
+    }
+  });
+
+  it('puts neighboring browse icons in the same chunk at every style and optical size', () => {
+    const browseNames = orderBrowseIcons(catalog.icons).map(({ name }) => name);
+    expect(chunksFor(browseNames.slice(0, ICON_CHUNK))).toEqual([0]);
+    for (const style of STYLES) {
+      for (const size of catalog.sizes) {
+        const folder = size === catalog.grid ? style : `${size}/${style}`;
+        for (let offset = 0; offset < browseNames.length; offset += ICON_CHUNK) {
+          const names = browseNames.slice(offset, offset + ICON_CHUNK);
+          const [chunk] = chunksFor(names);
+          const artwork = JSON.parse(readFileSync(join(__dirname, '../public/icons', folder, `${chunk}.json`), 'utf8'));
+          expect(Object.keys(artwork)).toEqual(names);
+        }
+      }
     }
   });
 

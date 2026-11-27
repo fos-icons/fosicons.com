@@ -137,7 +137,7 @@ describe('Icons page', () => {
     sessionStorage.removeItem('fos-artwork-reload');
     renderAt('/');
     await waitFor(() => expect(reload).toHaveBeenCalledTimes(1));
-    expect(sessionStorage.getItem('fos-artwork-reload')).toBe(lock.manifestSha256);
+    expect(sessionStorage.getItem('fos-artwork-reload')).toBe(lock.artworkVersion);
 
     cleanup();
     resetStyleCache();

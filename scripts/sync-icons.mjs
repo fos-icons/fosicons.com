@@ -14,6 +14,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { ICON_CHUNK } from '../src/lib/artwork-chunk.ts';
+import { orderBrowseIcons } from '../src/lib/browse-order.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_PATH = join(ROOT, 'src/data/source-lock.json');
@@ -38,9 +40,6 @@ const BRAND_META = {
   'social/x.svg': { aliases: ['twitter'] },
 };
 
-/** Icons per artwork chunk. Must match ICON_CHUNK in src/lib/artwork-files.ts. */
-export const ICON_CHUNK = 96;
-
 const POPULAR = [
   'home', 'search', 'settings', 'user', 'bell', 'calendar', 'mail', 'heart', 'star', 'camera',
   'trash', 'edit', 'download', 'upload', 'share', 'lock', 'cart', 'chat', 'map', 'clock',
@@ -49,7 +48,7 @@ const POPULAR = [
 
 /** The app shell and sample pages need facts and a few icons, not the searchable catalog. */
 export function catalogMetadata({ icons, animated = [], ...metadata }, brandNames = []) {
-  const byName = new Map(icons.map((icon, index) => [icon.name, { icon, index }]));
+  const byName = new Map(orderBrowseIcons(icons).map((icon, index) => [icon.name, { icon, index }]));
   const popular = POPULAR.filter((name) => {
     const entry = byName.get(name);
     return entry && !entry.icon.composition;
@@ -140,6 +139,36 @@ export function buildOutputs(source) {
   const outputs = {};
   const snapshotDigests = {};
 
+  // Normalize both manifest composition shapes before sorting artwork into browse order.
+  const categoryCounts = new Map();
+  const catalogIcons = sorted.map((icon) => {
+    categoryCounts.set(icon.category, (categoryCounts.get(icon.category) ?? 0) + 1);
+    const entry = {
+      name: icon.name,
+      category: icon.category,
+      tags: [...new Set(icon.tags.map((t) => t.toLowerCase()))].filter((t) => t !== icon.name),
+      aliases: icon.aliases,
+    };
+    const c = icon.composition;
+    if (c) {
+      if (!names.has(c.base)) throw new Error(`${icon.name}: unknown base ${c.base}`);
+      entry.composition = {
+        base: c.base,
+        modifiers: Array.isArray(c.modifiers)
+          ? c.modifiers.map((m) => ({ name: m.name, position: m.position }))
+          : [{ name: c.modifier, position: c.position }],
+      };
+    }
+    return entry;
+  });
+  const artworkNames = orderBrowseIcons(catalogIcons).map(({ name }) => name);
+  const writeChunks = (dir, map) => {
+    for (let offset = 0; offset < artworkNames.length; offset += ICON_CHUNK) {
+      const chunk = artworkNames.slice(offset, offset + ICON_CHUNK).map((name) => [name, map[name]]);
+      outputs[`${dir}/${offset / ICON_CHUNK}.json`] = JSON.stringify(Object.fromEntries(chunk));
+    }
+  };
+
   for (const style of styles) {
     const map = {};
     for (const icon of sorted) {
@@ -148,14 +177,7 @@ export function buildOutputs(source) {
     const body = JSON.stringify(map);
     snapshotDigests[style] = sha256(body);
     outputs[`public/icons/${style}.json`] = body;
-    // The grid loads artwork in small chunks as icons scroll into view
-    // (catalog order, ICON_CHUNK icons each); the whole-style file above
-    // serves downloads and browsers without IntersectionObserver.
-    const names = Object.keys(map);
-    for (let n = 0; n * ICON_CHUNK < names.length; n += 1) {
-      const chunk = Object.fromEntries(names.slice(n * ICON_CHUNK, (n + 1) * ICON_CHUNK).map((name) => [name, map[name]]));
-      outputs[`public/icons/${style}/${n}.json`] = JSON.stringify(chunk);
-    }
+    writeChunks(`public/icons/${style}`, map);
   }
 
   // Optical sizes: each size is drawn on its own grid (16/32/48/64 beside
@@ -172,11 +194,7 @@ export function buildOutputs(source) {
         map[icon.name] = readVerified(source, file, icon.sizes?.[size]?.[style]);
       }
       snapshotDigests[`${size}/${style}`] = sha256(JSON.stringify(map));
-      const names = Object.keys(map);
-      for (let n = 0; n * ICON_CHUNK < names.length; n += 1) {
-        const chunk = Object.fromEntries(names.slice(n * ICON_CHUNK, (n + 1) * ICON_CHUNK).map((name) => [name, map[name]]));
-        outputs[`public/icons/${size}/${style}/${n}.json`] = JSON.stringify(chunk);
-      }
+      writeChunks(`public/icons/${size}/${style}`, map);
     }
   }
 
@@ -204,33 +222,6 @@ export function buildOutputs(source) {
   // Bundle the individual animations used by site controls.
   outputs['src/data/ui-animated-check.json'] = json({ check: animated.check ?? null });
   outputs['src/data/ui-animated-refresh.json'] = json({ refresh: animated.refresh ?? null });
-
-  // Normalize the two composition shapes found in the manifest into a list.
-  const compositionOf = (icon) => {
-    const c = icon.composition;
-    if (!c) return undefined;
-    const mods = Array.isArray(c.modifiers)
-      ? c.modifiers.map((m) => ({ name: m.name, position: m.position }))
-      : [{ name: c.modifier, position: c.position }];
-    return { base: c.base, modifiers: mods };
-  };
-
-  const categoryCounts = new Map();
-  const catalogIcons = sorted.map((icon) => {
-    categoryCounts.set(icon.category, (categoryCounts.get(icon.category) ?? 0) + 1);
-    const entry = {
-      name: icon.name,
-      category: icon.category,
-      tags: [...new Set(icon.tags.map((t) => t.toLowerCase()))].filter((t) => t !== icon.name),
-      aliases: icon.aliases,
-    };
-    const composition = compositionOf(icon);
-    if (composition) {
-      if (!names.has(composition.base)) throw new Error(`${icon.name}: unknown base ${composition.base}`);
-      entry.composition = composition;
-    }
-    return entry;
-  });
 
   const modifierLabels = Object.fromEntries(
     modifiers.modifiers.map((m) => [m.name, { label: m.label, group: m.group }]),
@@ -315,6 +306,8 @@ export function buildOutputs(source) {
     revision,
     dirty,
     manifestSha256: sha256(manifestRaw),
+    // Immutable URLs must change when icons move between chunks, even if the source manifest is unchanged.
+    artworkVersion: sha256(JSON.stringify([sha256(manifestRaw), ICON_CHUNK, artworkNames])),
     brandManifestSha256: brandManifestRaw ? sha256(brandManifestRaw) : null,
     snapshotSha256: snapshotDigests,
   };

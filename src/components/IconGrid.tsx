@@ -41,7 +41,7 @@ export function setProgressiveGrid(enabled: boolean) {
 /** Mount the next batch when the end of the mounted cells is this close. */
 const GROW_MARGIN = '1200px 0px';
 /** Load artwork this far ahead of the viewport. */
-const NEED_MARGIN = '900px 0px';
+const NEED_MARGIN = '320px 0px';
 
 const Cell = memo(function Cell({
   name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false, stagger, showNames,

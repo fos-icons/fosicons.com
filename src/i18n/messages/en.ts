@@ -376,6 +376,7 @@ const en = {
   'customize.foreground': 'Foreground',
   'customize.followTheme': 'Follows light and dark mode.',
   'customize.colorInput': '{label} picker',
+  'customize.opacity': 'Opacity',
 
   // Inspector
   'inspector.clear': 'Clear selection',

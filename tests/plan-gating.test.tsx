@@ -124,7 +124,7 @@ describe('animated icon pages', () => {
 });
 
 describe('inline icon page settings', () => {
-  const dropPalette = (name: string, field: HTMLInputElement) => {
+  const dropPalette = (name: string, field: HTMLElement) => {
     const colors = new Map<string, string>();
     const dataTransfer = {
       setData: (type: string, value: string) => colors.set(type, value),
@@ -147,33 +147,61 @@ describe('inline icon page settings', () => {
     expect([primary.value, secondary.value]).toEqual([themeColors('Red', 'dark').primary, themeColors('Teal', 'dark').secondary]);
     await user.click(screen.getByRole('button', { name: 'Swap primary and secondary colors' }));
     expect([primary.value, secondary.value]).toEqual([themeColors('Teal', 'dark').secondary, themeColors('Red', 'dark').primary]);
-    fireEvent.change(secondary, { target: { value: '#123456' } });
+    fireEvent.change(secondary, { target: { value: '#12345680' } });
 
     cleanup();
     renderAs('pro', url);
     await user.click(screen.getByRole('radio', { name: 'Warm' }));
     expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Primary' }).value).toBe(themeColors('Teal', 'ivory').secondary);
-    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Secondary' }).value).toBe('#123456');
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Secondary' }).value).toBe('#12345680');
   });
 
   it('accepts independent palette drops on foreground and modifier colors', async () => {
     const user = userEvent.setup();
     renderAs('advanced', '/icons/minimize?modifier=note&corner=bottom-right');
     const foreground = screen.getByRole<HTMLInputElement>('textbox', { name: 'Foreground' });
-    await waitFor(() => expect(document.querySelector<HTMLInputElement>('input[name="modifier-color"]')).toBeTruthy());
-    const modifier = document.querySelector<HTMLInputElement>('input[name="modifier-color"]')!;
+    const modifier = await screen.findByRole('button', { name: 'Modifier color' });
+    const preview = screen.getByRole('img', { name: 'Minimize icon, Regular style' });
 
     dropPalette('Orange', foreground);
     dropPalette('Teal', modifier);
     const expectColors = (mode: 'light' | 'ivory' | 'dark') => {
       expect(foreground.value).toBe(themeColors('Orange', mode).main);
-      expect(modifier.value).toBe(themeColors('Teal', mode).main.toLowerCase());
+      expect(preview.closest<HTMLElement>('[style*="--fos-modifier"]')?.style.getPropertyValue('--fos-modifier')).toBe(themeColors('Teal', mode).main);
     };
     expectColors('light');
     await user.click(screen.getByRole('radio', { name: 'Dark' }));
     expectColors('dark');
     await user.click(screen.getByRole('radio', { name: 'Warm' }));
     expectColors('ivory');
+  });
+
+  it('updates Duocolor opacity without changing the other paint role', async () => {
+    renderAs('pro', '/icons/alert-circle?style=duocolor');
+    const settings = screen.getByRole('region', { name: 'Customize size, stroke, and color' });
+    const primary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Primary' });
+    const secondary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Secondary' });
+    const accent = secondary.value;
+    const preview = await screen.findByRole('img', { name: 'Alert Circle icon, Duocolor style' });
+    const previewColor = () => preview.closest<HTMLElement>('[style*="--fos-primary"]')?.style.getPropertyValue('--fos-primary');
+
+    const swatch = within(settings).getByRole('button', { name: 'Primary picker' });
+    const popover = document.getElementById(swatch.getAttribute('popovertarget') ?? '');
+    expect(popover).not.toBeNull();
+    // JSDOM does not open a native popover when its trigger is clicked.
+    popover?.removeAttribute('popover');
+    const picker = within(settings).getByRole('group', { name: 'Primary picker' });
+    const opacity = within(picker).getByRole('slider', { name: 'Alpha' });
+    expect(opacity.getAttribute('aria-valuenow')).toBe('100');
+    fireEvent.keyDown(opacity, { key: 'ArrowLeft', keyCode: 37 });
+    await waitFor(() => expect(primary.value).toBe('#245B9EF2'));
+    expect(secondary.value).toBe(accent);
+    expect(previewColor()).toBe('#245B9EF2');
+
+    fireEvent.change(primary, { target: { value: '#245B9E00' } });
+    expect(opacity.getAttribute('aria-valuenow')).toBe('0');
+    expect(previewColor()).toBe('#245B9E00');
+    expect(secondary.value).toBe(accent);
   });
 
   it('remembers the selected style and color pair, while honoring an explicit style link', async () => {
