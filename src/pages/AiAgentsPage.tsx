@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { useActiveSection } from '../hooks/useActiveSection';
 import { Breadcrumbs, CopyCode, LandingSection } from '../components/LandingParts';
 import { ButtonAnchor, UiIcon } from '../components/ui';

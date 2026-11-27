@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useI18n } from '../i18n';
 import { ButtonLink, Chip, UiIcon, type UiIconName } from '../components/ui';
 import { catalogMeta as catalog, ICONS_ROUNDED } from '../lib/catalog-meta';

@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useId, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { Glyph } from '../components/LandingParts';
 import { Button, ButtonLink, UiIcon } from '../components/ui';
 import { LocalLink, useI18n } from '../i18n';

@@ -1,7 +1,7 @@
 import { SlashHint, UiIcon } from '../components/ui';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router';
 import { animatedNames, catalogMeta as catalog, ICONS_ROUNDED, lock, palettes, STYLE_META } from '../lib/catalog-meta';
 import { copyText } from '../lib/export';
 import { editorPath } from '../lib/icon-pages';

@@ -1,4 +1,4 @@
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 import { LOCALES, localizePath, splitLocale, useI18n } from '../i18n';
 import { UiIcon } from './ui';
 

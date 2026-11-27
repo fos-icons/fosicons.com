@@ -1,6 +1,6 @@
 import { use } from 'react';
 import { lazyPage, loadPage } from './lib/lazy-page';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { Layout } from './components/Layout';
 import { ToastProvider } from './components/ui';
 import { DEFAULT_LOCALE, I18nProvider, localizePath, type Translation } from './i18n';
