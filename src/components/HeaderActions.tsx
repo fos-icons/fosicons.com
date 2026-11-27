@@ -21,6 +21,9 @@ const mainLinks = [
   { to: '/docs', label: 'header.docs' },
 ] as const;
 
+/** The Examples menu is hidden until its pages are ready; set to true to show it again. */
+const SHOW_EXAMPLES_MENU: boolean = false;
+
 function ExamplesMenu({ inline = false, onNavigate }: { inline?: boolean; onNavigate?: () => void }) {
   const { t } = useI18n();
   const id = useId();
@@ -103,7 +106,7 @@ export function HeaderActions() {
             {t(label)}
           </NavLink>
         ))}
-        <ExamplesMenu />
+        {SHOW_EXAMPLES_MENU && <ExamplesMenu />}
         {/* An icon, so the text links stay about the site; its label shows on hover and to screen readers. */}
         <IconButton icon="message-smile-square" label={t('header.feedback')} aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className="-mx-2 text-muted hover:text-ink" />
       </div>
@@ -132,7 +135,7 @@ export function HeaderActions() {
               {t(label)}
             </NavLink>
           ))}
-          {menuOpen && <ExamplesMenu inline onNavigate={close} />}
+          {SHOW_EXAMPLES_MENU && menuOpen && <ExamplesMenu inline onNavigate={close} />}
           <Button aria-haspopup="dialog" onClick={() => openFeedback(toggleRef.current)} variant="ghost" className={menuItem}>
             {t('header.feedback')}
           </Button>
