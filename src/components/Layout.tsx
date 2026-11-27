@@ -6,7 +6,7 @@ import markRegular from '../brand/mark-regular.svg?raw';
 import { animatedNames, catalogMeta as catalog } from '../lib/catalog-meta';
 import { isCatalogEditor } from '../lib/catalog-routing';
 import { FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
-import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext, SITE_FRAME } from '../lib/layout';
+import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
 import { NPM_URL, ORG_URL, X_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
@@ -67,8 +67,10 @@ export function Layout() {
       mainRef.current?.focus({ preventScroll: true });
     }
   }, [pageKey, navigationType, hash]);
+  // Catalog views keep the full-height inspector beside the header.
+  const paneBesideHeader = editor;
   const header = (
-    <header className={`h-[var(--site-header-height)] shrink-0 border-b border-line ${iconPage ? 'header-glass' : ''}`}>
+    <header className={`col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
       <div className={`${CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
         <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
           <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
@@ -84,13 +86,12 @@ export function Layout() {
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
-      <div className={`flex min-h-dvh flex-col [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
+      <div className={`grid min-h-dvh grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_1fr] [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
         <a href="#main" className="sr-only z-50 rounded-lg bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
           {t('site.skipToContent')}
         </a>
         {header}
-        <div className={`${SITE_FRAME} grid flex-1 grid-cols-[minmax(0,1fr)_auto]`}>
-          <div className="flex min-w-0 flex-col">
+          <div className="col-start-1 row-start-2 flex min-w-0 flex-col">
             <main ref={mainRef} id="main" tabIndex={-1} className="flex-1 outline-none">
               {/* Re-keyed per page so moving between pages eases in (see .route-enter). */}
               <div key={pageKey} className="route-enter page-enter" data-enter={entrance.animate || undefined}>
@@ -142,8 +143,7 @@ export function Layout() {
               </div>
             </footer>
           </div>
-          <div ref={setPaneHost} className={`hidden lg:block ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
-        </div>
+          <div ref={setPaneHost} className={`col-start-2 hidden lg:block ${paneBesideHeader ? 'row-span-2 row-start-1' : 'row-start-2'} ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
       </div>
     </HeaderSlotContext.Provider>
     </PaneHostContext.Provider>
