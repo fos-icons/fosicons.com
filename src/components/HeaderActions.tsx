@@ -1,5 +1,7 @@
 import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
+import { appExamples } from '../data/app-examples';
+import { useDisclosure } from '../hooks/useDisclosure';
 import { useI18n } from '../i18n';
 import { lazyPage } from '../lib/lazy-page';
 import { Button, IconButton, UiIcon } from './ui';
@@ -18,6 +20,46 @@ const mainLinks = [
   { to: '/pricing', label: 'header.pricing' },
   { to: '/docs', label: 'header.docs' },
 ] as const;
+
+function ExamplesMenu({ inline = false, onNavigate }: { inline?: boolean; onNavigate?: () => void }) {
+  const { t } = useI18n();
+  const id = useId();
+  const { open, trigger, toggle, close, container } = useDisclosure();
+  return (
+    <div {...container} className="relative">
+      <button
+        ref={trigger}
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        onClick={toggle}
+        className={inline
+          ? `flex items-center justify-between rounded-lg px-3 text-sm font-medium text-ink hover:bg-sunken ${menuItem}`
+          : `${textLink} inline-flex min-h-11 items-center gap-1 aria-expanded:text-ink`}
+      >
+        {t('header.examples')}
+        <UiIcon name="chevron-down" className={`size-3.5 shrink-0 ${open ? 'rotate-180' : ''}`} />
+      </button>
+      <div id={id} hidden={!open} className={inline
+        ? 'my-1 ml-3 border-l border-line pl-2'
+        : 'absolute end-0 top-full z-40 w-64 rounded-xl border border-line bg-surface p-2 shadow-md'}>
+        {appExamples.length ? (
+          <ul className="max-h-[min(24rem,60dvh)] overflow-y-auto">
+            {appExamples.map(({ name, href, description }) => (
+              <li key={href}>
+                <a href={href} onClick={() => { close(); onNavigate?.(); }}
+                  className="block rounded-lg px-3 py-2 text-sm wrap-anywhere text-ink hover:bg-sunken">
+                  <span className="block font-medium">{name}</span>
+                  {description && <span className="mt-0.5 block text-xs text-muted">{description}</span>}
+                </a>
+              </li>
+            ))}
+          </ul>
+        ) : <p className="px-3 py-2 text-sm text-muted">{t('header.examplesEmpty')}</p>}
+      </div>
+    </div>
+  );
+}
 
 export function HeaderActions() {
   const { t, path } = useI18n();
@@ -55,17 +97,18 @@ export function HeaderActions() {
 
   return (
     <nav aria-label={t('header.main')} className="flex items-center gap-1 md:gap-5">
-      <div className="hidden items-center gap-5 md:flex">
+      <div className="hidden items-center gap-5 md:@min-[36rem]/site-header:flex">
         {mainLinks.map(({ to, label }) => (
           <NavLink key={to} to={path(to)} end={to === '/'} className={`${textLink} ${currentLink} inline-flex min-h-11 items-center`}>
             {t(label)}
           </NavLink>
         ))}
+        <ExamplesMenu />
         {/* An icon, so the text links stay about the site; its label shows on hover and to screen readers. */}
         <IconButton icon="message-smile-square" label={t('header.feedback')} aria-haspopup="dialog" onClick={(event) => openFeedback(event.currentTarget)} className="-mx-2 text-muted hover:text-ink" />
       </div>
 
-      <div ref={wrapRef} className="relative md:hidden"
+      <div ref={wrapRef} className="relative md:@min-[36rem]/site-header:hidden"
         onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) close(); }}
       >
         <button
@@ -89,6 +132,7 @@ export function HeaderActions() {
               {t(label)}
             </NavLink>
           ))}
+          {menuOpen && <ExamplesMenu inline onNavigate={close} />}
           <Button aria-haspopup="dialog" onClick={() => openFeedback(toggleRef.current)} variant="ghost" className={menuItem}>
             {t('header.feedback')}
           </Button>

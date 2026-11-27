@@ -19,11 +19,6 @@ import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, use
 
 const VISIBLE_COLOR_THEMES = [INK_THEME, 'Slate', 'Blue', 'Teal', 'Green', 'Violet', 'Amber', 'Orange', 'Red'];
 
-/** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
-const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
-const SIZE_LABELS = [16, 24, 32, 48, 64] as const;
-const STROKE_MARKS = [0.5, 1, 1.5, 2, 2.5] as const;
-
 const PRESET_DRAG = 'application/x-fos-color-preset';
 
 export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
@@ -135,16 +130,16 @@ const sectionOpen = new Map<string, boolean>();
 export const resetSectionState = () => sectionOpen.clear();
 
 export function Section({
-  title, children, aside, titleAccessory, collapsible = true, defaultOpen = true, triggerRef,
+  title, children, aside, collapsible = true, defaultOpen = true, triggerRef, divider = true,
 }: {
   title: string;
   children: ReactNode;
   aside?: ReactNode;
-  titleAccessory?: ReactNode;
   /** Render the title as a disclosure button that shows or hides the body. */
   collapsible?: boolean;
   defaultOpen?: boolean;
   triggerRef?: Ref<HTMLButtonElement>;
+  divider?: boolean;
 }) {
   const [open, setOpenState] = useState(() => sectionOpen.get(title) ?? defaultOpen);
   const setOpen = (update: (o: boolean) => boolean) => setOpenState((o) => {
@@ -153,10 +148,10 @@ export function Section({
     return next;
   });
   const bodyId = useId();
-  const heading = 'font-sans text-xs font-semibold uppercase tracking-[0.08em] text-muted';
+  const heading = 'font-display text-xs font-semibold uppercase tracking-[0.08em] text-muted';
   const expanded = !collapsible || open;
   return (
-    <section className="border-t border-line px-5 py-4">
+    <section className={`px-5 py-4 ${divider ? 'border-t border-line' : ''}`}>
       <div className={`relative flex min-h-7 items-center justify-between gap-2 ${expanded ? 'mb-3' : ''}`}>
         <div className="flex min-w-0 items-center gap-2">
           {collapsible ? (
@@ -176,7 +171,6 @@ export function Section({
           ) : (
             <h3 className={heading}>{title}</h3>
           )}
-          {titleAccessory}
         </div>
         {aside}
       </div>
@@ -193,179 +187,125 @@ export function Section({
  */
 const fmtStroke = (w: number, size: number) => `${Number(((w * size) / catalog.grid).toFixed(2))}px`;
 
-/** The Size section: a slider for common sizes plus a field for any size. */
-export function SizeControl({ look, onChange, compact = false }: { look: Look; onChange: (patch: Partial<Look>) => void; compact?: boolean }) {
+/** The Size slider covers common sizes, with a wider range for typed export sizes. */
+export function SizeControl({ look, onChange, defaultSize = DEFAULT_LOOK.size }: {
+  look: Look;
+  onChange: (patch: Partial<Look>) => void;
+  defaultSize?: number;
+}) {
   const { t } = useI18n();
-  const uid = useId();
-  const [sizeText, setSizeText] = useState(String(look.size));
-  useEffect(() => setSizeText(String(look.size)), [look.size]);
-
-  const commitSize = (value: number) => {
-    const next = Math.round(Math.min(MAX_SIZE, Math.max(MIN_SIZE, value)));
-    onChange({ size: next });
-    setSizeText(String(next));
-  };
+  const id = useId();
+  const setSize = (size: number) => onChange({ size });
 
   return (
-    <Section
-      title={t('customize.size')}
-      collapsible={!compact}
-      aside={(
-        <label className="flex items-center gap-1.5 text-xs text-muted">
-          <span className="sr-only">{t('customize.sizeCustom')}</span>
-          <input
-            type="number"
-            name="size"
-            inputMode="numeric"
-            min={MIN_SIZE}
-            max={MAX_SIZE}
-            value={sizeText}
-            onChange={(e) => {
-              setSizeText(e.target.value);
-              const n = Number(e.target.value);
-              if (Number.isFinite(n) && n >= MIN_SIZE && n <= MAX_SIZE) onChange({ size: Math.round(n) });
-            }}
-            onBlur={() => commitSize(Number(sizeText) || DEFAULT_LOOK.size)}
-            className="h-7 w-14 rounded-md border border-line-strong bg-surface px-2 text-right font-mono text-xs tabular-nums text-ink"
-          />
-          {t('customize.px')}
-        </label>
-      )}
-    >
+    <section className="px-5 py-2">
       <RangeSlider
-        id={`${uid}-size`}
+        id={id}
         label={t('customize.size')}
         min={SIZE_SLIDER_MIN}
         max={SIZE_SLIDER_MAX}
         step={SIZE_STEP}
         value={Math.min(SIZE_SLIDER_MAX, Math.max(SIZE_SLIDER_MIN, look.size))}
+        defaultValue={defaultSize}
         valueText={t('customize.pxValue', { value: look.size })}
-        onChange={commitSize}
-        marks={SIZE_MARKS}
-        labels={SIZE_LABELS}
-        format={(v) => t('customize.pxValue', { value: v })}
+        unit={t('customize.px')}
+        valueLabel={t('customize.sizeCustom')}
+        onChange={setSize}
+        field={{ value: look.size, min: MIN_SIZE, max: MAX_SIZE, step: 1, onChange: setSize }}
       />
       {look.size > GRID_MAX_SIZE && (
         <p className="mt-2 text-xs leading-relaxed text-faint">{t('customize.gridLimit', { max: GRID_MAX_SIZE, size: look.size })}</p>
       )}
-    </Section>
+    </section>
   );
 }
-
-const SPEED_MARKS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const;
-const SPEED_LABELS = [0.25, 1, 2] as const;
 
 /** Animated icons only: how fast they play, from a quarter to double speed. */
 export function SpeedControl({ look, onChange }: { look: Look; onChange: (patch: Partial<Look>) => void }) {
   const { t } = useI18n();
-  const uid = useId();
-  const format = (v: number) => t('customize.speedValue', { value: v });
+  const id = useId();
   return (
-    <Section title={t('customize.speed')} aside={<span className="font-mono text-xs tabular-nums text-muted">{format(look.speed)}</span>}>
+    <section className="px-5 py-2">
       <RangeSlider
-        id={`${uid}-speed`}
+        id={id}
         label={t('customize.speed')}
         min={0.25}
         max={2}
         step={0.25}
         value={look.speed}
-        valueText={format(look.speed)}
+        defaultValue={DEFAULT_LOOK.speed}
+        valueText={t('customize.speedValue', { value: look.speed })}
+        unit="×"
         onChange={(speed) => onChange({ speed })}
-        marks={SPEED_MARKS}
-        labels={SPEED_LABELS}
-        format={format}
       />
       <p className="mt-2 text-xs leading-relaxed text-faint">{t('customize.speedNote')}</p>
-    </Section>
+    </section>
   );
 }
 
-/** Stroke width: Auto follows the size; the slider pins a width. Explains why solid and brand icons have none. */
-export function StrokeControl({ look, onChange, style, kind = 'core', footnote, compact = false }: {
+/** Auto follows the size. Drag in design-grid units or type the width in actual pixels. */
+export function StrokeControl({ look, onChange, style, kind = 'core', footnote }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
   style: StyleId;
   kind?: 'core' | 'brand';
-  /** Stroke notes that only make sense for one icon (e.g. filled parts). */
   footnote?: ReactNode;
-  compact?: boolean;
 }) {
   const { t } = useI18n();
-  const uid = useId();
-  const canStroke = strokeAdjustable(style, kind);
+  const id = useId();
+  if (!strokeAdjustable(style, kind)) {
+    return (
+      <Section title={t('customize.stroke')} divider={false}>
+        <p className="text-xs leading-relaxed text-faint">
+          {kind === 'brand' ? t('customize.strokeBrand') : t('customize.strokeSolid')}
+        </p>
+      </Section>
+    );
+  }
+
   const stroke = strokeOf(look);
-  const [showStrokeInfo, setShowStrokeInfo] = useState(false);
-  useEffect(() => {
-    if (!showStrokeInfo) return;
-    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setShowStrokeInfo(false); };
-    document.addEventListener('keydown', close);
-    return () => document.removeEventListener('keydown', close);
-  }, [showStrokeInfo]);
+  const auto = look.strokeWidth === null;
+  const pixelRatio = look.size / catalog.grid;
+  const strokeText = fmtStroke(stroke, look.size);
+  const tooltip = auto
+    ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
+    : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) });
+
   return (
-    <Section
-      title={t('customize.stroke')}
-      collapsible={!compact}
-      titleAccessory={canStroke && (
-        <span className="inline-flex">
-          <button
-            type="button"
-            aria-label={t('customize.strokeInfo')}
-            aria-describedby={`${uid}-stroke-info`}
-            onPointerEnter={() => setShowStrokeInfo(true)}
-            onPointerLeave={() => setShowStrokeInfo(false)}
-            onFocus={() => setShowStrokeInfo(true)}
-            onBlur={() => setShowStrokeInfo(false)}
-            className="grid size-6 shrink-0 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink"
-          >
-            <UiIcon name="info-circle" className="size-4" />
-          </button>
-          <span
-            id={`${uid}-stroke-info`}
-            role="tooltip"
-            hidden={!showStrokeInfo}
-            className="pointer-events-none absolute start-0 top-full z-20 w-64 max-w-full site-tooltip rounded-md px-3 py-2 text-xs leading-relaxed shadow-md"
-          >
-            {look.strokeWidth === null
-              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
-              : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) })}
-          </span>
-        </span>
-      )}
-      aside={canStroke && (
-        <span className="flex items-center gap-2 text-xs">
-          {look.strokeWidth === null ? (
-            <span className="rounded bg-sunken px-1.5 py-0.5 font-medium text-muted">{t('customize.strokeAuto')}</span>
-          ) : (
-            <button type="button" onClick={() => onChange({ strokeWidth: null })} className="font-medium text-brand hover:underline">
-              {t('customize.strokeUseAuto')}
-            </button>
-          )}
-          <span className="font-mono tabular-nums text-ink">{fmtStroke(stroke, look.size)}</span>
-        </span>
-      )}
-    >
-      {canStroke ? (
-        <>
+    <section className="px-5 py-2">
+      <div className="flex items-center gap-2">
+        <div className="min-w-0 flex-1">
           <RangeSlider
-            id={`${uid}-stroke`}
+            id={id}
             label={t('customize.stroke')}
             min={STROKE_MIN}
             max={STROKE_MAX}
             step={STROKE_STEP}
             value={stroke}
-            valueText={look.strokeWidth === null ? t('customize.strokeAutoValue', { value: fmtStroke(stroke, look.size) }) : fmtStroke(stroke, look.size)}
-            onChange={(v) => onChange({ strokeWidth: v })}
-            marks={STROKE_MARKS}
-            format={(v) => fmtStroke(v, look.size)}
+            defaultValue={strokeOf({ ...look, strokeWidth: null })}
+            valueText={auto ? t('customize.strokeAutoValue', { value: strokeText }) : strokeText}
+            unit={t('customize.px')}
+            tooltip={tooltip}
+            onChange={(strokeWidth) => onChange({ strokeWidth })}
+            field={{
+              value: Number((stroke * pixelRatio).toFixed(2)),
+              min: STROKE_MIN * pixelRatio,
+              max: STROKE_MAX * pixelRatio,
+              step: 'any',
+              onChange: (pixels) => onChange({ strokeWidth: Math.min(STROKE_MAX, Math.max(STROKE_MIN, Number((pixels / pixelRatio).toFixed(6)))) }),
+            }}
           />
-          {footnote}
-        </>
-      ) : (
-        <p className="text-xs leading-relaxed text-faint">
-          {kind === 'brand' ? t('customize.strokeBrand') : t('customize.strokeSolid')}
-        </p>
-      )}
-    </Section>
+        </div>
+        {auto ? (
+          <span className="shrink-0 rounded bg-sunken px-1.5 py-0.5 text-xs font-medium text-muted">{t('customize.strokeAuto')}</span>
+        ) : (
+          <button type="button" onClick={() => onChange({ strokeWidth: null })} className="shrink-0 text-xs font-medium text-brand hover:underline">
+            {t('customize.strokeUseAuto')}
+          </button>
+        )}
+      </div>
+      {footnote}
+    </section>
   );
 }
 
@@ -576,7 +516,7 @@ export function CustomizePanel({
  * Bulk ZIPs need Pro; the paid styles need Pro too where billing is off.
  */
 export function DownloadSection({ look }: { look: Look }) {
-  const { t, n, list } = useI18n();
+  const { t, list } = useI18n();
   const i18n = useI18n();
   const toast = useToast();
   const { can, enforced } = usePlan();
@@ -606,7 +546,6 @@ export function DownloadSection({ look }: { look: Look }) {
   const toggle = (style: StyleId, on: boolean) => setChosen(on ? [...chosen, style] : chosen.filter((s) => s !== style));
   const label = busy ? t('download.preparing') : styles.length ? t('download.all') : t('download.none');
   const onlyFree = styles.length === 1 && styles[0] === FREE_ICON_STYLE;
-  const count = n(catalog.icons.length * styles.length);
   return (
     <section aria-labelledby={`${uid}-title`} className="border-t border-line px-5 py-4">
       <RailActions>{() => (
@@ -621,7 +560,7 @@ export function DownloadSection({ look }: { look: Look }) {
             const available = open(style);
             const checked = available && chosen.includes(style);
             return (
-              <label key={style} className={`relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 rounded-lg bg-sunken px-2 text-xs font-medium text-muted ${
+              <label key={style} className={`button-corners relative inline-flex h-7 min-w-0 max-w-24 flex-1 select-none items-center justify-center gap-1 bg-sunken px-2 text-xs font-medium text-muted ${
                 available ? 'cursor-pointer hover:text-ink has-[:checked]:bg-brand-soft has-[:checked]:text-brand has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand/40' : 'cursor-not-allowed opacity-55'
               }`}>
                 <input type="checkbox" name="download-style" value={style} className="sr-only" disabled={!available} checked={checked}
@@ -648,8 +587,8 @@ export function DownloadSection({ look }: { look: Look }) {
       </div>
       <p id={`${uid}-note`} className="mt-1.5 text-xs leading-relaxed text-faint">
         {onlyFree || !styles.length
-          ? t('download.note', { count: n(styles.length ? catalog.icons.length : 0) })
-          : t('download.noteStyles', { count, styles: list(styles.map((s) => t(`style.${s}`))) })}
+          ? t('download.note')
+          : t('download.noteStyles', { styles: list(styles.map((s) => t(`style.${s}`))) })}
         {enforced || can('styles') ? null : <> {t('download.premiumSoon')}</>}
       </p>
       {!zip && <UpgradePrompt feature="zip" className="mt-1.5 text-xs leading-relaxed text-muted" />}

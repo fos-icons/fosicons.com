@@ -1,4 +1,4 @@
-import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react';
+import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type ComponentPropsWithRef, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react';
 import type { LinkProps } from 'react-router';
 import { LocalLink, useI18n } from '../i18n';
 import animatedCheck from '../data/ui-animated-check.json';
@@ -46,9 +46,9 @@ const VARIANTS: Record<ButtonVariant, string> = {
   quiet: 'text-muted hover:bg-sunken hover:text-ink',
 };
 const SIZES: Record<ButtonSize, { box: string; icon: string }> = {
-  sm: { box: 'h-8 gap-1.5 rounded-lg px-2.5', icon: 'size-4' },
-  md: { box: 'h-9 gap-2 rounded-lg px-3', icon: 'size-[18px]' },
-  lg: { box: 'h-10 gap-2 rounded-xl px-4', icon: 'size-4' },
+  sm: { box: 'h-8 gap-1.5 px-2.5', icon: 'size-4' },
+  md: { box: 'h-9 gap-2 px-3', icon: 'size-[18px]' },
+  lg: { box: 'h-10 gap-2 px-4', icon: 'size-4' },
 };
 
 export interface ButtonStyle {
@@ -62,7 +62,7 @@ export interface ButtonStyle {
 
 /** The class list behind every button and button-styled link, for the rare element that cannot use them. */
 export const buttonClass = ({ variant = 'secondary', size = 'md' }: ButtonStyle = {}) =>
-  `inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${SIZES[size].box} ${VARIANTS[variant]}`;
+  `button-corners inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${SIZES[size].box} ${VARIANTS[variant]}`;
 
 const ButtonIcon = ({ icon, size = 'md' }: ButtonStyle) => (icon ? <UiIcon name={icon} className={SIZES[size].icon} /> : null);
 
@@ -131,11 +131,14 @@ export function Chip({ to, count, children, className = '' }: { to: string; coun
 }
 
 /** A small tinted label that links to a search for its word. */
-export function Tag({ to, size = 'md', children }: { to: string; size?: 'sm' | 'md'; children: ReactNode }) {
+export function Tag({ to, size = 'md', tone, children }: { to: string; size?: 'sm' | 'md'; tone?: 'neutral'; children: ReactNode }) {
   return (
     <LocalLink
       to={to}
-      className={`inline-flex items-center rounded-lg bg-tag-soft font-medium text-tag transition-colors hover:bg-tag-soft/55 ${
+      className={`inline-flex items-center rounded-lg font-medium transition-colors ${tone === 'neutral'
+        ? 'bg-sunken text-muted hover:bg-line hover:text-ink'
+        : 'bg-tag-soft text-tag hover:bg-tag-soft/55'
+      } ${
         size === 'sm' ? 'h-6 px-2 text-xs' : 'h-8 px-3 text-sm'
       }`}
     >
@@ -144,31 +147,37 @@ export function Tag({ to, size = 'md', children }: { to: string; size?: 'sm' | '
   );
 }
 
-export function IconButton({ label, icon, className = '', ...props }: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; icon: UiIconName }) {
+export function IconButton({ label, icon, hoverIcon, className = '', ...props }: ComponentPropsWithRef<'button'> & { label: string; icon: UiIconName; hoverIcon?: UiIconName }) {
   return (
     <button
       type="button"
       aria-label={label}
       data-tooltip={label}
-      className={`inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken ${className}`}
+      className={`inline-flex size-9 items-center justify-center text-ink transition hover:bg-sunken ${hoverIcon ? 'group/icon-button' : ''} ${className}`}
       {...props}
     >
-      <UiIcon name={icon} />
+      {hoverIcon ? (
+        <>
+          <span className="contents group-hover/icon-button:hidden group-focus-visible/icon-button:hidden"><UiIcon name={icon} /></span>
+          <span className="hidden group-hover/icon-button:contents group-focus-visible/icon-button:contents"><UiIcon name={hoverIcon} /></span>
+        </>
+      ) : <UiIcon name={icon} />}
     </button>
   );
 }
 
-/** Horizontal size of the slider handle; tick positions line up with its center. */
-const THUMB_W = 22;
+interface RangeValueField {
+  value: number;
+  min: number;
+  max: number;
+  step: number | 'any';
+  onChange: (value: number) => void;
+}
 
-/**
- * A slider with tick marks under its track. The track fills in the brand
- * color up to an oval, brand-colored handle. `marks` places ticks;
- * `labels` (a subset of marks) also prints their value, shown on hover or
- * keyboard focus.
- */
+/** A compact native slider, with a directly editable value and an optional default marker. */
 export function RangeSlider({
-  id, label, min, max, step, value, onChange, valueText, marks, labels = marks, format,
+  id, label, min, max, step, value, onChange, valueText, unit, defaultValue, tooltip,
+  valueLabel, field = { value, min, max, step, onChange },
 }: {
   id: string;
   label: string;
@@ -177,45 +186,109 @@ export function RangeSlider({
   step: number;
   value: number;
   onChange: (value: number) => void;
-  /** What screen readers announce for the current value. */
   valueText?: string;
-  marks: readonly number[];
-  labels?: readonly number[];
-  format: (value: number) => string;
+  unit?: string;
+  defaultValue?: number;
+  tooltip?: string;
+  valueLabel?: string;
+  /** Override the text field when it uses different units or bounds from the slider. */
+  field?: RangeValueField;
 }) {
-  const at = (v: number) => (Math.min(max, Math.max(min, v)) - min) / (max - min);
-  // Center of the handle at fraction p of the track (the handle stays inside the input's box).
-  const left = (p: number) => `calc(${THUMB_W / 2}px + (100% - ${THUMB_W}px) * ${p})`;
-  const shown = new Set(labels);
+  const { t } = useI18n();
+  const [draft, setDraft] = useState<string | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipId = `${id}-help`;
+  const titleClass = 'compact-range-title inline-flex h-full max-w-[46%] shrink-0 items-center bg-brand-soft ps-2.5 pe-1.5 text-start font-display text-xs font-semibold leading-tight text-muted';
+  const position = (n: number) => {
+    const ratio = max > min ? (Math.min(max, Math.max(min, n)) - min) / (max - min) : 0;
+    return `calc(2px + (100% - 4px) * ${ratio})`;
+  };
+
+  const commit = () => {
+    setDraft(null);
+    if (!draft?.trim()) return;
+    const parsed = Number(draft);
+    if (!Number.isFinite(parsed) || parsed === field.value) return;
+    const snapped = field.step === 'any' ? parsed
+      : field.min + Math.round((parsed - field.min) / field.step) * field.step;
+    const next = Math.min(field.max, Math.max(field.min, Number(snapped.toFixed(6))));
+    if (next !== field.value) field.onChange(next);
+  };
+
   return (
-    // Values under the ticks appear while the slider is hovered or focused.
-    <div className="group">
-      <label htmlFor={id} className="sr-only">{label}</label>
-      <input
-        id={id}
-        type="range"
-        min={min}
-        max={max}
-        step={step}
-        value={value}
-        aria-valuetext={valueText}
-        onChange={(e) => onChange(Number(e.target.value))}
-        className="range w-full"
-        style={{ '--fill': left(at(value)) } as CSSProperties}
-      />
-      {/* Pulled up so the ticks sit just under the track (the input box is taller than the track). */}
-      <div className="relative -mt-1 h-[22px]" aria-hidden="true">
-        {marks.map((m) => (
-          <span key={m} className="absolute top-0 flex -translate-x-1/2 flex-col items-center" style={{ left: left(at(m)) }}>
-            <span className={`h-1.5 w-px ${m <= value ? 'bg-brand/60' : 'bg-line-strong'}`} />
-            {shown.has(m) && (
-              <span className="mt-1 text-[11px] tabular-nums leading-none text-faint opacity-0 transition-opacity duration-150 group-focus-within:opacity-100 group-hover:opacity-100">
-                {format(m)}
-              </span>
-            )}
-          </span>
-        ))}
+    <div className={`relative isolate ${showTooltip ? 'z-[1]' : ''}`}>
+      <div className="button-corners flex h-10 items-center border border-line bg-surface focus-within:border-focus">
+        {tooltip ? (
+          <button
+            type="button"
+            id={`${id}-title`}
+            aria-describedby={tooltipId}
+            className={`${titleClass} cursor-help underline decoration-dotted underline-offset-2 hover:text-ink`}
+            onPointerEnter={() => setShowTooltip(true)}
+            onPointerLeave={() => setShowTooltip(false)}
+            onFocus={() => setShowTooltip(true)}
+            onBlur={() => setShowTooltip(false)}
+            onClick={() => setShowTooltip(true)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape' && showTooltip) {
+                event.stopPropagation();
+                setShowTooltip(false);
+              }
+            }}
+          >
+            {label}
+          </button>
+        ) : <label htmlFor={id} className={`${titleClass} cursor-pointer`}>{label}</label>}
+        <div className="relative h-full min-w-0 flex-1">
+          <span aria-hidden="true" className="compact-range-fill" style={{ width: position(value) }} />
+          {defaultValue !== undefined && (
+            <span aria-hidden="true" className="compact-range-default" style={{ insetInlineStart: position(defaultValue) }} />
+          )}
+          <input
+            id={id}
+            type="range"
+            min={min}
+            max={max}
+            step={step}
+            value={value}
+            aria-labelledby={tooltip ? `${id}-title` : undefined}
+            aria-valuetext={valueText}
+            onChange={(event) => onChange(Number(event.target.value))}
+            className="compact-range relative block h-full w-full focus-visible:-outline-offset-2"
+          />
+        </div>
+        <label className="flex shrink-0 items-center gap-1 pe-2.5 text-xs text-muted">
+          <span className="sr-only">{valueLabel ?? t('slider.editValue', { label })}</span>
+          <input
+            type="number"
+            inputMode={field.step === 1 ? 'numeric' : 'decimal'}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            value={draft ?? field.value}
+            onFocus={(event) => event.currentTarget.select()}
+            onChange={(event) => setDraft(event.target.value)}
+            onBlur={commit}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault();
+                event.currentTarget.blur();
+              } else if (event.key === 'Escape') {
+                event.stopPropagation();
+                setDraft(null);
+              }
+            }}
+            className="compact-range-value h-7 w-[5ch] cursor-text rounded-md text-end font-mono text-xs tabular-nums text-ink hover:bg-sunken focus-visible:bg-sunken"
+          />
+          {unit && <span aria-hidden="true">{unit}</span>}
+        </label>
       </div>
+      {tooltip && (
+        <span id={tooltipId} role="tooltip" hidden={!showTooltip}
+          className="site-tooltip pointer-events-none absolute start-0 top-full z-20 mt-1 w-64 max-w-full rounded-md px-3 py-2 text-xs leading-relaxed shadow-md">
+          {tooltip}
+        </span>
+      )}
     </div>
   );
 }
@@ -255,7 +328,7 @@ export function SlidingPill({ position, className }: { position: PillPosition; c
   return (
     <span
       aria-hidden="true"
-      className={`pointer-events-none absolute left-0 rounded-md ${className} ${position.animate
+      className={`pointer-events-none absolute left-0 ${className} ${position.animate
         ? 'motion-safe:transition-[transform,width] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]'
         : ''}`}
       style={{ width: position.width, transform: `translateX(${position.left}px)` }}
@@ -301,8 +374,8 @@ export function Segmented<T extends string>({
     refs.current[target]?.focus();
   };
   return (
-    <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative isolate rounded-lg border border-line bg-segmented-track p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
-      {pill && <SlidingPill position={pill} className="inset-y-0.5 bg-surface shadow-sm ring-1 ring-line" />}
+    <div ref={groupRef} role="radiogroup" aria-label={label} className={`button-corners relative isolate border border-line bg-segmented-track p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
+      {pill && <SlidingPill position={pill} className="button-corners inset-y-0.5 bg-surface shadow-sm ring-1 ring-line" />}
       {options.map((option, i) => {
         const checked = option.value === current;
         return (

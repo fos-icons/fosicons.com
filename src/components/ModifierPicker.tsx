@@ -27,7 +27,7 @@ export function useModifiers(enabled: boolean) {
   return state;
 }
 
-const tile = 'relative flex size-9 items-center justify-center rounded-lg border text-ink transition-colors';
+const tile = 'relative flex h-9 w-full items-center justify-center rounded-lg border text-ink transition-colors';
 const GENERAL_GROUPS = ['status', 'access-identity', 'commerce', 'time', 'image-quality'];
 const GENERAL_ACTIONS = new Set(['phone', 'search', 'shield', 'home']);
 const inActions = (modifier: ModifierAsset) => modifier.group === 'actions' && !GENERAL_ACTIONS.has(modifier.name);
@@ -115,7 +115,7 @@ export function ModifierPicker({
         </div>
         {sizeControl && (
           <div className={`order-last col-span-2 min-w-0 ${inlineSize
-            ? '@min-[26rem]:order-none @min-[26rem]:col-span-1 @min-[26rem]:w-36'
+            ? '@min-[26rem]:order-none @min-[26rem]:col-span-1 @min-[26rem]:w-48'
             : ''}`}>
             {sizeControl}
           </div>
@@ -184,7 +184,7 @@ export function ModifierPicker({
           id={`${baseId}-panel`}
           role="tabpanel"
           aria-labelledby={`${baseId}-tab-${current.id}`}
-          className="mt-2.5 flex flex-wrap gap-1"
+          className="mt-2.5 grid grid-cols-[repeat(auto-fill,minmax(2.25rem,1fr))] gap-1"
         >
           {current.items.map((m) => {
             const active = value?.modifier.name === m.name;

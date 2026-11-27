@@ -5,6 +5,7 @@ import { Navigate, useLocation, useNavigate } from 'react-router';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { GridHelp, IconGrid } from '../components/IconGrid';
+import { GridSettings } from '../components/GridSettings';
 import { Inspector, SidePane } from '../components/Inspector';
 import { useModifiers } from '../components/ModifierPicker';
 import { NoResults } from '../components/NoResults';
@@ -26,6 +27,7 @@ import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
 import { prepareDuotoneSvg, prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
 import { useClientValue } from '../lib/hydration';
+import { useGridPreferences } from '../lib/grid-preferences';
 import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
@@ -77,6 +79,12 @@ export function SearchField({
   const [focused, setFocused] = useState(false);
   const { t } = useI18n();
   const { tip, index } = useRotatingTip(tips, focused || !!value);
+  const letters = useMemo(() => typeof Intl.Segmenter === 'function'
+    ? Array.from(new Intl.Segmenter().segment(tip), ({ segment }) => segment)
+    : Array.from(tip), [tip]);
+  const revealStep = Math.min(18, 420 / letters.length);
+  const sweepStart = letters.length * revealStep + 90;
+  const sweepStep = Math.min(14, 350 / letters.length);
   return (
     <div className="relative">
       <UiIcon name="search" className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-faint" />
@@ -99,9 +107,16 @@ export function SearchField({
           key={index}
           aria-hidden="true"
           data-testid="search-tip"
-          className="search-tip pointer-events-none absolute inset-y-0 left-12 right-4 flex items-center truncate text-base text-muted sm:right-12"
+          className="pointer-events-none absolute inset-y-0 left-12 right-4 flex items-center text-base text-muted sm:right-12"
         >
-          <span className="truncate">{tip}</span>
+          <span className="truncate">
+            {letters.map((letter, position) => (
+              <span key={position} className="search-tip-letter" style={{
+                '--tip-reveal-delay': `${revealStep * position}ms`,
+                '--tip-sweep-delay': `${sweepStart + sweepStep * position}ms`,
+              } as CSSProperties}>{letter}</span>
+            ))}
+          </span>
         </span>
       )}
       {/* A 32px slot centered 26px from the right edge, mirroring the search icon. */}
@@ -163,6 +178,7 @@ export function IconsPage() {
   const [artworkErrors, setArtworkErrors] = useState<Record<string, string | undefined>>({});
   const [attempt, setAttempt] = useState(0);
   const [look, changeLook] = useIconLook(DEFAULT_LOOK);
+  const { area: gridArea, ...grid } = useGridPreferences(look.size);
   const savedCollapsed = useClientValue(readCollapsed, false);
   const [chosenCollapsed, setCollapsedState] = useState<boolean | null>(null);
   const collapsed = chosenCollapsed ?? savedCollapsed;
@@ -495,6 +511,7 @@ export function IconsPage() {
                 </Select>
               </>
             )}
+            <GridSettings {...grid} />
           </div>
         </div>
       </div>
@@ -506,7 +523,7 @@ export function IconsPage() {
         </p>
       )}
 
-      <div className="mt-6">
+      <div ref={gridArea} className="mt-6">
         <GridHelp />
         {brandsView && brandEntries.length === 0 ? (
           <BrandsEmpty />
@@ -528,6 +545,8 @@ export function IconsPage() {
               label={brandsView ? t('icons.brandGridLabel') : t('icons.gridLabel', { style: t(animatedView ? 'style.animated' : `style.${drawStyle}`) })}
               premiumLabel={(animatedView ? plan.can('animated') : drawStyle === FREE_ICON_STYLE || plan.can('styles')) ? undefined : t('icons.premium')}
               items={results}
+              columns={grid.columns}
+              showNames={grid.showNames}
               categoryTitle={browsingCore && !state.category && !animatedView ? (category) => label('category', category, category) : undefined}
               svgs={gridSvgs}
               selected={selectedSet}
@@ -566,11 +585,11 @@ export function IconsPage() {
         quickControls={(
           <>
             <QuickPopover icon="arrows-fit-horizontal" label={t('customize.size')}>
-              <SizeControl compact look={look} onChange={changeLook} />
+              <SizeControl look={look} onChange={changeLook} />
             </QuickPopover>
             {strokeAdjustable(drawStyle, kind) && (
               <QuickPopover icon="slider-horizontal" label={t('customize.stroke')}>
-                <StrokeControl compact look={look} onChange={changeLook} style={drawStyle} kind={kind} />
+                <StrokeControl look={look} onChange={changeLook} style={drawStyle} kind={kind} />
               </QuickPopover>
             )}
           </>

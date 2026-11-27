@@ -35,7 +35,7 @@ const VISITORS = {
     viewport: { width: 1440, height: 900 },
     colorScheme: 'light',
     storage: {
-      'fos-theme': 'dark', 'fos-pane-width': '500', 'fos-pane-collapsed': '1',
+      'fos-theme': 'dark', 'fos-pane-width': '500', 'fos-pane-collapsed': '1', 'fos-grid-preferences': '6:1',
       'fos:code-tab': 'vue', 'fos-learned-tips': '["modifier","color"]',
     },
   },
