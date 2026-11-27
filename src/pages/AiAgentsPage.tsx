@@ -347,7 +347,7 @@ export default function AiAgentsPage() {
   return (
     <div className={`code-stone ${CONTAINER} pb-24 pt-8 sm:pt-10`}>
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: 'AI agents' }]} />
-      <h1 className="mt-6 font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight">
         Fos Icons for <span className="text-brand">AI agents</span>
       </h1>
       <p className="mt-4 max-w-2xl text-base text-muted sm:text-lg">

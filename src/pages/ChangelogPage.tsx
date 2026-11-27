@@ -32,7 +32,7 @@ export default function ChangelogPage() {
   return (
     <div className={`${CONTAINER} pb-16 pt-12 sm:pb-24 sm:pt-16`}>
       <header className="mb-8 sm:mb-12">
-        <h1 id="changelog" className="text-balance text-4xl font-semibold tracking-tight sm:text-5xl">
+        <h1 id="changelog" className="text-balance text-4xl font-semibold tracking-tight">
           {t('changelog.title')}
         </h1>
         <p className="mt-3 max-w-prose text-base leading-7 text-muted sm:text-lg">{t('changelog.intro')}</p>

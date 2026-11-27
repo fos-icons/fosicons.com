@@ -1,9 +1,8 @@
 import { Suspense, useEffect, useId, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router';
 import { useI18n } from '../i18n';
-import { ORG_URL } from '../lib/links';
 import { lazyPage } from '../lib/lazy-page';
-import { Button, ButtonAnchor, ButtonLink, IconButton, UiIcon } from './ui';
+import { Button, IconButton, UiIcon } from './ui';
 
 const FeedbackDialog = lazyPage(() => import('./FeedbackDialog'));
 
@@ -19,20 +18,6 @@ const mainLinks = [
   { to: '/pricing', label: 'header.pricing' },
   { to: '/docs', label: 'header.docs' },
 ] as const;
-
-/**
- * The home page's two calls to action under its intro: get started on the
- * GitHub organization (primary) and the docs (secondary).
- */
-export function HeroActions({ className = '' }: { className?: string }) {
-  const { t } = useI18n();
-  return (
-    <div className={`flex flex-wrap gap-2 ${className}`}>
-      <ButtonAnchor href={ORG_URL} external variant="primary" size="lg">{t('header.getStarted')}</ButtonAnchor>
-      <ButtonLink to="/docs" size="lg">{t('header.documentation')}</ButtonLink>
-    </div>
-  );
-}
 
 export function HeaderActions() {
   const { t, path } = useI18n();

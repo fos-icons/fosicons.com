@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { Navigate, useLocation, useNavigate } from 'react-router';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
-import { HeroActions } from '../components/HeaderActions';
 import { GridHelp, IconGrid } from '../components/IconGrid';
 import { Inspector, SidePane } from '../components/Inspector';
 import { useModifiers } from '../components/ModifierPicker';
@@ -14,14 +13,13 @@ import { Button, Segmented, Select, SlashHint, UiIcon } from '../components/ui';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
 import { BRANDS_CATEGORY, brandCatalogEntries, brandEntries, isBlackBrandMark, isBrand, isColorMark, loadBrandMarks } from '../lib/brands';
 import { usePlan } from '../lib/plan';
-import { animatedNames, artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadAnimated, loadIconChunk, loadStyle, MODIFIER_COMBINATIONS_ROUNDED, STYLE_META, type StyleId } from '../lib/catalog';
+import { animatedNames, artworkKey, catalog, chunksFor, FREE_ICON_STYLE, ICONS_ROUNDED, ICON_VARIANTS_ROUNDED, iconsByName, loadAnimated, loadIconChunk, loadStyle, STYLE_META, type StyleId } from '../lib/catalog';
 import { catalogEditorLocation, catalogRouteFilters, legacyCatalogDestination } from '../lib/catalog-location';
 import { catalogRoute } from '../lib/catalog-routing';
 import NotFoundPage from './NotFoundPage';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
-import { PLATFORM_NAMES } from '../lib/links';
 import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable } from '../lib/look';
 import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
@@ -155,7 +153,7 @@ export default function CatalogEditorRoute() {
 
 export function IconsPage() {
   const i18n = useI18n();
-  const { t, rich, label, list, path } = i18n;
+  const { t, rich, label, path } = i18n;
   const plan = usePlan();
   const location = useLocation();
   const navigate = useNavigate();
@@ -429,18 +427,12 @@ export function IconsPage() {
   return (
     <div className={`${CONTAINER} pb-16 pt-8 sm:pt-12`}>
       <div className="mb-5 max-w-2xl">
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+        <h1 className="text-4xl font-semibold tracking-tight">
           {rich('icons.headline', { em: (text) => <span className="text-brand">{text}</span> })}
         </h1>
         <p className="mt-2 text-base text-muted">
-          {t('icons.intro', {
-            variants: ICON_VARIANTS_ROUNDED,
-            combinations: MODIFIER_COMBINATIONS_ROUNDED,
-            styles: list(catalog.styles.map((s) => t(`style.${s}`))),
-            platforms: list(PLATFORM_NAMES),
-          })}
+          {t('icons.intro', { variants: ICON_VARIANTS_ROUNDED })}
         </p>
-        <HeroActions className="mt-5" />
       </div>
 
       <div className="catalog-toolbar sticky top-0 z-20 -mx-4 px-4 py-3 sm:-mx-6 sm:px-6">

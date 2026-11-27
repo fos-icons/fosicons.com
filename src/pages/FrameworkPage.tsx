@@ -145,7 +145,7 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/vue';
   return (
     <div className={`code-stone ${CONTAINER} pb-24 pt-8 sm:pt-10`}>
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: title }]} />
-      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight">
         Free {title.replace(' icons', '')} icons
       </h1>
       {body}

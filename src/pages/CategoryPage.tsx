@@ -45,7 +45,7 @@ export default function CategoryPage() {
   return (
     <div className={`${CONTAINER} pb-24 pt-8 sm:pt-10`}>
       <Breadcrumbs items={[{ label: t('iconPage.allIcons'), to: '/' }, { label: name }]} />
-      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight sm:text-5xl">{t('categoryPage.heading', { category: name })}</h1>
+      <h1 className="mt-6 font-display text-4xl font-semibold tracking-tight">{t('categoryPage.heading', { category: name })}</h1>
       <p className="mt-4 max-w-2xl text-base text-muted sm:text-lg">
         {t('categoryPage.intro', { count: n(category.count), category: name.toLowerCase(), styles, frameworks: list(FRAMEWORK_NAMES) })}
       </p>

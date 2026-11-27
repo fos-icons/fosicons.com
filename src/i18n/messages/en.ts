@@ -57,8 +57,6 @@ const en = {
 
   // Header
   'header.main': 'Main',
-  'header.getStarted': 'Get started',
-  'header.documentation': 'Documentation',
   'header.docs': 'Docs',
   'header.pricing': 'Pricing',
   'header.browse': 'Browse icons',
@@ -231,7 +229,7 @@ const en = {
 
   // Icons page
   'icons.headline': 'Find the <em>right</em> icon, then ship it.',
-  'icons.intro': 'Explore {variants}+ soft, rounded icon variants in {styles}, with {combinations}+ ways to combine icons, modifiers, and placements. Customize and download SVGs or use the library with {platforms}.',
+  'icons.intro': 'Explore {variants}+ soft, rounded icons across multiple variants; customize them as SVGs or download them ready for your favorite framework.',
   'icons.searchIcons': 'Search icons',
   'icons.searchBrands': 'Search brands',
   'icons.clearSearch': 'Clear search',
