@@ -1,9 +1,12 @@
 import { useEffect } from 'react';
+import { IconLinkGrid } from '../components/LandingParts';
 import { UiIcon } from '../components/ui';
-import { changelog } from '../data/changelog';
-import { LocalLink, useI18n } from '../i18n';
-import { displayName, gridPreviewPath, iconPath } from '../lib/icon-pages';
+import { changelog, type ChangeKind } from '../data/changelog';
+import { useI18n } from '../i18n';
 import { CONTAINER } from '../lib/layout';
+
+const MARKER: Record<ChangeKind, string> = { added: '+', changed: '^', removed: '-', fixed: '*' };
+const MARKER_TONE: Record<ChangeKind, string> = { added: 'text-success', changed: 'text-brand', removed: 'text-danger', fixed: 'text-muted' };
 
 export default function ChangelogPage() {
   const { locale, t } = useI18n();
@@ -39,7 +42,7 @@ export default function ChangelogPage() {
       </header>
 
       <div className="grid gap-3 md:grid-cols-[minmax(0,1fr)_12.5rem] md:gap-12 lg:gap-16">
-        <nav aria-label={t('changelog.index')} className="self-start border-y border-line md:sticky md:top-8 md:col-start-2 md:row-start-1 md:border-b-0 md:pt-5">
+        <nav aria-label={t('changelog.index')} className="self-start border-y border-line md:sticky md:top-[calc(var(--site-header-height)+2rem)] md:col-start-2 md:row-start-1 md:border-b-0 md:pt-5">
           <div className="hidden md:block">
             <h2 className="text-sm font-semibold">{t('changelog.index')}</h2>
             {indexLinks}
@@ -60,9 +63,9 @@ export default function ChangelogPage() {
               id={id}
               lang="en"
               aria-labelledby={`${id}-title`}
-              className="relative grid scroll-mt-6 gap-x-5 gap-y-2 border-b border-line py-7 target:border-b-brand/40 md:py-10 lg:grid-cols-[8rem_minmax(0,1fr)]"
+              className="relative grid scroll-mt-[calc(var(--site-header-height)+1.5rem)] gap-x-5 gap-y-2 border-b border-line py-7 target:border-b-brand/40 md:py-10 lg:grid-cols-[8rem_minmax(0,1fr)]"
             >
-              {legacyIds?.map((legacyId) => <span key={legacyId} id={legacyId} aria-hidden="true" className="pointer-events-none absolute start-0 top-0 scroll-mt-6" />)}
+              {legacyIds?.map((legacyId) => <span key={legacyId} id={legacyId} aria-hidden="true" className="pointer-events-none absolute start-0 top-0 scroll-mt-[calc(var(--site-header-height)+1.5rem)]" />)}
               <h2 id={`${id}-title`} className="text-balance text-2xl font-semibold leading-tight lg:col-start-2 lg:row-start-1 lg:text-[1.7rem]">
                 {title}
               </h2>
@@ -72,28 +75,19 @@ export default function ChangelogPage() {
               <div className="min-w-0 max-w-2xl lg:col-start-2">
                 <p className="max-w-prose text-base leading-7 text-muted">{summary}</p>
                 {highlights && (
-                  <ul className="mt-3 list-disc space-y-1 ps-5 text-sm leading-6 marker:text-faint">
-                    {highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}
-                  </ul>
-                )}
-                {icons && (
-                  <ul aria-label={t('changelog.featuredIcons')} className="mt-5 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-4">
-                    {icons.map((name) => (
-                      <li key={name} className="min-w-0 bg-canvas">
-                        <LocalLink
-                          to={iconPath(name)}
-                          className="flex min-h-21 flex-col items-center justify-center gap-2 px-2 py-3 text-center text-xs leading-tight text-muted hover:bg-sunken hover:text-ink focus-visible:outline-offset-[-3px]"
-                        >
-                          <span
-                            aria-hidden="true"
-                            className="size-7 bg-ink [mask-position:center] [mask-repeat:no-repeat] [mask-size:contain]"
-                            style={{ maskImage: `url(${gridPreviewPath(name)})` }}
-                          />
-                          <span>{displayName(name)}</span>
-                        </LocalLink>
+                  <ul className="mt-3 space-y-1 font-mono text-[13px] leading-6">
+                    {highlights.map(({ kind, text }) => (
+                      <li key={text} className="flex gap-2.5">
+                        {/* Changelog markers: + added, ^ changed, - removed, * fixed. */}
+                        <span aria-hidden="true" className={`w-3 shrink-0 text-center font-semibold ${MARKER_TONE[kind]}`}>{MARKER[kind]}</span>
+                        <span className="sr-only">{t(`changelog.kind.${kind}`)}: </span>
+                        <span className="min-w-0">{text}</span>
                       </li>
                     ))}
                   </ul>
+                )}
+                {icons && (
+                  <IconLinkGrid label={t('changelog.featuredIcons')} icons={icons.map((name) => ({ name }))} className="mt-5" />
                 )}
                 <a
                   href={source}

@@ -1,5 +1,13 @@
 import { LIBRARY_URL } from '../lib/links';
 
+/** Keep a Changelog change types. Each highlight is one kind, shown with its marker. */
+export type ChangeKind = 'added' | 'changed' | 'removed' | 'fixed';
+
+export interface ChangelogHighlight {
+  kind: ChangeKind;
+  text: string;
+}
+
 interface ChangelogEntry {
   id: string;
   date: string;
@@ -7,7 +15,8 @@ interface ChangelogEntry {
   legacyIds?: readonly string[];
   title: string;
   summary: string;
-  highlights?: readonly string[];
+  /** Added first, then changed, removed, and fixed. */
+  highlights?: readonly ChangelogHighlight[];
   icons?: readonly string[];
   source: string;
 }
@@ -29,13 +38,19 @@ export const changelog: readonly ChangelogEntry[] = [
     title: 'New icons, redraws, and five optical sizes',
     summary: 'The library now includes 16, 24, 32, 48, and 64px drawings. Each size has its own stroke width and grid so icons stay clear at small sizes and balanced at large ones.',
     highlights: [
-      'Added 34 icons for formatting, hand gestures, lighting, scanning, and more, and refreshed 18 existing drawings.',
-      'Added construction and legal icons, including hard hats, cranes, handcuffs, and police badges. Refreshed the Nature & animals set.',
-      'Added home-signal and text-square, refreshed 24 drawings including wand-sparkles, copy, and folder-open, and expanded the animated set with file-add, microphone-off, and settings-sliders.',
-      'Redrew hammer, shovel, plane, and phone-missed, and refined the letterforms in the Filled Bold and Bold Square icons.',
-      'Regenerated the React, Vue, Svelte, Angular, and Flutter packages with updated artwork.',
+      { kind: 'added', text: 'Added 34 icons for formatting, hand gestures, lighting, scanning, and more.' },
+      { kind: 'added', text: 'Added construction and legal icons, including hard hats, cranes, handcuffs, and police badges.' },
+      { kind: 'added', text: 'Added home-signal and text-square.' },
+      { kind: 'added', text: 'Added file-add, microphone-off, and settings-sliders to the animated set.' },
+      { kind: 'changed', text: 'Refreshed 42 drawings, including wand-sparkles, copy, and folder-open, and the Nature & animals set.' },
+      { kind: 'changed', text: 'Redrew hammer, shovel, plane, and phone-missed, and refined the letterforms in the Filled Bold and Bold Square icons.' },
+      { kind: 'changed', text: 'Regenerated the React, Vue, Svelte, Angular, and Flutter packages with updated artwork.' },
     ],
-    icons: ['hammer', 'shovel', 'plane', 'phone-missed', 'home-signal', 'wand-sparkles', 'hard-hat', 'handcuffs'],
+    icons: [
+      'hammer', 'shovel', 'plane', 'phone-missed', 'home-signal', 'wand-sparkles', 'hard-hat', 'handcuffs',
+      'crane', 'excavator', 'traffic-cone', 'police-badge', 'gavel', 'scales', 'hand-wave', 'hand-pinch',
+      'lightbulb-filament', 'lightbulb-sparkle', 'scan-barcode', 'text-square', 'text-color', 'folder-open', 'microphone-off', 'settings-sliders',
+    ],
     source: `${LIBRARY_URL}/compare/37c716c334616c1975e7d2cb11309dfcdc3e54b6...bbc932551308aa90d58c17379ef867fa90b51d58`,
   },
 ];

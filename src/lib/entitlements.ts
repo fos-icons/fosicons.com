@@ -11,7 +11,7 @@ export const PLAN_LEVEL: Record<Plan, number> = { free: 0, pro: 1, advanced: 2 }
  * - styles: copy and download Filled, Duocolor, and Duotone artwork (previews stay free)
  * - duoColors: separate primary and accent colors for the duo styles
  * - zip: bulk SVG and PNG ZIPs (all icons, a category, or a selection)
- * - modifiers: the modifier picker, placement, badge color, and exports with modifiers
+ * - modifiers: copy and download icons with modifiers or a custom badge color (trying them in the preview stays free)
  * - animated: copy and download animated icons (hover previews stay free)
  */
 export const FEATURE_PLAN = {

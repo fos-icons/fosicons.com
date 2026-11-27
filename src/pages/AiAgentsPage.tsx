@@ -38,7 +38,7 @@ const external = (href: string, children: ReactNode) => (
 
 function Client({ id, title, children }: { id: string; title: string; children: ReactNode }) {
   return (
-    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 scroll-mt-6 flex-col gap-3 border-t border-line pt-8 first:border-t-0 first:pt-0">
+    <section id={id} aria-labelledby={`${id}-title`} className="flex min-w-0 scroll-mt-[calc(var(--site-header-height)+1.5rem)] flex-col gap-3 border-t border-line pt-8 first:border-t-0 first:pt-0">
       <h3 id={`${id}-title`} className="font-display text-lg font-semibold">{title}</h3>
       {children}
     </section>
@@ -185,7 +185,7 @@ function PageContents({ active, onChoose }: { active: string; onChoose: (id: str
     </li>
   );
   return (
-    <aside className="min-w-0 self-start lg:sticky lg:top-8 lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-4rem)] lg:overflow-y-auto lg:p-1">
+    <aside className="min-w-0 self-start lg:sticky lg:top-[calc(var(--site-header-height)+2rem)] lg:col-start-2 lg:row-start-1 lg:max-h-[calc(100dvh-var(--site-header-height)-4rem)] lg:overflow-y-auto lg:p-1">
       <nav aria-label="On this page">
         <button
           type="button"

@@ -29,7 +29,8 @@ const featureGroups = [
   { id: 'customize', minimum: 'pro', features: ['duoColors'] },
   { id: 'export', minimum: 'free', features: ['svg', 'png', 'pngScales', 'clipboard'] },
   { id: 'export', minimum: 'pro', features: ['svgZip', 'pngZip'] },
-  { id: 'modifiers', minimum: 'advanced', features: ['modifierPicker', 'modifierPlacement', 'modifierColor', 'modifierSingle', 'modifierZip'] },
+  { id: 'modifiers', minimum: 'free', features: ['modifierPicker', 'modifierPlacement', 'modifierColor'] },
+  { id: 'modifiers', minimum: 'advanced', features: ['modifierSingle', 'modifierZip'] },
   { id: 'agents', minimum: 'free', features: ['agentLookup', 'agentSnippets'] },
 ] as const satisfies readonly { id: string; minimum: PlanId; features: readonly string[] }[];
 const groups = [...new Set(featureGroups.map(({ id }) => id))];
@@ -132,7 +133,7 @@ export default function PricingPage() {
   return (
     <div className={`${CONTAINER} pricing`}>
       <header className="pricing-intro">
-        <h1 id="pricing-title" className="text-balance text-4xl font-semibold tracking-tight">{t('pricing.title')}</h1>
+        <h1 id="pricing-title" className="text-balance text-4xl font-semibold tracking-tight">{rich('pricing.title', { em: (text) => <span className="text-brand">{text}</span> })}</h1>
         <p>{t('pricing.intro')}</p>
       </header>
 

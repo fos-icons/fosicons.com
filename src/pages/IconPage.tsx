@@ -411,9 +411,9 @@ export default function IconPage() {
   const icon = iconsByName.get(name);
   const { can } = usePlan();
   /**
-   * Modifiers are Advanced. Without it, a modifier in the link is ignored (the
-   * page says how to get it), and a library icon that carries one opens as
-   * itself rather than as its base plus an editable modifier.
+   * Anyone can try a modifier in the preview; exporting an icon with one is
+   * Advanced. Without it, a library icon that carries a modifier opens as
+   * itself (free to export) rather than as its base plus an editable modifier.
    */
   const modifiersUnlocked = can('modifiers');
   const preset = modifiersUnlocked ? editablePreset(icon) : null;
@@ -481,7 +481,7 @@ export default function IconPage() {
     changeLook({
       ...sharedLook,
       ...(can('duoColors') ? { custom, duotoneTint } : {}),
-      ...(modifiersUnlocked ? { modifierColor } : {}),
+      modifierColor,
     });
     setPreference(entry.themePreference);
     rememberIconStyle(entry.style);
@@ -527,7 +527,7 @@ export default function IconPage() {
       setParams(next, { replace: true, preventScrollReset: true, state: location.state });
     }
   };
-  const canModify = !animated && !!inspected && !inspected.composition && modifiersUnlocked;
+  const canModify = !animated && !!inspected && !inspected.composition;
   const modifiers = useModifiers(canModify);
   const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
@@ -550,7 +550,7 @@ export default function IconPage() {
   /** Drawn from the optical size nearest `px`; the 24px artwork until that size loads. */
   const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
   if (!icon) return <NotFoundPage />;
-  const vars = gridVars(modifiersUnlocked ? look : { ...look, modifierColor: null }, animated ? FREE_ICON_STYLE : style, theme);
+  const vars = gridVars(look, animated ? FREE_ICON_STYLE : style, theme);
   const previewVars = {
     ...vars,
     '--stroke-scale': undefined,
@@ -578,6 +578,9 @@ export default function IconPage() {
   const component = componentName(icon.name, style);
   const styleLabel = t(`style.${style}`);
   const premium = style !== FREE_ICON_STYLE && !can('styles');
+  /** A modifier is being tried (a badge, or a recolored one): exporting it needs Advanced. */
+  const modifierLocked = !modifiersUnlocked && (!!applied || (!!look.modifierColor && !!shown && hasModifierRole(shown)));
+  const exportLocked = premium || modifierLocked;
   const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
   const custom = look.size !== PAGE_LOOK.size || isCustomized({ ...look, size: DEFAULT_LOOK.size });
   const needsDuoColors = shown && (isDuo(style) && hasModifierRole(shown) || style === 'duotone' && hasSecondaryRole(shown));
@@ -586,20 +589,20 @@ export default function IconPage() {
     const source = shownAt(size);
     if (!source) return null;
     return buildSvg(source, {
-      ...exportColors(source, style, look, custom ? theme : 'light', modifiersUnlocked ? look.modifierColor : null),
+      ...exportColors(source, style, look, custom ? theme : 'light', look.modifierColor),
       size,
       strokeWidth: custom && strokeAdjustable(style) ? strokeOf(look) : undefined,
       sourceStroke: opticalStroke(svgGrid(source) || catalog.grid),
     });
   };
   const copySvg = () => {
-    if (premium || !shown) return;
+    if (exportLocked || !shown) return;
     const file = resolveSvg ? build(look.size) : shown;
     if (!file) return;
     copyText(file).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
   };
   const downloadPng = () => {
-    if (premium) return;
+    if (exportLocked) return;
     const size = look.size;
     const file = build(size);
     if (!file) return;
@@ -704,9 +707,9 @@ export default function IconPage() {
             ) : (
               <>
                 <div className="flex flex-wrap gap-2">
-                  {premium || resolveSvg ? (
-                    <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => {
-                      const file = premium ? null : build(look.size);
+                  {exportLocked || resolveSvg ? (
+                    <Button variant="primary" size="lg" icon="download" disabled={exportLocked || !shown} onClick={() => {
+                      const file = exportLocked ? null : build(look.size);
                       if (file) downloadBlob(svgBlob(file), `${fileBase}.svg`);
                     }}>
                       {t('iconPage.download', { style: styleLabel })}
@@ -717,12 +720,12 @@ export default function IconPage() {
                     </ButtonAnchor>
                   )}
                   <div className="flex flex-wrap gap-2">
-                    <Button size="lg" onClick={downloadPng} disabled={premium || !svg}>{t('iconPage.downloadPng')}</Button>
-                    <Button size="lg" icon="copy" onClick={copySvg} disabled={premium || !shown}>{t('iconPage.copySvg')}</Button>
+                    <Button size="lg" onClick={downloadPng} disabled={exportLocked || !svg}>{t('iconPage.downloadPng')}</Button>
+                    <Button size="lg" icon="copy" onClick={copySvg} disabled={exportLocked || !shown}>{t('iconPage.copySvg')}</Button>
                   </div>
                 </div>
                 {premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
-                {badge && !modifiersUnlocked && inspected?.composition && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
+                {!premium && (modifierLocked || (badge && !modifiersUnlocked && inspected?.composition)) && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
               </>
             )}
           </div>
@@ -759,22 +762,24 @@ export default function IconPage() {
 
       <div className="mt-14 space-y-12">
         <LandingSection id="use" narrow className="code-stone" title={t('iconPage.use', { name: title.toLowerCase() })}>
-          <CodeTabs
-            label={t('iconPage.framework')}
-            tabs={[
-              { id: 'react', label: t('iconPage.react'), code: animated ? jsxExample : react, lang: 'tsx' },
-              { id: 'vue', label: t('iconPage.vue'), code: animated ? `<template>\n  ${image} />\n</template>` : vue, lang: 'vue' },
-              { id: 'svelte', label: t('iconPage.svelte'), code: animated ? `${image} />` : svelte, lang: 'svelte' },
-              { id: 'solid', label: t('iconPage.solid'), code: animated ? jsxExample : solidSnippet(icon.name, style, { size: 24, color: null }), lang: 'tsx' },
-              { id: 'angular', label: t('iconPage.angular'), code: animated
-                ? `import { Component } from '@angular/core';\n\n@Component({\n  selector: 'app-example',\n  template: \`${image}>\`,\n})\nexport class ExampleComponent {}`
-                : angularSnippet(icon.name, style, { size: 24, color: null }), lang: 'ts' },
-            ]}
-          />
+          <div className="mt-7">
+            <CodeTabs
+              label={t('iconPage.framework')}
+              tabs={[
+                { id: 'react', label: t('iconPage.react'), code: animated ? jsxExample : react, lang: 'tsx' },
+                { id: 'vue', label: t('iconPage.vue'), code: animated ? `<template>\n  ${image} />\n</template>` : vue, lang: 'vue' },
+                { id: 'svelte', label: t('iconPage.svelte'), code: animated ? `${image} />` : svelte, lang: 'svelte' },
+                { id: 'solid', label: t('iconPage.solid'), code: animated ? jsxExample : solidSnippet(icon.name, style, { size: 24, color: null }), lang: 'tsx' },
+                { id: 'angular', label: t('iconPage.angular'), code: animated
+                  ? `import { Component } from '@angular/core';\n\n@Component({\n  selector: 'app-example',\n  template: \`${image}>\`,\n})\nexport class ExampleComponent {}`
+                  : angularSnippet(icon.name, style, { size: 24, color: null }), lang: 'ts' },
+              ]}
+            />
+          </div>
           {animated ? (
-            <p className="mt-3 text-sm text-muted">{t('iconPage.animatedExample', { file: `${icon.name}-animated.svg` })}</p>
+            <p className="mt-7 text-sm text-muted">{t('iconPage.animatedExample', { file: `${icon.name}-animated.svg` })}</p>
           ) : (
-            <p className="mt-3 text-sm text-muted">
+            <p className="mt-7 text-sm text-muted">
               {t('iconPage.componentNames')}{' '}
               {components.map((c, i) => <span key={c}>{i > 0 && ', '}<code className="rounded bg-sunken px-1 py-0.5 text-ink">{c}</code></span>)}
             </p>

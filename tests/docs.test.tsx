@@ -18,7 +18,10 @@ describe('Docs page', () => {
     }
     const links = nav.getAllByRole('link').map((link) => link.getAttribute('href'));
     const sections = within(screen.getByRole('article')).getAllByRole('region').map((section) => `#${section.id}`);
-    expect(links).toEqual(sections);
+    // In-page sections in article order, then the Changelog page under Reference.
+    expect(links).toEqual([...sections, '/changelog']);
+    const referenceId = nav.getByRole('button', { name: 'Reference' }).getAttribute('aria-controls');
+    expect(nav.getByRole('link', { name: 'Changelog' }).closest('ul')?.id).toBe(referenceId);
     const pluginsId = nav.getByRole('button', { name: 'Plugins' }).getAttribute('aria-controls');
     expect(nav.getByRole('link', { name: 'Framer' }).closest('ul')?.id).toBe(pluginsId);
     expect(nav.getByRole('link', { name: 'Framer' }).getAttribute('href')).toBe('#framer');

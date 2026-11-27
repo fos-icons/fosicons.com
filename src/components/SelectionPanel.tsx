@@ -160,7 +160,7 @@ export function SelectionPanel({
                   id="zip-scale"
                   value={scale}
                   onChange={(e) => setScale(Number(e.target.value) as (typeof PNG_SCALES)[number])}
-                  className="w-[76px] shrink-0"
+                  className="w-34 shrink-0"
                 >
                   {PNG_SCALES.map((s) => <option key={s} value={s}>{s}× · {t('customize.pxValue', { value: look.size * s })}</option>)}
                 </Select>
