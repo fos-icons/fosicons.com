@@ -44,6 +44,7 @@ const VISITORS = {
 
 /** React's hydration reports, in development and (as error codes) in production. */
 const MISMATCH = /hydrat|didn't match|Minified React error #(418|419|421|422|423|425)\b/i;
+const ARTWORK_CHUNK = /^\/icon-artwork\/[^/]+\/icons\/(?:\d+\/)?[^/]+\/\d+\.json$/;
 
 // A development build of the client: same chunks, with React's warnings.
 const cache = join(root, 'node_modules/.cache');
@@ -90,8 +91,11 @@ try {
       const page = await context.newPage();
       const problems = [];
       let requestedCatalog = false;
+      const artworkChunks = new Set();
       page.on('request', (request) => {
-        if (/^\/assets\/catalog-data-[\w-]+\.js$/.test(new URL(request.url()).pathname)) requestedCatalog = true;
+        const { pathname } = new URL(request.url());
+        if (/^\/assets\/catalog-data-[\w-]+\.js$/.test(pathname)) requestedCatalog = true;
+        if (ARTWORK_CHUNK.test(pathname)) artworkChunks.add(pathname);
       });
       page.on('console', (message) => { if (MISMATCH.test(message.text())) problems.push(message.text()); });
       page.on('pageerror', (error) => { if (MISMATCH.test(error.message)) problems.push(error.message); });
@@ -111,6 +115,9 @@ try {
       const needsCatalog = route === '/' || route === '/brands' || /^\/(icons|categories)\//.test(route);
       if (requestedCatalog !== needsCatalog) {
         problems.push(needsCatalog ? 'The full catalog was not requested.' : 'The route unnecessarily requested the full catalog.');
+      }
+      if (route === '/' && !Object.keys(storage).length && (artworkChunks.size < 1 || artworkChunks.size > 2)) {
+        problems.push(`Expected 1–2 artwork chunks before scrolling; requested ${artworkChunks.size}.`);
       }
       console.log(`${problems.length ? '✗' : '✓'} ${route} (${visitor})`);
       if (problems.length) failures.push({ route, visitor, problems });
