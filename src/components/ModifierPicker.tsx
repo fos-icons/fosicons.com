@@ -40,7 +40,7 @@ const actionRank = (modifier: ModifierAsset) => {
 };
 
 export function ModifierPicker({
-  modifiers, value, onChange, authored, accessory,
+  modifiers, value, onChange, authored, accessory, sizeControl, inlineSize = false,
 }: {
   modifiers: ModifierAsset[];
   value: ModifierChoice | null;
@@ -49,6 +49,8 @@ export function ModifierPicker({
   authored: Map<string, Set<Corner>>;
   /** A compact control beside None (the modifier color). */
   accessory?: ReactNode;
+  sizeControl?: ReactNode;
+  inlineSize?: boolean;
 }) {
   const cornerLabel = useId();
   const { t, label } = useI18n();
@@ -94,9 +96,11 @@ export function ModifierPicker({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
+    <div className="@container space-y-3">
+      <div className={`grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-3 ${inlineSize && sizeControl
+        ? '@min-[26rem]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
+        : ''}`}>
+        <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
             aria-pressed={!value}
@@ -109,7 +113,14 @@ export function ModifierPicker({
           </button>
           {accessory}
         </div>
-        <div className="flex items-center gap-2">
+        {sizeControl && (
+          <div className={`order-last col-span-2 min-w-0 ${inlineSize
+            ? '@min-[26rem]:order-none @min-[26rem]:col-span-1 @min-[26rem]:w-36'
+            : ''}`}>
+            {sizeControl}
+          </div>
+        )}
+        <div className="ml-auto flex shrink-0 items-center gap-2">
           <span id={cornerLabel} className="text-xs text-muted">{t('modifiers.corner')}</span>
           <div role="group" aria-labelledby={cornerLabel} className="grid grid-cols-2 gap-1">
             {CORNERS.map((corner) => {
@@ -173,7 +184,7 @@ export function ModifierPicker({
           id={`${baseId}-panel`}
           role="tabpanel"
           aria-labelledby={`${baseId}-tab-${current.id}`}
-          className="mt-2.5 grid grid-cols-8 gap-1"
+          className="mt-2.5 flex flex-wrap gap-1"
         >
           {current.items.map((m) => {
             const active = value?.modifier.name === m.name;

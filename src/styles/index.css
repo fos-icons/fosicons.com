@@ -166,12 +166,11 @@
     animation-play-state: paused !important;
   }
   .icon-preview-panel {
-    --preview-max-edge: 7rem;
-    --preview-edge: var(--preview-max-edge);
+    --preview-edge: 7rem;
     --preview-toolbar-height: 4rem;
   }
   @media (min-width: 40rem) {
-    .icon-preview-panel { --preview-max-edge: 9rem; }
+    .icon-preview-panel { --preview-edge: 9rem; }
   }
   .icon-preview-canvas { padding-top: var(--preview-toolbar-height); }
   .icon-preview-toolbar {

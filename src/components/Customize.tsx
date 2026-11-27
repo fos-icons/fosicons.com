@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n';
+import animatedRefresh from '../data/ui-animated-refresh.json';
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { catalog, FREE_ICON_STYLE, opticalStroke, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
@@ -21,6 +22,9 @@ import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, use
 const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
 const SIZE_LABELS = [16, 24, 32, 48, 64] as const;
 const STROKE_MARKS = [0.5, 1, 1.5, 2, 2.5] as const;
+
+// Give the button its own one-shot animation so it cannot affect gallery artwork.
+const swapAnimation = animatedRefresh.refresh?.replaceAll('fa-refresh', 'fa-swap-refresh').replace(/\binfinite\b/g, '1');
 
 export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
   const id = useId();
@@ -65,11 +69,12 @@ const sectionOpen = new Map<string, boolean>();
 export const resetSectionState = () => sectionOpen.clear();
 
 export function Section({
-  title, children, aside, collapsible = true, defaultOpen = true, triggerRef,
+  title, children, aside, titleAccessory, collapsible = true, defaultOpen = true, triggerRef,
 }: {
   title: string;
   children: ReactNode;
   aside?: ReactNode;
+  titleAccessory?: ReactNode;
   /** Render the title as a disclosure button that shows or hides the body. */
   collapsible?: boolean;
   defaultOpen?: boolean;
@@ -86,24 +91,27 @@ export function Section({
   const expanded = !collapsible || open;
   return (
     <section className="border-t border-line px-5 py-4">
-      <div className={`flex min-h-7 items-center justify-between gap-2 ${expanded ? 'mb-3' : ''}`}>
-        {collapsible ? (
-          <h3 className={heading}>
-            <button
-              type="button"
-              ref={triggerRef}
-              aria-expanded={open}
-              aria-controls={bodyId}
-              onClick={() => setOpen((o) => !o)}
-              className="-mx-1 inline-flex items-center gap-1.5 rounded px-1 uppercase hover:text-ink"
-            >
-              <UiIcon name="chevron-down" className={`size-3.5 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
-              {title}
-            </button>
-          </h3>
-        ) : (
-          <h3 className={heading}>{title}</h3>
-        )}
+      <div className={`relative flex min-h-7 items-center justify-between gap-2 ${expanded ? 'mb-3' : ''}`}>
+        <div className="flex min-w-0 items-center gap-2">
+          {collapsible ? (
+            <h3 className={heading}>
+              <button
+                type="button"
+                ref={triggerRef}
+                aria-expanded={open}
+                aria-controls={bodyId}
+                onClick={() => setOpen((o) => !o)}
+                className="-mx-1 inline-flex items-center gap-1.5 rounded px-1 uppercase hover:text-ink"
+              >
+                <UiIcon name="chevron-down" className={`size-3.5 transition-transform duration-200 ${open ? '' : '-rotate-90'}`} />
+                {title}
+              </button>
+            </h3>
+          ) : (
+            <h3 className={heading}>{title}</h3>
+          )}
+          {titleAccessory}
+        </div>
         {aside}
       </div>
       <div id={bodyId} hidden={!expanded}>
@@ -220,10 +228,38 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
   const uid = useId();
   const canStroke = strokeAdjustable(style, kind);
   const stroke = strokeOf(look);
+  const [showStrokeInfo, setShowStrokeInfo] = useState(false);
   return (
     <Section
       title={t('customize.stroke')}
       collapsible={!compact}
+      titleAccessory={canStroke && (
+        <span className="inline-flex">
+          <button
+            type="button"
+            aria-label={t('customize.strokeInfo')}
+            aria-describedby={`${uid}-stroke-info`}
+            onPointerEnter={() => setShowStrokeInfo(true)}
+            onPointerLeave={() => setShowStrokeInfo(false)}
+            onFocus={() => setShowStrokeInfo(true)}
+            onBlur={() => setShowStrokeInfo(false)}
+            onKeyDown={(event) => { if (event.key === 'Escape') setShowStrokeInfo(false); }}
+            className="grid size-6 shrink-0 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink"
+          >
+            <UiIcon name="info-circle" className="size-4" />
+          </button>
+          <span
+            id={`${uid}-stroke-info`}
+            role="tooltip"
+            hidden={!showStrokeInfo}
+            className="pointer-events-none absolute start-0 top-full z-20 w-64 max-w-full rounded-md border border-line bg-surface px-3 py-2 text-xs leading-relaxed text-ink shadow-md"
+          >
+            {look.strokeWidth === null
+              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
+              : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) })}
+          </span>
+        </span>
+      )}
       aside={canStroke && (
         <span className="flex items-center gap-2 text-xs">
           {look.strokeWidth === null ? (
@@ -251,11 +287,6 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
             marks={STROKE_MARKS}
             format={(v) => fmtStroke(v, look.size)}
           />
-          <p className="mt-2 text-xs leading-relaxed text-faint">
-            {look.strokeWidth === null
-              ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
-              : t('customize.strokeFixedHelp', { stroke: fmtStroke(stroke, catalog.grid) })}
-          </p>
           {footnote}
         </>
       ) : (
@@ -269,7 +300,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
 
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false,
+  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -285,12 +316,15 @@ export function CustomizeControls({
   showStroke?: boolean;
   /** The Animated tab: adds the speed control under Stroke. */
   animated?: boolean;
+  /** Pair Duocolor fields when the icon page has enough room. */
+  pairedColors?: boolean;
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
   const { can } = usePlan();
   const duo = isDuo(style);
   const r = resolveLook(look, theme);
+  const [swapCount, setSwapCount] = useState(0);
 
   return (
     <>
@@ -352,7 +386,9 @@ export function CustomizeControls({
             <UpgradePrompt feature="duoColors" />
           ) : duo ? (
             <>
-              <div className="relative grid gap-3">
+              <div className={`relative grid gap-3 ${pairedColors && style === 'duocolor'
+                ? '@min-[27rem]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
+                : ''}`}>
                 <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
                 {style === 'duocolor' && (
                   <>
@@ -360,10 +396,17 @@ export function CustomizeControls({
                       type="button"
                       aria-label={t('customize.swapColors')}
                       title={t('customize.swapColors')}
-                      className="absolute left-0.5 top-[calc(50%+0.5rem)] grid size-7 -translate-y-1/2 place-items-center rounded-lg text-ink transition hover:bg-sunken"
-                      onClick={() => onChange({ custom: { primary: r.duo.secondary, secondary: r.duo.primary } })}
+                      className={`absolute left-0.5 top-[calc(50%+0.5rem)] grid size-7 -translate-y-1/2 place-items-center rounded-lg text-ink transition hover:bg-sunken ${pairedColors
+                        ? '@min-[27rem]:static @min-[27rem]:size-8 @min-[27rem]:translate-y-0 @min-[27rem]:self-end'
+                        : ''}`}
+                      onClick={() => {
+                        onChange({ custom: { primary: r.duo.secondary, secondary: r.duo.primary } });
+                        setSwapCount((count) => count + 1);
+                      }}
                     >
-                      <UiIcon name="refresh" className="size-4" />
+                      {swapCount > 0 && swapAnimation ? (
+                        <span key={swapCount} aria-hidden="true" className="glyph size-4" dangerouslySetInnerHTML={{ __html: swapAnimation }} />
+                      ) : <UiIcon name="refresh" className="size-4" />}
                     </button>
                     <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
                   </>

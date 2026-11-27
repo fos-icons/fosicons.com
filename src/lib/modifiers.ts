@@ -40,17 +40,10 @@ export interface ModifierAsset {
   svg: string;
 }
 
-/**
- * Some modifier groups only make sense on certain icons: file-type labels on
- * files and folders, image-quality marks on images.
- */
-const GROUP_SCOPE: Record<string, RegExp> = {
-  'file-types': /^(file|files|folder)(-|$)/,
-  'image-quality': /^images?(-|$)/,
-};
-
+/** Image-quality marks are only available on image icons. */
 export function modifiersFor(iconName: string, modifiers: ModifierAsset[]): ModifierAsset[] {
-  return modifiers.filter((m) => GROUP_SCOPE[m.group]?.test(iconName) ?? true);
+  if (/^images?(-|$)/.test(iconName)) return modifiers;
+  return modifiers.filter((m) => m.group !== 'image-quality');
 }
 
 export const CORNER_LABELS: Record<Corner, string> = {

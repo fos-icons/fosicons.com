@@ -229,6 +229,7 @@ export function Inspector({
       onChange={onLookChange}
       showSize={false}
       showStroke={false}
+      pairedColors={inlineControls}
       style={style}
       kind={kind}
       footnote={style === 'duocolor' && colors.secondary === undefined
@@ -282,14 +283,10 @@ export function Inspector({
       )}
       {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
-      <SizeControl look={look} onChange={onLookChange} />
-      {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
-      <StrokeControl
-        look={look}
-        onChange={onLookChange}
-        style={style}
-        kind={kind}
-      />
+      <div className={inlineControls ? 'grid @min-[27rem]:grid-cols-2 @min-[27rem]:gap-6 [&>section]:min-w-0 [&>section]:px-0' : 'contents'}>
+        <SizeControl look={look} onChange={onLookChange} />
+        <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} />
+      </div>
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
       {inlineControls && colorControls}
 
@@ -325,35 +322,36 @@ export function Inspector({
                     )}
                   </span>
                 )}
+                inlineSize={inlineControls}
+                sizeControl={badge && (
+                  <div>
+                    <div className="mb-1 flex items-center justify-between text-xs">
+                      <span className="text-muted">{t('inspector.modifierSize')}</span>
+                      <span className="flex items-center gap-2">
+                        {badgeAdjust !== 1 && (
+                          <button type="button" onClick={() => setBadgeAdjust(1)} className="font-medium text-brand hover:underline">
+                            {t('inspector.modifierSizeReset')}
+                          </button>
+                        )}
+                        <span className="font-mono tabular-nums text-ink">{pxText(badgeSize)}</span>
+                      </span>
+                    </div>
+                    <RangeSlider
+                      id={`${uid}-badge-size`}
+                      label={t('inspector.modifierSize')}
+                      min={badgeRange.min}
+                      max={badgeRange.max}
+                      step={1}
+                      value={badgeSize}
+                      valueText={t('inspector.modifierSizeValue', { size: pxText(badgeSize), icon: pxText(size) })}
+                      onChange={(px) => setBadgeAdjust(px === linkedBadgePx ? 1 : px / linkedBadgePx)}
+                      marks={[...new Set([badgeRange.min, linkedBadgePx, badgeRange.max])]}
+                      format={pxText}
+                    />
+                  </div>
+                )}
               />
               <TeachingTip tip="modifier" />
-              {badge && (
-                <div className="mt-4">
-                  <div className="mb-1 flex items-center justify-between text-xs">
-                    <span className="text-muted">{t('inspector.modifierSize')}</span>
-                    <span className="flex items-center gap-2">
-                      {badgeAdjust !== 1 && (
-                        <button type="button" onClick={() => setBadgeAdjust(1)} className="font-medium text-brand hover:underline">
-                          {t('inspector.modifierSizeReset')}
-                        </button>
-                      )}
-                      <span className="font-mono tabular-nums text-ink">{pxText(badgeSize)}</span>
-                    </span>
-                  </div>
-                  <RangeSlider
-                    id={`${uid}-badge-size`}
-                    label={t('inspector.modifierSize')}
-                    min={badgeRange.min}
-                    max={badgeRange.max}
-                    step={1}
-                    value={badgeSize}
-                    valueText={t('inspector.modifierSizeValue', { size: pxText(badgeSize), icon: pxText(size) })}
-                    onChange={(px) => setBadgeAdjust(px === linkedBadgePx ? 1 : px / linkedBadgePx)}
-                    marks={[...new Set([badgeRange.min, linkedBadgePx, badgeRange.max])]}
-                    format={pxText}
-                  />
-                </div>
-              )}
               {composed.error && <p role="status" className="mt-3 text-xs text-danger">{composed.error}</p>}
             </>
           )}

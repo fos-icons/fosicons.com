@@ -81,10 +81,12 @@ describe('animated icon pages', () => {
     const preview = screen.getByRole('region', { name: 'Preview' });
     const grid = () => preview.querySelector('[data-preview-grid]');
     const sizes = () => within(screen.getByRole('list', { name: 'Actual size' })).getAllByRole('listitem');
-    expect(sizes().map((sample) => sample.textContent)).toEqual(['16', '20', '24', '32', '48']);
+    expect(sizes().map((sample) => sample.textContent)).toEqual(['16', '20', '24', '32', '48', '64']);
     await waitFor(() => expect(sizes()[4].querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 48 48'));
-    await waitFor(() => expect(grid()?.getAttribute('data-preview-grid')).toBe('64'));
+    await waitFor(() => expect(grid()?.getAttribute('data-preview-grid')).toBe('24'));
     expect(grid()?.getAttribute('aria-hidden')).toBe('true');
+    expect(sizes().find((sample) => sample.getAttribute('aria-current') === 'true')?.textContent).toBe('24');
+    expect(screen.getByText('Export size: 24 px')).toBeTruthy();
     expect(sizes().every((sample) => !sample.querySelector('[data-preview-grid]'))).toBe(true);
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/animated.json?'))).toBe(false);
 
@@ -253,11 +255,15 @@ describe('Pro plan', () => {
     const swap = within(panel).getByRole('button', { name: 'Swap primary and secondary colors' });
     const colors = [primary.value, secondary.value];
     expect(colors[0]).not.toBe(colors[1]);
+    expect(swap.querySelector('.fa-swap-refresh')).toBeNull();
     await user.click(swap);
     await waitFor(() => expect([primary.value, secondary.value]).toEqual([colors[1], colors[0]]));
+    const firstAnimation = swap.querySelector('.fa-swap-refresh');
+    expect(firstAnimation).not.toBeNull();
     swap.focus();
     await user.keyboard('{Enter}');
     await waitFor(() => expect([primary.value, secondary.value]).toEqual(colors));
+    expect(swap.querySelector('.fa-swap-refresh')).not.toBe(firstAnimation);
   });
 
   it('downloads all four styles as one ZIP', async () => {

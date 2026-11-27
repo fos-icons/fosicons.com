@@ -169,17 +169,10 @@ function HeaderIconSearch({
   );
 }
 
-const ACTUAL_SIZES = [
-  { px: 16, className: 'size-4' },
-  { px: 20, className: 'size-5' },
-  { px: 24, className: 'size-6' },
-  { px: 32, className: 'size-8' },
-  { px: 48, className: 'size-12' },
-] as const;
-/** The large preview's edge on wide screens (size-36); it draws from this size's optical artwork. */
-const STAGE_PIXELS = 144;
-/** Edge length of the PNG download: large enough for slides and docs, small enough to stay crisp-looking. */
-const PNG_PIXELS = 256;
+const ACTUAL_SIZES: readonly number[] = [16, 20, 24, 32, 48, 64];
+const MAX_ACTUAL_SAMPLE = ACTUAL_SIZES[ACTUAL_SIZES.length - 1];
+/** Fallback artwork size for the animated preview while the animation loads. */
+const ANIMATED_PREVIEW_PIXELS = 144;
 /**
  * The optical sizes the page draws from: each view uses the artwork drawn for
  * the size nearest its own, as the grid and downloads do. The canonical 24px
@@ -216,22 +209,31 @@ function PreviewCanvas({ svg, label, stageRef, offscreen, children, color }: {
   );
 }
 
-function ActualSizePreviews({ svgAt, listRef, offscreen, color }: {
+function ActualSizePreviews({ svgAt, listRef, offscreen, color, exportSize }: {
   svgAt: (px: number) => string | undefined;
   listRef?: React.Ref<HTMLUListElement>;
   offscreen?: boolean;
   color?: string;
+  exportSize?: number;
 }) {
   const { t } = useI18n();
+  const sizes = exportSize !== undefined && exportSize <= MAX_ACTUAL_SAMPLE && !ACTUAL_SIZES.includes(exportSize)
+    ? [...ACTUAL_SIZES, exportSize].sort((a, b) => a - b)
+    : ACTUAL_SIZES;
   return (
-    <div className="flex flex-col gap-2 border-t border-line px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-      <span className="text-xs text-muted">{t('iconPage.actualSize')}</span>
+    <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-t border-line px-4 py-3">
+      <div className="shrink-0 text-xs text-muted">
+        <p>{t('iconPage.actualSize')}</p>
+        {exportSize !== undefined && (
+          <p className="mt-1 font-medium text-ink">{t('iconPage.exportSize', { size: exportSize })}</p>
+        )}
+      </div>
       <ul ref={listRef} aria-label={t('iconPage.actualSize')} data-offscreen={offscreen || undefined}
-        className="flex items-end gap-3 self-end sm:self-auto sm:gap-4 xl:gap-7">
-        {ACTUAL_SIZES.map(({ px, className }) => (
-          <li key={px} className="flex flex-col items-center gap-1.5">
-            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} style={{ color }} />
-            <span className="text-[11px] tabular-nums text-faint">{px}</span>
+        className="ml-auto flex max-w-full flex-wrap items-end justify-end gap-x-3 gap-y-2">
+        {sizes.map((px) => (
+          <li key={px} aria-current={px === exportSize ? 'true' : undefined} className="flex flex-col items-center gap-1.5">
+            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className="shrink-0" style={{ color, width: px, height: px }} />
+            <span className={`rounded px-1 text-[11px] tabular-nums ${px === exportSize ? 'bg-brand-soft font-semibold text-brand' : 'text-faint'}`}>{px}</span>
           </li>
         ))}
       </ul>
@@ -295,7 +297,7 @@ function AnimatedPreview({ name, svgAt, label }: {
   const sampleSvg = svg?.replace(/<style>[\s\S]*?<\/style>/, '');
   return (
     <div className="animated-preview flex flex-1 flex-col" data-paused={paused || hidden || undefined}>
-      <PreviewCanvas stageRef={stage} offscreen={!stageVisible} svg={svg ?? svgAt(STAGE_PIXELS)} label={label}>
+      <PreviewCanvas stageRef={stage} offscreen={!stageVisible} svg={svg ?? svgAt(ANIMATED_PREVIEW_PIXELS)} label={label}>
         {svg && !reducedMotion && (
           <Button size="sm" variant="quiet" className="absolute bottom-2 end-2" onClick={() => setPaused(!paused)}>
             {t(paused ? 'iconPage.playAnimation' : 'iconPage.pauseAnimation')}
@@ -314,14 +316,14 @@ function AnimatedPreview({ name, svgAt, label }: {
 }
 
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, previewSize, vars, color }: {
+function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSize, vars, color }: {
   name: string;
   style: PreviewStyle;
   canAnimate: boolean;
   /** The icon drawn from the optical size nearest `px`. */
   svgAt: (px: number) => string | undefined;
   onStyleChange: (style: PreviewStyle) => void;
-  previewSize: number;
+  exportSize: number;
   vars: CSSProperties;
   color?: string;
 }) {
@@ -330,9 +332,8 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, previewSi
   const label = t('iconPage.preview', { name: displayName(name), style: t(`style.${style}`) });
   const options = catalog.styles.map((s) => ({ value: s as PreviewStyle, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
   if (canAnimate) options.push({ value: ANIMATED_SLUG, label: t('style.animated'), badge: undefined });
-  const sizing = previewSize === STAGE_PIXELS ? undefined : `min(${previewSize}px, var(--preview-max-edge))`;
   return (
-    <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={{ ...vars, '--preview-edge': sizing } as CSSProperties}>
+    <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
       <h2 id="icon-preview" className="sr-only">{t('iconPage.styles')}</h2>
       <div className="icon-preview-toolbar absolute inset-x-0 top-0 z-10 flex items-center px-3">
         <div className="min-w-0 flex-1">
@@ -348,8 +349,8 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, previewSi
       </div>
       {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} /> : (
         <>
-          <PreviewCanvas svg={svgAt(previewSize)} label={label} color={color} />
-          <ActualSizePreviews svgAt={svgAt} color={color} />
+          <PreviewCanvas svg={svgAt(exportSize)} label={label} color={color} />
+          <ActualSizePreviews svgAt={svgAt} color={color} exportSize={exportSize} />
         </>
       )}
     </section>
@@ -438,12 +439,11 @@ export default function IconPage() {
   const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
   if (!icon) return <NotFoundPage />;
-  const previewSize = look.size === PAGE_LOOK.size ? STAGE_PIXELS : look.size;
   const vars = gridVars(modifiersUnlocked ? look : { ...look, modifierColor: null }, animated ? FREE_ICON_STYLE : style, theme);
   const previewVars = { ...vars, '--stroke-scale': undefined };
   const previewAt = (px: number) => {
     const source = shownAt(px);
-    if (!source || animated || !strokeAdjustable(style) || look.strokeWidth === null && look.size === PAGE_LOOK.size) return source;
+    if (!source || animated || !strokeAdjustable(style) || look.strokeWidth === null && px !== look.size) return source;
     return prepareGridSvg(source, String(strokeOf(look) / opticalStroke(svgGrid(source) || catalog.grid)));
   };
   const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
@@ -479,7 +479,7 @@ export default function IconPage() {
   };
   const downloadPng = () => {
     if (premium) return;
-    const size = look.size === PAGE_LOOK.size ? PNG_PIXELS : look.size;
+    const size = look.size;
     const file = build(size);
     if (!file) return;
     svgToPng(file, size).then(
@@ -541,8 +541,7 @@ export default function IconPage() {
         ]}
       />
 
-      {/* Phones read heading, preview, then actions; from lg the preview spans the right column. */}
-      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-8">
+      <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-6">
         <div>
           <h1 className="text-balance font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t('iconPage.heading', { name: title })}</h1>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
@@ -552,62 +551,62 @@ export default function IconPage() {
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
-          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={previewAt} onStyleChange={setStyle} previewSize={previewSize} vars={previewVars as CSSProperties} color={vars['--glyph-color']} />
+          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={previewAt} onStyleChange={setStyle} exportSize={look.size} vars={previewVars as CSSProperties} color={vars['--glyph-color']} />
+          <div className="mt-4">
+            {animated ? (
+              <>
+                <ButtonLink to={`${editorPath(icon.name)}&style=${ANIMATED_SLUG}`} variant="primary" size="lg" icon="palette">
+                  {t('iconPage.customizeAnimation')}
+                </ButtonLink>
+                {!can('animated') && <UpgradePrompt feature="animated" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
+              </>
+            ) : (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {premium || resolveSvg ? (
+                    <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => {
+                      const file = premium ? null : build(look.size);
+                      if (file) downloadBlob(svgBlob(file), `${fileBase}.svg`);
+                    }}>
+                      {t('iconPage.download', { style: styleLabel })}
+                    </Button>
+                  ) : (
+                    <ButtonAnchor href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} variant="primary" size="lg" icon="download">
+                      {t('iconPage.download', { style: styleLabel })}
+                    </ButtonAnchor>
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="lg" onClick={downloadPng} disabled={premium || !svg}>{t('iconPage.downloadPng')}</Button>
+                    <Button size="lg" icon="copy" onClick={copySvg} disabled={premium || !shown}>{t('iconPage.copySvg')}</Button>
+                  </div>
+                </div>
+                {premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
+                {badge && !modifiersUnlocked && inspected?.composition && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
+              </>
+            )}
+          </div>
         </div>
 
-        <div className="lg:col-start-1 lg:row-start-2">
-          {animated ? (
-              <>
-              <ButtonLink to={`${editorPath(icon.name)}&style=${ANIMATED_SLUG}`} variant="primary" size="lg" icon="palette">
-                {t('iconPage.customizeAnimation')}
-              </ButtonLink>
-              {!can('animated') && <UpgradePrompt feature="animated" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
-              </>
-          ) : (
-          <>
-          <div className="flex flex-wrap gap-2">
-            {premium || resolveSvg ? (
-              <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => {
-                const file = premium ? null : build(look.size);
-                if (file) downloadBlob(svgBlob(file), `${fileBase}.svg`);
-              }}>
-                {t('iconPage.download', { style: styleLabel })}
-              </Button>
-            ) : (
-              <ButtonAnchor href={svgFilePath(style, icon.name)} download={`${fileBase}.svg`} variant="primary" size="lg" icon="download">
-                {t('iconPage.download', { style: styleLabel })}
-              </ButtonAnchor>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Button size="lg" onClick={downloadPng} disabled={premium || !svg}>{t('iconPage.downloadPng')}</Button>
-              <Button size="lg" icon="copy" onClick={copySvg} disabled={premium || !shown}>{t('iconPage.copySvg')}</Button>
-            </div>
-          </div>
-          {premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
-          {badge && !modifiersUnlocked && inspected?.composition && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
-          {inspected && (
-            <section aria-label={t('iconPage.customize')} className="mt-6 [&>div>section]:px-0">
-              <Inspector
-                key={icon.name}
-                inlineControls
-                icon={inspected}
-                style={style}
-                styles={catalog.styles}
-                source={sized[PAGE_SIZES.indexOf(opticalSize(look.size))][iconName] ?? svg}
-                look={look}
-                onLookChange={changeLook}
-                onStyleChange={setStyle}
-                onClose={leave}
-                headingId="icon-customize"
-                badgeRequest={badge}
-                onBadgeChange={setBadge}
-                modifierAdjustment={{ value: badgeAdjust, onChange: setBadgeAdjust }}
-              />
-            </section>
-          )}
-          </>
-          )}
-        </div>
+        {!animated && inspected && (
+          <section aria-label={t('iconPage.customize')} className="@container lg:col-start-1 lg:row-start-2 [&>div>section]:px-0">
+            <Inspector
+              key={icon.name}
+              inlineControls
+              icon={inspected}
+              style={style}
+              styles={catalog.styles}
+              source={sized[PAGE_SIZES.indexOf(opticalSize(look.size))][iconName] ?? svg}
+              look={look}
+              onLookChange={changeLook}
+              onStyleChange={setStyle}
+              onClose={leave}
+              headingId="icon-customize"
+              badgeRequest={badge}
+              onBadgeChange={setBadge}
+              modifierAdjustment={{ value: badgeAdjust, onChange: setBadgeAdjust }}
+            />
+          </section>
+        )}
       </div>
 
       <div className="mt-14 space-y-12">
@@ -646,7 +645,7 @@ export default function IconPage() {
         </LandingSection>
 
         {related.length > 0 && (
-          <LandingSection id="related" title={t('iconPage.related', { category: category.toLowerCase() })}>
+          <LandingSection id="related" narrow title={t('iconPage.related', { category: category.toLowerCase() })}>
             <IconLinkGrid icons={related} />
             <p className="mt-4 text-sm">
               <LocalLink to={categoryPath(icon.category)} className="text-brand underline-offset-2 hover:underline">
