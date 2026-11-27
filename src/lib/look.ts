@@ -16,7 +16,7 @@ export interface Look {
   /** The color theme: `INK_THEME` or a library palette name. */
   paletteName: string;
   custom: { primary: string; secondary: string } | null;
-  /** Modifier (badge) color, or `null` for the default: the library's color in duo styles, the icon's color otherwise. */
+  /** Explicit badge color, or `null` for the default. Duo styles default to Primary. */
   modifierColor: string | null;
   /** Playback rate for animated icons (1 = as designed); it retimes their CSS, exports included. */
   speed: number;
@@ -151,34 +151,34 @@ export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'co
   };
   if (isDuo(style)) {
     vars['--fos-primary'] = r.duo.primary;
-    vars['--fos-secondary'] = r.duo.secondary;
+    vars['--fos-secondary'] = style === 'duocolor' ? r.duo.secondary : r.duo.primary;
+    vars['--fos-modifier'] = look.modifierColor ?? r.duo.primary;
   } else if (!r.monoFollowsSite) {
     // A variable, not `color`: grid cells set their own ink color, which would win over an inherited one.
     vars['--glyph-color'] = r.mono;
   }
-  // Library icons with a modifier role pick up the chosen modifier color in the grid too.
-  if (look.modifierColor) vars['--fos-modifier'] = look.modifierColor;
+  if (!isDuo(style) && look.modifierColor) vars['--fos-modifier'] = look.modifierColor;
   return vars;
 }
 
 /**
- * Concrete export colors for one icon under this look. Secondary is only
- * applied where the artwork has that role; modifier glyphs keep the
- * library default unless an override is given.
+ * Concrete preview and export colors for one icon under this look.
+ * Duo modifiers follow Primary unless the user picks a modifier color.
+ * Duotone artwork also uses Primary for any secondary paint roles.
  */
 export function exportColors(
   source: string,
   style: StyleId,
   look: Look,
   theme: SiteTheme,
-  modifierOverride?: string | null,
+  modifierOverride: string | null = look.modifierColor,
 ): SvgColorOptions {
   const r = resolveLook(look, theme);
   const duo = isDuo(style);
   const modifierDefault = source.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase();
   return {
     primary: duo ? r.duo.primary : r.mono,
-    secondary: duo && hasSecondaryRole(source) ? r.duo.secondary : undefined,
-    modifier: hasModifierRole(source) ? (modifierOverride ?? look.modifierColor ?? modifierDefault ?? undefined) : undefined,
+    secondary: duo && hasSecondaryRole(source) ? (style === 'duocolor' ? r.duo.secondary : r.duo.primary) : undefined,
+    modifier: hasModifierRole(source) ? (modifierOverride ?? (duo ? r.duo.primary : modifierDefault)) : undefined,
   };
 }

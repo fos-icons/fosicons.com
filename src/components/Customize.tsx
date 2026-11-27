@@ -352,10 +352,23 @@ export function CustomizeControls({
             <UpgradePrompt feature="duoColors" />
           ) : duo ? (
             <>
-              <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
-              {style === 'duocolor' && (
-                <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
-              )}
+              <div className="relative grid gap-3">
+                <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
+                {style === 'duocolor' && (
+                  <>
+                    <button
+                      type="button"
+                      aria-label={t('customize.swapColors')}
+                      title={t('customize.swapColors')}
+                      className="absolute left-0.5 top-[calc(50%+0.5rem)] grid size-7 -translate-y-1/2 place-items-center rounded-lg text-ink transition hover:bg-sunken"
+                      onClick={() => onChange({ custom: { primary: r.duo.secondary, secondary: r.duo.primary } })}
+                    >
+                      <UiIcon name="refresh" className="size-4" />
+                    </button>
+                    <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
+                  </>
+                )}
+              </div>
               {style === 'duotone' && (
                 <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
               )}

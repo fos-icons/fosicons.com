@@ -19,10 +19,11 @@ export function useStyleVars(style: StyleId): CSSProperties {
 }
 
 /** Inline artwork for one icon; an empty box of the same size while it loads. */
-export function Glyph({ svg, idPrefix, className = 'size-6', label }: { svg?: string; idPrefix: string; className?: string; label?: string }) {
+export function Glyph({ svg, idPrefix, className = 'size-6', label, style }: { svg?: string; idPrefix: string; className?: string; label?: string; style?: CSSProperties }) {
   return (
     <span
       className={`glyph inline-block text-ink ${className}`}
+      style={style}
       {...(label ? { role: 'img', 'aria-label': label } : { 'aria-hidden': true })}
       dangerouslySetInnerHTML={svg ? { __html: scopeIds(svg, idPrefix) } : undefined}
     />

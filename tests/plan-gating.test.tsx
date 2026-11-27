@@ -121,6 +121,31 @@ describe('animated icon pages', () => {
   });
 });
 
+describe('inline icon page settings', () => {
+  it('remembers the selected style and color pair, while honoring an explicit style link', async () => {
+    const user = userEvent.setup();
+    renderAs('pro', '/icons/image');
+    await user.click(screen.getByRole('radio', { name: 'Duocolor' }));
+    const settings = screen.getByRole('region', { name: 'Customize size, stroke, and color' });
+    const primary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Primary' });
+    const secondary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Secondary' });
+    const colors = [primary.value, secondary.value];
+    await user.click(within(settings).getByRole('button', { name: 'Swap primary and secondary colors' }));
+    await waitFor(() => expect([primary.value, secondary.value]).toEqual([colors[1], colors[0]]));
+
+    cleanup();
+    renderAs('pro', '/icons/image');
+    expect(screen.getByRole('radio', { name: 'Duocolor' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Primary' }).value).toBe(colors[1]);
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Secondary' }).value).toBe(colors[0]);
+
+    cleanup();
+    renderAs('pro', '/icons/image?style=regular');
+    expect(screen.getByRole('radio', { name: /Regular/ }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByRole('textbox', { name: 'Secondary' })).toBeNull();
+  });
+});
+
 describe('entitlements', () => {
   it('follows the pricing matrix: styles, duo colors, and ZIPs with Pro; modifiers and animated icons with Advanced', () => {
     expect(FEATURE_PLAN).toEqual({ styles: 'pro', duoColors: 'pro', zip: 'pro', modifiers: 'advanced', animated: 'advanced' });
@@ -217,6 +242,22 @@ describe('Pro plan', () => {
     expect(within(panel).getByLabelText('Primary')).toBeTruthy();
     expect(within(panel).queryByText(/with Pro\./)).toBeNull();
     pricingLink(panel, 'Add modifiers like Add, Lock, or PDF with Advanced.');
+  });
+
+  it('swaps the two Duocolor fields and restores them when pressed again', async () => {
+    const user = userEvent.setup();
+    renderAs('pro', '/?icon=search&style=duocolor');
+    const panel = await pane();
+    const primary = within(panel).getByLabelText<HTMLInputElement>('Primary');
+    const secondary = within(panel).getByLabelText<HTMLInputElement>('Secondary');
+    const swap = within(panel).getByRole('button', { name: 'Swap primary and secondary colors' });
+    const colors = [primary.value, secondary.value];
+    expect(colors[0]).not.toBe(colors[1]);
+    await user.click(swap);
+    await waitFor(() => expect([primary.value, secondary.value]).toEqual([colors[1], colors[0]]));
+    swap.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect([primary.value, secondary.value]).toEqual(colors));
   });
 
   it('downloads all four styles as one ZIP', async () => {

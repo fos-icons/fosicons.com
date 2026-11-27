@@ -365,6 +365,7 @@ const en = {
   'customize.fromTheme': 'From the {theme} theme.',
   'customize.primary': 'Primary',
   'customize.secondary': 'Secondary',
+  'customize.swapColors': 'Swap primary and secondary colors',
   'customize.duotoneTint': 'Duotone keeps its 16% interior tint of the primary color.',
   'customize.foreground': 'Foreground',
   'customize.followTheme': 'Follows light and dark mode.',
@@ -390,6 +391,7 @@ const en = {
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
   'inspector.modifierColor': 'Modifier color',
   'inspector.modifierSameAsIcon': 'Same as the icon.',
+  'inspector.modifierFollowsPrimary': 'Follows the primary color.',
   'inspector.modifierColorReset': 'Use the default color',
   'inspector.libraryDefault': 'Library default {color}',
 

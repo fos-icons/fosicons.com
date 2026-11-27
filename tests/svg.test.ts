@@ -123,6 +123,42 @@ describe('autoStroke', () => {
 });
 
 describe('color themes', () => {
+  it.each(['duocolor', 'duotone'] as const)('shares the %s modifier color between the grid and SVG exports', async (style) => {
+    const { DEFAULT_LOOK, exportColors, gridVars } = await import('../src/lib/look');
+    const source = styleSvgs(style)['user-add'];
+    const look = { ...DEFAULT_LOOK, custom: { primary: '#D21E1E', secondary: '#1FB814' } };
+    for (const current of [DEFAULT_LOOK, look, { ...look, modifierColor: '#6633AA' }]) {
+      const vars = gridVars(current, style, 'light');
+      const expected = current.modifierColor ?? vars['--fos-primary'];
+      const colors = exportColors(source, style, current, 'light');
+      const svg = buildSvg(source, { ...colors, size: 24 });
+      expect(vars['--fos-modifier']).toBe(expected);
+      expect(colors.modifier).toBe(expected);
+      expect(parse(svg).querySelector('svg[viewBox="0 0 10 10"][x][y]')?.getAttribute('color')).toBe(expected);
+      expect(svg).not.toContain('#0F7B0F');
+    }
+    expect(exportColors(source, style, { ...look, modifierColor: '#6633AA' }, 'light', null).modifier).toBe(look.custom.primary);
+    expect(gridVars(look, 'regular', 'light')['--fos-modifier']).toBeUndefined();
+  });
+
+  it('uses Primary for secondary SVG roles only in Duotone', async () => {
+    const { DEFAULT_LOOK, exportColors, gridVars } = await import('../src/lib/look');
+    const primary = '#D21E1E';
+    const secondary = '#1FB814';
+    const look = { ...DEFAULT_LOOK, custom: { primary, secondary } };
+    const source = styleSvgs('duotone').cake;
+    expect(hasSecondaryRole(source)).toBe(true);
+
+    const svg = buildSvg(source, { ...exportColors(source, 'duotone', look, 'light'), size: 24 });
+    expect(gridVars(look, 'duotone', 'light')['--fos-secondary']).toBe(primary);
+    expect(svg).not.toContain(secondary);
+    expect(svg.match(/opacity="0\.16"/g)).toEqual(source.match(/opacity="0\.16"/g));
+
+    const duocolor = styleSvgs('duocolor').cake;
+    expect(gridVars(look, 'duocolor', 'light')['--fos-secondary']).toBe(secondary);
+    expect(buildSvg(duocolor, { ...exportColors(duocolor, 'duocolor', look, 'light'), size: 24 })).toContain(secondary);
+  });
+
   it('color the whole grid: Ink follows the site, other themes and hand-picked colors set the glyph color', async () => {
     const { DEFAULT_LOOK, gridVars, themeColors, INK_THEME } = await import('../src/lib/look');
     // Ink (the default) leaves Regular to the site's ink, so light/dark keep working.

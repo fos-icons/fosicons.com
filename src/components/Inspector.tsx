@@ -12,8 +12,8 @@ import {
   catalog, FREE_ICON_STYLE, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
-import { artworkSize, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
-import { BASE_STROKE, buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
+import { artworkSize, exportColors, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
+import { BASE_STROKE, buildSvg, hasModifierRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
@@ -48,6 +48,13 @@ export interface InspectorProps {
   onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
   /** Animated icons: Regular artwork whose exports need the `animated` feature (Advanced). */
   premiumView?: boolean;
+  /** The icon page already supplies the preview and export actions. */
+  inlineControls?: boolean;
+  /** Shared with the icon page so its preview uses the modifier size shown here. */
+  modifierAdjustment?: { value: number; onChange: (adjust: number) => void };
+  /** Link back to the originating catalog view from the dedicated icon page. */
+  catalogBackTo?: string;
+
 }
 
 
@@ -56,9 +63,10 @@ const THUMB_MAX = 64;
 
 export function Inspector({
   icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
-  badgeRequest = null, onBadgeChange, premiumView = false,
+  badgeRequest = null, onBadgeChange, premiumView = false, inlineControls = false, modifierAdjustment, catalogBackTo,
 }: InspectorProps) {
   const toast = useToast();
+  const location = useLocation();
   const i18n = useI18n();
   const { t, rich, label, path } = i18n;
   const { resolved: theme } = useTheme();
@@ -96,7 +104,9 @@ export function Inspector({
    * as a ratio of the linked size (1 = linked), so it carries across icon sizes
    * and modifiers.
    */
-  const [badgeAdjust, setBadgeAdjust] = useState(1);
+  const [localAdjustment, setLocalAdjustment] = useState(1);
+  const badgeAdjust = modifierAdjustment?.value ?? localAdjustment;
+  const setBadgeAdjust = modifierAdjustment?.onChange ?? setLocalAdjustment;
   const linkedBadgePx = autoModifierPx(size);
   const badgeRange = modifierPxRange(size);
   const badgeSize = modifierPx(size, badgeAdjust);
@@ -118,15 +128,12 @@ export function Inspector({
   const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
-  const showSecondary = !!source && duo && hasSecondaryRole(source);
-  const modifierDefault = source?.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase() ?? null;
   const showModifier = !!source && hasModifierRole(source);
-
-  const colors = useMemo(() => ({
-    primary: duo ? r.duo.primary : r.mono,
-    secondary: showSecondary ? r.duo.secondary : undefined,
-    modifier: showModifier ? (modifier ?? modifierDefault ?? undefined) : undefined,
-  }), [duo, r.duo.primary, r.duo.secondary, r.mono, showSecondary, showModifier, modifier, modifierDefault]);
+  const colors = useMemo(() => exportColors(source ?? '', style, look, theme, modifier),
+    [source, style, look, theme, modifier]);
+  const modifierSwatch = colors.modifier ?? colors.primary;
+  const modifierHint = modifier ? undefined : duo ? t('inspector.modifierFollowsPrimary')
+    : colors.modifier ? t('inspector.libraryDefault', { color: colors.modifier }) : t('inspector.modifierSameAsIcon');
 
   const build = (px: number, idPrefix?: string) => {
     if (!source) throw new LocalizedError('error.loadingArtwork');
@@ -134,7 +141,7 @@ export function Inspector({
   };
 
   const preview = useMemo(() => {
-    if (!source) return null;
+    if (!source || inlineControls) return null;
     try {
       return {
         actual: buildSvg(source, { ...colors, size: thumbSize, idPrefix: `${uid}-a`, strokeWidth, sourceStroke }),
@@ -142,7 +149,7 @@ export function Inspector({
     } catch {
       return null;
     }
-  }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke]);
+  }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke, inlineControls]);
 
   const slug = premiumView ? ANIMATED_SLUG : STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
@@ -188,7 +195,7 @@ export function Inspector({
     color: duo || r.monoFollowsSite ? null : r.mono,
     primary: duo ? colors.primary : undefined,
     secondary: colors.secondary,
-    modifier: showModifier && modifier ? modifier : undefined,
+    modifier: !plainFallback && (duo || modifier) ? colors.modifier : undefined,
   };
   const snippetName = packaged ?? icon.name;
   /**
@@ -216,12 +223,26 @@ export function Inspector({
     }
     : null;
 
+  const colorControls = (
+    <CustomizeControls
+      look={look}
+      onChange={onLookChange}
+      showSize={false}
+      showStroke={false}
+      style={style}
+      kind={kind}
+      footnote={style === 'duocolor' && colors.secondary === undefined
+        ? <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
+        : undefined}
+    />
+  );
   return (
     <div className="flex min-h-full flex-col">
       {/*
         The preview and icon name stay pinned while the controls scroll.
         The 72px square draws the icon at actual size up to THUMB_MAX.
       */}
+      {!inlineControls && (
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-surface px-5 py-4 [dialog_&]:top-4">
         <figure className="group checkerboard relative flex size-18 shrink-0 items-center justify-center rounded-xl border border-line">
           {preview ? (
@@ -249,12 +270,17 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
-            {kind === 'core' && <> · <LocalLink to={`${iconPath(icon.name)}${premiumView ? `?style=${ANIMATED_SLUG}` : ''}`} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
+            {kind === 'core' && <> · <LocalLink
+              to={`${iconPath(icon.name)}?style=${premiumView ? ANIMATED_SLUG : STYLE_META[style].slug}`}
+              state={{ from: `${location.pathname}${location.search}`, catalogBackTo }}
+              className="text-brand underline-offset-2 hover:underline"
+            >{t('inspector.iconPage')}</LocalLink></>}
           </p>
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="sheet-close -mr-2 self-start" />
       </div>
-      {kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
+      )}
+      {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
       <SizeControl look={look} onChange={onLookChange} />
       {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
@@ -265,6 +291,7 @@ export function Inspector({
         kind={kind}
       />
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
+      {inlineControls && colorControls}
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
@@ -288,8 +315,8 @@ export function Inspector({
                       type="color"
                       name="modifier-color"
                       aria-label={t('inspector.modifierColor')}
-                      title={modifier ? t('inspector.modifierColor') : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
-                      value={(modifier ?? modifierDefault ?? colors.primary).length === 7 ? (modifier ?? modifierDefault ?? colors.primary) : '#000000'}
+                      title={modifierHint ?? t('inspector.modifierColor')}
+                      value={modifierSwatch.length === 7 ? modifierSwatch : '#000000'}
                       onChange={(e) => onLookChange({ modifierColor: e.target.value.toUpperCase() })}
                       className="squircle size-8 shrink-0 cursor-pointer border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
                     />
@@ -335,9 +362,9 @@ export function Inspector({
             <div className="mt-4">
               <ColorField
                 label={t('inspector.modifierColor')}
-                value={modifier ?? modifierDefault ?? colors.primary}
+                value={modifierSwatch}
                 onChange={(v) => onLookChange({ modifierColor: v })}
-                hint={modifier ? undefined : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
+                hint={modifierHint}
               />
               {modifier && (
                 <button type="button" onClick={() => onLookChange({ modifierColor: null })} className="mt-1 text-xs font-medium text-brand hover:underline">
@@ -350,7 +377,7 @@ export function Inspector({
       )}
 
       {/* On desktop the grid's own style switcher sits beside the pane; the phone sheet covers it. */}
-      {!desktop && (
+      {!inlineControls && !desktop && (
         <Section title={t('inspector.style')}>
           <Segmented
             label={t('icons.styleSwitcher')}
@@ -362,21 +389,8 @@ export function Inspector({
         </Section>
       )}
 
-      <CustomizeControls
-        look={look}
-        onChange={onLookChange}
-        showSize={false}
-        showStroke={false}
-        style={style}
-        kind={kind}
-        footnote={(
-          <>
-            {style === 'duocolor' && !showSecondary && (
-              <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
-            )}
-          </>
-        )}
-      />
+      {!inlineControls && <>
+      {colorControls}
 
       <RailActions>{(expand) => (
         <>
@@ -445,6 +459,7 @@ export function Inspector({
         </Section>
       )}
       <div className="h-4" />
+      </>}
     </div>
   );
 }

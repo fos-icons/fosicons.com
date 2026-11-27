@@ -29,7 +29,7 @@
     },
     {
       "name": "Communication",
-      "count": 111
+      "count": 112
     },
     {
       "name": "Data & commerce",
@@ -53,7 +53,7 @@
     },
     {
       "name": "Interfaces",
-      "count": 150
+      "count": 149
     },
     {
       "name": "Media & devices",
@@ -408,7 +408,8 @@
   },
   "iconAliases": {
     "slash-divider": "slash",
-    "code-browser": "browser-code"
+    "code-browser": "browser-code",
+    "skull-simple": "skull"
   },
   "animated": [
     "activity",
@@ -604,8 +605,8 @@
     "x"
   ],
   "compositions": {
-    "count": 185,
-    "bases": 35,
+    "count": 187,
+    "bases": 36,
     "modifiers": 69
   }
 }
