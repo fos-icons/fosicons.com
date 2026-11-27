@@ -22,7 +22,7 @@ export const VSCODE_INSTALL = `vscode:mcp/install?${encodeURIComponent(JSON.stri
 
 export const AGENT_TOOLS: [string, string][] = [
   ['search_icons', 'Searches names, tags, aliases, and categories, up to 20 queries at once, with suggestions when nothing matches.'],
-  ['get_icon_code', 'Install, import, and usage code for one icon in React, Vue, Svelte, SolidJS, Angular, Flutter, or plain SVG.'],
+  ['get_icon_code', 'Install, import, and usage code for one icon in React, Vue, Svelte, Solid, Angular, Flutter, or plain SVG.'],
   ['check_icon_names', 'Checks names your code already uses and suggests real icons for any that don’t exist.'],
   ['list_icons', 'Pages through every icon alphabetically, optionally within one category.'],
   ['get_framework_setup', 'Package install steps, the naming rule, props, an example, and accessibility guidance.'],

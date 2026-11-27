@@ -19,12 +19,12 @@ import { catalogRoute } from '../lib/catalog-routing';
 import NotFoundPage from './NotFoundPage';
 import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
-import { CONTAINER, usePaneHost } from '../lib/layout';
+import { CATALOG_CONTAINER, usePaneHost } from '../lib/layout';
 import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable } from '../lib/look';
 import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
-import { prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
+import { prepareDuotoneSvg, prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
 import { useClientValue } from '../lib/hydration';
 import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
 import { useMediaQuery, useTheme } from '../lib/theme';
@@ -353,11 +353,14 @@ export function IconsPage() {
   );
   const gridSvgs = useMemo(
     () => (styleSvgs ? Object.fromEntries(Object.entries(styleSvgs).map(([name, svg]) => {
-      if (!isBrand(name)) return [name, prepareGridSvg(svg)];
+      if (!isBrand(name)) {
+        const weighted = prepareGridSvg(svg);
+        return [name, drawStyle === 'duotone' ? prepareDuotoneSvg(weighted) : weighted];
+      }
       if (!isColorMark(name, brandStyle)) return [name, svg];
       return [name, svg.replace('<svg', `<svg data-brand="${isBlackBrandMark(name) ? 'black' : 'color'}"`)];
     })) : null),
-    [styleSvgs, brandStyle],
+    [styleSvgs, brandStyle, drawStyle],
   );
 
   const multiActive = multi.length >= 2;
@@ -425,7 +428,7 @@ export function IconsPage() {
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
 
   return (
-    <div className={`${CONTAINER} pb-16 pt-8 sm:pt-12`}>
+    <div className={`${CATALOG_CONTAINER} pb-16 pt-8 sm:pt-12`}>
       <div className="mb-5 max-w-2xl">
         <h1 className="text-4xl font-semibold tracking-tight">
           {rich('icons.headline', { em: (text) => <span className="text-brand">{text}</span> })}

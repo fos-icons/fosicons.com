@@ -7,7 +7,7 @@ export const FRAMEWORK_PACKAGES = {
   react: { label: 'React', name: '@fos-icons/react' },
   vue: { label: 'Vue', name: '@fos-icons/vue' },
   svelte: { label: 'Svelte', name: '@fos-icons/svelte' },
-  solid: { label: 'SolidJS', name: '@fos-icons/solid' },
+  solid: { label: 'Solid', name: '@fos-icons/solid' },
   angular: { label: 'Angular', name: '@fos-icons/angular' },
 } as const;
 

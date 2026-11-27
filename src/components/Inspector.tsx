@@ -13,7 +13,7 @@ import {
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
 import { artworkSize, exportColors, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
-import { BASE_STROKE, buildSvg, hasModifierRole, isDuo } from '../lib/svg';
+import { authoredDuotoneTint, BASE_STROKE, buildSvg, hasModifierRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
@@ -230,6 +230,8 @@ export function Inspector({
       showSize={false}
       showStroke={false}
       pairedColors={inlineControls}
+      collapsible={!inlineControls}
+      defaultTint={style === 'duotone' && source ? authoredDuotoneTint(source) : undefined}
       style={style}
       kind={kind}
       footnote={style === 'duocolor' && colors.secondary === undefined
@@ -284,14 +286,14 @@ export function Inspector({
       {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
       <div className={inlineControls ? 'grid @min-[27rem]:grid-cols-2 @min-[27rem]:gap-6 [&>section]:min-w-0 [&>section]:px-0' : 'contents'}>
-        <SizeControl look={look} onChange={onLookChange} />
-        <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} />
+        <SizeControl look={look} onChange={onLookChange} compact={inlineControls} />
+        <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} compact={inlineControls} />
       </div>
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
       {inlineControls && colorControls}
 
       {kind === 'core' && (
-        <Section title={t('inspector.modifier')}>
+        <Section title={t('inspector.modifier')} collapsible={!inlineControls}>
           {!canTryModifiers ? null : !modifiersUnlocked ? (
             <UpgradePrompt feature="modifiers" />
           ) : modifiers.error ? (
@@ -312,7 +314,7 @@ export function Inspector({
                       type="color"
                       name="modifier-color"
                       aria-label={t('inspector.modifierColor')}
-                      title={modifierHint ?? t('inspector.modifierColor')}
+                      data-tooltip={modifierHint ?? t('inspector.modifierColor')}
                       value={modifierSwatch.length === 7 ? modifierSwatch : '#000000'}
                       onChange={(e) => onLookChange({ modifierColor: e.target.value.toUpperCase() })}
                       className="squircle size-8 shrink-0 cursor-pointer border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
@@ -529,7 +531,7 @@ export function SidePane({
             aria-valuemax={PANE_WIDTH.max}
             aria-valuenow={width}
             aria-valuetext={t('customize.pxValue', { value: width })}
-            title={t('pane.resizeHint')}
+            data-tooltip={t('pane.resizeHint')}
             tabIndex={0}
             onPointerDown={(e) => {
               if (e.button !== 0) return;
@@ -583,7 +585,7 @@ export function SidePane({
               // The page's back link returns here, with the search and selection intact.
               state={{ from: `${pathname}${search}`, catalogBackTo: expandBackTo }}
               aria-label={t('pane.openPage')}
-              title={t('pane.openPage')}
+              data-tooltip={t('pane.openPage')}
               className="ml-auto inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken"
             >
               {/* Mirrored so the arrows point to the top-right and bottom-left corners. */}

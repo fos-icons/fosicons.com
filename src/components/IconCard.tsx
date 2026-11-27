@@ -12,7 +12,7 @@ export function IconCardTooltip({ name }: { name: string }) {
   return (
     <span
       aria-hidden="true"
-      className="icon-card-tooltip pointer-events-none absolute start-1/2 top-full mt-1 w-max max-w-[calc(100%+2rem)] -translate-x-1/2 rounded-md bg-black px-2 py-1 text-center text-xs leading-4 text-white [overflow-wrap:anywhere]"
+      className="icon-card-tooltip pointer-events-none absolute start-1/2 top-full mt-1 w-max max-w-[calc(100%+2rem)] -translate-x-1/2 site-tooltip rounded-md px-2 py-1 text-center text-xs leading-4 [overflow-wrap:anywhere]"
     >
       {name}
     </span>

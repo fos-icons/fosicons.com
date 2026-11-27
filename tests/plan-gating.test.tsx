@@ -77,7 +77,7 @@ describe('animated icon pages', () => {
     const user = userEvent.setup();
     renderAs('free', '/icons/download');
     expect(screen.getByText('Download Regular SVG')).toBeTruthy();
-    expect(screen.getByText('The download icon comes in five styles.')).toBeTruthy();
+    expect(screen.getByText("Bring the file down to earth, or at least onto this device. A small cue for “save”.")).toBeTruthy();
     const preview = screen.getByRole('region', { name: 'Preview' });
     const grid = () => preview.querySelector('[data-preview-grid]');
     const sizes = () => within(screen.getByRole('list', { name: 'Actual size' })).getAllByRole('listitem');
@@ -103,7 +103,7 @@ describe('animated icon pages', () => {
     expect(screen.getByRole('link', { name: 'Customize animation' }).getAttribute('href')).toBe('/icons/download?view=editor&style=animated');
     expect(screen.getByText('Copy and download animated icons with Advanced.', { exact: false })).toBeTruthy();
 
-    for (const name of ['React', 'Vue', 'Svelte', 'SolidJS', 'Angular']) {
+    for (const name of ['React', 'Vue', 'Svelte', 'Solid', 'Angular']) {
       await user.click(screen.getByRole('tab', { name }));
       const panel = screen.getByRole('tabpanel', { name });
       expect(panel.querySelector('pre')?.textContent).toContain('/icons/download-animated.svg');
@@ -117,7 +117,7 @@ describe('animated icon pages', () => {
 
   it('keeps an icon without animated artwork in Regular, even with an Animated URL', () => {
     renderAs(null, '/icons/accordion?style=animated');
-    expect(screen.getByText('The accordion icon comes in four styles.')).toBeTruthy();
+    expect(screen.getByText("For music that needs room to breathe in and out. A small cue for “concertina”.")).toBeTruthy();
     expect(screen.queryByRole('radio', { name: 'Animated' })).toBeNull();
     expect(screen.getByRole('img', { name: 'Accordion icon, Regular style' })).toBeTruthy();
   });
@@ -255,15 +255,15 @@ describe('Pro plan', () => {
     const swap = within(panel).getByRole('button', { name: 'Swap primary and secondary colors' });
     const colors = [primary.value, secondary.value];
     expect(colors[0]).not.toBe(colors[1]);
-    expect(swap.querySelector('.fa-swap-refresh')).toBeNull();
+    expect(swap.querySelector('[class*="color-swap-feedback"]')).toBeNull();
     await user.click(swap);
     await waitFor(() => expect([primary.value, secondary.value]).toEqual([colors[1], colors[0]]));
-    const firstAnimation = swap.querySelector('.fa-swap-refresh');
+    const firstAnimation = swap.querySelector('[class*="color-swap-feedback"]');
     expect(firstAnimation).not.toBeNull();
     swap.focus();
     await user.keyboard('{Enter}');
     await waitFor(() => expect([primary.value, secondary.value]).toEqual(colors));
-    expect(swap.querySelector('.fa-swap-refresh')).not.toBe(firstAnimation);
+    expect(swap.querySelector('[class*="color-swap-feedback"]')).not.toBe(firstAnimation);
   });
 
   it('downloads all four styles as one ZIP', async () => {

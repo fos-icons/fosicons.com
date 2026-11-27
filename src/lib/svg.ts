@@ -10,6 +10,8 @@ export interface SvgColorOptions {
   secondary?: string;
   /** Filled glyph color for named presets that expose `--fos-modifier`. */
   modifier?: string;
+  /** Opacity override for the authored Duotone tint, between zero and one. */
+  duotoneTint?: number;
 }
 
 export interface SvgBuildOptions extends SvgColorOptions {
@@ -49,6 +51,27 @@ const SHAPES = new Set(['path', 'circle', 'ellipse', 'rect', 'line', 'polyline',
 const usesDefaultWidth = (node: Element) =>
   SHAPES.has(node.localName) && !!node.getAttribute('stroke') && node.getAttribute('stroke') !== 'none' && !node.getAttribute('stroke-width');
 const DEFAULT_WIDTH_RE = /<(?:path|circle|ellipse|rect|line|polyline|polygon)\b(?![^>]*\sstroke-width=)[^>]*\sstroke="(?!none")/;
+const TINT_ATTRIBUTES = ['opacity', 'fill-opacity'] as const;
+const TINT_VALUE = /^0?\.(16|24)$/;
+const TINT_TAG = /<(?:g|path|circle|ellipse|rect|polygon)\b[^>]*\b(?:fill-)?opacity="0?\.(?:16|24)"[^>]*>/g;
+
+export function authoredDuotoneTint(source: string): number {
+  const tag = source.match(TINT_TAG)?.[0];
+  return Number(tag?.match(/(?:fill-)?opacity="0?\.(16|24)"/)?.[1] ?? 16);
+}
+
+/** Leave authored opacity in the SVG and let an ancestor override the live preview. */
+export function prepareDuotoneSvg(source: string): string {
+  return source.replace(TINT_TAG, (tag) => {
+    const tint = tag.match(/\s(opacity|fill-opacity)="(0?\.(?:16|24))"/);
+    if (!tint) return tag;
+    const declaration = `${tint[1]}:var(--fos-duotone-tint,${tint[2]})`;
+    return tag.includes(' style="')
+      ? tag.replace(/ style="([^"]*)"/, (_, existing) => ` style="${existing};${declaration}"`)
+      : tag.replace(/\/?>$/, (end) => ` style="${declaration}"${end}`);
+  });
+}
+
 const PAINT_ATTRS = ['fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color'];
 const VAR_RE = /^var\(\s*(--[\w-]+)\s*(?:,\s*(.+?)\s*)?\)$/;
 const COLOR_RE = /^(#[0-9a-f]{3,4}|#[0-9a-f]{6}|#[0-9a-f]{8})$/i;
@@ -111,8 +134,8 @@ function namespaceIds(root: Element, prefix: string) {
 /**
  * Produce a standalone SVG: CSS custom properties and every `currentColor`
  * are resolved to concrete colors, so the file renders identically in any
- * viewer or design tool. Geometry, masks, clip paths, opacity groups (the
- * Duotone 16% tint), and definition references are preserved untouched.
+ * viewer or design tool. Geometry and definitions are preserved. Duotone
+ * tint is preserved unless an opacity override was supplied.
  */
 export function buildSvg(source: string, options: SvgBuildOptions): string {
   const root = parse(source);
@@ -138,6 +161,16 @@ export function buildSvg(source: string, options: SvgBuildOptions): string {
       for (const child of Array.from(node.children)) walk(child, color);
     };
     walk(root, options.primary);
+  }
+
+  const tint = options.duotoneTint;
+  if (tint !== undefined && Number.isFinite(tint) && tint >= 0 && tint <= 1) {
+    for (const node of all) {
+      if (node.closest('defs, mask, clipPath')) continue;
+      for (const attr of TINT_ATTRIBUTES) {
+        if (TINT_VALUE.test(node.getAttribute(attr) ?? '')) node.setAttribute(attr, String(tint));
+      }
+    }
   }
 
   const factor = options.strokeWidth === undefined ? 1 : options.strokeWidth / (options.sourceStroke ?? BASE_STROKE);

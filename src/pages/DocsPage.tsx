@@ -376,7 +376,7 @@ export default function DocsPage() {
   --fos-primary: #245B9E;
   --fos-secondary: #5B87B7;
 }`}</Code>
-          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with 16% of the primary color. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
+          <p>Duocolor uses the secondary color for details; single-contour icons stay primary-only. Duotone tints closed shapes with the primary color, usually at 16%. Adjust the tint percentage in the color controls. Named presets add <code>--fos-modifier</code> for their solid glyph.</p>
           <p>The {palettes.palettes.length} library palettes each have Light and Dark pairs.</p>
           <ul className="grid grid-cols-2 gap-2 !pl-0 sm:grid-cols-3" role="list">
             {palettes.palettes.map((p) => (
@@ -501,9 +501,9 @@ import { CameraRegular, CameraDuocolor } from '@fos-icons/svelte';
           </ul>
         </Section>
 
-        <Section id="solid" title="SolidJS">
+        <Section id="solid" title="Solid">
           <p><code>@fos-icons/solid</code> targets Solid 2 and includes TypeScript types, tree-shakeable imports, and browser and server rendering. It is tested with <code>2.0.0-rc.21</code> of <code>solid-js</code> and <code>@solidjs/web</code>. Source: <a target="_blank" rel="noreferrer" href={packageSource('solid')}>packages/solid</a>.</p>
-          <p>Use an application configured for Solid 2; Solid 1.x is not supported. The SolidJS framework is separate from the icon style labeled Solid, whose components use the <code>Filled</code> suffix.</p>
+          <p>Use an application configured for Solid 2; Solid 1.x is not supported. Components for the solid icon style use the <code>Filled</code> suffix.</p>
           <p>Build a local tarball from a monorepo checkout that includes <code>packages/solid</code>. Use Node.js 22.12 or later.</p>
           <Code lang="sh">{`cd fos-icons/packages/solid
 npm ci

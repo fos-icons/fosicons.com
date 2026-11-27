@@ -1,5 +1,4 @@
 import { useI18n } from '../i18n';
-import animatedRefresh from '../data/ui-animated-refresh.json';
 import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
 import { catalog, FREE_ICON_STYLE, opticalStroke, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
@@ -8,7 +7,7 @@ import { buildZip } from '../lib/zip';
 import { errorText } from '../i18n/errors';
 import {
   DEFAULT_LOOK, INK_THEME, STROKE_ANCHORS, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
-  artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, THEME_NAMES, type Look,
+  artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, type Look,
 } from '../lib/look';
 import { usePlan } from '../lib/plan';
 import { buildSvg, isDuo, isHexColor } from '../lib/svg';
@@ -18,23 +17,50 @@ import { UpgradePrompt } from './UpgradePrompt';
 import { RailActions } from './QuickTools';
 import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
+const VISIBLE_COLOR_THEMES = [INK_THEME, 'Slate', 'Blue', 'Teal', 'Green', 'Violet', 'Amber', 'Orange', 'Red'];
+
 /** Slider ticks: size every 8px (labels where the usual sizes are), stroke every 0.5px. */
 const SIZE_MARKS = [16, 24, 32, 40, 48, 56, 64] as const;
 const SIZE_LABELS = [16, 24, 32, 48, 64] as const;
 const STROKE_MARKS = [0.5, 1, 1.5, 2, 2.5] as const;
 
-// Give the button its own one-shot animation so it cannot affect gallery artwork.
-const swapAnimation = animatedRefresh.refresh?.replaceAll('fa-refresh', 'fa-swap-refresh').replace(/\binfinite\b/g, '1');
+const PRESET_DRAG = 'application/x-fos-color-preset';
 
-export function ColorField({ label, value, onChange, hint }: { label: string; value: string; onChange: (v: string) => void; hint?: string }) {
+export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  hint?: string;
+  onPresetDrop?: (name: string) => void;
+}) {
   const id = useId();
   const { t } = useI18n();
   const [text, setText] = useState(value);
+  const [over, setOver] = useState(false);
   useEffect(() => setText(value), [value]);
   const valid = isHexColor(text);
   return (
     // Label on top; the swatch and hex input share one row at the same height, so they line up.
-    <div>
+    <div
+      className={over ? 'rounded-md ring-2 ring-brand ring-offset-2 ring-offset-surface' : undefined}
+      onDragOver={onPresetDrop && ((event) => {
+        if (!event.dataTransfer.types.includes(PRESET_DRAG)) return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        setOver(true);
+      })}
+      onDragLeave={onPresetDrop && ((event) => {
+        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+        setOver(false);
+      })}
+      onDrop={onPresetDrop && ((event) => {
+        const name = event.dataTransfer.getData(PRESET_DRAG);
+        if (!VISIBLE_COLOR_THEMES.includes(name)) return;
+        event.preventDefault();
+        setOver(false);
+        onPresetDrop(name);
+      })}
+    >
       <label htmlFor={id} className="block pl-11 text-xs font-medium text-muted">{label}</label>
       <div className="mt-0.5 flex items-center gap-3">
         <input
@@ -61,6 +87,46 @@ export function ColorField({ label, value, onChange, hint }: { label: string; va
       </div>
       {hint && <p id={`${id}-hint`} className="mt-1 pl-11 text-xs text-faint">{hint}</p>}
     </div>
+  );
+}
+
+function TintField({ value, authored, onChange }: {
+  value: number | null | undefined;
+  authored: number;
+  onChange: (value: number | null) => void;
+}) {
+  const { t } = useI18n();
+  const current = value ?? authored;
+  const [text, setText] = useState(String(current));
+  useEffect(() => setText(String(current)), [current]);
+  return (
+    <label className="block min-w-0 text-xs font-medium text-muted">
+      {t('customize.tint')}
+      <span className="relative mt-0.5 block">
+        <input
+          type="number"
+          name="duotone-tint"
+          inputMode="numeric"
+          min={0}
+          max={100}
+          step={1}
+          value={text}
+          onChange={(event) => {
+            setText(event.target.value);
+            const next = event.target.valueAsNumber;
+            if (Number.isInteger(next) && next >= 0 && next <= 100) onChange(next);
+          }}
+          onBlur={(event) => {
+            const next = event.target.valueAsNumber;
+            const normalized = Number.isFinite(next) ? Math.min(100, Math.max(0, Math.round(next))) : null;
+            if (normalized !== current || normalized === null) onChange(normalized);
+            setText(String(normalized ?? authored));
+          }}
+          className="h-8 w-full rounded-md border border-line bg-surface ps-2 pe-6 text-right font-mono text-sm tabular-nums text-ink [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
+        />
+        <span aria-hidden="true" className="pointer-events-none absolute inset-y-0 end-2 flex items-center">%</span>
+      </span>
+    </label>
   );
 }
 
@@ -229,6 +295,12 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
   const canStroke = strokeAdjustable(style, kind);
   const stroke = strokeOf(look);
   const [showStrokeInfo, setShowStrokeInfo] = useState(false);
+  useEffect(() => {
+    if (!showStrokeInfo) return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') setShowStrokeInfo(false); };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [showStrokeInfo]);
   return (
     <Section
       title={t('customize.stroke')}
@@ -243,7 +315,6 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
             onPointerLeave={() => setShowStrokeInfo(false)}
             onFocus={() => setShowStrokeInfo(true)}
             onBlur={() => setShowStrokeInfo(false)}
-            onKeyDown={(event) => { if (event.key === 'Escape') setShowStrokeInfo(false); }}
             className="grid size-6 shrink-0 place-items-center rounded-md text-muted hover:bg-sunken hover:text-ink"
           >
             <UiIcon name="info-circle" className="size-4" />
@@ -252,7 +323,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
             id={`${uid}-stroke-info`}
             role="tooltip"
             hidden={!showStrokeInfo}
-            className="pointer-events-none absolute start-0 top-full z-20 w-64 max-w-full rounded-md border border-line bg-surface px-3 py-2 text-xs leading-relaxed text-ink shadow-md"
+            className="pointer-events-none absolute start-0 top-full z-20 w-64 max-w-full site-tooltip rounded-md px-3 py-2 text-xs leading-relaxed shadow-md"
           >
             {look.strokeWidth === null
               ? t('customize.strokeAutoHelp', { sizes: STROKE_ANCHORS.map((a) => t('customize.strokeAtSize', { stroke: fmtStroke(a.stroke, a.size), size: a.size })).join(', ') })
@@ -300,7 +371,7 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote, 
 
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false,
+  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false, defaultTint = 16, collapsible = true,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
@@ -318,6 +389,8 @@ export function CustomizeControls({
   animated?: boolean;
   /** Pair Duocolor fields when the icon page has enough room. */
   pairedColors?: boolean;
+  defaultTint?: number;
+  collapsible?: boolean;
 }) {
   const { resolved: theme, setPreference } = useTheme();
   const { t } = useI18n();
@@ -325,6 +398,11 @@ export function CustomizeControls({
   const duo = isDuo(style);
   const r = resolveLook(look, theme);
   const [swapCount, setSwapCount] = useState(0);
+  const canDragPreset = duo && can('duoColors');
+  const dropPreset = (role: 'primary' | 'secondary', name: string) => {
+    const colors = themeColors(name, r.mode);
+    onChange({ custom: { ...r.duo, [role]: colors[role] } });
+  };
 
   return (
     <>
@@ -336,6 +414,7 @@ export function CustomizeControls({
 
       <Section
         title={t('customize.color')}
+        collapsible={collapsible}
         aside={(
           <Segmented
             label={t('customize.paletteVariant')}
@@ -354,7 +433,7 @@ export function CustomizeControls({
         <div className="space-y-3">
           {/* One theme sets every style: a main color for Regular and Filled, primary and secondary for the duo styles. */}
           <div role="radiogroup" aria-label={t('customize.colorTheme')} className="grid grid-cols-[auto_repeat(8,minmax(0,2rem))] items-start justify-start gap-1">
-            {THEME_NAMES.map((name) => {
+            {VISIBLE_COLOR_THEMES.map((name) => {
               const c = themeColors(name, r.mode);
               const checked = !look.custom && !look.mono && name === r.themeName;
               const themeLabel = name === INK_THEME ? t('customize.inkTheme') : name;
@@ -365,7 +444,12 @@ export function CustomizeControls({
                   role="radio"
                   aria-checked={checked}
                   aria-label={themeLabel}
-                  title={themeLabel}
+                  data-tooltip={themeLabel}
+                  draggable={canDragPreset}
+                  onDragStart={canDragPreset ? (event) => {
+                    event.dataTransfer.setData(PRESET_DRAG, name);
+                    event.dataTransfer.effectAllowed = 'copy';
+                  } : undefined}
                   onClick={() => onChange({ paletteName: name, custom: null, mono: null })}
                   className={`theme-swatch squircle flex size-8 max-w-full items-center justify-center ring-offset-2 ring-offset-surface ${checked ? 'ring-2 ring-ink' : ''}`}
                 >
@@ -377,7 +461,7 @@ export function CustomizeControls({
                 </button>
               );
               return name === INK_THEME
-                ? <div key={name} className="col-start-1 row-span-2 row-start-1 mr-1 border-r border-line pr-2">{swatch}</div>
+                ? <div key={name} className="col-start-1 row-start-1 mr-1 border-r border-line pr-2">{swatch}</div>
                 : swatch;
             })}
           </div>
@@ -386,16 +470,22 @@ export function CustomizeControls({
             <UpgradePrompt feature="duoColors" />
           ) : duo ? (
             <>
-              <div className={`relative grid gap-3 ${pairedColors && style === 'duocolor'
-                ? '@min-[27rem]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]'
-                : ''}`}>
-                <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
+              <div className={`relative grid gap-3 ${style === 'duotone'
+                ? 'grid-cols-[minmax(0,1fr)_4.5rem]'
+                : pairedColors ? '@min-[27rem]:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]' : ''}`}>
+                <ColorField
+                  label={t('customize.primary')}
+                  value={r.duo.primary}
+                  onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })}
+                  onPresetDrop={(name) => dropPreset('primary', name)}
+                />
+                {style === 'duotone' && <TintField value={look.duotoneTint} authored={defaultTint} onChange={(duotoneTint) => onChange({ duotoneTint })} />}
                 {style === 'duocolor' && (
                   <>
                     <button
                       type="button"
                       aria-label={t('customize.swapColors')}
-                      title={t('customize.swapColors')}
+                      data-tooltip={t('customize.swapColors')}
                       className={`absolute left-0.5 top-[calc(50%+0.5rem)] grid size-7 -translate-y-1/2 place-items-center rounded-lg text-ink transition hover:bg-sunken ${pairedColors
                         ? '@min-[27rem]:static @min-[27rem]:size-8 @min-[27rem]:translate-y-0 @min-[27rem]:self-end'
                         : ''}`}
@@ -404,17 +494,21 @@ export function CustomizeControls({
                         setSwapCount((count) => count + 1);
                       }}
                     >
-                      {swapCount > 0 && swapAnimation ? (
-                        <span key={swapCount} aria-hidden="true" className="glyph size-4" dangerouslySetInnerHTML={{ __html: swapAnimation }} />
-                      ) : <UiIcon name="refresh" className="size-4" />}
+                      <UiIcon
+                        key={swapCount}
+                        name={pairedColors ? 'arrows-swap-horizontal' : 'arrows-swap-vertical'}
+                        className={`size-4 ${swapCount ? 'motion-safe:animate-[color-swap-feedback_240ms_ease-out]' : ''}`}
+                      />
                     </button>
-                    <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
+                    <ColorField
+                      label={t('customize.secondary')}
+                      value={r.duo.secondary}
+                      onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })}
+                      onPresetDrop={(name) => dropPreset('secondary', name)}
+                    />
                   </>
                 )}
               </div>
-              {style === 'duotone' && (
-                <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
-              )}
             </>
           ) : (
             <ColorField
@@ -460,6 +554,7 @@ export function CustomizePanel({
               variant="secondary"
               size="sm"
               icon="undo"
+              className="h-7!"
               aria-label={t('customize.reset')}
               onClick={() => { heading.current?.focus(); onReset(); }}
             >

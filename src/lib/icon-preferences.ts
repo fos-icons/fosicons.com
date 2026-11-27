@@ -8,7 +8,7 @@ import { isHexColor } from './svg';
 const KEY = 'fos-icon-preferences';
 let memory = '';
 const listeners = new Set<() => void>();
-type Colors = Pick<Look, 'paletteName' | 'custom' | 'mono' | 'modifierColor'>;
+type Colors = Pick<Look, 'paletteName' | 'custom' | 'mono' | 'modifierColor' | 'duotoneTint'>;
 type Preferences = Colors & { style: StyleId };
 
 function read() {
@@ -33,12 +33,14 @@ function parse(raw: string): Preferences {
   try { saved = JSON.parse(raw); } catch { /* Missing or invalid saved settings. */ }
   const primary = hex(saved?.custom?.primary);
   const secondary = hex(saved?.custom?.secondary);
+  const tint = saved?.duotoneTint;
   return {
     style: styleFromSlug(saved?.style ?? null) ?? 'regular',
     paletteName: saved?.paletteName && THEME_NAMES.includes(saved.paletteName) ? saved.paletteName : DEFAULT_LOOK.paletteName,
     custom: primary && secondary ? { primary, secondary } : null,
     mono: hex(saved?.mono),
     modifierColor: hex(saved?.modifierColor),
+    duotoneTint: typeof tint === 'number' && Number.isInteger(tint) && tint >= 0 && tint <= 100 ? tint : null,
   };
 }
 
@@ -58,7 +60,7 @@ export function useIconLook(initial: Look) {
   const [look, setLook] = useState(initial);
   const { can } = usePlan();
   const raw = useClientValue(read, '', subscribe);
-  const { paletteName, custom, mono, modifierColor } = useMemo(() => parse(raw), [raw]);
+  const { paletteName, custom, mono, modifierColor, duotoneTint } = useMemo(() => parse(raw), [raw]);
   const update = useCallback((patch: Partial<Look>) => {
     const { size, strokeWidth, speed, ...colors } = patch;
     if (Object.keys(colors).length) save(colors);
@@ -71,7 +73,8 @@ export function useIconLook(initial: Look) {
   }, []);
   const allowedCustom = can('duoColors') ? custom : null;
   const allowedModifier = can('modifiers') ? modifierColor : null;
-  const resolved = useMemo(() => ({ ...look, paletteName, custom: allowedCustom, mono, modifierColor: allowedModifier }),
-    [look, paletteName, allowedCustom, mono, allowedModifier]);
+  const allowedTint = can('duoColors') ? duotoneTint : null;
+  const resolved = useMemo(() => ({ ...look, paletteName, custom: allowedCustom, mono, modifierColor: allowedModifier, duotoneTint: allowedTint }),
+    [look, paletteName, allowedCustom, mono, allowedModifier, allowedTint]);
   return [resolved, update] as const;
 }

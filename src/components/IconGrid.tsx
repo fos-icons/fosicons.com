@@ -79,7 +79,7 @@ const Cell = memo(function Cell({
         className={iconCardClass(selected)}
       >
         {premiumLabel && (
-          <span aria-hidden="true" title={premiumLabel} className="absolute start-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-sunken text-muted">
+          <span aria-hidden="true" data-tooltip={premiumLabel} className="absolute start-1 top-1 flex size-3.5 items-center justify-center rounded-full bg-sunken text-muted">
             <UiIcon name="crown-simple" className="size-3 [&_path]:[stroke-width:1.75]" />
           </span>
         )}
