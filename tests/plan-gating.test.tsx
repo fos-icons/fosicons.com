@@ -219,6 +219,22 @@ describe('Pro plan', () => {
     pricingLink(panel, 'Add modifiers like Add, Lock, or PDF with Advanced.');
   });
 
+  it('swaps the two Duocolor fields and restores them when pressed again', async () => {
+    const user = userEvent.setup();
+    renderAs('pro', '/?icon=search&style=duocolor');
+    const panel = await pane();
+    const primary = within(panel).getByLabelText<HTMLInputElement>('Primary');
+    const secondary = within(panel).getByLabelText<HTMLInputElement>('Secondary');
+    const swap = within(panel).getByRole('button', { name: 'Swap primary and secondary colors' });
+    const colors = [primary.value, secondary.value];
+    expect(colors[0]).not.toBe(colors[1]);
+    await user.click(swap);
+    await waitFor(() => expect([primary.value, secondary.value]).toEqual([colors[1], colors[0]]));
+    swap.focus();
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect([primary.value, secondary.value]).toEqual(colors));
+  });
+
   it('downloads all four styles as one ZIP', async () => {
     const user = userEvent.setup();
     renderAs('pro', '/');

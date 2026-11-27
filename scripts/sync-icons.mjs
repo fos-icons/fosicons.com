@@ -26,7 +26,7 @@ export const UI_ICONS = [
   'layout-sidebar-right', 'settings-sliders', 'undo', 'message-smile-square',
   'plus', 'minus', 'dots-horizontal', 'compass', 'binoculars', 'map', 'route', 'home',
   'sparkles', 'lightbulb', 'arrow-right', 'search-sparkles', 'globe', 'expand', 'slider-horizontal', 'arrows-fit-horizontal',
-  'crown-simple',
+  'crown-simple', 'refresh',
 ];
 
 /** Brand names and search aliases where the file path alone isn't the familiar name. */

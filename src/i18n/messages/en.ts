@@ -365,6 +365,7 @@ const en = {
   'customize.fromTheme': 'From the {theme} theme.',
   'customize.primary': 'Primary',
   'customize.secondary': 'Secondary',
+  'customize.swapColors': 'Swap primary and secondary colors',
   'customize.duotoneTint': 'Duotone keeps its 16% interior tint of the primary color.',
   'customize.foreground': 'Foreground',
   'customize.followTheme': 'Follows light and dark mode.',

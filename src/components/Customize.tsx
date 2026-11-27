@@ -352,10 +352,20 @@ export function CustomizeControls({
             <UpgradePrompt feature="duoColors" />
           ) : duo ? (
             <>
-              <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
-              {style === 'duocolor' && (
-                <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
-              )}
+              <div className="relative grid gap-3">
+                <ColorField label={t('customize.primary')} value={r.duo.primary} onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })} />
+                {style === 'duocolor' && (
+                  <>
+                    <IconButton
+                      icon="refresh"
+                      label={t('customize.swapColors')}
+                      className="absolute left-0.5 top-[calc(50%+0.5rem)] size-7! -translate-y-1/2 [&_svg]:size-4"
+                      onClick={() => onChange({ custom: { primary: r.duo.secondary, secondary: r.duo.primary } })}
+                    />
+                    <ColorField label={t('customize.secondary')} value={r.duo.secondary} onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })} />
+                  </>
+                )}
+              </div>
               {style === 'duotone' && (
                 <p className="text-xs leading-relaxed text-faint">{t('customize.duotoneTint')}</p>
               )}
