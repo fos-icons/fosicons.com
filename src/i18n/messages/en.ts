@@ -62,7 +62,7 @@ const en = {
   'header.browse': 'Browse icons',
   'header.browseNav': 'Browse',
   'header.feedback': 'Feedback',
-  'header.mcp': 'MCP',
+  'header.mcp': 'Install',
   'feedback.type': 'Feedback type',
   'feedback.selectType': 'Choose a type',
   'feedback.type.new-icon': 'New icon request',

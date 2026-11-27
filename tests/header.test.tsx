@@ -68,20 +68,20 @@ describe('Header actions', () => {
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
     const links = nav.getAllByRole('link');
     expect(links.map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
-      ['Browse', '/'], ['MCP', '/ai-agents'], ['Pricing', '/pricing'], ['Docs', '/docs'],
+      ['Browse', '/'], ['Install', '/ai-agents'], ['Pricing', '/pricing'], ['Docs', '/docs'],
     ]);
     expect(links.filter((link) => link.getAttribute('aria-current') === 'page').map((link) => link.getAttribute('href'))).toEqual([url]);
     expect(nav.getByRole('button', { name: 'Feedback' })).toBeTruthy();
   });
 
-  it('opens the AI agents page directly from the MCP link', async () => {
+  it('opens the AI agents page directly from the Install link', async () => {
     const user = userEvent.setup();
     renderAt('/');
     const nav = within(screen.getByRole('navigation', { name: 'Main' }));
-    expect(nav.queryByRole('button', { name: 'MCP' })).toBeNull();
-    await user.click(nav.getByRole('link', { name: 'MCP' }));
+    expect(nav.queryByRole('button', { name: 'Install' })).toBeNull();
+    await user.click(nav.getByRole('link', { name: 'Install' }));
     expect(screen.getByRole('heading', { name: 'Fos Icons for AI agents' })).toBeTruthy();
-    expect(nav.getByRole('link', { name: 'MCP' }).getAttribute('aria-current')).toBe('page');
+    expect(nav.getByRole('link', { name: 'Install' }).getAttribute('aria-current')).toBe('page');
   });
 
   it('links Pricing from the header and the menu, closes the menu, and marks Pricing current', async () => {
@@ -92,7 +92,7 @@ describe('Header actions', () => {
     const menu = within(nav).getByRole('button', { name: 'Menu' });
     await user.click(menu);
     const panel = within(document.getElementById(menu.getAttribute('aria-controls')!)!);
-    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'MCP', 'Pricing', 'Docs']);
+    expect(panel.getAllByRole('link').map((link) => link.textContent)).toEqual(['Browse', 'Install', 'Pricing', 'Docs']);
     expect(panel.getByRole('button', { name: 'Feedback' })).toBeTruthy();
     const links = within(nav).getAllByRole('link', { name: 'Pricing' });
     await user.click(links[1]);
