@@ -151,6 +151,9 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   search field stays pinned while scrolling; `/` focuses it. The grid is one
   tab stop with arrow-key navigation. Grid settings let visitors choose a
   column count and show icon names on cards. Both choices are saved locally.
+- **Back and forward**: press Option + Left/Right on Mac outside editing
+  controls and dialogs. On Windows, use the browser's Alt + Left/Right.
+  Both navigate browser history; the browser's other shortcuts still work.
 - **Examples menu**: add published apps that use Fos Icons to
   [the app examples list](src/data/app-examples.ts). Each entry has a name and
   URL and can include a short description.
