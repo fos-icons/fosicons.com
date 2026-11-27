@@ -12,8 +12,8 @@ import {
   catalog, FREE_ICON_STYLE, modifierFamily, opticalStroke, STYLE_META, type IconEntry, type StyleId,
 } from '../lib/catalog';
 import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, type SnippetOptions } from '../lib/react-snippet';
-import { artworkSize, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
-import { BASE_STROKE, buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from '../lib/svg';
+import { artworkSize, exportColors, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
+import { BASE_STROKE, buildSvg, hasModifierRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
@@ -118,15 +118,12 @@ export function Inspector({
   const exportDisabled = premium || !source || busy;
   const codeTrigger = useRef<HTMLButtonElement>(null);
 
-  const showSecondary = !!source && duo && hasSecondaryRole(source);
-  const modifierDefault = source?.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase() ?? null;
   const showModifier = !!source && hasModifierRole(source);
-
-  const colors = useMemo(() => ({
-    primary: duo ? r.duo.primary : r.mono,
-    secondary: showSecondary ? r.duo.secondary : undefined,
-    modifier: showModifier ? (modifier ?? modifierDefault ?? undefined) : undefined,
-  }), [duo, r.duo.primary, r.duo.secondary, r.mono, showSecondary, showModifier, modifier, modifierDefault]);
+  const colors = useMemo(() => exportColors(source ?? '', style, look, theme, modifier),
+    [source, style, look, theme, modifier]);
+  const modifierSwatch = colors.modifier ?? colors.primary;
+  const modifierHint = modifier ? undefined : duo ? t('inspector.modifierFollowsPrimary')
+    : colors.modifier ? t('inspector.libraryDefault', { color: colors.modifier }) : t('inspector.modifierSameAsIcon');
 
   const build = (px: number, idPrefix?: string) => {
     if (!source) throw new LocalizedError('error.loadingArtwork');
@@ -188,7 +185,7 @@ export function Inspector({
     color: duo || r.monoFollowsSite ? null : r.mono,
     primary: duo ? colors.primary : undefined,
     secondary: colors.secondary,
-    modifier: showModifier && modifier ? modifier : undefined,
+    modifier: !plainFallback && (duo || modifier) ? colors.modifier : undefined,
   };
   const snippetName = packaged ?? icon.name;
   /**
@@ -288,8 +285,8 @@ export function Inspector({
                       type="color"
                       name="modifier-color"
                       aria-label={t('inspector.modifierColor')}
-                      title={modifier ? t('inspector.modifierColor') : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
-                      value={(modifier ?? modifierDefault ?? colors.primary).length === 7 ? (modifier ?? modifierDefault ?? colors.primary) : '#000000'}
+                      title={modifierHint ?? t('inspector.modifierColor')}
+                      value={modifierSwatch.length === 7 ? modifierSwatch : '#000000'}
                       onChange={(e) => onLookChange({ modifierColor: e.target.value.toUpperCase() })}
                       className="squircle size-8 shrink-0 cursor-pointer border border-line-strong bg-surface p-1 [&::-webkit-color-swatch]:rounded-md [&::-webkit-color-swatch]:border-0 [&::-webkit-color-swatch-wrapper]:p-0"
                     />
@@ -335,9 +332,9 @@ export function Inspector({
             <div className="mt-4">
               <ColorField
                 label={t('inspector.modifierColor')}
-                value={modifier ?? modifierDefault ?? colors.primary}
+                value={modifierSwatch}
                 onChange={(v) => onLookChange({ modifierColor: v })}
-                hint={modifier ? undefined : modifierDefault ? t('inspector.libraryDefault', { color: modifierDefault }) : t('inspector.modifierSameAsIcon')}
+                hint={modifierHint}
               />
               {modifier && (
                 <button type="button" onClick={() => onLookChange({ modifierColor: null })} className="mt-1 text-xs font-medium text-brand hover:underline">
@@ -371,7 +368,7 @@ export function Inspector({
         kind={kind}
         footnote={(
           <>
-            {style === 'duocolor' && !showSecondary && (
+            {style === 'duocolor' && colors.secondary === undefined && (
               <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
             )}
           </>

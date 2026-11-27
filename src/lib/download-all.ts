@@ -2,7 +2,7 @@ import type { SiteTheme } from './theme';
 import { LocalizedError } from '../i18n/errors';
 import { catalog, FREE_ICON_STYLE, loadStyle, lock, opticalStroke, STYLE_META, type IconEntry, type StyleId } from './catalog';
 import { artworkSize, DEFAULT_LOOK, exportColors, INK_THEME, resolveLook, strokeAdjustable, strokeOf, type Look } from './look';
-import { buildSvg } from './svg';
+import { buildSvg, hasModifierRole, hasSecondaryRole, isDuo } from './svg';
 import { buildZip, type ZipEntry } from './zip';
 
 /**
@@ -60,8 +60,10 @@ async function buildIconSet(
     for (const icon of icons) {
       const source = maps[i][icon.name];
       if (!source) throw new LocalizedError('error.missingArtwork', { style: STYLE_META[style].label, icon: icon.name });
+      const needsDuoColors = (isDuo(style) && hasModifierRole(source)) || (style === 'duotone' && hasSecondaryRole(source));
+      const keepArtworkColors = keepColors && !needsDuoColors;
       const svg = buildSvg(source, {
-        ...(keepColors ? { primary: 'currentColor', keepColors: true } : exportColors(source, style, look, theme)),
+        ...(keepArtworkColors ? { primary: 'currentColor', keepColors: true } : exportColors(source, style, look, theme)),
         size: look.size,
         strokeWidth: strokeAdjustable(style) ? stroke : undefined,
         sourceStroke: opticalStroke(artworkSize(look)),
@@ -80,7 +82,7 @@ async function buildIconSet(
       '',
       `Size: ${look.size}px, drawn from the ${artworkSize(look)}px optical size. Stroke: ${Number(stroke.toFixed(3))}px on the 24px grid (Regular, Duocolor, Duotone; Filled has none).`,
       keepColors
-        ? 'Colors: as authored. Regular and Filled use currentColor; Duocolor and Duotone use --fos-primary and --fos-secondary.'
+        ? 'Colors: as authored. Regular and Filled use currentColor; Duocolor and Duotone use --fos-primary and --fos-secondary, with concrete colors where duo paint roles follow Primary.'
         : `Colors: ${look.paletteName === INK_THEME ? 'Ink' : look.paletteName} theme${look.mono || look.custom ? ' with your own colors' : ''} (${theme}).`,
       '',
     ].join('\n'),

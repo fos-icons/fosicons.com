@@ -390,6 +390,7 @@ const en = {
   'inspector.singleContour': 'This icon is a single contour, so it is primary-only by design.',
   'inspector.modifierColor': 'Modifier color',
   'inspector.modifierSameAsIcon': 'Same as the icon.',
+  'inspector.modifierFollowsPrimary': 'Follows the primary color.',
   'inspector.modifierColorReset': 'Use the default color',
   'inspector.libraryDefault': 'Library default {color}',
 
