@@ -6,7 +6,7 @@ import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,
 } from '../components/LandingParts';
-import { Button, ButtonAnchor, ButtonLink, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, ButtonLink, IconButton, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
@@ -18,7 +18,7 @@ import {
 import { CONTAINER, useHeaderSlot } from '../lib/layout';
 import { DEFAULT_LOOK, exportColors, gridVars, isCustomized, strokeAdjustable, strokeOf } from '../lib/look';
 import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
-import { buildSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareDuotoneSvg, prepareGridSvg } from '../lib/svg';
+import { buildSvg, flipSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareDuotoneSvg, prepareGridSvg } from '../lib/svg';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
@@ -191,29 +191,24 @@ function PreviewCanvas({ svg, label, stageRef, offscreen, children, color }: {
   children?: ReactNode;
   color?: string;
 }) {
-  const grid = svgGrid(svg);
   return (
-    <div className="icon-preview-canvas relative isolate flex flex-1 flex-col rounded-t-2xl">
-      {grid > 0 && (
-        <div aria-hidden="true" data-preview-grid={grid}
-          className="icon-preview-grid pointer-events-none absolute inset-0 -z-10 rounded-[inherit]"
-          style={{ '--grid-units': grid } as CSSProperties} />
-      )}
+    <div className="icon-preview-canvas checkerboard relative isolate flex flex-1 flex-col rounded-t-2xl">
       <div ref={stageRef} data-offscreen={offscreen || undefined}
         className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-        <Glyph svg={svg} idPrefix="stage-" className="icon-preview-glyph" label={label} style={{ color }} />
+        <Glyph svg={svg} idPrefix="stage-" className="icon-preview-glyph icon-page-preview-artwork" label={label} style={{ color }} />
         {children}
       </div>
     </div>
   );
 }
 
-function ActualSizePreviews({ svgAt, listRef, offscreen, color, exportSize }: {
+function ActualSizePreviews({ svgAt, listRef, offscreen, color, exportSize, actions }: {
   svgAt: (px: number) => string | undefined;
   listRef?: React.Ref<HTMLUListElement>;
   offscreen?: boolean;
   color?: string;
   exportSize?: number;
+  actions: ReactNode;
 }) {
   const { t } = useI18n();
   const sizes = exportSize !== undefined && exportSize <= MAX_ACTUAL_SAMPLE && !ACTUAL_SIZES.includes(exportSize)
@@ -221,17 +216,20 @@ function ActualSizePreviews({ svgAt, listRef, offscreen, color, exportSize }: {
     : ACTUAL_SIZES;
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-t border-line px-4 py-3">
-      <div className="shrink-0 text-xs text-muted">
-        <p>{t('iconPage.actualSize')}</p>
-        {exportSize !== undefined && (
-          <p className="mt-1 font-medium text-ink">{t('iconPage.exportSize', { size: exportSize })}</p>
-        )}
+      <div className="flex shrink-0 items-end gap-3">
+        <div className="text-xs text-muted">
+          <p>{t('iconPage.actualSize')}</p>
+          {exportSize !== undefined && (
+            <p className="mt-1 font-medium text-ink">{t('iconPage.exportSize', { size: exportSize })}</p>
+          )}
+        </div>
+        {actions}
       </div>
       <ul ref={listRef} aria-label={t('iconPage.actualSize')} data-offscreen={offscreen || undefined}
         className="ml-auto flex max-w-full flex-wrap items-end justify-end gap-x-3 gap-y-2">
         {sizes.map((px) => (
           <li key={px} aria-current={px === exportSize ? 'true' : undefined} className="flex flex-col items-center gap-1.5">
-            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className="shrink-0" style={{ color, width: px, height: px }} />
+            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className="icon-page-preview-artwork shrink-0" style={{ color, width: px, height: px }} />
             <span className={`rounded px-1 text-[11px] tabular-nums ${px === exportSize ? 'bg-brand-soft font-semibold text-brand' : 'text-faint'}`}>{px}</span>
           </li>
         ))}
@@ -240,10 +238,11 @@ function ActualSizePreviews({ svgAt, listRef, offscreen, color, exportSize }: {
   );
 }
 
-function AnimatedPreview({ name, svgAt, label }: {
+function AnimatedPreview({ name, svgAt, label, actions }: {
   name: string;
   svgAt: (px: number) => string | undefined;
   label: string;
+  actions: ReactNode;
 }) {
   const i18n = useI18n();
   const { t } = i18n;
@@ -309,13 +308,13 @@ function AnimatedPreview({ name, svgAt, label }: {
           </div>
         )}
       </PreviewCanvas>
-      <ActualSizePreviews svgAt={(px) => sampleSvg ?? svgAt(px)} listRef={samples} offscreen={!samplesVisible} />
+      <ActualSizePreviews svgAt={(px) => sampleSvg ?? svgAt(px)} listRef={samples} offscreen={!samplesVisible} actions={actions} />
     </div>
   );
 }
 
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSize, vars, color }: {
+function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSize, vars, color, actions, resetFlips }: {
   name: string;
   style: PreviewStyle;
   canAnimate: boolean;
@@ -325,6 +324,8 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSiz
   exportSize: number;
   vars: CSSProperties;
   color?: string;
+  actions: ReactNode;
+  resetFlips?: () => void;
 }) {
   const { t } = useI18n();
   const animated = style === ANIMATED_SLUG;
@@ -334,7 +335,7 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSiz
   return (
     <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
       <h2 id="icon-preview" className="sr-only">{t('iconPage.styles')}</h2>
-      <div className="icon-preview-toolbar absolute inset-x-0 top-0 z-10 flex items-center px-3">
+      <div className="icon-preview-toolbar absolute inset-x-0 top-0 z-10 flex items-center gap-2 px-3">
         <div className="min-w-0 flex-1">
           <Segmented
             fill
@@ -345,11 +346,15 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, exportSiz
             onChange={onStyleChange}
           />
         </div>
+        {resetFlips && (
+          <IconButton icon="undo" label={t('iconPage.resetFlips')} onClick={resetFlips}
+            className="size-8! shrink-0 border border-line bg-surface" />
+        )}
       </div>
-      {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} /> : (
+      {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} actions={actions} /> : (
         <>
           <PreviewCanvas svg={svgAt(exportSize)} label={label} color={color} />
-          <ActualSizePreviews svgAt={svgAt} color={color} exportSize={exportSize} />
+          <ActualSizePreviews svgAt={svgAt} color={color} exportSize={exportSize} actions={actions} />
         </>
       )}
     </section>
@@ -399,6 +404,9 @@ export default function IconPage() {
   const wide = useMediaQuery('(min-width: 768px)');
   const headerSlot = useHeaderSlot();
   const [look, changeLook] = useIconLook(PAGE_LOOK);
+  const [flipHorizontal, setFlipHorizontal] = useState(false);
+  const [flipVertical, setFlipVertical] = useState(false);
+  const flipButton = useRef<HTMLButtonElement>(null);
   const { resolved: theme } = useTheme();
   const [badgeAdjust, setBadgeAdjust] = useState(1);
   const badgeScale = modifierScaleFor(look.size, modifierPx(look.size, badgeAdjust));
@@ -424,14 +432,16 @@ export default function IconPage() {
   /** The same, at each optical size in PAGE_SIZES (24 first). */
   const shownBySize = useMemo(() => sized.map((svgs) => {
     const source = svgs[iconName];
-    if (!source || !applied) return source;
+    if (!source || animated) return source;
+    const base = flipSvg(source, flipHorizontal, flipVertical);
+    if (!applied) return base;
     try {
       const corner = badge?.corner && applied.positions[badge.corner] ? badge.corner : initialCorner(applied);
-      return composeSvg(source, applied, corner, style, badgeScale, true);
+      return composeSvg(base, applied, corner, style, badgeScale, true);
     } catch {
-      return source;
+      return base;
     }
-  }), [sized, iconName, applied, badge?.corner, style, badgeScale]);
+  }), [sized, iconName, animated, flipHorizontal, flipVertical, applied, badge?.corner, style, badgeScale]);
   const shown = shownBySize[0];
   /** Drawn from the optical size nearest `px`; the 24px artwork until that size loads. */
   const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
@@ -439,7 +449,13 @@ export default function IconPage() {
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
   if (!icon) return <NotFoundPage />;
   const vars = gridVars(modifiersUnlocked ? look : { ...look, modifierColor: null }, animated ? FREE_ICON_STYLE : style, theme);
-  const previewVars = { ...vars, '--stroke-scale': undefined };
+  const previewVars = {
+    ...vars,
+    '--stroke-scale': undefined,
+    // Animated previews load their authored SVG separately and have no modifier.
+    '--preview-flip-x': animated && flipHorizontal ? -1 : 1,
+    '--preview-flip-y': animated && flipVertical ? -1 : 1,
+  };
   const previewAt = (px: number) => {
     const source = shownAt(px);
     if (!source || animated) return source;
@@ -466,7 +482,7 @@ export default function IconPage() {
   const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
   const custom = look.size !== PAGE_LOOK.size || isCustomized({ ...look, size: DEFAULT_LOOK.size });
   const needsDuoColors = shown && (isDuo(style) && hasModifierRole(shown) || style === 'duotone' && hasSecondaryRole(shown));
-  const resolveSvg = custom || Boolean(applied) || Boolean(needsDuoColors);
+  const resolveSvg = custom || flipHorizontal || flipVertical || Boolean(applied) || Boolean(needsDuoColors);
   const build = (size: number) => {
     const source = shownAt(size);
     if (!source) return null;
@@ -555,7 +571,29 @@ export default function IconPage() {
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
-          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={previewAt} onStyleChange={setStyle} exportSize={look.size} vars={previewVars as CSSProperties} color={vars['--glyph-color']} />
+          <PreviewStage
+            name={icon.name}
+            style={animated ? ANIMATED_SLUG : style}
+            canAnimate={canAnimate}
+            svgAt={previewAt}
+            onStyleChange={setStyle}
+            exportSize={look.size}
+            vars={previewVars as CSSProperties}
+            color={vars['--glyph-color']}
+            resetFlips={flipHorizontal || flipVertical ? () => {
+              setFlipHorizontal(false);
+              setFlipVertical(false);
+              flipButton.current?.focus({ preventScroll: true });
+            } : undefined}
+            actions={(
+              <div className="flex gap-1">
+                <IconButton ref={flipButton} icon="flip-horizontal" label={t('iconPage.flipHorizontal')} aria-pressed={flipHorizontal}
+                  onClick={() => setFlipHorizontal((flipped) => !flipped)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand" />
+                <IconButton icon="flip-horizontal" label={t('iconPage.flipVertical')} aria-pressed={flipVertical}
+                  onClick={() => setFlipVertical((flipped) => !flipped)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand [&>.glyph]:rotate-90" />
+              </div>
+            )}
+          />
           <div className="mt-4">
             {animated ? (
               <>

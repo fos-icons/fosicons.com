@@ -79,21 +79,20 @@ describe('animated icon pages', () => {
     expect(screen.getByText('Download Regular SVG')).toBeTruthy();
     expect(screen.getByText("Bring the file down to earth, or at least onto this device. A small cue for “save”.")).toBeTruthy();
     const preview = screen.getByRole('region', { name: 'Preview' });
-    const grid = () => preview.querySelector('[data-preview-grid]');
+    const checkerboard = () => preview.querySelector('.icon-preview-canvas.checkerboard');
     const sizes = () => within(screen.getByRole('list', { name: 'Actual size' })).getAllByRole('listitem');
     expect(sizes().map((sample) => sample.textContent)).toEqual(['16', '20', '24', '32', '48', '64']);
     await waitFor(() => expect(sizes()[4].querySelector('svg')?.getAttribute('viewBox')).toBe('0 0 48 48'));
-    await waitFor(() => expect(grid()?.getAttribute('data-preview-grid')).toBe('24'));
-    expect(grid()?.getAttribute('aria-hidden')).toBe('true');
+    expect(checkerboard()).toBeTruthy();
     expect(sizes().find((sample) => sample.getAttribute('aria-current') === 'true')?.textContent).toBe('24');
     expect(screen.getByText('Export size: 24 px')).toBeTruthy();
-    expect(sizes().every((sample) => !sample.querySelector('[data-preview-grid]'))).toBe(true);
+    expect(sizes().every((sample) => !sample.querySelector('.checkerboard'))).toBe(true);
     expect(fetchMock.mock.calls.some(([url]) => url.includes('/animated.json?'))).toBe(false);
 
     const animatedOption = screen.getByRole('radio', { name: 'Animated' });
     await user.click(animatedOption);
     expect((await screen.findByRole('img', { name: 'Download icon, Animated style' })).querySelector('.fa-download style')).not.toBeNull();
-    expect(grid()?.getAttribute('data-preview-grid')).toBe('24');
+    expect(checkerboard()).toBeTruthy();
     expect(document.activeElement).toBe(animatedOption);
     expect(sizes().every((sample) => sample.querySelector('svg.fa-download'))).toBe(true);
     await user.click(screen.getByRole('button', { name: 'Pause animation' }));

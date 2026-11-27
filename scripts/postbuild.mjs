@@ -18,7 +18,7 @@ const {
   PAGES, PAGE_IDS, pageFor, pageUrl, headTags, facts, absolute, artworkDirectory, catalog, brands, FREE_ICON_STYLE,
   SITE_NAME, LIBRARY_URL, FIGMA_URL, FLUTTER_PACKAGE, FRAMEWORK_NAMES, FRAMEWORK_PACKAGES, packageSource,
   LOCALES, webManifest, DEFAULT_LOCALE, localizePath, i18nFor,
-  primeArtwork, trackArtwork, takeTrackedArtwork, iconPath, categoryPath, svgFilePath,
+  primeArtwork, trackArtwork, takeTrackedArtwork, repairOpticalArtwork, iconPath, categoryPath, svgFilePath,
   DEFAULT_ARTWORK_SIZE, defaultGridSvg, artworkKey, gridPreviewPath, FRAMEWORK_PATHS, STYLE_PATHS, STYLE_META, displayName,
 } = server;
 
@@ -33,8 +33,9 @@ const sizedArtwork = {};
 for (const size of catalog.sizes.filter((s) => s !== catalog.grid)) {
   for (const style of catalog.styles) {
     const folder = join(versionedArtwork, String(size), style);
-    sizedArtwork[artworkKey(style, size)] = Object.assign({}, ...readdirSync(folder).filter((f) => f.endsWith('.json'))
-      .map((f) => JSON.parse(readFileSync(join(folder, f), 'utf8'))));
+    const chunks = readdirSync(folder).filter((f) => f.endsWith('.json'))
+      .map((f) => JSON.parse(readFileSync(join(folder, f), 'utf8')));
+    sizedArtwork[artworkKey(style, size)] = repairOpticalArtwork(Object.assign({}, ...chunks), size);
   }
 }
 primeArtwork({ ...artwork, ...sizedArtwork });

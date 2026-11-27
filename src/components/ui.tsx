@@ -239,10 +239,11 @@ export function RangeSlider({
             {label}
           </button>
         ) : <label htmlFor={id} className={`${titleClass} cursor-pointer`}>{label}</label>}
-        <div className="relative h-full min-w-0 flex-1">
+        <div className="compact-range-track relative h-full min-w-0 flex-1">
           <span aria-hidden="true" className="compact-range-fill" style={{ width: position(value) }} />
           {defaultValue !== undefined && (
-            <span aria-hidden="true" className="compact-range-default" style={{ insetInlineStart: position(defaultValue) }} />
+            <span aria-hidden="true" className="compact-range-default" data-filled={defaultValue <= value || undefined}
+              style={{ insetInlineStart: position(defaultValue) }} />
           )}
           <input
             id={id}

@@ -637,7 +637,7 @@ describe('Side pane (desktop)', () => {
     renderAt('/?style=solid');
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
     expect(within(pane).queryByRole('slider', { name: 'Stroke width' })).toBeNull();
-    expect(within(pane).getByText(/no stroke to adjust/)).toBeTruthy();
+    expect(within(pane).queryByRole('button', { name: 'Stroke width' })).toBeNull();
   });
 
   it('keeps quick actions available while collapsed and expands directly to code', async () => {
@@ -686,7 +686,7 @@ describe('Side pane (desktop)', () => {
     const slider = within(pane).getByRole('slider', { name: 'Stroke width' });
     // Strokes read in real pixels at the icon size: Auto at 32px is 1.5px.
     expect(slider.getAttribute('aria-valuetext')).toBe('1.5px, automatic for this size');
-    expect(within(pane).getByText(/1px at 16px, 1\.25px at 24px, 1\.5px at 32px, 2px at 48px, 2\.5px at 64px/)).toBeTruthy();
+    expect(within(pane).getByText('Auto draws each optical size with its designed stroke and blends between them.')).toBeTruthy();
     fireEvent.change(slider, { target: { value: '2' } });
     expect(slider.getAttribute('aria-valuetext')).toBe('2.67px');
     expect(within(pane).getByText('Your stroke scales with the icon: 2px at 24px.')).toBeTruthy();
@@ -986,6 +986,64 @@ describe('Icon page header search (desktop)', () => {
     expect(await navigator.clipboard.readText()).toBe('bar-chart-square');
     expect(await screen.findByText('Copied “bar-chart-square”')).toBeTruthy();
     expect(copy.querySelector('svg.fa-check')).toBeTruthy();
+  });
+
+  it('uses full-size swatchbook masks and carries both preview flips into the copied SVG', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/swatchbook');
+    const preview = screen.getByRole('region', { name: 'Preview' });
+    const samples = within(preview).getByRole('list', { name: 'Actual size' });
+    const largest = within(samples).getAllByRole('listitem').at(-1)!;
+    await waitFor(() => {
+      const mask = largest.querySelector('mask');
+      expect(mask?.getAttribute('width')).toBe('64');
+      expect(mask?.querySelector('rect')?.getAttribute('height')).toBe('64');
+    });
+
+    const horizontal = within(preview).getByRole('button', { name: 'Flip horizontally' });
+    const vertical = within(preview).getByRole('button', { name: 'Flip vertically' });
+    await user.click(horizontal);
+    await user.click(vertical);
+    expect(horizontal.getAttribute('aria-pressed')).toBe('true');
+    expect(vertical.getAttribute('aria-pressed')).toBe('true');
+    await user.click(screen.getByRole('button', { name: 'Copy SVG' }));
+    const copied = new DOMParser().parseFromString(await navigator.clipboard.readText(), 'image/svg+xml');
+    expect(copied.querySelector('svg > g[transform="translate(24 24) scale(-1 -1)"]')).toBeTruthy();
+  });
+
+  it('flips the base without mirroring its attached modifier or moving its clearance', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/swatchbook?modifier=shield&corner=top-right');
+    const preview = screen.getByRole('region', { name: 'Preview' });
+    const stage = within(preview).getByRole('img', { name: 'Swatchbook icon, Regular style' });
+    const badgeSelector = 'svg svg[x][y]';
+    await waitFor(() => expect(stage.querySelector(badgeSelector)).toBeTruthy());
+    const badge = stage.querySelector(badgeSelector)!;
+    const placement = [badge.getAttribute('x'), badge.getAttribute('y')];
+    const flip = 'g[transform="translate(24 24) scale(-1 -1)"]';
+    const horizontal = within(preview).getByRole('button', { name: 'Flip horizontally' });
+    const vertical = within(preview).getByRole('button', { name: 'Flip vertically' });
+    expect(within(preview).queryByRole('button', { name: 'Reset flips' })).toBeNull();
+
+    await user.click(horizontal);
+    await user.click(vertical);
+    expect(stage.querySelector(flip)?.closest('g[clip-path], g[mask]')).toBeTruthy();
+    expect(stage.querySelector(badgeSelector)?.outerHTML).toBe(badge.outerHTML);
+    expect(stage.querySelector(badgeSelector)?.closest(flip)).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Copy SVG' }));
+    const copied = new DOMParser().parseFromString(await navigator.clipboard.readText(), 'image/svg+xml');
+    const copiedBadge = copied.querySelector(badgeSelector)!;
+    expect(copied.querySelector(flip)?.closest('g[clip-path], g[mask]')).toBeTruthy();
+    expect(copiedBadge.closest(flip)).toBeNull();
+    expect([copiedBadge.getAttribute('x'), copiedBadge.getAttribute('y')]).toEqual(placement);
+
+    await user.click(within(preview).getByRole('button', { name: 'Reset flips' }));
+    expect(within(preview).queryByRole('button', { name: 'Reset flips' })).toBeNull();
+    expect(horizontal.getAttribute('aria-pressed')).toBe('false');
+    expect(vertical.getAttribute('aria-pressed')).toBe('false');
+    expect(stage.querySelector(flip)).toBeNull();
+    expect(document.activeElement).toBe(horizontal);
   });
 
   it('puts a modifier on the icon when its name is typed, as a second tag', async () => {
