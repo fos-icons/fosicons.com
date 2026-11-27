@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,
 } from '../components/LandingParts';
-import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, UiAnimatedCheck, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, ButtonLink, Segmented, SlashHint, UiAnimatedCheck, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
-import { LocalLink, useI18n } from '../i18n';
+import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
 import { animatedNames, catalog, chunksFor, FREE_ICON_STYLE, iconsByName, loadAnimated, opticalSize, opticalStroke, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
@@ -17,7 +17,7 @@ import {
 import { CONTAINER, useHeaderSlot } from '../lib/layout';
 import { DEFAULT_LOOK, exportColors, gridVars, isCustomized, strokeAdjustable, strokeOf } from '../lib/look';
 import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
-import { buildSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg } from '../lib/svg';
+import { buildSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareDuotoneSvg, prepareGridSvg } from '../lib/svg';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
@@ -30,6 +30,7 @@ import { composeSvg, CORNERS, editablePreset, initialCorner, modifierPx, modifie
 import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
 import { ANIMATED_SLUG } from '../lib/url-state';
+import narratives from '../data/icon-narratives.en.json';
 
 function CopyIconName({ name }: { name: string }) {
   const i18n = useI18n();
@@ -47,7 +48,7 @@ function CopyIconName({ name }: { name: string }) {
       <button
         type="button"
         aria-label={i18n.t('iconPage.copyName')}
-        title={i18n.t(copied ? 'code.copied' : 'iconPage.copyName')}
+        data-tooltip={i18n.t(copied ? 'code.copied' : 'iconPage.copyName')}
         className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-sunken hover:text-ink"
         onClick={() => copyText(name).then(
           () => setCopied((count) => count + 1),
@@ -73,9 +74,6 @@ const openInPlace = (open: () => void) => (e: MouseEvent) => {
 };
 
 /** Sizes icons are usually set at, shown 1:1 so the drawing can be judged where it ships. */
-/** Pulled left so its arrow lines up with the breadcrumbs below. */
-const backLink = '-ml-2 mb-4 px-2';
-
 /**
  * Icon pages visited this session, for the header search's back and forward
  * arrows. Opening an icon any other way drops what was ahead, like browser
@@ -141,7 +139,7 @@ function HeaderIconSearch({
           disabled={!to}
           onClick={() => step(to)}
           aria-label={to ? `${text}: ${to}` : text}
-          title={to ? `${text}: ${to}` : text}
+          data-tooltip={to ? `${text}: ${to}` : text}
           className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-ink transition hover:bg-sunken disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
         >
           <UiIcon name="chevron-down" className={`size-4 ${turn}`} />
@@ -152,7 +150,7 @@ function HeaderIconSearch({
           <UiIcon name="search" className="size-4 shrink-0 text-faint" />
           <span className={`${tag} max-w-[45%]`}>
             <span className="truncate">{name}</span>
-            <button type="button" onClick={onRemove} aria-label={t('iconPage.removeIcon', { name })} title={t('iconPage.removeIcon', { name })} className={tagX}>
+            <button type="button" onClick={onRemove} aria-label={t('iconPage.removeIcon', { name })} data-tooltip={t('iconPage.removeIcon', { name })} className={tagX}>
               <UiIcon name="x" className="size-3" />
             </button>
           </span>
@@ -473,14 +471,21 @@ export default function IconPage() {
   const previewVars = { ...vars, '--stroke-scale': undefined };
   const previewAt = (px: number) => {
     const source = shownAt(px);
-    if (!source || animated || !strokeAdjustable(style) || look.strokeWidth === null && px !== look.size) return source;
-    return prepareGridSvg(source, String(strokeOf(look) / opticalStroke(svgGrid(source) || catalog.grid)));
+    if (!source || animated) return source;
+    const customizeStroke = strokeAdjustable(style) && (look.strokeWidth !== null || px === look.size);
+    const weighted = customizeStroke
+      ? prepareGridSvg(source, String(strokeOf(look) / opticalStroke(svgGrid(source) || catalog.grid)))
+      : source;
+    return style === 'duotone' ? prepareDuotoneSvg(weighted) : weighted;
   };
   const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
   const prevIcon = trailAt > 0 ? trail.names[trailAt - 1] : null;
   const nextIcon = trailAt >= 0 && trailAt < trail.names.length - 1 ? trail.names[trailAt + 1] : null;
 
   const title = displayName(icon.name);
+  const narrative = i18n.config.code === DEFAULT_LOCALE
+    ? (narratives as Record<string, string>)[icon.name]
+    : undefined;
   const category = label('category', icon.category, icon.category);
   const categoryCount = catalog.categories.find((c) => c.name === icon.category)?.count ?? 0;
   const components = catalog.styles.map((s) => componentName(icon.name, s));
@@ -552,18 +557,13 @@ export default function IconPage() {
         />,
         headerSlot,
       )}
-      {/* Catalog visits have an explicit return link on every screen. */}
-      <div className={inHeader && !backTo ? 'hidden' : undefined}>
-      {backTo ? (
-        // A plain Link: backTo is already a full path. Going back in history also restores the list's scroll.
-        <Link to={backTo} onClick={openInPlace(() => navigate(-1))} className={`${buttonClass({ variant: 'quiet', size: 'sm' })} ${backLink}`}>
-          <UiIcon name="arrow-left" className="size-4" /> {t('iconPage.back')}
-        </Link>
-      ) : (
-        <ButtonLink to="/" variant="quiet" size="sm" icon="arrow-left" className={backLink}>{t('iconPage.back')}</ButtonLink>
-      )}
-      </div>
       <Breadcrumbs
+        backLink={{
+          to: backTo ?? path('/'),
+          // Returning through history also restores the catalog's scroll position.
+          onClick: backTo ? openInPlace(() => navigate(-1)) : undefined,
+        }}
+        linkClassName="text-brand"
         items={[
           { label: t('iconPage.allIcons'), to: '/' },
           { label: category, to: categoryPath(icon.category) },
@@ -578,7 +578,7 @@ export default function IconPage() {
             <CopyIconName key={icon.name} name={icon.name} />
           </div>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
-            {t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
+            {narrative ?? t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
           </p>
           <KeywordTags icon={icon} className="mt-4" />
         </div>

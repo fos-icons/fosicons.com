@@ -39,7 +39,7 @@ export interface IconSummary {
   name: string;
   category: string;
   tags: string[];
-  /** Component name per style, the same in React, Vue, Svelte, SolidJS and Angular. */
+  /** Component name per style, the same in React, Vue, Svelte, Solid and Angular. */
   components: Record<StyleId, string>;
   url: string;
 }
@@ -216,7 +216,7 @@ export function frameworkSetup(framework: Framework): FrameworkSetup {
       return {
         framework, package: '@fos-icons/solid', published: false,
         install: tarballInstall('solid', ' solid-js@2.0.0-rc.21 @solidjs/web@2.0.0-rc.21'),
-        naming: `${COMPONENT_NAMING} SolidJS the framework is unrelated to the Solid icon style.`,
+        naming: `${COMPONENT_NAMING} Components for the solid icon style use the Filled suffix.`,
         props: `${COMPONENT_PROPS} Also strokeWidth. Requires Solid 2; Solid 1.x is not supported.`,
         example: solidSnippet('camera', 'duocolor', SAMPLE), accessibility: DECORATIVE, docs,
       };

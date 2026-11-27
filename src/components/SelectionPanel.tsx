@@ -122,7 +122,7 @@ export function SelectionPanel({
             <li key={name}>
               <button
                 type="button"
-                title={name}
+                data-tooltip={name}
                 aria-label={t('selection.remove', { name })}
                 onClick={() => onRemove(name)}
                 className="group relative flex aspect-square w-full items-center justify-center rounded-xl bg-sunken text-ink transition-colors hover:bg-line"

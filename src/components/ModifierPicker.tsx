@@ -132,7 +132,7 @@ export function ModifierPicker({
                   key={corner}
                   type="button"
                   aria-label={t(`corner.${corner}`)}
-                  title={allowed || !value ? t(`corner.${corner}`) : t('modifiers.onlySits', {
+                  data-tooltip={allowed || !value ? t(`corner.${corner}`) : t('modifiers.onlySits', {
                     modifier: label('modifier', value.modifier.name, value.modifier.label),
                     corners: (Object.keys(value.modifier.positions) as Corner[]).map((c) => t(`corner.${c}.inline`)).join(', '),
                   })}
@@ -195,7 +195,7 @@ export function ModifierPicker({
                   type="button"
                   aria-pressed={active}
                   aria-label={t(hasAuthored ? 'modifiers.tileAuthored' : 'modifiers.tile', { label: label('modifier', m.name, m.label) })}
-                  title={label('modifier', m.name, m.label)}
+                  data-tooltip={label('modifier', m.name, m.label)}
                   onClick={() => pick(m)}
                   className={`${tile} ${active ? 'border-brand bg-brand-soft' : 'border-transparent bg-sunken hover:border-line-strong'}`}
                 >

@@ -92,7 +92,7 @@ describe('Docs page', () => {
     render(<ToastProvider><MemoryRouter><DocsPage /></MemoryRouter></ToastProvider>);
     const nav = screen.getByRole('navigation', { name: 'Documentation' });
     await user.click(within(nav).getByRole('button', { name: 'Code' }));
-    expect(within(nav).getByRole('link', { name: 'SolidJS' }).getAttribute('href')).toBe('#solid');
+    expect(within(nav).getByRole('link', { name: 'Solid' }).getAttribute('href')).toBe('#solid');
     const section = document.getElementById('solid')!;
     expect(section.textContent).toContain('@solidjs/web@2.0.0-rc.21');
     expect(section.textContent).toContain('Solid 1.x is not supported');

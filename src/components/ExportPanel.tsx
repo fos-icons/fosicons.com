@@ -150,7 +150,7 @@ export function ExportPanel({
                   id={`${uid}-s${r.id}`}
                   value={effectiveScale(r)}
                   disabled={svg}
-                  title={svg ? t('export.svgFixed') : t('customize.pxValue', { value: pxOf(size, effectiveScale(r)) })}
+                  data-tooltip={svg ? t('export.svgFixed') : t('customize.pxValue', { value: pxOf(size, effectiveScale(r)) })}
                   onChange={(e) => patch(r.id, { scale: Number(e.target.value) as Scale })}
                   className="w-[76px] shrink-0"
                 >
@@ -169,7 +169,7 @@ export function ExportPanel({
                 <button
                   type="button"
                   aria-label={t('export.options', { row: i + 1 })}
-                  title={t('export.suffix')}
+                  data-tooltip={t('export.suffix')}
                   aria-expanded={open}
                   aria-controls={`${uid}-o${r.id}`}
                   onClick={() => setOpenRow(open ? null : r.id)}
@@ -180,7 +180,7 @@ export function ExportPanel({
                 <button
                   type="button"
                   aria-label={t('export.remove', { row: i + 1 })}
-                  title={t('export.removeTitle')}
+                  data-tooltip={t('export.removeTitle')}
                   disabled={rows.length === 1}
                   onClick={() => setRows(rows.filter((x) => x.id !== r.id))}
                   className="inline-flex size-8 items-center justify-center rounded-md transition-colors hover:bg-sunken disabled:opacity-30 disabled:hover:bg-transparent"

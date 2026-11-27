@@ -2,6 +2,7 @@ import { use } from 'react';
 import { lazyPage, loadPage } from './lib/lazy-page';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router';
 import { Layout } from './components/Layout';
+import { Tooltips } from './components/Tooltips';
 import { ToastProvider } from './components/ui';
 import { DEFAULT_LOCALE, I18nProvider, localizePath, type Translation } from './i18n';
 import { docsPageFor } from './i18n/content';
@@ -56,6 +57,7 @@ export function AppShell({ locale = DEFAULT_LOCALE, messages }: AppProps) {
       <ThemeProvider>
         <ToastProvider>
           <PlanProvider>
+            <Tooltips />
             <Routes>
               <Route path={base} element={<Layout />}>
                 <Route index element={<CatalogRoute page="home" />} />

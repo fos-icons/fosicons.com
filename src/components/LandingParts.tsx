@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEventHandler, type ReactNode } from 'react';
+import { Link } from 'react-router';
 import { LocalLink, useI18n } from '../i18n';
 import { scopeIds } from '../lib/artwork';
 import type { IconEntry, StyleId } from '../lib/catalog';
@@ -8,7 +9,7 @@ import { DEFAULT_LOOK, gridVars } from '../lib/look';
 import { useTheme } from '../lib/theme';
 import { CodeBlock } from './CodeBlock';
 import { IconCardContent, iconCardClass, iconCardGlyphClass } from './IconCard';
-import { Tag, useToast } from './ui';
+import { SlidingPill, Tag, UiIcon, useSlidingPill, useToast } from './ui';
 
 /** Shared pieces of the crawlable landing pages (icon, category, React/Vue/Figma). */
 
@@ -128,11 +129,13 @@ export function CodeTabs({ tabs, label }: {
 }) {
   const uid = useId();
   const refs = useRef<(HTMLButtonElement | null)[]>([]);
+  const groupRef = useRef<HTMLDivElement>(null);
   const [picked, setPicked] = useState<string | null>(null);
   // After hydration, so the prerendered page and the first render agree.
   useEffect(() => { setPicked((p) => p ?? readTab()); }, []);
   const index = Math.max(0, tabs.findIndex((tab) => tab.id === picked));
   const active = tabs[index];
+  const pill = useSlidingPill(groupRef, refs, index);
   const choose = (i: number) => {
     setPicked(tabs[i].id);
     saveTab(tabs[i].id);
@@ -151,45 +154,59 @@ export function CodeTabs({ tabs, label }: {
         lang={active.lang}
         what={active.label}
         label={(
-          <span role="tablist" aria-label={label} onKeyDown={onKeyDown} className="-ml-1.5 flex min-w-0 gap-1 overflow-x-auto">
-            {tabs.map((tab, i) => (
-              <button
-                key={tab.id}
-                ref={(el) => { refs.current[i] = el; }}
-                type="button"
-                role="tab"
-                id={`${uid}-${tab.id}`}
-                aria-selected={i === index}
-                aria-controls={`${uid}-panel`}
-                tabIndex={i === index ? 0 : -1}
-                onClick={() => choose(i)}
-                className={`shrink-0 rounded-md px-2 py-1 text-xs font-medium transition ${
-                  i === index ? 'bg-[var(--code-hover)] text-[var(--code-ink)]' : 'text-[var(--code-muted)] hover:text-[var(--code-ink)]'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </span>
+          <div className="-ml-1.5 min-w-0 overflow-x-auto">
+            <div ref={groupRef} role="tablist" aria-label={label} onKeyDown={onKeyDown} className="relative isolate flex w-max gap-1">
+              {pill && <SlidingPill position={pill} className="inset-y-0 bg-[var(--code-hover)]" />}
+              {tabs.map((tab, i) => (
+                <button
+                  key={tab.id}
+                  ref={(el) => { refs.current[i] = el; }}
+                  type="button"
+                  role="tab"
+                  id={`${uid}-${tab.id}`}
+                  aria-selected={i === index}
+                  aria-controls={`${uid}-panel`}
+                  tabIndex={i === index ? 0 : -1}
+                  onClick={() => choose(i)}
+                  className={`relative z-10 shrink-0 rounded-md px-2 py-1 text-xs font-medium transition-colors focus-visible:outline-offset-[-2px] ${
+                    i === index ? `text-[var(--code-ink)] ${pill ? '' : 'bg-[var(--code-hover)]'}` : 'text-[var(--code-muted)] hover:text-[var(--code-ink)]'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
         )}
       />
     </div>
   );
 }
 
-export function Breadcrumbs({ items }: { items: { label: string; to?: string }[] }) {
-  const { t } = useI18n();
+export function Breadcrumbs({ items, backLink, linkClassName = '' }: {
+  items: { label: string; to?: string }[];
+  backLink?: { to: string; onClick?: MouseEventHandler<HTMLAnchorElement> };
+  linkClassName?: string;
+}) {
+  const { t, path } = useI18n();
   return (
     <nav aria-label={t('iconPage.breadcrumb')} className="text-sm text-muted">
       <ol className="flex flex-wrap items-center gap-1.5">
-        {items.map((item, i) => (
-          <li key={item.label} className="flex items-center gap-1.5">
-            {i > 0 && <span aria-hidden="true" className="text-faint">/</span>}
-            {item.to
-              ? <LocalLink to={item.to} className="rounded underline-offset-2 hover:text-ink hover:underline">{item.label}</LocalLink>
-              : <span aria-current="page" className="text-ink">{item.label}</span>}
-          </li>
-        ))}
+        {items.map((item, i) => {
+          const back = i === 0 ? backLink : undefined;
+          const to = back?.to ?? (item.to ? path(item.to) : undefined);
+          return (
+            <li key={item.label} className="flex items-center gap-1.5">
+              {i > 0 && <span aria-hidden="true" className="text-faint">/</span>}
+              {to
+                ? <Link to={to} onClick={back?.onClick} className={`rounded underline-offset-2 hover:text-ink hover:underline ${backLink ? 'inline-flex min-h-6 items-center gap-1' : ''} ${linkClassName}`}>
+                    {back && <UiIcon name="chevron-down" className="size-4 rotate-90 rtl:-rotate-90" />}
+                    {item.label}
+                  </Link>
+                : <span aria-current="page" className="text-ink">{item.label}</span>}
+            </li>
+          );
+        })}
       </ol>
     </nav>
   );

@@ -18,6 +18,8 @@ export interface Look {
   custom: { primary: string; secondary: string } | null;
   /** Explicit badge color, or `null` for the default. Duo styles default to Primary. */
   modifierColor: string | null;
+  /** Duotone interior opacity in percent, or null to use the artwork’s tint. */
+  duotoneTint?: number | null;
   /** Playback rate for animated icons (1 = as designed); it retimes their CSS, exports included. */
   speed: number;
 }
@@ -29,6 +31,7 @@ export const DEFAULT_LOOK: Look = {
   paletteName: 'Ink',
   custom: null,
   modifierColor: null,
+  duotoneTint: null,
   speed: 1,
 };
 
@@ -139,6 +142,7 @@ export const isCustomized = (look: Look) =>
   || look.mono !== null
   || look.custom !== null
   || look.modifierColor !== null
+  || look.duotoneTint != null
   || look.paletteName !== DEFAULT_LOOK.paletteName
   || look.speed !== DEFAULT_LOOK.speed;
 
@@ -157,6 +161,7 @@ export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'co
     // A variable, not `color`: grid cells set their own ink color, which would win over an inherited one.
     vars['--glyph-color'] = r.mono;
   }
+  if (style === 'duotone' && look.duotoneTint != null) vars['--fos-duotone-tint'] = String(look.duotoneTint / 100);
   if (!isDuo(style) && look.modifierColor) vars['--fos-modifier'] = look.modifierColor;
   return vars;
 }
@@ -178,6 +183,7 @@ export function exportColors(
   const modifierDefault = source.match(/var\(--fos-modifier,\s*(#[0-9a-fA-F]{3,8})\)/)?.[1]?.toUpperCase();
   return {
     primary: duo ? r.duo.primary : r.mono,
+    duotoneTint: style === 'duotone' && look.duotoneTint != null ? look.duotoneTint / 100 : undefined,
     secondary: duo && hasSecondaryRole(source) ? (style === 'duocolor' ? r.duo.secondary : r.duo.primary) : undefined,
     modifier: hasModifierRole(source) ? (modifierOverride ?? (duo ? r.duo.primary : modifierDefault)) : undefined,
   };

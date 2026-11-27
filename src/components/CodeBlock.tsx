@@ -71,7 +71,7 @@ export function CodeBlock({ code, lang, action, label, wrap = false, className =
           </span>
         )}
         {label ?? <span>{CODE_LANGS.includes(lang as CodeLang) ? t(`code.${lang as CodeLang}`) : lang}</span>}
-        {action && <span className="ml-auto">{action}</span>}
+        {action && <span className="ml-auto shrink-0">{action}</span>}
       </div>
       <pre ref={preRef} tabIndex={scrollable ? 0 : undefined} className={`${wrap ? 'whitespace-pre-wrap break-all' : 'overflow-x-auto'} px-4 pb-4 pt-1 font-mono text-[13px] leading-relaxed focus-visible:outline-offset-[-2px]`}>
         {colored !== null

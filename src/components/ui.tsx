@@ -1,4 +1,4 @@
-import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
+import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type RefObject, type SelectHTMLAttributes } from 'react';
 import type { LinkProps } from 'react-router';
 import { LocalLink, useI18n } from '../i18n';
 import animatedCheck from '../data/ui-animated-check.json';
@@ -149,7 +149,7 @@ export function IconButton({ label, icon, className = '', ...props }: ButtonHTML
     <button
       type="button"
       aria-label={label}
-      title={label}
+      data-tooltip={label}
       className={`inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken ${className}`}
       {...props}
     >
@@ -222,6 +222,47 @@ export function RangeSlider({
 
 export const freeBadgeClass = 'pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2 rounded-full bg-green-100 px-1.5 text-[10px] leading-4 font-semibold text-green-900 ring-2 ring-canvas dark:bg-green-950 dark:text-green-200';
 
+type PillPosition = { left: number; width: number; animate: boolean };
+
+export function useSlidingPill(
+  groupRef: RefObject<HTMLDivElement | null>,
+  buttons: RefObject<(HTMLButtonElement | null)[]>,
+  index: number,
+) {
+  const [pill, setPill] = useState<PillPosition | null>(null);
+  useLayoutEffect(() => {
+    const group = groupRef.current;
+    const button = buttons.current[index];
+    if (!group || !button) { setPill(null); return; }
+    const measure = (animate: boolean) => {
+      const left = button.offsetLeft;
+      const width = button.offsetWidth;
+      setPill((previous) => previous?.left === left && previous.width === width
+        ? previous
+        : { left, width, animate: animate && previous !== null });
+    };
+    measure(true);
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => measure(false));
+    observer.observe(group);
+    for (const option of buttons.current) if (option) observer.observe(option);
+    return () => observer.disconnect();
+  }, [groupRef, buttons, index]);
+  return pill;
+}
+
+export function SlidingPill({ position, className }: { position: PillPosition; className: string }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`pointer-events-none absolute left-0 rounded-md ${className} ${position.animate
+        ? 'motion-safe:transition-[transform,width] motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.22,1,0.36,1)]'
+        : ''}`}
+      style={{ width: position.width, transform: `translateX(${position.left}px)` }}
+    />
+  );
+}
+
 /** Accessible single-choice segmented control (radio group semantics). */
 export function Segmented<T extends string>({
   label, value, options, onChange, size = 'md', fill = false,
@@ -252,28 +293,7 @@ export function Segmented<T extends string>({
     setPending(next);
     startTransition(() => onChange(next));
   };
-  const [pill, setPill] = useState<{ left: number; width: number; animate: boolean } | null>(null);
-
-  // Measure the active option so the highlight can slide between options.
-  // Re-measure on resize (fonts loading, layout changes) without animating.
-  useLayoutEffect(() => {
-    const measure = (animate: boolean) => {
-      const el = refs.current[index];
-      if (!el) { setPill(null); return; }
-      setPill((prev) => ({ left: el.offsetLeft, width: el.offsetWidth, animate: animate && prev !== null }));
-    };
-    measure(true);
-    const group = groupRef.current;
-    if (!group || typeof ResizeObserver === 'undefined') return;
-    let lastWidth = group.offsetWidth;
-    const observer = new ResizeObserver(() => {
-      if (group.offsetWidth === lastWidth) return;
-      lastWidth = group.offsetWidth;
-      measure(false);
-    });
-    observer.observe(group);
-    return () => observer.disconnect();
-  }, [index]);
+  const pill = useSlidingPill(groupRef, refs, index);
 
   const move = (next: number) => {
     const target = (next + options.length) % options.length;
@@ -282,15 +302,7 @@ export function Segmented<T extends string>({
   };
   return (
     <div ref={groupRef} role="radiogroup" aria-label={label} className={`relative isolate rounded-lg border border-line bg-segmented-track p-0.5 ${fill ? 'flex w-full sm:inline-flex sm:w-auto' : 'inline-flex'}`}>
-      {pill && (
-        <span
-          aria-hidden="true"
-          className={`pointer-events-none absolute inset-y-0.5 left-0 rounded-md bg-surface shadow-sm ring-1 ring-line ${
-            pill.animate ? 'transition-[transform,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]' : ''
-          }`}
-          style={{ width: pill.width, transform: `translateX(${pill.left}px)` }}
-        />
-      )}
+      {pill && <SlidingPill position={pill} className="inset-y-0.5 bg-surface shadow-sm ring-1 ring-line" />}
       {options.map((option, i) => {
         const checked = option.value === current;
         return (
@@ -301,7 +313,7 @@ export function Segmented<T extends string>({
             role="radio"
             aria-checked={checked}
             aria-description={option.badge}
-            title={option.title}
+            data-tooltip={option.title}
             tabIndex={checked || (index < 0 && i === 0) ? 0 : -1}
             onClick={() => select(option.value)}
             onKeyDown={(e) => {

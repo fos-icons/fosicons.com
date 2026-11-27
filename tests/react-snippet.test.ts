@@ -48,7 +48,7 @@ describe('React snippet', () => {
   });
 });
 
-describe('SolidJS snippet', () => {
+describe('Solid snippet', () => {
   it('uses named Filled exports and carries the selected icon settings', () => {
     expect(solidSnippet('binoculars', 'regular', { size: 24, color: null })).toBe(
       "import { BinocularsRegular } from '@fos-icons/solid';\n\n<BinocularsRegular />",

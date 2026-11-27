@@ -12,7 +12,7 @@ export const SERVER_VERSION = '0.1.0';
 
 const stats = libraryStats();
 
-export const INSTRUCTIONS = `Fos Icons: ${stats.icons.toLocaleString('en-US')} ${stats.license} icons in four styles (regular, filled, duocolor, duotone), with packages for React, Vue, Svelte, SolidJS, Angular and Flutter. ${SITE}
+export const INSTRUCTIONS = `Fos Icons: ${stats.icons.toLocaleString('en-US')} ${stats.license} icons in four styles (regular, filled, duocolor, duotone), with packages for React, Vue, Svelte, Solid, Angular and Flutter. ${SITE}
 
 Rules:
 - Never guess or invent an icon name. Find icons with search_icons, and run check_icon_names on any name you didn't get from these tools (including names already in the user's code).

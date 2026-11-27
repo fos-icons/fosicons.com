@@ -317,7 +317,7 @@ describe('Icons page', () => {
     const actions = within(screen.getByRole('tabpanel', { name: 'Actions' }));
     expect(actions.queryByRole('button', { name: /^(Search|Phone|Shield|Home) modifier/ })).toBeNull();
     // Add and remove lead, then the arrows, then everything else.
-    const order = actions.getAllByRole('button', { name: / modifier/ }).map((b) => b.getAttribute('title'));
+    const order = actions.getAllByRole('button', { name: / modifier/ }).map((b) => b.getAttribute('data-tooltip'));
     expect(order.slice(0, 8)).toEqual(['Add', 'Remove', 'Arrow up', 'Arrow down', 'Arrow left', 'Arrow right', 'Reply', 'Forward']);
     await user.click(screen.getByRole('button', { name: /^Add modifier/ }));
     expect(screen.getByRole('button', { name: 'Top left' }).getAttribute('aria-pressed')).toBe('true');
@@ -820,7 +820,7 @@ describe('Inspector sections (desktop)', () => {
     await user.click(within(section).getByRole('button', { name: 'Copy' }));
     expect(await navigator.clipboard.readText()).toBe(code());
     expect(localStorage.getItem('fos:code-tab')).toBe('svelte');
-    const solid = within(section).getByRole('tab', { name: 'SolidJS' });
+    const solid = within(section).getByRole('tab', { name: 'Solid' });
     await user.click(solid);
     expect(code()).toContain("import { SearchRegular } from '@fos-icons/solid';");
     expect(code()).toContain('<SearchRegular size={32} />');
@@ -903,7 +903,7 @@ describe('Icon page header search (desktop)', () => {
     expect(await navigator.clipboard.readText()).toBe(styleSvgs('regular')['triangle-right']);
   });
 
-  it('offers copyable Svelte, SolidJS, and Angular code on icon pages and updates it with the style', async () => {
+  it('offers copyable Svelte, Solid, and Angular code on icon pages and updates it with the style', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/triangle-right');
     const section = document.getElementById('use')!.closest('section')!;
@@ -920,7 +920,7 @@ describe('Icon page header search (desktop)', () => {
     expect(code()).not.toContain('TriangleRightRegular');
     expect(tab.getAttribute('aria-selected')).toBe('true');
 
-    const solid = within(section).getByRole('tab', { name: 'SolidJS' });
+    const solid = within(section).getByRole('tab', { name: 'Solid' });
     await user.click(solid);
     const solidCode = () => section.querySelector('.code-block[data-lang="tsx"] code')!.textContent;
     expect(solidCode()).toContain("import { TriangleRightFilled } from '@fos-icons/solid';");

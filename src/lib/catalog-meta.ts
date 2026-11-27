@@ -39,7 +39,7 @@ export const STYLE_META: Record<StyleId, { label: string; slug: string; descript
   regular: { label: 'Regular', slug: 'regular', description: '1.25px line on a 24px grid' },
   filled: { label: 'Filled', slug: 'filled', description: 'Silhouettes with transparent cutouts' },
   duocolor: { label: 'Duocolor', slug: 'duocolor', description: 'Primary structure with secondary details' },
-  duotone: { label: 'Duotone', slug: 'duotone', description: 'Line with a 16% interior tint' },
+  duotone: { label: 'Duotone', slug: 'duotone', description: 'Line with an adjustable interior tint' },
 };
 
 /** Old style slugs still accepted in links: Filled was called Solid until 2026-11-26. */

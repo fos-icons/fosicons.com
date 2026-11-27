@@ -62,8 +62,9 @@ async function buildIconSet(
       if (!source) throw new LocalizedError('error.missingArtwork', { style: STYLE_META[style].label, icon: icon.name });
       const needsDuoColors = (isDuo(style) && hasModifierRole(source)) || (style === 'duotone' && hasSecondaryRole(source));
       const keepArtworkColors = keepColors && !needsDuoColors;
+      const colors = exportColors(source, style, look, theme);
       const svg = buildSvg(source, {
-        ...(keepArtworkColors ? { primary: 'currentColor', keepColors: true } : exportColors(source, style, look, theme)),
+        ...(keepArtworkColors ? { primary: 'currentColor', keepColors: true, duotoneTint: colors.duotoneTint } : colors),
         size: look.size,
         strokeWidth: strokeAdjustable(style) ? stroke : undefined,
         sourceStroke: opticalStroke(artworkSize(look)),
