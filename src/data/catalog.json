@@ -29,7 +29,7 @@
     },
     {
       "name": "Communication",
-      "count": 111
+      "count": 112
     },
     {
       "name": "Data & commerce",
@@ -53,7 +53,7 @@
     },
     {
       "name": "Interfaces",
-      "count": 150
+      "count": 149
     },
     {
       "name": "Media & devices",
@@ -8641,7 +8641,16 @@
       ],
       "aliases": [
         "interface/edit-circle"
-      ]
+      ],
+      "composition": {
+        "base": "circle",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "edit-sparkles",
@@ -8679,7 +8688,16 @@
         "modify",
         "draft"
       ],
-      "aliases": []
+      "aliases": [],
+      "composition": {
+        "base": "square-rounded",
+        "modifiers": [
+          {
+            "name": "edit",
+            "position": "top-right"
+          }
+        ]
+      }
     },
     {
       "name": "edit-window",
@@ -17614,6 +17632,19 @@
       "aliases": []
     },
     {
+      "name": "phone-missed",
+      "category": "Communication",
+      "tags": [
+        "missed call",
+        "call log",
+        "unanswered",
+        "hang up",
+        "handset",
+        "notification"
+      ],
+      "aliases": []
+    },
+    {
       "name": "phone-out",
       "category": "Communication",
       "tags": [
@@ -20061,23 +20092,9 @@
         "poison",
         "halloween"
       ],
-      "aliases": []
-    },
-    {
-      "name": "skull-simple",
-      "category": "Interfaces",
-      "tags": [
-        "death",
-        "danger",
-        "dead",
-        "skeleton",
-        "pirate",
-        "poison",
-        "halloween"
-      ],
       "aliases": [
         "interface/skull",
-        "skull"
+        "skull-simple"
       ]
     },
     {
@@ -23746,6 +23763,7 @@
   ],
   "iconAliases": {
     "slash-divider": "slash",
-    "code-browser": "browser-code"
+    "code-browser": "browser-code",
+    "skull-simple": "skull"
   }
 }

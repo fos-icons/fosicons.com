@@ -32,9 +32,27 @@ function safeFrames(frames) {
 const pct = (f) => `${num(f * 100)}%`;
 const px = ([x, y]) => `${num(x)}px ${num(y)}px`;
 
-/** Split an icon's SVG into drawable parts, each with its absolute translate. */
+// A composed preset (scripts/compose_svg.py at 24px): the base drawing clipped
+// by the modifier's clearance, then the badge in its own nested <svg>.
+const PRESET_RE = /^<defs><clipPath id="[\w-]+" clipPathUnits="userSpaceOnUse"><path fill-rule="evenodd" d="([-\d.\sMLCQZ]+)" clip-rule="evenodd"\/><\/clipPath><\/defs><g clip-path="url\(#[\w-]+\)"><svg width="24" height="24" fill="none" viewBox="0 0 24 24">([\s\S]*?)<\/svg><\/g><svg width="(\d+(?:\.\d+)?)" height="(\d+(?:\.\d+)?)" x="(-?[\d.]+)" y="(-?[\d.]+)"[^>]*viewBox="0 0 (\d+(?:\.\d+)?) (\d+(?:\.\d+)?)">([\s\S]*?)<\/svg>$/;
+
+/**
+ * Split an icon's SVG into drawable parts, each with its absolute translate.
+ * Preset parts keep their clearance: base parts carry `clip` (the clip path
+ * data), and the badge's paths follow as separate parts placed at the badge.
+ */
 export function parseParts(svg, { split = false } = {}) {
   const body = svg.trim().replace(/^<svg\b[^>]*>/, '').replace(/<\/svg>$/, '');
+  const preset = PRESET_RE.exec(body);
+  if (preset) {
+    const [, clip, base, w, h, x, y, vw, vh, badge] = preset;
+    if (Number(w) !== Number(vw) || Number(h) !== Number(vh)) throw new Error('Unsupported artwork: scaled preset badge');
+    const wrap = (inner) => `<svg>${inner}</svg>`;
+    return [
+      ...parseParts(wrap(base), { split }).map((p) => ({ ...p, clip })),
+      ...parseParts(wrap(badge), { split }).map((p) => ({ ...p, translate: [p.translate[0] + Number(x), p.translate[1] + Number(y)] })),
+    ];
+  }
   let outer = [0, 0];
   let inner = body;
   const group = /^<g transform="translate\(([-\d.]+)(?:[ ,]([-\d.]+))?\)">([\s\S]*)<\/g>$/.exec(body);
@@ -218,9 +236,14 @@ export function animateSvg(name, svg, spec, extras = {}) {
   };
   const css = spec.motions.map((m, i) => compileMotion(m, sel, `${prefix}-m${i}`)).join('')
     + `@media (prefers-reduced-motion:reduce){.${prefix} *{animation:none!important}}`;
-  const body = parts.map(({ attrs, d, translate: [x, y] }, i) => {
+  const clip = parts.find((p) => p.clip)?.clip;
+  const defs = clip
+    ? `<defs><clipPath id="${prefix}-clip" clipPathUnits="userSpaceOnUse"><path fill-rule="evenodd" clip-rule="evenodd" d="${clip}"/></clipPath></defs>`
+    : '';
+  const body = parts.map(({ attrs, d, translate: [x, y], clip: clipped }, i) => {
     const t = x || y ? ` transform="translate(${num(x)} ${num(y)})"` : '';
-    return `<g class="${prefix}-${i}"><path pathLength="1" ${attrs} d="${d}"${t}/></g>`;
+    const c = clipped ? ` clip-path="url(#${prefix}-clip)"` : '';
+    return `<g class="${prefix}-${i}"${c}><path pathLength="1" ${attrs} d="${d}"${t}/></g>`;
   }).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" class="${prefix}"><style>${css}</style>${body}</svg>\n`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" class="${prefix}"><style>${css}</style>${defs}${body}</svg>\n`;
 }
