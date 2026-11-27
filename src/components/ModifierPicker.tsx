@@ -112,7 +112,7 @@ export function ModifierPicker({
           </button>
           {accessory}
         </div>
-        {sizeControl && <div className="mx-auto w-32 max-w-full">{sizeControl}</div>}
+        {sizeControl && <div className="mx-auto w-36 max-w-full">{sizeControl}</div>}
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <span id={cornerLabel} className="text-xs text-muted">{t('modifiers.corner')}</span>
           <div role="group" aria-labelledby={cornerLabel} className="grid grid-cols-2 gap-1">
