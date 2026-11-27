@@ -3,6 +3,8 @@ import { LIBRARY_URL } from '../lib/links';
 interface ChangelogEntry {
   id: string;
   date: string;
+  startDate?: string;
+  legacyIds?: readonly string[];
   title: string;
   summary: string;
   highlights?: readonly string[];
@@ -10,62 +12,30 @@ interface ChangelogEntry {
   source: string;
 }
 
-const WEBSITE_URL = 'https://github.com/fos-icons/fosicons.com';
-
 // Add new entries at the top. IDs are permanent links to individual updates.
 export const changelog: readonly ChangelogEntry[] = [
   {
-    id: 'character-search-and-redraws',
+    id: 'november-20-27-2026',
+    startDate: '2026-11-20',
     date: '2026-11-27',
-    title: 'Character search and four redrawn icons',
-    summary: 'Find icons by the characters they draw. Search for “letter” or “number”, or enter a symbol like ?, @, or # to find icons that contain it.',
-    highlights: [
-      'Redrew hammer, shovel, plane, and phone-missed.',
-      'Refined the letterforms in the Filled Bold and Bold Square icons.',
+    legacyIds: [
+      'character-search-and-redraws',
+      'new-animations-and-previews',
+      'fos-icons-for-ai-agents',
+      'five-optical-sizes',
+      'construction-and-legal-icons',
+      'new-drawings-and-redraws',
     ],
-    icons: ['hammer', 'shovel', 'plane', 'phone-missed'],
-    source: `${WEBSITE_URL}/pull/123`,
-  },
-  {
-    id: 'new-animations-and-previews',
-    date: '2026-11-26',
-    title: 'More animations and pixel-grid previews',
-    summary: 'The animated set gained new entries, including file-add, microphone-off, and settings-sliders. Icon pages now show artwork at its individual optical sizes, with a pixel-grid preview for closer inspection.',
+    title: 'New icons, redraws, and five optical sizes',
+    summary: 'The library now includes 16, 24, 32, 48, and 64px drawings. Each size has its own stroke width and grid so icons stay clear at small sizes and balanced at large ones.',
     highlights: [
-      'Added home-signal and text-square.',
-      'Refreshed 24 drawings, including wand-sparkles, copy, and folder-open.',
+      'Added 34 icons for formatting, hand gestures, lighting, scanning, and more, and refreshed 18 existing drawings.',
+      'Added construction and legal icons, including hard hats, cranes, handcuffs, and police badges. Refreshed the Nature & animals set.',
+      'Added home-signal and text-square, refreshed 24 drawings including wand-sparkles, copy, and folder-open, and expanded the animated set with file-add, microphone-off, and settings-sliders.',
+      'Redrew hammer, shovel, plane, and phone-missed, and refined the letterforms in the Filled Bold and Bold Square icons.',
+      'Regenerated the React, Vue, Svelte, Angular, and Flutter packages with updated artwork.',
     ],
-    icons: ['home-signal', 'text-square', 'wand-sparkles', 'settings-sliders'],
-    source: `${LIBRARY_URL}/pull/54`,
-  },
-  {
-    id: 'fos-icons-for-ai-agents',
-    date: '2026-11-25',
-    title: 'Fos Icons for AI agents',
-    summary: 'The Fos Icons MCP server lets coding agents search the catalog and get the right import. Agent Skills explain how to use Fos icons and migrate from Lucide, Heroicons, or React Icons.',
-    source: `${WEBSITE_URL}/pull/86`,
-  },
-  {
-    id: 'five-optical-sizes',
-    date: '2026-11-22',
-    title: 'Five optical sizes',
-    summary: 'Icons now come in 16, 24, 32, 48, and 64px drawings. Each size has its own stroke width and grid so the artwork stays clear at small sizes and balanced at large ones.',
-    source: `${LIBRARY_URL}/pull/29`,
-  },
-  {
-    id: 'construction-and-legal-icons',
-    date: '2026-11-21',
-    title: 'Construction, legal, and nature icons',
-    summary: 'Added construction and legal icons, from hard hats and cranes to handcuffs and police badges. The Nature & animals drawings were refreshed as a set.',
-    icons: ['hard-hat', 'crane', 'handcuffs', 'police-badge'],
-    source: `${LIBRARY_URL}/pull/26`,
-  },
-  {
-    id: 'new-drawings-and-redraws',
-    date: '2026-11-20',
-    title: '34 new icons and 18 redraws',
-    summary: 'Added new drawings for formatting, hand gestures, lightbulbs, scanning, and more. The batch also refreshed 18 existing icons.',
-    icons: ['activity-square', 'hand-wave', 'lightbulb-ai', 'wallet-money'],
-    source: `${LIBRARY_URL}/pull/22`,
+    icons: ['hammer', 'shovel', 'plane', 'phone-missed', 'home-signal', 'wand-sparkles', 'hard-hat', 'handcuffs'],
+    source: `${LIBRARY_URL}/compare/37c716c334616c1975e7d2cb11309dfcdc3e54b6...bbc932551308aa90d58c17379ef867fa90b51d58`,
   },
 ];

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
+import { useEffect, useEffectEvent, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { CopyIconName } from '../components/CopyIconName';
@@ -16,10 +16,10 @@ import {
   categoryPath, displayName, editorPath, iconPath, svgFilePath,
 } from '../lib/icon-pages';
 import { CONTAINER, useHeaderSlot } from '../lib/layout';
-import { DEFAULT_LOOK, exportColors, gridVars, isCustomized, strokeAdjustable, strokeOf } from '../lib/look';
+import { DEFAULT_LOOK, exportColors, gridVars, isCustomized, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
 import { buildSvg, flipSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareDuotoneSvg, prepareGridSvg } from '../lib/svg';
-import { useMediaQuery, useTheme } from '../lib/theme';
+import { useMediaQuery, useTheme, type ThemePreference } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
@@ -44,21 +44,57 @@ const openInPlace = (open: () => void) => (e: MouseEvent) => {
   open();
 };
 
-/** Sizes icons are usually set at, shown 1:1 so the drawing can be judged where it ships. */
-/**
- * Icon pages visited this session, for the header search's back and forward
- * arrows. Opening an icon any other way drops what was ahead, like browser
- * history; the arrows only move along the trail.
- */
-const trail: { names: string[]; at: number } = { names: [], at: -1 };
-function visitIcon(name: string, viaTrail: boolean) {
-  if (viaTrail) {
-    const i = trail.names.lastIndexOf(name);
-    if (i >= 0) { trail.at = i; return; }
+type PreviewSettings = {
+  look: Look;
+  flipHorizontal: boolean;
+  flipVertical: boolean;
+  badgeAdjust: number;
+};
+type IconLocationState = {
+  from?: unknown;
+  catalogBackTo?: unknown;
+  preview?: PreviewSettings;
+};
+type IconHistoryEntry = PreviewSettings & {
+  pathname: string;
+  search: string;
+  style: StyleId;
+  themePreference: ThemePreference;
+  name: string;
+  state: IconLocationState | null;
+};
+type IconHistory = { entries: IconHistoryEntry[]; index: number };
+const emptyHistory: IconHistory = { entries: [], index: -1 };
+let iconHistory = emptyHistory;
+const historyListeners = new Set<() => void>();
+const subscribeHistory = (listener: () => void) => {
+  historyListeners.add(listener);
+  return () => { historyListeners.delete(listener); };
+};
+const readHistory = () => iconHistory;
+const serverHistory = () => emptyHistory;
+let lastSliderEdit: { field: string; time: number } | null = null;
+
+function updateHistory(entries: IconHistoryEntry[], index: number) {
+  iconHistory = { entries, index };
+  historyListeners.forEach((listener) => listener());
+}
+
+function recordEdit(before: IconHistoryEntry, after: IconHistoryEntry, slider?: string) {
+  if (JSON.stringify(before) === JSON.stringify(after)) return;
+  const { entries, index } = iconHistory;
+  const time = Date.now();
+  // Keep consecutive slider input events together so an arrow undoes a drag in one step.
+  const extend = slider && lastSliderEdit?.field === slider && time - lastSliderEdit.time < 300;
+  lastSliderEdit = slider ? { field: slider, time } : null;
+  const past = entries.slice(0, extend ? index : index + 1);
+  if (!extend) {
+    // Use the actual state before the first edit, including hydrated preferences.
+    if (past.at(-1)?.pathname === before.pathname) past[past.length - 1] = before;
+    else past.push(before);
   }
-  if (trail.names[trail.at] === name) return;
-  trail.names = [...trail.names.slice(0, trail.at + 1), name];
-  trail.at = trail.names.length - 1;
+  const updated = [...past, after].slice(-100);
+  updateHistory(updated, updated.length - 1);
 }
 
 /**
@@ -67,10 +103,10 @@ function visitIcon(name: string, viaTrail: boolean) {
  * tags. Typing a modifier this icon supports ("add", "plus", "lock") offers to
  * put it on the icon; Enter does. Anything else searches the grid. Backspace in
  * the empty field removes the last tag: the modifier, then the icon, which goes
- * back to the icon list. Arrows step through the icons visited before.
+ * back to the icon list. Arrows step through visits and customization changes.
  */
 function HeaderIconSearch({
-  name, modifiers, modifier, onModifier, onRemove, prev, next,
+  name, modifiers, modifier, onModifier, onRemove, prev, next, onStep,
 }: {
   name: string;
   /** Modifiers this icon can take. */
@@ -79,8 +115,9 @@ function HeaderIconSearch({
   modifier: string | null;
   onModifier: (name: string | null) => void;
   onRemove: () => void;
-  prev: string | null;
-  next: string | null;
+  prev: IconHistoryEntry | undefined;
+  next: IconHistoryEntry | undefined;
+  onStep: (offset: -1 | 1) => void;
 }) {
   const { t, path, label } = useI18n();
   const navigate = useNavigate();
@@ -97,25 +134,33 @@ function HeaderIconSearch({
     if (suggestion) { onModifier(suggestion); setQuery(''); return; }
     navigate(path(`/?${new URLSearchParams({ q })}`));
   };
-  const step = (to: string | null) => to && navigate(path(iconPath(to)), { state: { trail: true } });
   const tag = 'inline-flex h-6 shrink-0 items-center gap-0.5 rounded-md bg-tag-soft pl-2 pr-0.5 text-xs font-medium text-tag';
   const tagX = 'inline-flex size-5 shrink-0 items-center justify-center rounded hover:bg-tag/10';
   return (
     <div className="flex w-full max-w-lg items-center gap-1">
       {/* < and >: the chevron turned to point back and forward. */}
-      {([['prev', prev, 'rotate-90', t('iconPage.previousIcon')], ['next', next, '-rotate-90', t('iconPage.nextIcon')]] as const).map(([key, to, turn, text]) => (
-        <button
-          key={key}
-          type="button"
-          disabled={!to}
-          onClick={() => step(to)}
-          aria-label={to ? `${text}: ${to}` : text}
-          data-tooltip={to ? `${text}: ${to}` : text}
-          className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-ink transition hover:bg-sunken disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
-        >
-          <UiIcon name="chevron-down" className={`size-4 ${turn}`} />
-        </button>
-      ))}
+      {([-1, 1] as const).map((offset) => {
+        const back = offset === -1;
+        const entry = back ? prev : next;
+        const isChange = entry?.name === name;
+        const text = isChange
+          ? t(back ? 'iconPage.previousChange' : 'iconPage.nextChange')
+          : t(back ? 'iconPage.previousIcon' : 'iconPage.nextIcon');
+        const label = entry && !isChange ? `${text}: ${entry.name}` : text;
+        return (
+          <button
+            key={offset}
+            type="button"
+            disabled={!entry}
+            onClick={() => onStep(offset)}
+            aria-label={label}
+            data-tooltip={label}
+            className="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-ink transition hover:bg-sunken disabled:cursor-default disabled:opacity-30 disabled:hover:bg-transparent"
+          >
+            <UiIcon name="chevron-down" className={`size-5 ${back ? 'rotate-90' : '-rotate-90'}`} />
+          </button>
+        );
+      })}
       <form role="search" onSubmit={submit} className="relative min-w-0 flex-1">
         <div className="flex h-9 w-full items-center gap-1.5 rounded-lg border border-line-strong bg-surface pl-3 pr-1.5 transition focus-within:border-brand focus-within:ring-4 focus-within:ring-brand/15">
           <UiIcon name="search" className="size-4 shrink-0 text-faint" />
@@ -379,7 +424,7 @@ export default function IconPage() {
   const [params, setParams] = useSearchParams();
   const location = useLocation();
   /** The icon list this page was opened from (the grid's Open icon page button), if any. */
-  const previous = location.state as { from?: unknown; catalogBackTo?: unknown } | null;
+  const previous = location.state as IconLocationState | null;
   const from = previous?.from;
   const backTo = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : null;
   const canAnimate = animatedNames.has(name);
@@ -387,28 +432,80 @@ export default function IconPage() {
   const preferredStyle = useIconStyle();
   const styleParam = params.get('style');
   const style = styleFromSlug(styleParam) ?? (styleParam === null ? preferredStyle : catalog.styles[0]);
-  const setStyle = (next: PreviewStyle) => {
-    if (next !== ANIMATED_SLUG) rememberIconStyle(next);
-    setParams((p) => {
-      const q = new URLSearchParams(p);
-      if (next === catalog.styles[0]) q.delete('style');
-      else q.set('style', next === ANIMATED_SLUG ? next : STYLE_META[next].slug);
-      if (next === ANIMATED_SLUG) { q.delete('modifier'); q.delete('corner'); }
-      return q;
-    }, { replace: true, preventScrollReset: true, state: location.state });
-  };
   const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES, chunksFor);
   const svg = sized[0][inspected?.name ?? name];
   const navigate = useNavigate();
   /** The header search slot shows from md up, like the docs page. */
   const wide = useMediaQuery('(min-width: 768px)');
   const headerSlot = useHeaderSlot();
-  const [look, changeLook] = useIconLook(PAGE_LOOK);
-  const [flipHorizontal, setFlipHorizontal] = useState(false);
-  const [flipVertical, setFlipVertical] = useState(false);
+  const [look, changeLook] = useIconLook(previous?.preview?.look ?? PAGE_LOOK);
+  const [flipHorizontal, setFlipHorizontal] = useState(previous?.preview?.flipHorizontal ?? false);
+  const [flipVertical, setFlipVertical] = useState(previous?.preview?.flipVertical ?? false);
   const flipButton = useRef<HTMLButtonElement>(null);
-  const { resolved: theme } = useTheme();
-  const [badgeAdjust, setBadgeAdjust] = useState(1);
+  const { resolved: theme, preference: themePreference, setPreference } = useTheme();
+  const [badgeAdjust, setBadgeAdjust] = useState(previous?.preview?.badgeAdjust ?? 1);
+  const history = useSyncExternalStore(subscribeHistory, readHistory, serverHistory);
+  const frame: IconHistoryEntry = {
+    name, pathname: location.pathname, search: location.search, state: previous, style,
+    look, flipHorizontal, flipVertical, badgeAdjust, themePreference,
+  };
+  const recordVisit = useEffectEvent(() => {
+    const { entries, index } = iconHistory;
+    if (!icon || entries[index]?.pathname === frame.pathname) return;
+    lastSliderEdit = null;
+    const updated = [...entries.slice(0, index + 1), frame].slice(-100);
+    updateHistory(updated, updated.length - 1);
+  });
+  useEffect(() => { recordVisit(); }, [location.pathname]);
+  const edit = (patch: Partial<IconHistoryEntry>, slider?: string) => {
+    recordEdit(frame, { ...frame, ...patch }, slider);
+  };
+  const changePreviewLook = (patch: Partial<Look>) => {
+    const slider = Object.keys(patch).find((key) => ['size', 'strokeWidth', 'duotoneTint'].includes(key));
+    edit({ look: { ...look, ...patch } }, slider);
+    changeLook(patch);
+  };
+  const changeOrientation = (horizontal: boolean, vertical: boolean) => {
+    edit({ flipHorizontal: horizontal, flipVertical: vertical });
+    setFlipHorizontal(horizontal);
+    setFlipVertical(vertical);
+  };
+  const stepHistory = (offset: -1 | 1) => {
+    const { entries, index } = iconHistory;
+    const entry = entries[index + offset];
+    if (!entry) return;
+    lastSliderEdit = null;
+    updateHistory(entries, index + offset);
+    const { look: restoredLook, flipHorizontal, flipVertical, badgeAdjust } = entry;
+    const { custom, modifierColor, duotoneTint, ...sharedLook } = restoredLook;
+    changeLook({
+      ...sharedLook,
+      ...(can('duoColors') ? { custom, duotoneTint } : {}),
+      ...(modifiersUnlocked ? { modifierColor } : {}),
+    });
+    setPreference(entry.themePreference);
+    rememberIconStyle(entry.style);
+    setFlipHorizontal(flipHorizontal);
+    setFlipVertical(flipVertical);
+    setBadgeAdjust(badgeAdjust);
+    const samePage = entry.pathname === location.pathname;
+    if (!samePage || entry.search !== location.search) {
+      navigate({ pathname: entry.pathname, search: entry.search }, {
+        replace: samePage,
+        preventScrollReset: samePage,
+        state: samePage ? location.state : { ...entry.state, preview: { look: restoredLook, flipHorizontal, flipVertical, badgeAdjust } },
+      });
+    }
+  };
+  const setStyle = (next: PreviewStyle) => {
+    const q = new URLSearchParams(params);
+    if (next === catalog.styles[0]) q.delete('style');
+    else q.set('style', next === ANIMATED_SLUG ? next : STYLE_META[next].slug);
+    if (next === ANIMATED_SLUG) { q.delete('modifier'); q.delete('corner'); }
+    edit({ search: q.size ? `?${q}` : '', style: next === ANIMATED_SLUG ? style : next });
+    if (next !== ANIMATED_SLUG) rememberIconStyle(next);
+    setParams(q, { replace: true, preventScrollReset: true, state: location.state });
+  };
   const badgeScale = modifierScaleFor(look.size, modifierPx(look.size, badgeAdjust));
   /** A modifier on the icon (?modifier=, ?corner=), from the header search or the editor; kept in shared links. */
   const modifierParam = params.get('modifier');
@@ -420,8 +517,15 @@ export default function IconPage() {
     const next = new URLSearchParams(params);
     if (choice) next.set('modifier', choice.name); else next.delete('modifier');
     if (choice?.corner) next.set('corner', choice.corner); else next.delete('corner');
-    if (preset) navigate({ pathname: path(iconPath(preset.base.name)), search: next.toString() });
-    else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
+    const search = next.size ? `?${next}` : '';
+    if (preset) {
+      const pathname = path(iconPath(preset.base.name));
+      edit({ name: preset.base.name, pathname, search });
+      navigate({ pathname, search }, { state: { ...previous, preview: { look, flipHorizontal, flipVertical, badgeAdjust } } });
+    } else {
+      edit({ search });
+      setParams(next, { replace: true, preventScrollReset: true, state: location.state });
+    }
   };
   const canModify = !animated && !!inspected && !inspected.composition && modifiersUnlocked;
   const modifiers = useModifiers(canModify);
@@ -445,8 +549,6 @@ export default function IconPage() {
   const shown = shownBySize[0];
   /** Drawn from the optical size nearest `px`; the 24px artwork until that size loads. */
   const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
-  const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
-  useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
   if (!icon) return <NotFoundPage />;
   const vars = gridVars(modifiersUnlocked ? look : { ...look, modifierColor: null }, animated ? FREE_ICON_STYLE : style, theme);
   const previewVars = {
@@ -465,9 +567,6 @@ export default function IconPage() {
       : source;
     return style === 'duotone' ? prepareDuotoneSvg(weighted) : weighted;
   };
-  const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
-  const prevIcon = trailAt > 0 ? trail.names[trailAt - 1] : null;
-  const nextIcon = trailAt >= 0 && trailAt < trail.names.length - 1 ? trail.names[trailAt + 1] : null;
 
   const title = displayName(icon.name);
   const narrative = i18n.config.code === DEFAULT_LOCALE
@@ -539,8 +638,9 @@ export default function IconPage() {
           modifier={applied?.name ?? null}
           onModifier={(m) => setBadge(m ? { name: m, corner: null } : null)}
           onRemove={leave}
-          prev={prevIcon}
-          next={nextIcon}
+          prev={history.entries[history.index - 1]}
+          next={history.entries[history.index + 1]}
+          onStep={stepHistory}
         />,
         headerSlot,
       )}
@@ -548,7 +648,7 @@ export default function IconPage() {
         backLink={{
           to: backTo ?? path('/'),
           // Returning through history also restores the catalog's scroll position.
-          onClick: backTo ? openInPlace(() => navigate(-1)) : undefined,
+          onClick: backTo && !previous?.preview ? openInPlace(() => navigate(-1)) : undefined,
         }}
         linkClassName="text-brand"
         items={[
@@ -581,16 +681,15 @@ export default function IconPage() {
             vars={previewVars as CSSProperties}
             color={vars['--glyph-color']}
             resetFlips={flipHorizontal || flipVertical ? () => {
-              setFlipHorizontal(false);
-              setFlipVertical(false);
+              changeOrientation(false, false);
               flipButton.current?.focus({ preventScroll: true });
             } : undefined}
             actions={(
               <div className="flex gap-1">
                 <IconButton ref={flipButton} icon="flip-horizontal" label={t('iconPage.flipHorizontal')} aria-pressed={flipHorizontal}
-                  onClick={() => setFlipHorizontal((flipped) => !flipped)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand" />
+                  onClick={() => changeOrientation(!flipHorizontal, flipVertical)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand" />
                 <IconButton icon="flip-horizontal" label={t('iconPage.flipVertical')} aria-pressed={flipVertical}
-                  onClick={() => setFlipVertical((flipped) => !flipped)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand [&>.glyph]:rotate-90" />
+                  onClick={() => changeOrientation(flipHorizontal, !flipVertical)} className="size-8 border border-line aria-pressed:bg-brand-soft aria-pressed:text-brand [&>.glyph]:rotate-90" />
               </div>
             )}
           />
@@ -639,13 +738,20 @@ export default function IconPage() {
               styles={catalog.styles}
               source={sized[PAGE_SIZES.indexOf(opticalSize(look.size))][iconName] ?? svg}
               look={look}
-              onLookChange={changeLook}
+              onLookChange={changePreviewLook}
+              onThemeChange={(next) => {
+                edit({ themePreference: next });
+                setPreference(next);
+              }}
               onStyleChange={setStyle}
               onClose={leave}
               headingId="icon-customize"
               badgeRequest={badge}
               onBadgeChange={setBadge}
-              modifierAdjustment={{ value: badgeAdjust, onChange: setBadgeAdjust }}
+              modifierAdjustment={{ value: badgeAdjust, onChange: (next) => {
+                edit({ badgeAdjust: next }, 'badgeAdjust');
+                setBadgeAdjust(next);
+              } }}
             />
           </section>
         )}

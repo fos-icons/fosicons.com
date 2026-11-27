@@ -198,7 +198,7 @@ export function RangeSlider({
   const [draft, setDraft] = useState<string | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const tooltipId = `${id}-help`;
-  const titleClass = 'compact-range-title inline-flex h-full max-w-[46%] shrink-0 items-center bg-brand-soft ps-2.5 pe-1.5 text-start font-display text-xs font-semibold leading-tight text-muted';
+  const titleClass = 'compact-range-title inline-flex h-full shrink-0 items-center bg-brand-soft ps-2.5 pe-1.5 text-start font-display text-xs font-semibold leading-tight text-muted';
   const position = (n: number) => {
     const ratio = max > min ? (Math.min(max, Math.max(min, n)) - min) / (max - min) : 0;
     return `calc(2px + (100% - 4px) * ${ratio})`;
@@ -223,7 +223,7 @@ export function RangeSlider({
             type="button"
             id={`${id}-title`}
             aria-describedby={tooltipId}
-            className={`${titleClass} cursor-help underline decoration-dotted underline-offset-2 hover:text-ink`}
+            className={`${titleClass} cursor-help whitespace-nowrap underline decoration-dotted underline-offset-2 hover:text-ink`}
             onPointerEnter={() => setShowTooltip(true)}
             onPointerLeave={() => setShowTooltip(false)}
             onFocus={() => setShowTooltip(true)}
@@ -238,7 +238,7 @@ export function RangeSlider({
           >
             {label}
           </button>
-        ) : <label htmlFor={id} className={`${titleClass} cursor-pointer`}>{label}</label>}
+        ) : <label htmlFor={id} className={`${titleClass} max-w-[46%] cursor-pointer`}>{label}</label>}
         <div className="compact-range-track relative h-full min-w-0 flex-1">
           <span aria-hidden="true" className="compact-range-fill" style={{ width: position(value) }} />
           {defaultValue !== undefined && (

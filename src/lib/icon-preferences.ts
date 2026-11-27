@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { styleFromSlug, type StyleId } from './catalog-meta';
 import { useClientValue } from './hydration';
-import { DEFAULT_LOOK, THEME_NAMES, type Look } from './look';
+import { DEFAULT_LOOK, THEME_NAMES, type ColorChoice, type Look } from './look';
 import { usePlan } from './plan';
 import { isHexColor } from './svg';
 
@@ -28,18 +28,26 @@ function subscribe(listener: () => void) {
 }
 
 const hex = (value: unknown) => typeof value === 'string' && isHexColor(value) ? value : null;
+function colorChoice(value: unknown): ColorChoice | undefined {
+  if (typeof value === 'string') return hex(value) ?? undefined;
+  if (!value || typeof value !== 'object' || !('paletteName' in value) || !('role' in value)) return undefined;
+  const { paletteName, role } = value;
+  if (typeof paletteName !== 'string' || !THEME_NAMES.includes(paletteName)) return undefined;
+  if (role === 'main' || role === 'primary' || role === 'secondary') return { paletteName, role };
+}
+
 function parse(raw: string): Preferences {
   let saved: Partial<Preferences> | null = null;
   try { saved = JSON.parse(raw); } catch { /* Missing or invalid saved settings. */ }
-  const primary = hex(saved?.custom?.primary);
-  const secondary = hex(saved?.custom?.secondary);
+  const primary = colorChoice(saved?.custom?.primary);
+  const secondary = colorChoice(saved?.custom?.secondary);
   const tint = saved?.duotoneTint;
   return {
     style: styleFromSlug(saved?.style ?? null) ?? 'regular',
     paletteName: saved?.paletteName && THEME_NAMES.includes(saved.paletteName) ? saved.paletteName : DEFAULT_LOOK.paletteName,
-    custom: primary && secondary ? { primary, secondary } : null,
-    mono: hex(saved?.mono),
-    modifierColor: hex(saved?.modifierColor),
+    custom: primary || secondary ? { primary, secondary } : null,
+    mono: colorChoice(saved?.mono) ?? null,
+    modifierColor: colorChoice(saved?.modifierColor) ?? null,
     duotoneTint: typeof tint === 'number' && Number.isInteger(tint) && tint >= 0 && tint <= 100 ? tint : null,
   };
 }
