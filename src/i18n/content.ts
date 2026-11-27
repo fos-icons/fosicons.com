@@ -20,7 +20,7 @@ export function docsPageFor(locale: string): LazyExoticComponent<ComponentType> 
   const key = hasTranslatedDocs(locale) ? locale : DEFAULT_LOCALE;
   if (!pages.has(key)) {
     const load = key === DEFAULT_LOCALE ? () => import('../pages/DocsPage') : translated[`./content/${key}/DocsPage.tsx`];
-    pages.set(key, lazyPage(load));
+    pages.set(key, lazyPage<ComponentType>(load));
   }
   return pages.get(key)!;
 }
