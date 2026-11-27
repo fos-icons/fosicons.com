@@ -1,23 +1,24 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { Inspector, SidePane, type InspectorProps } from '../components/Inspector';
+import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
-  Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection, useStyleVars,
+  Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,
 } from '../components/LandingParts';
 import { Button, ButtonAnchor, buttonClass, ButtonLink, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { LocalLink, useI18n } from '../i18n';
-import { useArtwork, useSizedArtwork } from '../lib/artwork';
-import { animatedNames, catalog, chunksFor, FREE_ICON_STYLE, iconsByName, loadAnimated, opticalSize, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
+import { useSizedArtwork } from '../lib/artwork';
+import { animatedNames, catalog, chunksFor, FREE_ICON_STYLE, iconsByName, loadAnimated, opticalSize, opticalStroke, relatedIcons, STYLE_META, styleFromSlug, type StyleId } from '../lib/catalog';
 import { copyText, downloadBlob, svgToPng } from '../lib/export';
 import {
   categoryPath, displayName, editorPath, iconPath, svgFilePath,
 } from '../lib/icon-pages';
-import { CONTAINER, useHeaderSlot, usePaneHost } from '../lib/layout';
-import { DEFAULT_LOOK, exportColors, type Look } from '../lib/look';
-import { buildSvg } from '../lib/svg';
-import { useMediaQuery } from '../lib/theme';
+import { CONTAINER, useHeaderSlot } from '../lib/layout';
+import { DEFAULT_LOOK, exportColors, gridVars, isCustomized, strokeAdjustable, strokeOf } from '../lib/look';
+import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
+import { buildSvg, hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg } from '../lib/svg';
+import { useMediaQuery, useTheme } from '../lib/theme';
 import { FIGMA_URL } from '../lib/links';
 import { angularSnippet, componentName, solidSnippet, svelteSnippet } from '../lib/react-snippet';
 import { useSlashToFocus } from '../hooks/useSlashToFocus';
@@ -25,7 +26,7 @@ import NotFoundPage from './NotFoundPage';
 import { UpgradePrompt } from '../components/UpgradePrompt';
 import { usePlan } from '../lib/plan';
 import { useModifiers } from '../components/ModifierPicker';
-import { composeSvg, CORNERS, editablePreset, initialCorner, modifiersFor, type Corner } from '../lib/modifiers';
+import { composeSvg, CORNERS, editablePreset, initialCorner, modifierPx, modifierScaleFor, modifiersFor, type Corner } from '../lib/modifiers';
 import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
 import { ANIMATED_SLUG } from '../lib/url-state';
@@ -181,22 +182,24 @@ const STAGE_PIXELS = 144;
 const PNG_PIXELS = 256;
 /**
  * The optical sizes the page draws from: each view uses the artwork drawn for
- * the size nearest its own, as the grid and downloads do. 24 comes first: it
- * is the library file that Copy SVG, Download SVG, and the code use.
+ * the size nearest its own, as the grid and downloads do. The canonical 24px
+ * artwork comes first so it is available as a fallback.
  */
-const PAGE_SIZES = [...new Set([catalog.grid, ...[...ACTUAL_SIZES.map((s) => s.px), STAGE_PIXELS, PNG_PIXELS].map(opticalSize)])];
+const PAGE_SIZES = [catalog.grid, ...catalog.sizes.filter((size) => size !== catalog.grid)];
+const PAGE_LOOK = { ...DEFAULT_LOOK, size: catalog.grid };
+const svgGrid = (svg?: string) => Number(svg?.match(/^\s*<svg\b[^>]*\bviewBox="0 0 (\d+) \1"/)?.[1] ?? 0);
 
 type PreviewStyle = StyleId | typeof ANIMATED_SLUG;
 
-function PreviewCanvas({ svg, label, stageRef, offscreen, children }: {
+function PreviewCanvas({ svg, label, stageRef, offscreen, children, color }: {
   svg?: string;
   label: string;
   stageRef?: Ref<HTMLDivElement>;
   offscreen?: boolean;
   children?: ReactNode;
+  color?: string;
 }) {
-  // Match the source artwork, including the 24px Animated SVG and any loading fallback.
-  const grid = Number(svg?.match(/^\s*<svg\b[^>]*\bviewBox="0 0 (\d+) \1"/)?.[1] ?? 0);
+  const grid = svgGrid(svg);
   return (
     <div className="icon-preview-canvas relative isolate flex flex-1 flex-col rounded-t-2xl">
       {grid > 0 && (
@@ -206,17 +209,18 @@ function PreviewCanvas({ svg, label, stageRef, offscreen, children }: {
       )}
       <div ref={stageRef} data-offscreen={offscreen || undefined}
         className="relative flex min-h-56 flex-1 items-center justify-center px-6 py-10 sm:min-h-72">
-        <Glyph svg={svg} idPrefix="stage-" className="icon-preview-glyph" label={label} />
+        <Glyph svg={svg} idPrefix="stage-" className="icon-preview-glyph" label={label} style={{ color }} />
         {children}
       </div>
     </div>
   );
 }
 
-function ActualSizePreviews({ svgAt, listRef, offscreen }: {
+function ActualSizePreviews({ svgAt, listRef, offscreen, color }: {
   svgAt: (px: number) => string | undefined;
   listRef?: React.Ref<HTMLUListElement>;
   offscreen?: boolean;
+  color?: string;
 }) {
   const { t } = useI18n();
   return (
@@ -226,7 +230,7 @@ function ActualSizePreviews({ svgAt, listRef, offscreen }: {
         className="flex items-end gap-3 self-end sm:self-auto sm:gap-4 xl:gap-7">
         {ACTUAL_SIZES.map(({ px, className }) => (
           <li key={px} className="flex flex-col items-center gap-1.5">
-            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} />
+            <Glyph svg={svgAt(px)} idPrefix={`a${px}-`} className={className} style={{ color }} />
             <span className="text-[11px] tabular-nums text-faint">{px}</span>
           </li>
         ))}
@@ -310,22 +314,25 @@ function AnimatedPreview({ name, svgAt, label }: {
 }
 
 /** The icon in the chosen style: a large view, the style switcher, and the icon at real sizes. */
-function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
+function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange, previewSize, vars, color }: {
   name: string;
   style: PreviewStyle;
   canAnimate: boolean;
   /** The icon drawn from the optical size nearest `px`. */
   svgAt: (px: number) => string | undefined;
   onStyleChange: (style: PreviewStyle) => void;
+  previewSize: number;
+  vars: CSSProperties;
+  color?: string;
 }) {
   const { t } = useI18n();
   const animated = style === ANIMATED_SLUG;
-  const vars = useStyleVars(animated ? FREE_ICON_STYLE : style);
   const label = t('iconPage.preview', { name: displayName(name), style: t(`style.${style}`) });
   const options = catalog.styles.map((s) => ({ value: s as PreviewStyle, label: t(`style.${s}`), badge: s === FREE_ICON_STYLE ? t('icons.free') : undefined }));
   if (canAnimate) options.push({ value: ANIMATED_SLUG, label: t('style.animated'), badge: undefined });
+  const sizing = previewSize === STAGE_PIXELS ? undefined : `min(${previewSize}px, var(--preview-max-edge))`;
   return (
-    <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={vars}>
+    <section aria-labelledby="icon-preview" className="icon-preview-panel relative isolate flex flex-col rounded-2xl border border-line bg-surface" style={{ ...vars, '--preview-edge': sizing } as CSSProperties}>
       <h2 id="icon-preview" className="sr-only">{t('iconPage.styles')}</h2>
       <div className="icon-preview-toolbar absolute inset-x-0 top-0 z-10 flex items-center px-3">
         <div className="min-w-0 flex-1">
@@ -341,8 +348,8 @@ function PreviewStage({ name, style, canAnimate, svgAt, onStyleChange }: {
       </div>
       {animated ? <AnimatedPreview key={name} name={name} svgAt={svgAt} label={label} /> : (
         <>
-          <PreviewCanvas svg={svgAt(STAGE_PIXELS)} label={label} />
-          <ActualSizePreviews svgAt={svgAt} />
+          <PreviewCanvas svg={svgAt(previewSize)} label={label} color={color} />
+          <ActualSizePreviews svgAt={svgAt} color={color} />
         </>
       )}
     </section>
@@ -372,9 +379,11 @@ export default function IconPage() {
   const backTo = typeof from === 'string' && from.startsWith('/') && !from.startsWith('//') ? from : null;
   const canAnimate = animatedNames.has(name);
   const animated = canAnimate && params.get('style') === ANIMATED_SLUG;
-  const style = styleFromSlug(params.get('style')) ?? catalog.styles[0];
+  const preferredStyle = useIconStyle();
+  const styleParam = params.get('style');
+  const style = styleFromSlug(styleParam) ?? (styleParam === null ? preferredStyle : catalog.styles[0]);
   const setStyle = (next: PreviewStyle) => {
-    if (next === ANIMATED_SLUG) setEditing(null);
+    if (next !== ANIMATED_SLUG) rememberIconStyle(next);
     setParams((p) => {
       const q = new URLSearchParams(p);
       if (next === catalog.styles[0]) q.delete('style');
@@ -386,14 +395,13 @@ export default function IconPage() {
   const sized = useSizedArtwork(style, inspected ? [inspected.name] : [], PAGE_SIZES, chunksFor);
   const svg = sized[0][inspected?.name ?? name];
   const navigate = useNavigate();
-  const desktop = useMediaQuery('(min-width: 1024px)');
   /** The header search slot shows from md up, like the docs page. */
   const wide = useMediaQuery('(min-width: 768px)');
   const headerSlot = useHeaderSlot();
-  const paneHost = usePaneHost();
-  /** The style open in the editor beside the page; null when it is closed. It stays open across icon pages. */
-  const [editing, setEditing] = useState<StyleId | null>(null);
-  const [look, setLook] = useState<Look>(DEFAULT_LOOK);
+  const [look, changeLook] = useIconLook(PAGE_LOOK);
+  const { resolved: theme } = useTheme();
+  const [badgeAdjust, setBadgeAdjust] = useState(1);
+  const badgeScale = modifierScaleFor(look.size, modifierPx(look.size, badgeAdjust));
   /** A modifier on the icon (?modifier=, ?corner=), from the header search or the editor; kept in shared links. */
   const modifierParam = params.get('modifier');
   const cornerParam = params.get('corner');
@@ -408,7 +416,7 @@ export default function IconPage() {
     else setParams(next, { replace: true, preventScrollReset: true, state: location.state });
   };
   const canModify = !animated && !!inspected && !inspected.composition && modifiersUnlocked;
-  const modifiers = useModifiers(canModify && (wide || !!badge));
+  const modifiers = useModifiers(canModify);
   const available = useMemo(() => (inspected && canModify && modifiers.list ? modifiersFor(inspected.name, modifiers.list) : []), [inspected, canModify, modifiers.list]);
   const applied = badge ? available.find((m) => m.name === badge.name) ?? null : null;
   /** The artwork the page shows, copies, and downloads: the icon, plus any modifier on it. */
@@ -419,23 +427,28 @@ export default function IconPage() {
     if (!source || !applied) return source;
     try {
       const corner = badge?.corner && applied.positions[badge.corner] ? badge.corner : initialCorner(applied);
-      return composeSvg(source, applied, corner, style);
+      return composeSvg(source, applied, corner, style, badgeScale, true);
     } catch {
       return source;
     }
-  }), [sized, iconName, applied, badge?.corner, style]);
+  }), [sized, iconName, applied, badge?.corner, style, badgeScale]);
   const shown = shownBySize[0];
   /** Drawn from the optical size nearest `px`; the 24px artwork until that size loads. */
   const shownAt = (px: number) => shownBySize[PAGE_SIZES.indexOf(opticalSize(px))] ?? shown;
   const viaTrail = !!(location.state as { trail?: boolean } | null)?.trail;
   useEffect(() => { if (icon) visitIcon(icon.name, viaTrail); }, [icon, viaTrail]);
-  const editSvg = useArtwork(editing ?? catalog.styles[0], inspected && editing ? [inspected.name] : [], chunksFor)[inspected?.name ?? name];
   if (!icon) return <NotFoundPage />;
-  const openEditor = (style: StyleId) => setEditing(style);
+  const previewSize = look.size === PAGE_LOOK.size ? STAGE_PIXELS : look.size;
+  const vars = gridVars(modifiersUnlocked ? look : { ...look, modifierColor: null }, animated ? FREE_ICON_STYLE : style, theme);
+  const previewVars = { ...vars, '--stroke-scale': undefined };
+  const previewAt = (px: number) => {
+    const source = shownAt(px);
+    if (!source || animated || !strokeAdjustable(style) || look.strokeWidth === null && look.size === PAGE_LOOK.size) return source;
+    return prepareGridSvg(source, String(strokeOf(look) / opticalStroke(svgGrid(source) || catalog.grid)));
+  };
   const trailAt = trail.names[trail.at] === icon.name ? trail.at : trail.names.lastIndexOf(icon.name);
   const prevIcon = trailAt > 0 ? trail.names[trailAt - 1] : null;
   const nextIcon = trailAt >= 0 && trailAt < trail.names.length - 1 ? trail.names[trailAt + 1] : null;
-  const closeEditor = () => setEditing(null);
 
   const title = displayName(icon.name);
   const category = label('category', icon.category, icon.category);
@@ -445,20 +458,31 @@ export default function IconPage() {
   const styleLabel = t(`style.${style}`);
   const premium = style !== FREE_ICON_STYLE && !can('styles');
   const fileBase = `${icon.name}${applied ? `-${applied.name}` : ''}-${STYLE_META[style].slug}`;
-  const editorLink = `${editorPath(icon.name)}${style === catalog.styles[0] ? '' : `&style=${STYLE_META[style].slug}`}`;
-
+  const custom = look.size !== PAGE_LOOK.size || isCustomized({ ...look, size: DEFAULT_LOOK.size });
+  const needsDuoColors = shown && (isDuo(style) && hasModifierRole(shown) || style === 'duotone' && hasSecondaryRole(shown));
+  const resolveSvg = custom || Boolean(applied) || Boolean(needsDuoColors);
+  const build = (size: number) => {
+    const source = shownAt(size);
+    if (!source) return null;
+    return buildSvg(source, {
+      ...exportColors(source, style, look, custom ? theme : 'light', modifiersUnlocked ? look.modifierColor : null),
+      size,
+      strokeWidth: custom && strokeAdjustable(style) ? strokeOf(look) : undefined,
+      sourceStroke: opticalStroke(svgGrid(source) || catalog.grid),
+    });
+  };
   const copySvg = () => {
     if (premium || !shown) return;
-    copyText(shown).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
+    const file = resolveSvg ? build(look.size) : shown;
+    if (!file) return;
+    copyText(file).then(() => toast('success', t('iconPage.copied', { what: 'SVG' })), (e) => toast('error', errorText(e, i18n, 'error.copy')));
   };
   const downloadPng = () => {
     if (premium) return;
-    const source = shownAt(PNG_PIXELS);
-    if (!source) return;
-    // Light-theme ink: a PNG usually lands on a white slide or doc, whatever theme the site is in.
-    // Drawn from the nearest optical size (64px), at that size's own stroke.
-    const file = buildSvg(source, { ...exportColors(source, style, DEFAULT_LOOK, 'light'), size: PNG_PIXELS });
-    svgToPng(file, PNG_PIXELS).then(
+    const size = look.size === PAGE_LOOK.size ? PNG_PIXELS : look.size;
+    const file = build(size);
+    if (!file) return;
+    svgToPng(file, size).then(
       (png) => downloadBlob(png, `${fileBase}.png`),
       (e) => toast('error', errorText(e, i18n, 'error.png')),
     );
@@ -498,8 +522,8 @@ export default function IconPage() {
         />,
         headerSlot,
       )}
-      {/* Phones have no header search: a plain link back. */}
-      <div className={inHeader ? 'hidden' : undefined}>
+      {/* Catalog visits have an explicit return link on every screen. */}
+      <div className={inHeader && !backTo ? 'hidden' : undefined}>
       {backTo ? (
         // A plain Link: backTo is already a full path. Going back in history also restores the list's scroll.
         <Link to={backTo} onClick={openInPlace(() => navigate(-1))} className={`${buttonClass({ variant: 'quiet', size: 'sm' })} ${backLink}`}>
@@ -527,8 +551,8 @@ export default function IconPage() {
           <KeywordTags icon={icon} className="mt-4" />
         </div>
 
-        <div className="min-w-0 lg:col-start-2 lg:row-span-2 lg:row-start-1">
-          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={shownAt} onStyleChange={setStyle} />
+        <div className="min-w-0 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">
+          <PreviewStage name={icon.name} style={animated ? ANIMATED_SLUG : style} canAnimate={canAnimate} svgAt={previewAt} onStyleChange={setStyle} previewSize={previewSize} vars={previewVars as CSSProperties} color={vars['--glyph-color']} />
         </div>
 
         <div className="lg:col-start-1 lg:row-start-2">
@@ -542,9 +566,11 @@ export default function IconPage() {
           ) : (
           <>
           <div className="flex flex-wrap gap-2">
-            {premium || applied ? (
-              // With a modifier, the file is composed here rather than the library's published one.
-              <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => !premium && shown && downloadBlob(svgBlob(shown), `${fileBase}.svg`)}>
+            {premium || resolveSvg ? (
+              <Button variant="primary" size="lg" icon="download" disabled={premium || !shown} onClick={() => {
+                const file = premium ? null : build(look.size);
+                if (file) downloadBlob(svgBlob(file), `${fileBase}.svg`);
+              }}>
                 {t('iconPage.download', { style: styleLabel })}
               </Button>
             ) : (
@@ -558,21 +584,29 @@ export default function IconPage() {
             </div>
           </div>
           {premium && <UpgradePrompt feature="styles" fallback={t('export.premiumSoon')} className="mt-2 text-sm text-muted" />}
-          {badge && !modifiersUnlocked && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
-          <LocalLink
-            to={editorLink}
-            onClick={openInPlace(() => openEditor(style))}
-            className="mt-4 inline-flex items-center gap-1.5 rounded text-sm font-medium text-brand underline-offset-2 hover:underline"
-          >
-            <UiIcon name="palette" className="size-4" /> {t('iconPage.customize')}
-          </LocalLink>
+          {badge && !modifiersUnlocked && inspected?.composition && <UpgradePrompt feature="modifiers" className="mt-2 text-sm text-muted" />}
+          {inspected && (
+            <section aria-label={t('iconPage.customize')} className="mt-6 [&>div>section]:px-0">
+              <Inspector
+                key={icon.name}
+                inlineControls
+                icon={inspected}
+                style={style}
+                styles={catalog.styles}
+                source={sized[PAGE_SIZES.indexOf(opticalSize(look.size))][iconName] ?? svg}
+                look={look}
+                onLookChange={changeLook}
+                onStyleChange={setStyle}
+                onClose={leave}
+                headingId="icon-customize"
+                badgeRequest={badge}
+                onBadgeChange={setBadge}
+                modifierAdjustment={{ value: badgeAdjust, onChange: setBadgeAdjust }}
+              />
+            </section>
+          )}
           </>
           )}
-
-          <dl className="mt-8 grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 border-t border-line pt-6 text-sm">
-            <dt className="text-muted">{t('iconPage.category')}</dt>
-            <dd><LocalLink to={categoryPath(icon.category)} className="text-brand underline-offset-2 hover:underline">{category}</LocalLink></dd>
-          </dl>
         </div>
       </div>
 
@@ -623,33 +657,6 @@ export default function IconPage() {
         )}
       </div>
 
-      {editing && inspected && (
-        <SidePane
-          desktop={desktop}
-          host={paneHost}
-          collapsed={false}
-          onCollapsedChange={(collapsed) => { if (collapsed) closeEditor(); }}
-          sheetOpen
-          onDismiss={closeEditor}
-          headingId="pane-heading"
-          focusKey={`${icon.name}:${editing}`}
-        >
-          <Inspector
-            key={icon.name}
-            icon={inspected}
-            style={editing}
-            styles={catalog.styles}
-            source={editSvg}
-            look={look}
-            onLookChange={(patch) => setLook((l) => ({ ...l, ...patch }))}
-            onStyleChange={setEditing}
-            onClose={closeEditor}
-            headingId="pane-heading"
-            badgeRequest={badge}
-            onBadgeChange={setBadge}
-          />
-        </SidePane>
-      )}
     </div>
   );
 }

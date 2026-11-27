@@ -22,12 +22,13 @@ import { compareBrowseCategories, orderBrowseIcons } from '../lib/browse-order';
 import { iconPath } from '../lib/icon-pages';
 import { CONTAINER, usePaneHost } from '../lib/layout';
 import { PLATFORM_NAMES } from '../lib/links';
-import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable, type Look } from '../lib/look';
+import { artworkSize, DEFAULT_LOOK, gridVars, strokeAdjustable } from '../lib/look';
 import { editablePreset, modifiersFor } from '../lib/modifiers';
 import { hasConnector, parseModifierPhrase } from '../lib/phrase';
 import { createIndex, search, suggest } from '../lib/search';
 import { prepareGridSvg, retimeAnimatedSvg } from '../lib/svg';
 import { useClientValue } from '../lib/hydration';
+import { rememberIconStyle, useIconLook, useIconStyle } from '../lib/icon-preferences';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import {
   ANIMATED_SLUG, parseState, type CatalogState, type UrlStateConfig, type View,
@@ -158,11 +159,12 @@ export function IconsPage() {
   const plan = usePlan();
   const location = useLocation();
   const navigate = useNavigate();
-  const state = useMemo(() => parseState(location.search, config, catalogRouteFilters(location)), [location]);
+  const preferredStyle = useIconStyle();
+  const state = useMemo(() => parseState(location.search, config, catalogRouteFilters(location), preferredStyle), [location, preferredStyle]);
   const [svgs, setSvgs] = useState<Record<string, Record<string, string>>>({});
   const [artworkErrors, setArtworkErrors] = useState<Record<string, string | undefined>>({});
   const [attempt, setAttempt] = useState(0);
-  const [look, setLook] = useState<Look>(DEFAULT_LOOK);
+  const [look, changeLook] = useIconLook(DEFAULT_LOOK);
   const savedCollapsed = useClientValue(readCollapsed, false);
   const [chosenCollapsed, setCollapsedState] = useState<boolean | null>(null);
   const collapsed = chosenCollapsed ?? savedCollapsed;
@@ -205,7 +207,10 @@ export function IconsPage() {
     setCollapsedState(next);
     try { localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0'); } catch { /* per-viewer convenience only */ }
   }, []);
-  const changeLook = useCallback((patch: Partial<Look>) => setLook((l) => ({ ...l, ...patch })), []);
+  const changeStyle = (style: View) => {
+    if (style !== 'animated' && style !== 'brands' && !brandsOnly) rememberIconStyle(style);
+    update({ style });
+  };
 
 
   // Core artwork loads in chunks as icons near the viewport (see IconGrid's
@@ -415,7 +420,8 @@ export function IconsPage() {
       : []),
   ];
   const viewValue: View = animatedView ? 'animated' : drawStyle;
-  const pageStyle = animatedView ? ANIMATED_SLUG : drawStyle === catalog.styles[0] ? null : STYLE_META[drawStyle].slug;
+  const pageStyle = animatedView ? ANIMATED_SLUG : drawStyle === catalog.styles[0] && preferredStyle === drawStyle ? null : STYLE_META[drawStyle].slug;
+  const catalogBackTo = path(catalogEditorLocation({ ...state, icon: null, modifier: null, corner: null }).href);
   const tips = brandsView
     ? [t('icons.searchBrands')]
     : [t(desktop ? 'icons.tip.search' : 'icons.tip.searchShort', { count: ICONS_ROUNDED }), ...(desktop ? DESKTOP_TIPS : MOBILE_TIPS).map((k) => t(k))];
@@ -460,7 +466,7 @@ export function IconsPage() {
             fill
             label={t('icons.styleSwitcher')}
             value={viewValue}
-            onChange={(style) => update({ style })}
+            onChange={changeStyle}
             options={viewOptions}
           />
           {(!brandsView || brandEntries.length > 0) && (
@@ -577,7 +583,7 @@ export function IconsPage() {
         expandTo={selected && !selectedBrand && !multiActive
           ? `${iconPath(selected.name)}${pageStyle ? `?style=${pageStyle}` : ''}`
           : undefined}
-        expandBackTo={path(catalogEditorLocation({ ...state, icon: null, modifier: null, corner: null }).href)}
+        expandBackTo={catalogBackTo}
       >
         {multiActive ? (
           <SelectionPanel
@@ -602,7 +608,8 @@ export function IconsPage() {
             source={styleSvgs?.[inspected.name]}
             look={look}
             onLookChange={changeLook}
-            onStyleChange={(style) => update({ style })}
+            onStyleChange={changeStyle}
+            catalogBackTo={catalogBackTo}
             onClose={close}
             headingId="pane-heading"
             premiumView={animatedView && !selectedBrand}
@@ -617,7 +624,7 @@ export function IconsPage() {
           <CustomizePanel
             look={look}
             onChange={changeLook}
-            onReset={() => setLook(DEFAULT_LOOK)}
+            onReset={() => changeLook(DEFAULT_LOOK)}
             onClose={desktop ? undefined : () => setCustomizeOpen(false)}
             animated={animatedView}
             animatedSvgs={animatedView ? coreSvgs : null}

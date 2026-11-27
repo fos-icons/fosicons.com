@@ -48,6 +48,13 @@ export interface InspectorProps {
   onBadgeChange?: (choice: { name: string; corner: Corner } | null) => void;
   /** Animated icons: Regular artwork whose exports need the `animated` feature (Advanced). */
   premiumView?: boolean;
+  /** The icon page already supplies the preview and export actions. */
+  inlineControls?: boolean;
+  /** Shared with the icon page so its preview uses the modifier size shown here. */
+  modifierAdjustment?: { value: number; onChange: (adjust: number) => void };
+  /** Link back to the originating catalog view from the dedicated icon page. */
+  catalogBackTo?: string;
+
 }
 
 
@@ -56,9 +63,10 @@ const THUMB_MAX = 64;
 
 export function Inspector({
   icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
-  badgeRequest = null, onBadgeChange, premiumView = false,
+  badgeRequest = null, onBadgeChange, premiumView = false, inlineControls = false, modifierAdjustment, catalogBackTo,
 }: InspectorProps) {
   const toast = useToast();
+  const location = useLocation();
   const i18n = useI18n();
   const { t, rich, label, path } = i18n;
   const { resolved: theme } = useTheme();
@@ -96,7 +104,9 @@ export function Inspector({
    * as a ratio of the linked size (1 = linked), so it carries across icon sizes
    * and modifiers.
    */
-  const [badgeAdjust, setBadgeAdjust] = useState(1);
+  const [localAdjustment, setLocalAdjustment] = useState(1);
+  const badgeAdjust = modifierAdjustment?.value ?? localAdjustment;
+  const setBadgeAdjust = modifierAdjustment?.onChange ?? setLocalAdjustment;
   const linkedBadgePx = autoModifierPx(size);
   const badgeRange = modifierPxRange(size);
   const badgeSize = modifierPx(size, badgeAdjust);
@@ -131,7 +141,7 @@ export function Inspector({
   };
 
   const preview = useMemo(() => {
-    if (!source) return null;
+    if (!source || inlineControls) return null;
     try {
       return {
         actual: buildSvg(source, { ...colors, size: thumbSize, idPrefix: `${uid}-a`, strokeWidth, sourceStroke }),
@@ -139,7 +149,7 @@ export function Inspector({
     } catch {
       return null;
     }
-  }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke]);
+  }, [source, colors, thumbSize, uid, strokeWidth, sourceStroke, inlineControls]);
 
   const slug = premiumView ? ANIMATED_SLUG : STYLE_META[style].slug;
   const baseName = badge ? `${icon.name}-${badge.modifier.name}-${badge.corner}-${slug}` : `${icon.name}-${slug}`;
@@ -213,12 +223,26 @@ export function Inspector({
     }
     : null;
 
+  const colorControls = (
+    <CustomizeControls
+      look={look}
+      onChange={onLookChange}
+      showSize={false}
+      showStroke={false}
+      style={style}
+      kind={kind}
+      footnote={style === 'duocolor' && colors.secondary === undefined
+        ? <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
+        : undefined}
+    />
+  );
   return (
     <div className="flex min-h-full flex-col">
       {/*
         The preview and icon name stay pinned while the controls scroll.
         The 72px square draws the icon at actual size up to THUMB_MAX.
       */}
+      {!inlineControls && (
       <div className="sticky top-0 z-10 flex items-center gap-3 bg-surface px-5 py-4 [dialog_&]:top-4">
         <figure className="group checkerboard relative flex size-18 shrink-0 items-center justify-center rounded-xl border border-line">
           {preview ? (
@@ -246,12 +270,17 @@ export function Inspector({
           <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
-            {kind === 'core' && <> · <LocalLink to={`${iconPath(icon.name)}${premiumView ? `?style=${ANIMATED_SLUG}` : ''}`} replace={false} className="text-brand underline-offset-2 hover:underline">{t('inspector.iconPage')}</LocalLink></>}
+            {kind === 'core' && <> · <LocalLink
+              to={`${iconPath(icon.name)}?style=${premiumView ? ANIMATED_SLUG : STYLE_META[style].slug}`}
+              state={{ from: `${location.pathname}${location.search}`, catalogBackTo }}
+              className="text-brand underline-offset-2 hover:underline"
+            >{t('inspector.iconPage')}</LocalLink></>}
           </p>
         </div>
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="sheet-close -mr-2 self-start" />
       </div>
-      {kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
+      )}
+      {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
 
       <SizeControl look={look} onChange={onLookChange} />
       {/* Stroke sits with size: Auto stroke follows the size, so the two are adjusted together. */}
@@ -262,6 +291,7 @@ export function Inspector({
         kind={kind}
       />
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
+      {inlineControls && colorControls}
 
       {kind === 'core' && (
         <Section title={t('inspector.modifier')}>
@@ -347,7 +377,7 @@ export function Inspector({
       )}
 
       {/* On desktop the grid's own style switcher sits beside the pane; the phone sheet covers it. */}
-      {!desktop && (
+      {!inlineControls && !desktop && (
         <Section title={t('inspector.style')}>
           <Segmented
             label={t('icons.styleSwitcher')}
@@ -359,21 +389,8 @@ export function Inspector({
         </Section>
       )}
 
-      <CustomizeControls
-        look={look}
-        onChange={onLookChange}
-        showSize={false}
-        showStroke={false}
-        style={style}
-        kind={kind}
-        footnote={(
-          <>
-            {style === 'duocolor' && colors.secondary === undefined && (
-              <p className="text-xs leading-relaxed text-faint">{t('inspector.singleContour')}</p>
-            )}
-          </>
-        )}
-      />
+      {!inlineControls && <>
+      {colorControls}
 
       <RailActions>{(expand) => (
         <>
@@ -442,6 +459,7 @@ export function Inspector({
         </Section>
       )}
       <div className="h-4" />
+      </>}
     </div>
   );
 }
