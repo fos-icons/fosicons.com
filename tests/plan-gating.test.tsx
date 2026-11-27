@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -123,6 +123,34 @@ describe('animated icon pages', () => {
 });
 
 describe('inline icon page settings', () => {
+  it('updates Duocolor opacity without changing the other paint role', async () => {
+    renderAs('pro', '/icons/alert-circle?style=duocolor');
+    const settings = screen.getByRole('region', { name: 'Customize size, stroke, and color' });
+    const primary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Primary' });
+    const secondary = within(settings).getByRole<HTMLInputElement>('textbox', { name: 'Secondary' });
+    const accent = secondary.value;
+    const preview = await screen.findByRole('img', { name: 'Alert Circle icon, Duocolor style' });
+    const previewColor = () => preview.closest<HTMLElement>('[style*="--fos-primary"]')?.style.getPropertyValue('--fos-primary');
+
+    const swatch = within(settings).getByRole('button', { name: 'Primary picker' });
+    const popover = document.getElementById(swatch.getAttribute('popovertarget') ?? '');
+    expect(popover).not.toBeNull();
+    // JSDOM does not open a native popover when its trigger is clicked.
+    popover?.removeAttribute('popover');
+    const picker = within(settings).getByRole('group', { name: 'Primary picker' });
+    const opacity = within(picker).getByRole('slider', { name: 'Alpha' });
+    expect(opacity.getAttribute('aria-valuenow')).toBe('100');
+    fireEvent.keyDown(opacity, { key: 'ArrowLeft', keyCode: 37 });
+    await waitFor(() => expect(primary.value).toBe('#245B9EF2'));
+    expect(secondary.value).toBe(accent);
+    expect(previewColor()).toBe('#245B9EF2');
+
+    fireEvent.change(primary, { target: { value: '#245B9E00' } });
+    expect(opacity.getAttribute('aria-valuenow')).toBe('0');
+    expect(previewColor()).toBe('#245B9E00');
+    expect(secondary.value).toBe(accent);
+  });
+
   it('remembers the selected style and color pair, while honoring an explicit style link', async () => {
     const user = userEvent.setup();
     renderAs('pro', '/icons/image');
