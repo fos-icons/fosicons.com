@@ -27,7 +27,7 @@ function BrandLink({ href, brand, label, newTab }: { href: string; brand: string
       target="_blank"
       rel="noreferrer"
       data-tooltip={label}
-      className="inline-flex size-8 items-center justify-center rounded-md text-muted transition hover:bg-sunken hover:text-ink"
+      className="button-corners inline-flex size-8 items-center justify-center text-muted transition hover:bg-sunken hover:text-ink"
     >
       <span aria-hidden="true" className="brand-mark size-[18px]" style={{ '--brand-mark': `url(/brands/${brand}-filled.svg)` } as CSSProperties} />
       <span className="sr-only">{label}{newTab}</span>
@@ -70,7 +70,7 @@ export function Layout() {
   // Catalog views keep the full-height inspector beside the header.
   const paneBesideHeader = editor;
   const header = (
-    <header className={`col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
+    <header className={`@container/site-header relative z-30 col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
       <div className={`${editor ? CATALOG_CONTAINER : CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
         <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
           <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />

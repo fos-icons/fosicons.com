@@ -29,7 +29,11 @@ export async function svgToJpg(svg: string, pixels: number): Promise<Blob> {
   return svgToImage(svg, pixels, 'image/jpeg', '#FFFFFF');
 }
 
-async function svgToImage(svg: string, pixels: number, type: 'image/png' | 'image/jpeg', background?: string): Promise<Blob> {
+export async function svgToWebp(svg: string, pixels: number): Promise<Blob> {
+  return svgToImage(svg, pixels, 'image/webp');
+}
+
+async function svgToImage(svg: string, pixels: number, type: 'image/png' | 'image/jpeg' | 'image/webp', background?: string): Promise<Blob> {
   const url = URL.createObjectURL(svgBlob(svg));
   try {
     const image = new Image();
@@ -49,9 +53,18 @@ async function svgToImage(svg: string, pixels: number, type: 'image/png' | 'imag
       context.fillRect(0, 0, pixels, pixels);
     }
     context.drawImage(image, 0, 0, pixels, pixels);
-    return await new Promise<Blob>((resolve, reject) =>
-      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new LocalizedError('error.png'))), type, 0.92),
-    );
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        // Browsers can return PNG when the requested encoder is unavailable.
+        if (type === 'image/webp' && blob?.type !== type) {
+          reject(new LocalizedError('error.webp'));
+        } else if (blob) {
+          resolve(blob);
+        } else {
+          reject(new LocalizedError('error.png'));
+        }
+      }, type, 0.92);
+    });
   } finally {
     URL.revokeObjectURL(url);
   }

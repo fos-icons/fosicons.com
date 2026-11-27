@@ -17,6 +17,7 @@ import { authoredDuotoneTint, BASE_STROKE, buildSvg, hasModifierRole, isDuo } fr
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
 import { useMediaQuery, useTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
+import { CopyIconName } from './CopyIconName';
 import { ExportPanel } from './ExportPanel';
 import { ModifierPicker, useModifiers, type ModifierChoice } from './ModifierPicker';
 import { UpgradePrompt } from './UpgradePrompt';
@@ -270,7 +271,10 @@ export function Inspector({
           </figcaption>
         </figure>
         <div className="min-w-0 flex-1">
-          <h2 id={headingId} tabIndex={-1} className="truncate text-xl font-semibold outline-none">{icon.name}</h2>
+          <div className="flex items-center gap-1">
+            <h2 id={headingId} tabIndex={-1} className="min-w-0 truncate text-xl font-semibold outline-none">{icon.name}</h2>
+            <CopyIconName key={icon.name} name={icon.name} compact />
+          </div>
           <p className="mt-0.5 truncate text-sm text-muted">
             {label('category', icon.category, icon.category)}
             {kind === 'core' && <> · <LocalLink
@@ -283,11 +287,11 @@ export function Inspector({
         <IconButton icon="x" label={t('inspector.clear')} onClick={onClose} className="sheet-close -mr-2 self-start" />
       </div>
       )}
-      {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" className="px-5 pb-4" />}
+      {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" tone="neutral" className="px-5 pb-4" />}
 
       <div className={inlineControls ? 'grid @min-[27rem]:grid-cols-2 @min-[27rem]:gap-6 [&>section]:min-w-0 [&>section]:px-0' : 'contents'}>
-        <SizeControl look={look} onChange={onLookChange} compact={inlineControls} />
-        <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} compact={inlineControls} />
+        <SizeControl look={look} onChange={onLookChange} defaultSize={inlineControls ? catalog.grid : undefined} />
+        <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} />
       </div>
       {premiumView && <SpeedControl look={look} onChange={onLookChange} />}
       {inlineControls && colorControls}
@@ -327,17 +331,6 @@ export function Inspector({
                 inlineSize={inlineControls}
                 sizeControl={badge && (
                   <div>
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span className="text-muted">{t('inspector.modifierSize')}</span>
-                      <span className="flex items-center gap-2">
-                        {badgeAdjust !== 1 && (
-                          <button type="button" onClick={() => setBadgeAdjust(1)} className="font-medium text-brand hover:underline">
-                            {t('inspector.modifierSizeReset')}
-                          </button>
-                        )}
-                        <span className="font-mono tabular-nums text-ink">{pxText(badgeSize)}</span>
-                      </span>
-                    </div>
                     <RangeSlider
                       id={`${uid}-badge-size`}
                       label={t('inspector.modifierSize')}
@@ -345,11 +338,16 @@ export function Inspector({
                       max={badgeRange.max}
                       step={1}
                       value={badgeSize}
+                      defaultValue={linkedBadgePx}
+                      unit={t('customize.px')}
                       valueText={t('inspector.modifierSizeValue', { size: pxText(badgeSize), icon: pxText(size) })}
                       onChange={(px) => setBadgeAdjust(px === linkedBadgePx ? 1 : px / linkedBadgePx)}
-                      marks={[...new Set([badgeRange.min, linkedBadgePx, badgeRange.max])]}
-                      format={pxText}
                     />
+                    {badgeAdjust !== 1 && (
+                      <button type="button" onClick={() => setBadgeAdjust(1)} className="mt-1 text-xs font-medium text-brand hover:underline">
+                        {t('inspector.modifierSizeReset')}
+                      </button>
+                    )}
                   </div>
                 )}
               />
@@ -573,6 +571,7 @@ export function SidePane({
         <div className={`flex h-[57px] shrink-0 items-center border-b border-line px-2.5 ${collapsed ? 'justify-center' : ''}`}>
           <IconButton
             icon="layout-sidebar-right"
+            hoverIcon={collapsed ? undefined : "layout-sidebar-right-close"}
             label={collapsed ? t('pane.expand') : t('pane.collapse')}
             aria-expanded={!collapsed}
             aria-controls="side-pane-body"
@@ -586,7 +585,7 @@ export function SidePane({
               state={{ from: `${pathname}${search}`, catalogBackTo: expandBackTo }}
               aria-label={t('pane.openPage')}
               data-tooltip={t('pane.openPage')}
-              className="ml-auto inline-flex size-9 items-center justify-center rounded-lg text-ink transition hover:bg-sunken"
+              className="button-corners ml-auto inline-flex size-9 items-center justify-center text-ink transition hover:bg-sunken"
             >
               {/* Mirrored so the arrows point to the top-right and bottom-left corners. */}
               <UiIcon name="expand" className="size-5 -scale-x-100" />

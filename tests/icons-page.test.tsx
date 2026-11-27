@@ -86,7 +86,7 @@ describe('Icons page', () => {
     const grid = screen.getByRole('list', { name: 'Animated icons' });
     await user.click(within(grid).getByRole('button', { name: /^lock$/ }));
     const pane = await screen.findByRole('complementary', { name: 'Icon panel' });
-    for (const name of ['Open icon page', 'Icon page']) {
+    for (const name of ['Open icon page', 'Open page']) {
       expect(within(pane).getByRole('link', { name }).getAttribute('href')).toBe('/icons/lock?style=animated');
     }
   });
@@ -456,7 +456,7 @@ describe('Icons page', () => {
     expect((ex.getByRole('button', { name: 'Remove row 1' }) as HTMLButtonElement).disabled).toBe(true);
     expect(ex.getByRole('button', { name: /^Download search$/ })).toBeTruthy();
 
-    // + adds the formats not listed yet: PNG, then JPG; then PNG one scale up.
+    // + adds PNG, JPG, and WebP, then another PNG one scale up.
     await user.click(ex.getByRole('button', { name: 'Add a format' }));
     expect((ex.getByLabelText('Format, row 2') as HTMLSelectElement).value).toBe('png');
     const scale2 = ex.getByLabelText('Scale, row 2') as HTMLSelectElement;
@@ -466,21 +466,27 @@ describe('Icons page', () => {
     expect((ex.getByLabelText('Format, row 3') as HTMLSelectElement).value).toBe('jpg');
     expect(ex.getByText(/JPGs have white backgrounds/)).toBeTruthy();
     await user.click(ex.getByRole('button', { name: 'Add a format' }));
-    expect((ex.getByLabelText('Format, row 4') as HTMLSelectElement).value).toBe('png');
-    expect((ex.getByLabelText('Scale, row 4') as HTMLSelectElement).selectedOptions[0].textContent).toBe('1.5x');
-    expect(ex.getByRole('button', { name: 'Download search (4)' })).toBeTruthy();
+    expect((ex.getByLabelText('Format, row 4') as HTMLSelectElement).value).toBe('webp');
+    await user.click(ex.getByRole('button', { name: 'Add a format' }));
+    expect((ex.getByLabelText('Format, row 5') as HTMLSelectElement).value).toBe('png');
+    expect((ex.getByLabelText('Scale, row 5') as HTMLSelectElement).selectedOptions[0].textContent).toBe('1.5x');
+    expect(ex.getByRole('button', { name: 'Download search (5)' })).toBeTruthy();
 
-    await user.click(ex.getByRole('button', { name: 'Options, row 4' }));
+    await user.click(ex.getByRole('button', { name: 'Options, row 5' }));
     expect((ex.getByLabelText('Suffix') as HTMLInputElement).placeholder).toBe('-48px');
 
-    for (const n of [4, 3, 1]) await user.click(ex.getByRole('button', { name: `Remove row ${n}` }));
+    for (const n of [5, 4, 3, 1]) await user.click(ex.getByRole('button', { name: `Remove row ${n}` }));
     expect(within(list).getAllByRole('listitem')).toHaveLength(1);
 
     // Copy follows the same shape; scale only applies to images.
     const copyScale = ex.getByLabelText('Copy scale') as HTMLSelectElement;
     expect(copyScale.disabled).toBe(true);
+    expect(ex.queryByRole('option', { name: 'Name' })).toBeNull();
     await user.selectOptions(ex.getByLabelText('Copy as'), 'png');
     expect(copyScale.disabled).toBe(false);
+
+    await user.click(screen.getByRole('button', { name: 'Copy icon name' }));
+    expect(await navigator.clipboard.readText()).toBe('search');
   });
 
   it('links Pricing and Docs from the header and GitHub and Privacy from the footer', () => {

@@ -67,7 +67,7 @@ export function IconLinkGrid({ icons }: { icons: readonly Pick<IconEntry, 'name'
  * The words people search for an icon by, each a link to that search. Shared
  * by the icon page and the side pane; renders nothing for untagged icons.
  */
-export function KeywordTags({ icon, size = 'md', className = '' }: { icon: IconEntry; size?: 'sm' | 'md'; className?: string }) {
+export function KeywordTags({ icon, size = 'md', tone, className = '' }: { icon: IconEntry; size?: 'sm' | 'md'; tone?: 'neutral'; className?: string }) {
   const { t } = useI18n();
   const keywords = iconKeywords(icon);
   if (!keywords.length) return null;
@@ -75,7 +75,7 @@ export function KeywordTags({ icon, size = 'md', className = '' }: { icon: IconE
     <ul aria-label={t('iconPage.keywords')} className={`flex flex-wrap gap-1.5 ${className}`}>
       {keywords.map((word) => (
         <li key={word}>
-          <Tag to={`/?${new URLSearchParams({ q: word })}`} size={size}>{word}</Tag>
+          <Tag to={`/?${new URLSearchParams({ q: word })}`} size={size} tone={tone}>{word}</Tag>
         </li>
       ))}
     </ul>
@@ -156,7 +156,7 @@ export function CodeTabs({ tabs, label }: {
         label={(
           <div className="-ml-1.5 min-w-0 overflow-x-auto">
             <div ref={groupRef} role="tablist" aria-label={label} onKeyDown={onKeyDown} className="relative isolate flex w-max gap-1">
-              {pill && <SlidingPill position={pill} className="inset-y-0 bg-[var(--code-hover)]" />}
+              {pill && <SlidingPill position={pill} className="inset-y-0 rounded-md bg-[var(--code-hover)]" />}
               {tabs.map((tab, i) => (
                 <button
                   key={tab.id}

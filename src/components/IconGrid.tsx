@@ -19,6 +19,8 @@ interface Props {
   onSelect: (name: string, additive: boolean) => void;
   label: string;
   premiumLabel?: string;
+  columns?: number;
+  showNames?: boolean;
   /** Called with icons near the viewport, so their artwork can load lazily. */
   onNeed?: (names: string[]) => void;
   categoryTitle?: (category: string) => string;
@@ -42,7 +44,7 @@ const GROW_MARGIN = '1200px 0px';
 const NEED_MARGIN = '900px 0px';
 
 const Cell = memo(function Cell({
-  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false, stagger,
+  name, svg, selected, tabbable, onSelect, onFocusIndex, index, premiumLabel, playing = false, stagger, showNames,
 }: {
   name: string;
   svg: string | undefined;
@@ -54,6 +56,7 @@ const Cell = memo(function Cell({
   premiumLabel?: string;
   playing?: boolean;
   stagger: boolean;
+  showNames: boolean;
 }) {
   return (
     <li className="icon-cell" data-name={name} data-playing={playing || undefined} data-stagger={stagger || undefined}
@@ -92,10 +95,15 @@ const Cell = memo(function Cell({
         ) : (
           <span aria-hidden="true" className={`rounded-md bg-sunken ${iconCardGlyphClass}`} />
         )}
+        {showNames && (
+          <span aria-hidden="true" title={name} className="icon-card-name w-full wrap-anywhere text-center text-xs leading-4 text-muted">
+            {name}
+          </span>
+        )}
       </button>
       {/* Beside the button, not in it: the button skips rendering off screen
           (content-visibility), which would clip a tooltip inside it. */}
-      <IconCardTooltip name={name} />
+      {!showNames && <IconCardTooltip name={name} />}
     </li>
   );
 });
@@ -104,7 +112,7 @@ const Cell = memo(function Cell({
  * Dense, keyboard-navigable icon grid. The grid is one tab stop; arrow keys,
  * Home/End, and PageUp/PageDown move between icons; Enter/Space opens one.
  */
-export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle, playing }: Props) {
+export function IconGrid({ items: allItems, svgs, selected, onSelect, label, premiumLabel, onNeed, categoryTitle, playing, columns: preferredColumns, showNames = false }: Props) {
   const items = allItems;
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -245,6 +253,9 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, pre
       aria-describedby="grid-help"
       onKeyDown={onKeyDown}
       className="icon-card-grid"
+      data-columns={preferredColumns}
+      data-show-names={showNames || undefined}
+      style={preferredColumns === undefined ? undefined : { '--preferred-columns': preferredColumns } as CSSProperties}
     >
       {shown.map((item, index) => (
         <Fragment key={item.name}>
@@ -264,6 +275,7 @@ export function IconGrid({ items: allItems, svgs, selected, onSelect, label, pre
             onSelect={onSelect}
             onFocusIndex={onFocusIndex}
             premiumLabel={premiumLabel}
+            showNames={showNames}
           />
         </Fragment>
       ))}

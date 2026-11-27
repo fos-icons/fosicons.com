@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { useId, useState, type ReactNode } from 'react';
-import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng } from '../lib/export';
+import { copyPng, copyText, downloadBlob, svgBlob, svgToJpg, svgToPng, svgToWebp } from '../lib/export';
 import { GIF_BACKGROUNDS, svgToGif, type GifBackground } from '../lib/gif';
 import { buildZip, type ZipEntry } from '../lib/zip';
 import { Section } from './Customize';
@@ -8,11 +8,12 @@ import { Button, IconButton, Select, UiIcon } from './ui';
 
 export const EXPORT_SCALES = [0.5, 1, 1.5, 2, 3, 4] as const;
 type Scale = (typeof EXPORT_SCALES)[number];
-type Format = 'png' | 'jpg' | 'gif' | 'svg';
-const MIME: Record<Format, string> = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', gif: 'image/gif' };
-const FORMAT_LABEL: Record<Format, string> = { png: 'PNG', jpg: 'JPG', gif: 'GIF', svg: 'SVG' };
+type Format = 'png' | 'jpg' | 'webp' | 'gif' | 'svg';
+const MIME: Record<Format, string> = { svg: 'image/svg+xml', png: 'image/png', jpg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif' };
+const FORMAT_LABEL: Record<Format, string> = { png: 'PNG', jpg: 'JPG', webp: 'WebP', gif: 'GIF', svg: 'SVG' };
+const STILL_ENCODERS = { png: svgToPng, jpg: svgToJpg, webp: svgToWebp };
 /** Animated icons can't be still images: they export as GIF (baked frames) or SVG (live CSS). */
-const STILL_FORMATS = ['png', 'jpg', 'svg'] as const satisfies readonly Format[];
+const STILL_FORMATS = ['png', 'jpg', 'webp', 'svg'] as const satisfies readonly Format[];
 const ANIMATED_FORMATS = ['gif', 'svg'] as const satisfies readonly Format[];
 
 export interface ExportRow {
@@ -41,11 +42,10 @@ export const defaultSuffix = (r: Pick<ExportRow, 'format' | 'scale'>, size: numb
 
 const field = 'h-8 rounded-md border border-transparent bg-sunken px-2 text-sm text-ink transition-colors hover:border-line-strong disabled:text-faint disabled:hover:border-transparent';
 
-type CopyKind = 'svg' | 'png' | 'name';
+type CopyKind = 'svg' | 'png';
 const COPY_KINDS = [
   { value: 'svg', label: 'export.copySvg' },
   { value: 'png', label: 'export.copyPng' },
-  { value: 'name', label: 'export.copyName' },
 ] as const satisfies readonly { value: CopyKind; label: string }[];
 let rememberedCopy: { kind: CopyKind; scale: Scale } = { kind: 'svg', scale: 2 };
 
@@ -57,7 +57,7 @@ let rememberedCopy: { kind: CopyKind; scale: Scale } = { kind: 'svg', scale: 2 }
 export function ExportPanel({
   name, baseName, size, build, disabled, locked, run, animated = false,
 }: {
-  /** Icon name, for the button label and Copy name. */
+  /** Icon name, for the button label. */
   name: string;
   /** File name stem (icon, modifier, style). */
   baseName: string;
@@ -86,7 +86,7 @@ export function ExportPanel({
   const patch = (id: number, change: Partial<ExportRow>) => setRows(rows.map((r) => (r.id === id ? { ...r, ...change } : r)));
 
   const add = () => {
-    // A new row adds the next format not in the list yet (PNG, then JPG); after
+    // A new row adds the next format not in the list yet (PNG, JPG, then WebP); after
     // that, another PNG one scale up from the largest PNG, like Figma.
     const used = new Set(rows.map((r) => r.format));
     const raster = formats.filter((f) => f !== 'svg');
@@ -107,8 +107,12 @@ export function ExportPanel({
       names.add(fname);
       const px = pxOf(size, effectiveScale(r));
       const svg = build(px);
-      const image = r.format === 'png' ? svgToPng(svg, px) : r.format === 'jpg' ? svgToJpg(svg, px) : r.format === 'gif' ? svgToGif(svg, px, r.background) : null;
-      files.push({ name: fname, data: image ? new Uint8Array(await (await image).arrayBuffer()) : svg });
+      if (r.format === 'svg') {
+        files.push({ name: fname, data: svg });
+      } else {
+        const image = await (r.format === 'gif' ? svgToGif(svg, px, r.background) : STILL_ENCODERS[r.format](svg, px));
+        files.push({ name: fname, data: new Uint8Array(await image.arrayBuffer()) });
+      }
     }
     if (files.length === 1) {
       const [only] = files;
@@ -120,7 +124,6 @@ export function ExportPanel({
   }, rows.length === 1 ? t('export.downloaded', { file: fileName(rows[0]) }) : t('export.downloadedZip', { count: rows.length, file: `${baseName}.zip` }));
 
   const doCopy = () => {
-    if (copy.kind === 'name') return run(() => copyText(name), t('export.copiedName', { name }));
     if (copy.kind === 'svg') return run(() => copyText(build(size)), t('export.copiedSvg'));
     const px = pxOf(size, copy.scale);
     return run(() => copyPng(Promise.resolve().then(() => svgToPng(build(px), px))), t('export.copiedPng', { px }));
@@ -245,7 +248,7 @@ export function ExportPanel({
           >
             {copyKinds.map((k) => <option key={k.value} value={k.value}>{t(k.label)}</option>)}
           </Select>
-          <Button icon="copy" className="h-8 px-2.5" disabled={disabled && copy.kind !== 'name'} onClick={doCopy}>
+          <Button icon="copy" className="h-8 px-2.5" disabled={disabled} onClick={doCopy}>
             {t('export.copy')}
           </Button>
         </div>

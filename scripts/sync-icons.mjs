@@ -23,7 +23,7 @@ export const UI_ICONS = [
   'search', 'x', 'download', 'copy', 'image', 'code', 'sun', 'moon', 'monitor',
   'check', 'badge-verified', 'info-circle', 'chevron-down', 'link', 'link-external', 'menu',
   'book-open', 'palette', 'arrow-left', 'filter', 'x-circle',
-  'layout-sidebar-right', 'settings-sliders', 'undo', 'message-smile-square',
+  'layout-sidebar-right', 'layout-sidebar-right-close', 'settings', 'settings-sliders', 'undo', 'message-smile-square',
   'plus', 'minus', 'dots-horizontal', 'compass', 'binoculars', 'map', 'route', 'home',
   'sparkles', 'lightbulb', 'arrow-right', 'search-sparkles', 'globe', 'expand', 'slider-horizontal', 'arrows-fit-horizontal',
   'crown-simple', 'refresh', 'arrows-swap-vertical', 'arrows-swap-horizontal',

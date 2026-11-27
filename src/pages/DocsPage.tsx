@@ -599,6 +599,7 @@ FosIcon(
             <li><code>fos-pane-collapsed</code>: whether the side pane is collapsed.</li>
             <li><code>fos-learned-tips</code>: which learning tips this browser has already shown.</li>
             <li><code>fos-pane-width</code>: the side pane&apos;s width, when you resize it.</li>
+            <li><code>fos-grid-preferences</code>: the icon grid&apos;s column count and whether names appear in cards.</li>
           </ul>
           <p>Icon searches, customizations, and downloads are processed in your browser. We do not track them as separate analytics events. Links to GitHub, npm, and Figma take you to those services, which have their own privacy policies. Like any website, the server hosting this one may keep standard request logs.</p>
           <p>To clear the stored preferences, clear this site&apos;s data in your browser settings.</p>

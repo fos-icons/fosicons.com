@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
+import { CopyIconName } from '../components/CopyIconName';
 import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,
 } from '../components/LandingParts';
-import { Button, ButtonAnchor, ButtonLink, Segmented, SlashHint, UiAnimatedCheck, UiIcon, useToast } from '../components/ui';
+import { Button, ButtonAnchor, ButtonLink, Segmented, SlashHint, UiIcon, useToast } from '../components/ui';
 import { errorText } from '../i18n/errors';
 import { DEFAULT_LOCALE, LocalLink, useI18n } from '../i18n';
 import { useSizedArtwork } from '../lib/artwork';
@@ -31,36 +32,6 @@ import { resolveModifier } from '../lib/phrase';
 import { svgBlob } from '../lib/export';
 import { ANIMATED_SLUG } from '../lib/url-state';
 import narratives from '../data/icon-narratives.en.json';
-
-function CopyIconName({ name }: { name: string }) {
-  const i18n = useI18n();
-  const toast = useToast();
-  const [copied, setCopied] = useState(0);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(0), 1800);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
-
-  return (
-    <>
-      <button
-        type="button"
-        aria-label={i18n.t('iconPage.copyName')}
-        data-tooltip={i18n.t(copied ? 'code.copied' : 'iconPage.copyName')}
-        className="inline-flex size-11 shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-sunken hover:text-ink"
-        onClick={() => copyText(name).then(
-          () => setCopied((count) => count + 1),
-          (error) => toast('error', errorText(error, i18n, 'error.copy')),
-        )}
-      >
-        {copied ? <UiAnimatedCheck key={copied} className="size-5 text-success" /> : <UiIcon name="copy" />}
-      </button>
-      <span role="status" className="sr-only">{copied ? i18n.t('export.copiedName', { name }) : ''}</span>
-    </>
-  );
-}
 
 /**
  * A link to the editor on the home page that, on a plain click, opens the
@@ -580,7 +551,7 @@ export default function IconPage() {
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">
             {narrative ?? t(canAnimate ? 'iconPage.introAnimated' : 'iconPage.intro', { name: title.toLowerCase() })}
           </p>
-          <KeywordTags icon={icon} className="mt-4" />
+          <KeywordTags icon={icon} size="sm" tone="neutral" className="mt-4" />
         </div>
 
         <div className="min-w-0 lg:sticky lg:top-[calc(var(--site-header-height)+1rem)] lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:self-start">

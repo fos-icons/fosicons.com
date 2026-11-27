@@ -149,7 +149,11 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
   by category; switches Regular, Filled (`filled`), Duocolor, Duotone, and
   Brands. Search, category, style, and selected icon are kept in the URL. The
   search field stays pinned while scrolling; `/` focuses it. The grid is one
-  tab stop with arrow-key navigation.
+  tab stop with arrow-key navigation. Grid settings let visitors choose a
+  column count and show icon names on cards. Both choices are saved locally.
+- **Examples menu**: add published apps that use Fos Icons to
+  [the app examples list](src/data/app-examples.ts). Each entry has a name and
+  URL and can include a short description.
 - **Side pane**: always present on desktop and collapsible (the choice is
   remembered per browser). With no icon selected it is **Customize**: size,
   stroke width, and color (duo palettes for Duocolor/Duotone) applied to the
