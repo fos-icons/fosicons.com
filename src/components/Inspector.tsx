@@ -322,6 +322,7 @@ export function Inspector({
                     )}
                   </span>
                 )}
+                inlineSize={inlineControls}
                 sizeControl={badge && (
                   <div>
                     <div className="mb-1 flex items-center justify-between text-xs">
