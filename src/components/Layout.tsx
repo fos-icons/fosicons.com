@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useRef, useState, type CSSProperties } from 'react';
-import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
+import { Outlet, useLocation, useNavigationType } from 'react-router';
 import { LocalLink, useI18n } from '../i18n';
 import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';

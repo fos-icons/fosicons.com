@@ -1,5 +1,5 @@
 import { cleanup, render, screen, within } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { afterEach, beforeEach, expect, it } from 'vitest';
 import { primeArtwork } from '../src/lib/artwork';
 import PricingPage from '../src/pages/PricingPage';

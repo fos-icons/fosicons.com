@@ -1,5 +1,5 @@
 import type { Decorator, Preview } from '@storybook/react-vite';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { ToastProvider } from '../src/components/ui';
 import { I18nProvider } from '../src/i18n';
 import { ThemeProvider } from '../src/lib/theme';

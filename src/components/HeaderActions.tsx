@@ -1,5 +1,5 @@
 import { Suspense, useEffect, useId, useRef, useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router';
 import { useI18n } from '../i18n';
 import { ORG_URL } from '../lib/links';
 import { lazyPage } from '../lib/lazy-page';

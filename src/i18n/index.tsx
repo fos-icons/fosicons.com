@@ -1,5 +1,5 @@
 import { createContext, useContext, useMemo, type ReactNode } from 'react';
-import { Link, type LinkProps } from 'react-router-dom';
+import { Link, type LinkProps } from 'react-router';
 import { DEFAULT_LOCALE, localeConfig, localizePath, type LocaleConfig } from './config';
 import en from './messages/en';
 import { createTranslator, type Messages, type Translator } from './translate';

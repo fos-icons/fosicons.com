@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { Breadcrumbs, IconLinkGrid, LandingSection } from '../components/LandingParts';
 import { Button, ButtonLink, Chip, useToast } from '../components/ui';
 import { useI18n } from '../i18n';

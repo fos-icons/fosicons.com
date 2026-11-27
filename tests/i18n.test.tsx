@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it } from 'vitest';
 import { AppShell } from '../src/App';
 import { createI18n, localizePath, splitLocale, type Translation } from '../src/i18n';

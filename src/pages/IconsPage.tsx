@@ -1,7 +1,7 @@
 import { useI18n } from '../i18n';
 import { errorText } from '../i18n/errors';
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
+import { Navigate, useLocation, useNavigate } from 'react-router';
 import { QuickPopover } from '../components/QuickTools';
 import { CustomizePanel, SizeControl, StrokeControl } from '../components/Customize';
 import { HeroActions } from '../components/HeaderActions';

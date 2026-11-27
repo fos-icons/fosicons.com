@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type FormEvent, type MouseEvent, type ReactNode, type Ref } from 'react';
 import { createPortal } from 'react-dom';
-import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router';
 import { Inspector, type InspectorProps } from '../components/Inspector';
 import {
   Breadcrumbs, CodeTabs, Glyph, IconLinkGrid, KeywordTags, LandingSection,

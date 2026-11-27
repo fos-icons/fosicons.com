@@ -1,5 +1,5 @@
 import { createContext, startTransition, useCallback, useContext, useLayoutEffect, useRef, useState, type AnchorHTMLAttributes, type ButtonHTMLAttributes, type CSSProperties, type ReactNode, type SelectHTMLAttributes } from 'react';
-import type { LinkProps } from 'react-router-dom';
+import type { LinkProps } from 'react-router';
 import { LocalLink, useI18n } from '../i18n';
 import animatedCheck from '../data/ui-animated-check.json';
 import uiIcons from '../data/ui-icons.json';

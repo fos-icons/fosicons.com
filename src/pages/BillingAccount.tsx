@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { Button } from '../components/ui';
 import { useI18n, type MessageKey } from '../i18n';
 import { useHostedBilling } from '../lib/billing-actions';
