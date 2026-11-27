@@ -5,7 +5,6 @@ import { join } from 'node:path';
 import { MemoryRouter, Route, Routes } from 'react-router';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { DownloadSection } from '../src/components/Customize';
-import { HeroActions } from '../src/components/HeaderActions';
 import { DEFAULT_LOOK, type Look } from '../src/lib/look';
 import { Layout } from '../src/components/Layout';
 import { ToastProvider } from '../src/components/ui';
@@ -31,7 +30,7 @@ function renderAt(url: string) {
         <MemoryRouter initialEntries={[url]}>
           <Routes>
             <Route element={<Layout />}>
-              <Route path="/" element={<><HeroActions /><DownloadSection look={downloadLook} /></>} />
+              <Route path="/" element={<DownloadSection look={downloadLook} />} />
               <Route path="/docs" element={<h1>Documentation</h1>} />
               <Route path="/pricing" element={<h1>Pricing plans</h1>} />
               <Route path="/ai-agents" element={<h1>Fos Icons for AI agents</h1>} />
@@ -50,17 +49,6 @@ describe('Header actions', () => {
   it.each(['/', '/docs'])('does not show a theme-cycling button on %s', (url) => {
     renderAt(url);
     expect(within(screen.getByRole('banner')).queryByRole('button', { name: /^Theme:/ })).toBeNull();
-  });
-
-  it('keeps Get started in the home page intro', () => {
-    renderAt('/');
-    const nav = screen.getByRole('navigation', { name: 'Main' });
-    // Get started and Download are buttons under the home intro, not header links.
-    expect(within(nav).queryByRole('link', { name: /Get started/ })).toBeNull();
-    expect(within(nav).queryByRole('button', { name: /Download/ })).toBeNull();
-    const start = within(screen.getByRole('main')).getByRole('link', { name: /Get started/ });
-    expect(start.getAttribute('href')).toBe('https://github.com/fos-icons');
-    expect(start.getAttribute('target')).toBe('_blank');
   });
 
   it.each(['/', '/docs', '/pricing', '/ai-agents'])('keeps the same header link order and destinations on %s', (url) => {

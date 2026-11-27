@@ -30,7 +30,7 @@ function PageError({ offline }: { offline: boolean }) {
   return (
     <div className={`${CONTAINER} py-12 sm:py-20`}>
       <div role="alert">
-        <h1 className="text-3xl font-semibold">{t('error.pageTitle')}</h1>
+        <h1 className="text-4xl font-semibold">{t('error.pageTitle')}</h1>
         <p className="mt-3 max-w-xl text-muted">{t(offline ? 'error.pageDownload' : 'error.pageBody')}</p>
       </div>
       <div className="mt-6 flex flex-wrap gap-2">

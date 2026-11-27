@@ -132,7 +132,7 @@ export default function PricingPage() {
   return (
     <div className={`${CONTAINER} pricing`}>
       <header className="pricing-intro">
-        <h1 id="pricing-title">{t('pricing.title')}</h1>
+        <h1 id="pricing-title" className="text-balance text-4xl font-semibold tracking-tight">{t('pricing.title')}</h1>
         <p>{t('pricing.intro')}</p>
       </header>
 

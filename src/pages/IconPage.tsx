@@ -574,7 +574,7 @@ export default function IconPage() {
       <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-14 lg:gap-y-6">
         <div>
           <div className="flex items-center gap-1 sm:gap-2">
-            <h1 className="min-w-0 wrap-anywhere font-display text-3xl font-semibold tracking-tight sm:text-4xl">{icon.name}</h1>
+            <h1 className="min-w-0 wrap-anywhere font-display text-4xl font-semibold tracking-tight">{icon.name}</h1>
             <CopyIconName key={icon.name} name={icon.name} />
           </div>
           <p className="mt-4 max-w-xl text-pretty text-base text-muted sm:text-lg">

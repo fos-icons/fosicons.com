@@ -323,7 +323,7 @@ export default function DocsPage() {
             <UiIcon name="globe" className="size-4" /> {t('docs.englishOnly')}
           </p>
         )}
-        <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">Documentation</h1>
+        <h1 className="text-4xl font-semibold tracking-tight">Documentation</h1>
         <p className="mt-3 text-base text-muted">
           Use Fos Icons as plain SVG or with {new Intl.ListFormat('en').format([...PLATFORM_NAMES, 'Framer'])}. {nf.format(ICONS_ROUNDED)}+ icons,
           each in {catalog.styles.length} styles and {catalog.sizes.length} optical sizes from {catalog.sizes[0]} to {catalog.sizes[catalog.sizes.length - 1]}px,

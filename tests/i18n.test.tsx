@@ -89,7 +89,6 @@ describe('a translated page', () => {
   const pirate: Translation = {
     'icons.headline': 'Find ye <em>proper</em> icon, matey.',
     'icons.searchIcons': 'Search ye icons',
-    'header.documentation': 'Charts',
   };
 
   it('renders the app in the language, with localized links, falling back to English', async () => {

@@ -36,7 +36,7 @@ export default function NotFoundPage() {
             <span aria-hidden="true">·</span>
             {t('notFound.badge')}
           </p>
-          <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight sm:text-5xl">
+          <h1 className="mt-5 font-display text-4xl font-semibold tracking-tight">
             {rich('notFound.title', { em: (text) => <span className="text-brand">{text}</span> })}
           </h1>
           <p className="mt-4 max-w-lg text-base text-muted sm:text-lg">
