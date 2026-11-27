@@ -1,6 +1,25 @@
-import type { IconEntry } from './catalog';
+import { catalog, type IconEntry } from './catalog';
 
 const normalize = (value: string) => value.toLowerCase().replace(/[_/]+/g, ' ').replace(/\s+/g, ' ').trim();
+
+// These matches describe characters drawn in the icon, rather than words
+// that happen to be in its name or metadata.
+const characterQueries = new Map<string, RegExp>([
+  ['letter', /^(?:bold(?:-square)?|italic(?:-square)?|underline(?:-square)?|(?:type-)?strikethrough(?:-square)?|type(?:-square)?|text-color|letter-spacing|font-size|info(?:-circle|-hexagon|-octagon|-square)?|annotation-info|copyright|registered|trademark|subscript|superscript|sort-(?:a-z|z-a)-(?:up|down)|image-4k(?:-sparkles)?|network-[3-6]g)$/],
+  ['number', /^(?:number-\d+|sort-(?:0-9|9-0)-(?:up|down)|subscript|superscript|annotation-(?:7|24)|calendar-month-[0-9]+|clock-(?:12|24)|image-4k(?:-sparkles)?|laurel-wreath-1|medal-[1-3]|network-[3-6]g)$/],
+  ['?', /(?:^|-)question(?:-|$)/],
+  ['!', /^(?:annotation-alert|calendar-alert|shield-alert|alert-(?:circle|hexagon|octagon|square|triangle)|message-alert-(?:circle|square))$/],
+  ['@', /^at-sign$/],
+  ['$', /(?:^|-)dollar(?:-|$)/],
+  ['#', /(?:^|-)hash(?:-|$)/],
+  ['%', /^percent(?:-circle)?$/],
+  ['*', /^asterisk$/],
+]);
+const fileBadgeLabels = new Map(
+  Object.entries(catalog.modifiers)
+    .filter(([, modifier]) => modifier.group === 'file-types')
+    .map(([name, modifier]) => [name, modifier.label]),
+);
 
 interface Indexed {
   icon: IconEntry;
@@ -44,6 +63,13 @@ export function search(index: Indexed[], query: string, category?: string | null
   const q = normalize(query);
   const pool = category ? index.filter((e) => e.icon.category === category) : index;
   if (!q) return pool.map((e) => e.icon);
+  const character = characterQueries.get(q);
+  if (character) {
+    const badgeText = q === 'letter' ? /[a-z]/i : q === 'number' ? /[0-9]/ : null;
+    return pool.filter(({ icon, name }) => character.test(name) || (
+      badgeText && icon.composition?.modifiers.some((badge) => badgeText.test(fileBadgeLabels.get(badge.name) ?? ''))
+    )).map(({ icon }) => icon);
+  }
   const whole = q.replace(/ /g, '-');
   const terms = q.split(' ');
   const scored: { icon: IconEntry; score: number }[] = [];
