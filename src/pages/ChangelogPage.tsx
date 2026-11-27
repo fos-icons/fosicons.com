@@ -12,7 +12,7 @@ export default function ChangelogPage() {
   // A dev or client-rendered deep link can arrive before the lazy route mounts.
   useEffect(() => {
     const id = window.location.hash.slice(1);
-    if (changelog.some((entry) => entry.id === id)) {
+    if (changelog.some((entry) => entry.id === id || entry.legacyIds?.includes(id))) {
       document.getElementById(id)?.scrollIntoView();
     }
   }, []);
@@ -54,19 +54,20 @@ export default function ChangelogPage() {
         </nav>
 
         <div className="min-w-0 md:col-start-1 md:row-start-1">
-          {changelog.map(({ id, date, title, summary, highlights, icons, source }) => (
+          {changelog.map(({ id, date, startDate, legacyIds, title, summary, highlights, icons, source }) => (
             <article
               key={id}
               id={id}
               lang="en"
               aria-labelledby={`${id}-title`}
-              className="grid scroll-mt-6 gap-x-5 gap-y-2 border-b border-line py-7 target:border-b-brand/40 md:py-10 lg:grid-cols-[8rem_minmax(0,1fr)]"
+              className="relative grid scroll-mt-6 gap-x-5 gap-y-2 border-b border-line py-7 target:border-b-brand/40 md:py-10 lg:grid-cols-[8rem_minmax(0,1fr)]"
             >
+              {legacyIds?.map((legacyId) => <span key={legacyId} id={legacyId} aria-hidden="true" className="pointer-events-none absolute start-0 top-0 scroll-mt-6" />)}
               <h2 id={`${id}-title`} className="text-balance text-2xl font-semibold leading-tight lg:col-start-2 lg:row-start-1 lg:text-[1.7rem]">
                 {title}
               </h2>
               <time dateTime={date} className="text-sm tabular-nums text-muted lg:col-start-1 lg:row-start-1 lg:pt-1.5">
-                {dateFormat.format(new Date(date))}
+                {startDate ? dateFormat.formatRange(new Date(startDate), new Date(date)) : dateFormat.format(new Date(date))}
               </time>
               <div className="min-w-0 max-w-2xl lg:col-start-2">
                 <p className="max-w-prose text-base leading-7 text-muted">{summary}</p>

@@ -3,6 +3,9 @@ import type { SiteTheme } from './theme';
 import { catalogMeta as catalog, opticalSize, opticalStroke, palettes, type StyleId } from './catalog-meta';
 import { hasModifierRole, hasSecondaryRole, isDuo, prepareGridSvg, type SvgColorOptions } from './svg';
 
+export type DuoColorRole = 'primary' | 'secondary';
+export type ColorChoice = string | { paletteName: string; role: 'main' | DuoColorRole };
+
 /**
  * How icons are drawn across the grid, the side pane previews, and exports.
  * `null` colors follow the site theme until the user picks one.
@@ -11,13 +14,14 @@ export interface Look {
   size: number;
   /** Stroke in 24px grid units, or `null` to follow the size (see `autoStroke`). */
   strokeWidth: number | null;
-  /** Regular/Filled color chosen by hand, or `null` to take it from the color theme. */
-  mono: string | null;
+  /** Regular/Filled foreground override, or `null` to use the color theme. */
+  mono: ColorChoice | null;
   /** The color theme: `INK_THEME` or a library palette name. */
   paletteName: string;
-  custom: { primary: string; secondary: string } | null;
+  /** Per-channel overrides. Palette references resolve against the current mode. */
+  custom: Partial<Record<DuoColorRole, ColorChoice>> | null;
   /** Explicit badge color, or `null` for the default. Duo styles default to Primary. */
-  modifierColor: string | null;
+  modifierColor: ColorChoice | null;
   /** Duotone interior opacity in percent, or null to use the artwork’s tint. */
   duotoneTint?: number | null;
   /** Playback rate for animated icons (1 = as designed); it retimes their CSS, exports included. */
@@ -53,6 +57,10 @@ export function themeColors(name: string, mode: SiteTheme) {
   const variant = mode === 'dark' ? 'dark' : 'light';
   const palette = palettes.palettes.find((p) => p.name === (name === INK_THEME ? palettes.defaultPalette : name)) ?? palettes.palettes[0];
   return { main: name === INK_THEME ? INK[variant] : palette[variant].primary, ...palette[variant] };
+}
+
+function resolveColor(choice: ColorChoice | null | undefined, mode: SiteTheme): string | undefined {
+  return typeof choice === 'string' ? choice : choice ? themeColors(choice.paletteName, mode)[choice.role] : undefined;
 }
 
 /**
@@ -127,12 +135,16 @@ export function resolveLook(look: Look, theme: SiteTheme) {
   const mode = theme;
   const colors = themeColors(look.paletteName, mode);
   return {
-    mono: look.mono ?? colors.main,
+    mono: resolveColor(look.mono, mode) ?? colors.main,
+    modifierColor: resolveColor(look.modifierColor, mode),
     /** True when Regular/Filled simply follow the site's ink (Ink theme, no hand-picked color). */
     monoFollowsSite: look.mono === null && look.paletteName === INK_THEME,
     mode,
     themeName: THEME_NAMES.includes(look.paletteName) ? look.paletteName : INK_THEME,
-    duo: look.custom ?? { primary: colors.primary, secondary: colors.secondary },
+    duo: {
+      primary: resolveColor(look.custom?.primary, mode) ?? colors.primary,
+      secondary: resolveColor(look.custom?.secondary, mode) ?? colors.secondary,
+    },
   };
 }
 
@@ -156,13 +168,13 @@ export function gridVars(look: Look, style: StyleId, theme: SiteTheme, kind: 'co
   if (isDuo(style)) {
     vars['--fos-primary'] = r.duo.primary;
     vars['--fos-secondary'] = style === 'duocolor' ? r.duo.secondary : r.duo.primary;
-    vars['--fos-modifier'] = look.modifierColor ?? r.duo.primary;
+    vars['--fos-modifier'] = r.modifierColor ?? r.duo.primary;
   } else if (!r.monoFollowsSite) {
     // A variable, not `color`: grid cells set their own ink color, which would win over an inherited one.
     vars['--glyph-color'] = r.mono;
   }
   if (style === 'duotone' && look.duotoneTint != null) vars['--fos-duotone-tint'] = String(look.duotoneTint / 100);
-  if (!isDuo(style) && look.modifierColor) vars['--fos-modifier'] = look.modifierColor;
+  if (!isDuo(style) && r.modifierColor) vars['--fos-modifier'] = r.modifierColor;
   return vars;
 }
 
@@ -176,7 +188,7 @@ export function exportColors(
   style: StyleId,
   look: Look,
   theme: SiteTheme,
-  modifierOverride: string | null = look.modifierColor,
+  modifierOverride: ColorChoice | null = look.modifierColor,
 ): SvgColorOptions {
   const r = resolveLook(look, theme);
   const duo = isDuo(style);
@@ -185,6 +197,6 @@ export function exportColors(
     primary: duo ? r.duo.primary : r.mono,
     duotoneTint: style === 'duotone' && look.duotoneTint != null ? look.duotoneTint / 100 : undefined,
     secondary: duo && hasSecondaryRole(source) ? (style === 'duocolor' ? r.duo.secondary : r.duo.primary) : undefined,
-    modifier: hasModifierRole(source) ? (modifierOverride ?? (duo ? r.duo.primary : modifierDefault)) : undefined,
+    modifier: hasModifierRole(source) ? (resolveColor(modifierOverride, theme) ?? (duo ? r.duo.primary : modifierDefault)) : undefined,
   };
 }

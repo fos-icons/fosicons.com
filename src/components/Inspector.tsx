@@ -15,7 +15,7 @@ import { angularSnippet, reactSnippet, solidSnippet, svelteSnippet, vueSnippet, 
 import { artworkSize, exportColors, resolveLook, strokeAdjustable, strokeOf, type Look } from '../lib/look';
 import { authoredDuotoneTint, BASE_STROKE, buildSvg, hasModifierRole, isDuo } from '../lib/svg';
 import { PANE_WIDTH, usePaneWidth } from '../lib/pane-width';
-import { useMediaQuery, useTheme } from '../lib/theme';
+import { useMediaQuery, useTheme, type SiteTheme } from '../lib/theme';
 import { CodeTabs, KeywordTags } from './LandingParts';
 import { CopyIconName } from './CopyIconName';
 import { ExportPanel } from './ExportPanel';
@@ -27,7 +27,7 @@ import {
   authoredModifierPx, autoModifierPx, composeSvg, initialCorner, modifierPx, modifierPxRange, modifierScaleFor, modifiersFor, type Corner,
 } from '../lib/modifiers';
 import { ColorSwatch } from './ColorSwatch';
-import { ColorField, CustomizeControls, Section, SizeControl, SpeedControl, StrokeControl } from './Customize';
+import { ColorField, CustomizeControls, Section, SizeControl, SpeedControl, StrokeControl, usePaletteDrop } from './Customize';
 import { IconButton, RangeSlider, Segmented, UiIcon, useToast } from './ui';
 
 
@@ -39,6 +39,7 @@ export interface InspectorProps {
   source: string | undefined;
   look: Look;
   onLookChange: (patch: Partial<Look>) => void;
+  onThemeChange?: (theme: SiteTheme) => void;
   onStyleChange: (style: StyleId) => void;
   onClose: () => void;
   /** Brand assets: no React package, no duo controls, no stroke control. */
@@ -64,7 +65,7 @@ export interface InspectorProps {
 const THUMB_MAX = 64;
 
 export function Inspector({
-  icon, style, styles, source: librarySource, look, onLookChange, onStyleChange, onClose, kind = 'core', headingId,
+  icon, style, styles, source: librarySource, look, onLookChange, onThemeChange, onStyleChange, onClose, kind = 'core', headingId,
   badgeRequest = null, onBadgeChange, premiumView = false, inlineControls = false, modifierAdjustment, catalogBackTo,
 }: InspectorProps) {
   const toast = useToast();
@@ -87,6 +88,8 @@ export function Inspector({
   /** Modifiers, their placement, and badge colors are Advanced: without it, a modifier from a link is ignored. */
   const modifiersUnlocked = can('modifiers');
   const modifier = modifiersUnlocked ? look.modifierColor : null;
+  const setModifierPalette = (paletteName: string) => onLookChange({ modifierColor: { paletteName, role: duo ? 'primary' : 'main' } });
+  const modifierDrop = usePaletteDrop(modifiersUnlocked ? setModifierPalette : undefined);
   const canTryModifiers = kind === 'core' && !icon.composition;
   const modifiers = useModifiers(canTryModifiers && modifiersUnlocked && !!librarySource);
   const available = useMemo(() => modifiers.list ? modifiersFor(icon.name, modifiers.list) : [], [icon.name, modifiers.list]);
@@ -229,6 +232,7 @@ export function Inspector({
     <CustomizeControls
       look={look}
       onChange={onLookChange}
+      onThemeChange={onThemeChange}
       showSize={false}
       showStroke={false}
       pairedColors={inlineControls}
@@ -291,7 +295,7 @@ export function Inspector({
       )}
       {!inlineControls && kind === 'core' && <KeywordTags icon={icon} size="sm" tone="neutral" className="px-5 pb-4" />}
 
-      <div className={inlineControls ? 'grid @min-[27rem]:grid-cols-2 @min-[27rem]:gap-6 [&>section]:min-w-0 [&>section]:px-0' : 'contents'}>
+      <div className={inlineControls ? 'grid @min-[27rem]:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] @min-[27rem]:gap-6 [&>section]:min-w-0 [&>section]:px-0' : 'contents'}>
         <SizeControl look={look} onChange={onLookChange} defaultSize={inlineControls ? catalog.grid : undefined} />
         <StrokeControl look={look} onChange={onLookChange} style={style} kind={kind} />
       </div>
@@ -316,12 +320,17 @@ export function Inspector({
                 accessory={showModifier && (
                   // Compact modifier color beside None: a swatch, plus a reset once a color is picked.
                   <div className="flex items-center gap-1">
-                    <ColorSwatch
-                      label={t('inspector.modifierColor')}
-                      tooltip={modifierHint ?? t('inspector.modifierColor')}
-                      value={modifierSwatch}
-                      onChange={(modifierColor) => onLookChange({ modifierColor })}
-                    />
+                    <div
+                      className={`flex rounded-lg ${modifierDrop.over ? 'ring-2 ring-brand ring-offset-2 ring-offset-surface' : ''}`}
+                      {...modifierDrop.handlers}
+                    >
+                      <ColorSwatch
+                        label={t('inspector.modifierColor')}
+                        tooltip={modifierHint ?? t('inspector.modifierColor')}
+                        value={modifierSwatch}
+                        onChange={(modifierColor) => onLookChange({ modifierColor })}
+                      />
+                    </div>
                     {modifier && (
                       <IconButton icon="undo" label={t('inspector.modifierColorReset')} onClick={() => onLookChange({ modifierColor: null })} className="size-8 text-muted" />
                     )}
@@ -361,6 +370,7 @@ export function Inspector({
                 label={t('inspector.modifierColor')}
                 value={modifierSwatch}
                 onChange={(v) => onLookChange({ modifierColor: v })}
+                onPresetDrop={setModifierPalette}
                 hint={modifierHint}
               />
               {modifier && (

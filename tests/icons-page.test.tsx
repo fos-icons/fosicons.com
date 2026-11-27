@@ -889,6 +889,60 @@ describe('Icon page header search (desktop)', () => {
     </ThemeProvider>,
   );
 
+  it('steps through customization changes and restores them across icon visits', async () => {
+    const user = userEvent.setup();
+    renderIconPage('/icons/swatchbook?modifier=shield&corner=top-right');
+    const header = within(screen.getByRole('banner'));
+    const palette = screen.getByRole('radiogroup', { name: 'Color theme' });
+    const appearance = screen.getByRole('radiogroup', { name: 'Site appearance' });
+    const flip = () => screen.getByRole('button', { name: 'Flip horizontally' });
+    const undo = () => header.getByRole('button', { name: 'Previous customization' });
+    const redo = () => header.getByRole('button', { name: 'Next customization' });
+
+    await user.click(within(palette).getByRole('radio', { name: 'Teal' }));
+    await user.click(within(appearance).getByRole('radio', { name: 'Dark' }));
+    await user.click(flip());
+    await user.click(header.getByRole('button', { name: 'Remove Shield' }));
+    expect(location).toBe('');
+
+    await user.click(undo());
+    expect(location).toBe('?modifier=shield&corner=top-right');
+    expect(flip().getAttribute('aria-pressed')).toBe('true');
+    await user.click(undo());
+    expect(flip().getAttribute('aria-pressed')).toBe('false');
+    await user.click(undo());
+    expect(within(appearance).getByRole('radio', { name: 'Light' }).getAttribute('aria-checked')).toBe('true');
+    await user.click(undo());
+    expect(within(palette).getByRole('radio', { name: 'Teal' }).getAttribute('aria-checked')).toBe('false');
+
+    await user.click(redo());
+    await user.click(redo());
+    await user.click(redo());
+    expect(flip().getAttribute('aria-pressed')).toBe('true');
+    expect(within(palette).getByRole('radio', { name: 'Teal' }).getAttribute('aria-checked')).toBe('true');
+    expect(within(appearance).getByRole('radio', { name: 'Dark' }).getAttribute('aria-checked')).toBe('true');
+
+    await user.click(screen.getByRole('button', { name: 'Reset flips' }));
+    expect(header.getByRole('button', { name: 'Next icon' }).hasAttribute('disabled')).toBe(true);
+    await user.click(undo());
+    expect(flip().getAttribute('aria-pressed')).toBe('true');
+    await user.click(redo());
+    expect(flip().getAttribute('aria-pressed')).toBe('false');
+    await user.click(undo());
+
+    const related = screen.getByRole('region', { name: 'More workspace icons' });
+    const relatedIcon = within(related).getAllByRole('link')[0];
+    const relatedName = relatedIcon.getAttribute('aria-label');
+    await user.click(relatedIcon);
+    expect(pathname).toBe(`/icons/${relatedName}`);
+    await user.click(header.getByRole('button', { name: 'Previous icon: swatchbook' }));
+    expect(location).toBe('?modifier=shield&corner=top-right');
+    expect(flip().getAttribute('aria-pressed')).toBe('true');
+    await user.click(header.getByRole('button', { name: `Next icon: ${relatedName}` }));
+    expect(pathname).toBe(`/icons/${relatedName}`);
+    expect(flip().getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('keeps SVG copy and file downloads available for Regular only', async () => {
     const user = userEvent.setup();
     renderIconPage('/icons/triangle-right');

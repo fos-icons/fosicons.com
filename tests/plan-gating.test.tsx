@@ -12,6 +12,7 @@ import { ToastProvider } from '../src/components/ui';
 import { lock, resetStyleCache } from '../src/lib/catalog';
 import { entitledPlan, FEATURE_PLAN, legacyAllows, planAllows, type Plan } from '../src/lib/entitlements';
 import { StaticPlanProvider } from '../src/lib/plan';
+import { themeColors } from '../src/lib/look';
 import { ThemeProvider } from '../src/lib/theme';
 import CategoryPage from '../src/pages/CategoryPage';
 import IconPage from '../src/pages/IconPage';
@@ -123,6 +124,58 @@ describe('animated icon pages', () => {
 });
 
 describe('inline icon page settings', () => {
+  const dropPalette = (name: string, field: HTMLElement) => {
+    const colors = new Map<string, string>();
+    const dataTransfer = {
+      setData: (type: string, value: string) => colors.set(type, value),
+      getData: (type: string) => colors.get(type) ?? '',
+    };
+    fireEvent.dragStart(screen.getByRole('radio', { name }), { dataTransfer });
+    fireEvent.drop(field, { dataTransfer });
+  };
+
+  it('keeps each dropped palette color linked to its mode through swaps and reloads', async () => {
+    const user = userEvent.setup();
+    const url = '/icons/heart-circle?style=duocolor';
+    renderAs('pro', url);
+    const primary = screen.getByRole<HTMLInputElement>('textbox', { name: 'Primary' });
+    const secondary = screen.getByRole<HTMLInputElement>('textbox', { name: 'Secondary' });
+    dropPalette('Red', primary);
+    dropPalette('Teal', secondary);
+    expect([primary.value, secondary.value]).toEqual([themeColors('Red', 'light').primary, themeColors('Teal', 'light').secondary]);
+    await user.click(screen.getByRole('radio', { name: 'Dark' }));
+    expect([primary.value, secondary.value]).toEqual([themeColors('Red', 'dark').primary, themeColors('Teal', 'dark').secondary]);
+    await user.click(screen.getByRole('button', { name: 'Swap primary and secondary colors' }));
+    expect([primary.value, secondary.value]).toEqual([themeColors('Teal', 'dark').secondary, themeColors('Red', 'dark').primary]);
+    fireEvent.change(secondary, { target: { value: '#12345680' } });
+
+    cleanup();
+    renderAs('pro', url);
+    await user.click(screen.getByRole('radio', { name: 'Warm' }));
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Primary' }).value).toBe(themeColors('Teal', 'ivory').secondary);
+    expect(screen.getByRole<HTMLInputElement>('textbox', { name: 'Secondary' }).value).toBe('#12345680');
+  });
+
+  it('accepts independent palette drops on foreground and modifier colors', async () => {
+    const user = userEvent.setup();
+    renderAs('advanced', '/icons/minimize?modifier=note&corner=bottom-right');
+    const foreground = screen.getByRole<HTMLInputElement>('textbox', { name: 'Foreground' });
+    const modifier = await screen.findByRole('button', { name: 'Modifier color' });
+    const preview = screen.getByRole('img', { name: 'Minimize icon, Regular style' });
+
+    dropPalette('Orange', foreground);
+    dropPalette('Teal', modifier);
+    const expectColors = (mode: 'light' | 'ivory' | 'dark') => {
+      expect(foreground.value).toBe(themeColors('Orange', mode).main);
+      expect(preview.closest<HTMLElement>('[style*="--fos-modifier"]')?.style.getPropertyValue('--fos-modifier')).toBe(themeColors('Teal', mode).main);
+    };
+    expectColors('light');
+    await user.click(screen.getByRole('radio', { name: 'Dark' }));
+    expectColors('dark');
+    await user.click(screen.getByRole('radio', { name: 'Warm' }));
+    expectColors('ivory');
+  });
+
   it('updates Duocolor opacity without changing the other paint role', async () => {
     renderAs('pro', '/icons/alert-circle?style=duocolor');
     const settings = screen.getByRole('region', { name: 'Customize size, stroke, and color' });

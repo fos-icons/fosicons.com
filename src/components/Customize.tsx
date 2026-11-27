@@ -1,5 +1,5 @@
 import { useI18n } from '../i18n';
-import { useEffect, useId, useRef, useState, type ReactNode, type Ref } from 'react';
+import { useEffect, useId, useRef, useState, type DragEvent, type ReactNode, type Ref } from 'react';
 import { catalog, FREE_ICON_STYLE, opticalStroke, type StyleId } from '../lib/catalog';
 import { buildFullSet, fullSetName } from '../lib/download-all';
 import { downloadBlob } from '../lib/export';
@@ -7,11 +7,11 @@ import { buildZip } from '../lib/zip';
 import { errorText } from '../i18n/errors';
 import {
   DEFAULT_LOOK, INK_THEME, GRID_MAX_SIZE, isCustomized, MAX_SIZE, MIN_SIZE, resolveLook, SIZE_SLIDER_MAX, SIZE_SLIDER_MIN, SIZE_STEP, STROKE_MAX, STROKE_MIN, STROKE_STEP,
-  artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, type Look,
+  artworkSize, exportColors, strokeAdjustable, strokeOf, themeColors, type ColorChoice, type DuoColorRole, type Look,
 } from '../lib/look';
 import { usePlan } from '../lib/plan';
 import { buildSvg, isDuo, isHexColor } from '../lib/svg';
-import { useTheme } from '../lib/theme';
+import { useTheme, type SiteTheme } from '../lib/theme';
 import { ColorSwatch } from './ColorSwatch';
 import { TeachingTip } from './TeachingTip';
 import { UpgradePrompt } from './UpgradePrompt';
@@ -21,6 +21,30 @@ import { Button, freeBadgeClass, IconButton, RangeSlider, Segmented, UiIcon, use
 const VISIBLE_COLOR_THEMES = [INK_THEME, 'Slate', 'Blue', 'Teal', 'Green', 'Violet', 'Amber', 'Orange', 'Red'];
 
 const PRESET_DRAG = 'application/x-fos-color-preset';
+
+export function usePaletteDrop(onPresetDrop?: (name: string) => void) {
+  const [over, setOver] = useState(false);
+  const handlers = onPresetDrop ? {
+    onDragOver: (event: DragEvent<HTMLElement>) => {
+      if (!event.dataTransfer.types.includes(PRESET_DRAG)) return;
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+      setOver(true);
+    },
+    onDragLeave: (event: DragEvent<HTMLElement>) => {
+      if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
+      setOver(false);
+    },
+    onDrop: (event: DragEvent<HTMLElement>) => {
+      const name = event.dataTransfer.getData(PRESET_DRAG);
+      setOver(false);
+      if (!VISIBLE_COLOR_THEMES.includes(name)) return;
+      event.preventDefault();
+      onPresetDrop(name);
+    },
+  } : undefined;
+  return { over, handlers };
+}
 
 export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
   label: string;
@@ -32,30 +56,14 @@ export function ColorField({ label, value, onChange, hint, onPresetDrop }: {
   const id = useId();
   const { t } = useI18n();
   const [text, setText] = useState(value);
-  const [over, setOver] = useState(false);
+  const { over, handlers } = usePaletteDrop(onPresetDrop);
   useEffect(() => setText(value), [value]);
   const valid = isHexColor(text);
   return (
     // Label on top; the swatch and hex input share one row at the same height, so they line up.
     <div
       className={over ? 'rounded-md ring-2 ring-brand ring-offset-2 ring-offset-surface' : undefined}
-      onDragOver={onPresetDrop && ((event) => {
-        if (!event.dataTransfer.types.includes(PRESET_DRAG)) return;
-        event.preventDefault();
-        event.dataTransfer.dropEffect = 'copy';
-        setOver(true);
-      })}
-      onDragLeave={onPresetDrop && ((event) => {
-        if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget)) return;
-        setOver(false);
-      })}
-      onDrop={onPresetDrop && ((event) => {
-        const name = event.dataTransfer.getData(PRESET_DRAG);
-        if (!VISIBLE_COLOR_THEMES.includes(name)) return;
-        event.preventDefault();
-        setOver(false);
-        onPresetDrop(name);
-      })}
+      {...handlers}
     >
       <label htmlFor={id} className="block pl-11 text-xs font-medium text-muted">{label}</label>
       <div className="mt-0.5 flex items-center gap-3">
@@ -306,10 +314,11 @@ export function StrokeControl({ look, onChange, style, kind = 'core', footnote }
 
 /** Size, stroke, and color: shared by the grid-wide panel and the inspector. */
 export function CustomizeControls({
-  look, onChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false, defaultTint = 16, collapsible = true, colorDivider = true,
+  look, onChange, onThemeChange, style, kind = 'core', footnote, strokeFootnote, showSize = true, showStroke = true, animated = false, pairedColors = false, defaultTint = 16, collapsible = true, colorDivider = true,
 }: {
   look: Look;
   onChange: (patch: Partial<Look>) => void;
+  onThemeChange?: (theme: SiteTheme) => void;
   style: StyleId;
   kind?: 'core' | 'brand';
   /** Extra color notes that only make sense for one icon (e.g. single contour). */
@@ -334,11 +343,11 @@ export function CustomizeControls({
   const duo = isDuo(style);
   const r = resolveLook(look, theme);
   const [swapCount, setSwapCount] = useState(0);
-  const canDragPreset = duo && can('duoColors');
-  const dropPreset = (role: 'primary' | 'secondary', name: string) => {
-    const colors = themeColors(name, r.mode);
-    onChange({ custom: { ...r.duo, [role]: colors[role] } });
+  const canDragPreset = !duo || can('duoColors') || can('modifiers');
+  const setDuoColor = (role: DuoColorRole, choice: ColorChoice) => {
+    onChange({ custom: { ...look.custom, [role]: choice } });
   };
+  const currentChoice = (role: DuoColorRole): ColorChoice => look.custom?.[role] ?? { paletteName: r.themeName, role };
 
   return (
     <>
@@ -358,7 +367,7 @@ export function CustomizeControls({
             size="sm"
             value={r.mode}
             // Themes have light and dark variants, previewed on the matching background: switch the site theme.
-            onChange={(v) => setPreference(v)}
+            onChange={onThemeChange ?? setPreference}
             options={[
               { value: 'light', label: t('theme.light') },
               { value: 'ivory', label: t('theme.warm') },
@@ -413,8 +422,8 @@ export function CustomizeControls({
                 <ColorField
                   label={t('customize.primary')}
                   value={r.duo.primary}
-                  onChange={(v) => onChange({ custom: { ...r.duo, primary: v } })}
-                  onPresetDrop={(name) => dropPreset('primary', name)}
+                  onChange={(v) => setDuoColor('primary', v)}
+                  onPresetDrop={(paletteName) => setDuoColor('primary', { paletteName, role: 'primary' })}
                 />
                 {style === 'duotone' && <TintField value={look.duotoneTint} authored={defaultTint} onChange={(duotoneTint) => onChange({ duotoneTint })} />}
                 {style === 'duocolor' && (
@@ -427,7 +436,7 @@ export function CustomizeControls({
                         ? '@min-[27rem]:static @min-[27rem]:size-8 @min-[27rem]:translate-y-0 @min-[27rem]:self-end'
                         : ''}`}
                       onClick={() => {
-                        onChange({ custom: { primary: r.duo.secondary, secondary: r.duo.primary } });
+                        onChange({ custom: { primary: currentChoice('secondary'), secondary: currentChoice('primary') } });
                         setSwapCount((count) => count + 1);
                       }}
                     >
@@ -440,8 +449,8 @@ export function CustomizeControls({
                     <ColorField
                       label={t('customize.secondary')}
                       value={r.duo.secondary}
-                      onChange={(v) => onChange({ custom: { ...r.duo, secondary: v } })}
-                      onPresetDrop={(name) => dropPreset('secondary', name)}
+                      onChange={(v) => setDuoColor('secondary', v)}
+                      onPresetDrop={(paletteName) => setDuoColor('secondary', { paletteName, role: 'secondary' })}
                     />
                   </>
                 )}
@@ -453,6 +462,7 @@ export function CustomizeControls({
                 label={t('customize.foreground')}
                 value={r.mono}
                 onChange={(v) => onChange({ mono: v })}
+                onPresetDrop={(paletteName) => onChange({ mono: { paletteName, role: 'main' } })}
                 hint={look.mono ? undefined : r.monoFollowsSite ? t('customize.followTheme') : t('customize.fromTheme', { theme: r.themeName })}
               />
             </div>
