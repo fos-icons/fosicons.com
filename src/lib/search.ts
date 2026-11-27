@@ -15,6 +15,11 @@ const characterQueries = new Map<string, RegExp>([
   ['%', /^percent(?:-circle)?$/],
   ['*', /^asterisk$/],
 ]);
+const fileBadgeLabels = new Map(
+  Object.entries(catalog.modifiers)
+    .filter(([, modifier]) => modifier.group === 'file-types')
+    .map(([name, modifier]) => [name, modifier.label]),
+);
 
 interface Indexed {
   icon: IconEntry;
@@ -61,10 +66,9 @@ export function search(index: Indexed[], query: string, category?: string | null
   const character = characterQueries.get(q);
   if (character) {
     const badgeText = q === 'letter' ? /[a-z]/i : q === 'number' ? /[0-9]/ : null;
-    return pool.filter(({ icon, name }) => character.test(name) || icon.composition?.modifiers.some((badge) => {
-      const modifier = catalog.modifiers[badge.name];
-      return modifier?.group === 'file-types' && badgeText?.test(modifier.label);
-    })).map(({ icon }) => icon);
+    return pool.filter(({ icon, name }) => character.test(name) || (
+      badgeText && icon.composition?.modifiers.some((badge) => badgeText.test(fileBadgeLabels.get(badge.name) ?? ''))
+    )).map(({ icon }) => icon);
   }
   const whole = q.replace(/ /g, '-');
   const terms = q.split(' ');
