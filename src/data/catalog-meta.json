@@ -41,7 +41,7 @@
     },
     {
       "name": "Files",
-      "count": 112
+      "count": 113
     },
     {
       "name": "Food & drink",
@@ -544,7 +544,7 @@
     "zoom-in",
     "zoom-out"
   ],
-  "iconCount": 1592,
+  "iconCount": 1593,
   "examples": [
     "home",
     "search",
