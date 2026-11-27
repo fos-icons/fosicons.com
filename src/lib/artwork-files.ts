@@ -1,9 +1,9 @@
 import { LocalizedError } from '../i18n/errors';
+import { ICON_CHUNK } from './artwork-chunk';
 import { catalogMeta, lock, STYLE_META, type StyleId } from './catalog-meta';
 
-export const artworkDirectory = `icon-artwork/${lock.manifestSha256}/icons`;
-/** Icons per artwork chunk; matches ICON_CHUNK in scripts/sync-icons.mjs. */
-export const ICON_CHUNK = 96;
+export { ICON_CHUNK };
+export const artworkDirectory = `icon-artwork/${lock.artworkVersion}/icons`;
 export const artworkKey = (style: StyleId, size: number = catalogMeta.grid) =>
   size === catalogMeta.grid ? style : `${style}@${size}`;
 
@@ -12,8 +12,8 @@ const RELOAD_KEY = 'fos-artwork-reload';
 /** A missing immutable artwork URL can be an old tab after a deploy. Reload once per snapshot. */
 function recoverFromStaleArtwork(): boolean {
   try {
-    if (sessionStorage.getItem(RELOAD_KEY) === lock.manifestSha256) return false;
-    sessionStorage.setItem(RELOAD_KEY, lock.manifestSha256);
+    if (sessionStorage.getItem(RELOAD_KEY) === lock.artworkVersion) return false;
+    sessionStorage.setItem(RELOAD_KEY, lock.artworkVersion);
   } catch {
     return false;
   }

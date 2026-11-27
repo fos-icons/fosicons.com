@@ -291,7 +291,9 @@ The site is built for several languages; it ships in English today.
   near the end (or all at once for keyboard jumps and deep selections), so
   a phone never lays out 1,458 cells up front.
 - Icon artwork loads in 96-icon chunks (`public/icons/<style>/<n>.json`) as
-  cells approach the viewport; the first chunk is preloaded with the page.
+  cells approach the viewport. The chunks follow catalog browse order, so
+  the preloaded first chunk covers the first rows without also fetching
+  artwork from later categories.
   Off-screen cells skip rendering (`content-visibility`).
 - The two Latin text fonts are preloaded. The catalog ships as JSON.parse
   data; highlight.js and the ZIP library load on demand.

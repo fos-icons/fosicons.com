@@ -61,9 +61,9 @@ export function loadStyle(style: StyleId, size: number = catalog.grid): Promise<
   return cache[key];
 }
 
-const position = new Map(catalog.icons.map((icon, i) => [icon.name, i]));
+const position = new Map(orderBrowseIcons(catalog.icons).map((icon, i) => [icon.name, i]));
 
-/** The artwork chunks (catalog order) that hold these icons, in first-needed order. */
+/** The artwork chunks that hold these icons, in first-needed order. */
 export function chunksFor(names: Iterable<string>): number[] {
   const chunks = new Set<number>();
   for (const name of names) {

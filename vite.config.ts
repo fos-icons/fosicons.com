@@ -13,7 +13,7 @@ function versionedArtwork(): Plugin {
     name: 'fos-versioned-artwork',
     apply: 'serve',
     configureServer(server) {
-      const prefix = `/icon-artwork/${sourceLock.manifestSha256}/icons/`;
+      const prefix = `/icon-artwork/${sourceLock.artworkVersion}/icons/`;
       server.middlewares.use((req, _res, next) => {
         if (req.url?.startsWith(prefix)) req.url = `/icons/${req.url.slice(prefix.length)}`;
         next();
