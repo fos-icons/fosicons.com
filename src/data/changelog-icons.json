@@ -1,0 +1,39 @@
+[
+  {
+    "id": "icons-2026-11-27",
+    "date": "2026-11-27",
+    "added": [
+      "package-open"
+    ],
+    "removed": [],
+    "animated": [],
+    "redrawn": [
+      "attachment",
+      "barbell",
+      "bat-baseball",
+      "bat-cricket",
+      "certificate",
+      "clapperboard",
+      "file-attachment",
+      "first-aid-kit",
+      "flash",
+      "flash-off",
+      "harp",
+      "headphones-audio",
+      "link-external",
+      "motorcycle",
+      "navigation-pointer",
+      "navigation-pointer-off",
+      "planet-ringed",
+      "stand",
+      "syringe",
+      "table-off",
+      "tree-pine"
+    ],
+    "categories": [
+      "Files"
+    ],
+    "from": "bbc932551308aa90d58c17379ef867fa90b51d58",
+    "to": "8f0713c07e028e7a2d2c8ea88e2125d9e06baf44"
+  }
+]

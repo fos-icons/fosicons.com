@@ -16,9 +16,16 @@ import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { ICON_CHUNK } from '../src/lib/artwork-chunk.ts';
 import { orderBrowseIcons } from '../src/lib/browse-order.ts';
+import { describeIconChangelog, iconChangelogEntry, mergeIconChangelog } from '../src/lib/icon-changelog.ts';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const LOCK_PATH = join(ROOT, 'src/data/source-lock.json');
+/**
+ * Changelog entries written by each sync that adds or removes icons. It's a
+ * record of past syncs, not a copy of the source, so `--check` leaves it out.
+ */
+const ICON_CHANGELOG_PATH = join(ROOT, 'src/data/changelog-icons.json');
+
 
 /** Regular icons the website chrome uses. They must exist in the library. */
 export const UI_ICONS = [
@@ -373,10 +380,34 @@ function main() {
     console.log(`Synchronized data matches ${relative(ROOT, resolve(source)) || source}.`);
     return;
   }
+  const catalogPath = join(ROOT, 'src/data/catalog.json');
+  const previous = existsSync(catalogPath) ? readJson(catalogPath) : null;
+  const previousLock = existsSync(LOCK_PATH) ? readJson(LOCK_PATH) : null;
+  // Icons whose 24px artwork changed in any style, compared before the files are replaced.
+  const redrawn = new Set();
+  for (const style of JSON.parse(outputs['src/data/catalog.json']).styles) {
+    const path = `public/icons/${style}.json`;
+    const old = existsSync(join(ROOT, path)) ? readJson(join(ROOT, path)) : {};
+    const next = outputs[path] ? JSON.parse(outputs[path]) : {};
+    for (const [name, svg] of Object.entries(next)) if (name in old && old[name] !== svg) redrawn.add(name);
+  }
   for (const [path, body] of Object.entries(outputs)) {
     const full = join(ROOT, path);
     mkdirSync(dirname(full), { recursive: true });
     writeFileSync(full, body);
+  }
+  // Record added and removed icons on the changelog page.
+  const nextLock = JSON.parse(outputs['src/data/source-lock.json']);
+  const entry = previous && iconChangelogEntry(previous, JSON.parse(outputs['src/data/catalog.json']), {
+    date: new Date().toISOString().slice(0, 10),
+    from: previousLock?.revision ?? null,
+    to: nextLock.revision,
+    redrawn: [...redrawn],
+  });
+  if (entry) {
+    const entries = existsSync(ICON_CHANGELOG_PATH) ? readJson(ICON_CHANGELOG_PATH) : [];
+    writeFileSync(ICON_CHANGELOG_PATH, json(mergeIconChangelog(entries, entry)));
+    console.log(`Changelog: ${describeIconChangelog(entry).title} (${entry.id}).`);
   }
   for (const path of leftovers) rmSync(join(ROOT, path));
   const lock = readJson(LOCK_PATH);
