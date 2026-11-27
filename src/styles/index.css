@@ -667,7 +667,7 @@ html:has(.docs-page) {
 
 /* The curated SVG declares its animation outside the CSS layers. */
 @media (prefers-reduced-motion: no-preference) {
-  .toast-check .fa-check * {
+  .animated-check .fa-check * {
     animation-duration: 640ms;
     animation-iteration-count: 1;
     animation-fill-mode: both;

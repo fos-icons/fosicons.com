@@ -27,6 +27,13 @@ describe('search', () => {
     expect(names('weather').length).toBeGreaterThan(0);
   });
 
+  it('finds table tennis by its racket and ping pong tags', () => {
+    expect(names('racket')).toContain('table-tennis');
+    expect(names('ping pong')).toContain('table-tennis');
+    expect(names('add')).not.toContain('table-tennis');
+    expect(names('paddle')).toContain('person-rowing');
+  });
+
   it('requires every term and filters by category', () => {
     const files = names('', 'Files');
     expect(files.length).toBe(catalog.categories.find((c) => c.name === 'Files')!.count);

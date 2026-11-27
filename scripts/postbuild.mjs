@@ -106,6 +106,7 @@ const pageFile = (path) => (path === '/' ? 'index.html' : `${path.slice(1)}/inde
 const ROUTES = [
   ['/', homePreloads],
   ['/docs'],
+  ['/changelog'],
   ['/pricing'],
   ['/brands'],
   ['/ai-agents'],

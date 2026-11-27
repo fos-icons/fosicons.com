@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
 
-/** One container for header, page content, and footer so their edges align. */
-export const CONTAINER = 'mx-auto w-full max-w-[1280px] px-4 sm:px-6';
+/** The header and workspace share this width even when the inspector opens. */
+export const SITE_FRAME = 'mx-auto w-full max-w-[1280px]';
+export const CONTAINER = `${SITE_FRAME} px-4 sm:px-6`;
 
 /** Shared sidebar width and gutter align the docs search with the article. */
 export const DOCS_GRID = 'md:[--docs-nav-width:11rem] md:gap-x-12';

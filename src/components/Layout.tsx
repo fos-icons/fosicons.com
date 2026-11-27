@@ -5,8 +5,8 @@ import { splitLocale } from '../i18n/config';
 import markRegular from '../brand/mark-regular.svg?raw';
 import { animatedNames, catalogMeta as catalog } from '../lib/catalog-meta';
 import { isCatalogEditor } from '../lib/catalog-routing';
-import { categoryPath, FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
-import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext } from '../lib/layout';
+import { FRAMEWORK_PATHS, STYLE_PATHS } from '../lib/icon-pages';
+import { CONTAINER, DOCS_GRID, HeaderSlotContext, PaneHostContext, SITE_FRAME } from '../lib/layout';
 import { NPM_URL, ORG_URL, X_URL } from '../lib/links';
 import { useDocumentMeta } from '../lib/useDocumentMeta';
 import { HeaderActions } from './HeaderActions';
@@ -41,7 +41,7 @@ export function Layout() {
   const [paneHost, setPaneHost] = useState<HTMLElement | null>(null);
   const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
   useDocumentMeta();
-  const { t, label } = useI18n();
+  const { t } = useI18n();
   const location = useLocation();
   const { pathname, hash } = location;
   const editor = isCatalogEditor(location);
@@ -52,7 +52,7 @@ export function Layout() {
   const iconPage = !editor && pagePath.startsWith('/icons/');
   const docsPage = pagePath.replace(/\/$/, '') === '/docs';
   // Long reading pages sit on the surface color, so their content needs no cards.
-  const readingPage = docsPage || pagePath.replace(/\/$/, '') === '/ai-agents';
+  const readingPage = docsPage || ['/ai-agents', '/changelog'].includes(pagePath.replace(/\/$/, ''));
   const navigationType = useNavigationType();
   const mainRef = useRef<HTMLElement>(null);
   // A link to another page starts at its top (the router keeps the old scroll
@@ -67,12 +67,8 @@ export function Layout() {
       mainRef.current?.focus({ preventScroll: true });
     }
   }, [pageKey, navigationType, hash]);
-  // On Browse the side pane runs the full height beside the page, so the header
-  // sits in the page column and lines up with the catalog. Elsewhere (icon pages)
-  // the header spans the window and the pane starts below it.
-  const paneBesideHeader = !iconPage && (editor || pagePath === '/' || pagePath.replace(/\/$/, '') === '/brands');
   const header = (
-    <header className={`col-start-1 row-start-1 h-[var(--site-header-height)] border-b border-line ${paneBesideHeader ? '' : 'col-span-2'} ${iconPage ? 'header-glass' : ''}`}>
+    <header className={`h-[var(--site-header-height)] shrink-0 border-b border-line ${iconPage ? 'header-glass' : ''}`}>
       <div className={`${CONTAINER} flex h-full items-center gap-2 ${docsPage ? `${DOCS_GRID} md:grid md:grid-cols-[var(--docs-nav-width)_minmax(0,1fr)_auto]` : ''}`}>
         <LocalLink to="/" className="flex shrink-0 items-center gap-2 rounded-lg pr-1 text-ink md:justify-self-start" aria-label={t('site.home')}>
           <span className="glyph size-7 text-ink" aria-hidden="true" dangerouslySetInnerHTML={{ __html: markRegular }} />
@@ -88,13 +84,13 @@ export function Layout() {
   return (
     <PaneHostContext.Provider value={paneHost}>
     <HeaderSlotContext.Provider value={headerSlot}>
-      {/* Header, page column, and side pane share one grid, so the header never remounts when the layout changes. */}
-      <div className={`grid min-h-dvh grid-cols-[minmax(0,1fr)_auto] grid-rows-[auto_1fr] [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
+      <div className={`flex min-h-dvh flex-col [--site-header-height:calc(3.5rem+1px)] ${readingPage ? 'bg-surface' : ''}`}>
         <a href="#main" className="sr-only z-50 rounded-lg bg-surface px-3 py-2 focus:not-sr-only focus:fixed focus:left-3 focus:top-3">
           {t('site.skipToContent')}
         </a>
         {header}
-          <div className="col-start-1 row-start-2 flex min-w-0 flex-col">
+        <div className={`${SITE_FRAME} grid flex-1 grid-cols-[minmax(0,1fr)_auto]`}>
+          <div className="flex min-w-0 flex-col">
             <main ref={mainRef} id="main" tabIndex={-1} className="flex-1 outline-none">
               {/* Re-keyed per page so moving between pages eases in (see .route-enter). */}
               <div key={pageKey} className="route-enter page-enter" data-enter={entrance.animate || undefined}>
@@ -106,11 +102,10 @@ export function Layout() {
               </div>
             </main>
             <footer className="border-t border-line">
-              {/* Every page links to every category and framework page, so crawlers reach each icon page. */}
-              <div className={`${CONTAINER} grid gap-6 border-b border-line py-8 text-sm md:grid-cols-[auto_1fr] md:gap-16`}>
-                <nav aria-label={t('footer.browse')}>
+              <div className={`${CONTAINER} border-b border-line py-7 text-sm`}>
+                <nav aria-label={t('footer.browse')} className="grid gap-3 md:grid-cols-[auto_1fr] md:gap-x-8">
                   <h2 className="font-medium text-ink">{t('footer.browse')}</h2>
-                  <ul className="mt-3 space-y-2">
+                  <ul className="grid grid-cols-2 gap-x-4 gap-y-2 sm:flex sm:flex-wrap sm:gap-x-5">
                     <li><LocalLink to={FRAMEWORK_PATHS.react} className={footerLink}>{t('footer.reactIcons')}</LocalLink></li>
                     <li><LocalLink to={FRAMEWORK_PATHS.vue} className={footerLink}>{t('footer.vueIcons')}</LocalLink></li>
                     <li><LocalLink to="/docs#flutter" className={footerLink}>{t('footer.flutterIcons')}</LocalLink></li>
@@ -124,17 +119,10 @@ export function Layout() {
                     )}
                   </ul>
                 </nav>
-                <nav aria-label={t('footer.categories')}>
-                  <h2 className="font-medium text-ink">{t('footer.categories')}</h2>
-                  <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 sm:grid-cols-3 lg:grid-cols-4">
-                    {catalog.categories.map((c) => (
-                      <li key={c.name}><LocalLink to={categoryPath(c.name)} className={footerLink}>{label('category', c.name, c.name)}</LocalLink></li>
-                    ))}
-                  </ul>
-                </nav>
               </div>
               <div className={`${CONTAINER} flex flex-col gap-3 py-6 text-sm text-muted md:flex-row md:items-center md:justify-between`}>
                 <nav aria-label={t('footer.nav')} className="flex flex-wrap items-center gap-x-5 gap-y-2">
+                  <LocalLink to="/changelog" className={footerLink}>{t('changelog.title')}</LocalLink>
                   <LocalLink to="/docs#privacy" className={footerLink}>{t('footer.privacy')}</LocalLink>
                   <LocalLink to="/docs#terms" className={footerLink}>{t('footer.terms')}</LocalLink>
                   <LocalLink to="/docs#licensing" className={footerLink}>{t('footer.license')}</LocalLink>
@@ -154,7 +142,8 @@ export function Layout() {
               </div>
             </footer>
           </div>
-          <div ref={setPaneHost} className={`col-start-2 hidden lg:block ${paneBesideHeader ? 'row-span-2 row-start-1' : 'row-start-2'} ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
+          <div ref={setPaneHost} className={`hidden lg:block ${iconPage ? '[--inspector-top:var(--site-header-height)]' : ''}`} />
+        </div>
       </div>
     </HeaderSlotContext.Provider>
     </PaneHostContext.Provider>

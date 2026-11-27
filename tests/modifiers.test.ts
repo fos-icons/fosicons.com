@@ -82,21 +82,22 @@ describe('modifier composition', () => {
 });
 
 describe('size-linked modifier size', () => {
-  it('holds the anchors exactly: 20px on a 48px icon, 11px on a 24px icon', () => {
+  it('uses the authored badge size at 24px and 48px', () => {
     expect(autoModifierPx(48)).toBe(20);
-    expect(autoModifierPx(24)).toBe(11);
-    // 48px is drawn as authored, so the library's packaged components match it.
+    expect(autoModifierPx(24)).toBe(10);
+    // Packaged components use the same badge proportions at these sizes.
+    expect(modifierScaleFor(24, autoModifierPx(24))).toBe(1);
     expect(modifierScaleFor(48, autoModifierPx(48))).toBe(1);
     expect(authoredModifierPx(48)).toBe(20);
   });
 
-  it('follows a straight line through the anchors at every slider size', () => {
+  it('rounds the authored proportions to whole pixels at every slider size', () => {
     const expected: Record<number, number> = {
-      16: 8, 20: 10, 24: 11, 28: 13, 32: 14, 36: 16, 40: 17, 44: 19, 48: 20, 52: 22, 56: 23, 60: 25, 64: 26,
+      16: 7, 20: 8, 24: 10, 28: 12, 32: 13, 36: 15, 40: 17, 44: 18, 48: 20, 52: 22, 56: 23, 60: 25, 64: 27,
     };
     for (const [size, px] of Object.entries(expected)) expect(autoModifierPx(Number(size)), `${size}px`).toBe(px);
-    expect(autoModifierPx(96)).toBe(38);
-    expect(autoModifierPx(512)).toBe(194);
+    expect(autoModifierPx(96)).toBe(40);
+    expect(autoModifierPx(512)).toBe(213);
   });
 
   it('never grows as the icon shrinks, and stays within a quarter of the icon', () => {
@@ -111,14 +112,13 @@ describe('size-linked modifier size', () => {
       expect(modifierScaleFor(size, px)).toBeGreaterThanOrEqual(MODIFIER_SCALE.min - 1e-9);
       previous = px;
     }
-    // Below 16px the line would pass a quarter of the icon, so it is held there.
-    expect(autoModifierPx(8)).toBe(4);
-    expect(autoModifierPx(12)).toBe(6);
+    expect(autoModifierPx(8)).toBe(3);
+    expect(autoModifierPx(12)).toBe(5);
   });
 
   it('applies the user adjustment as a ratio of the linked size, within range', () => {
     expect(modifierPx(48)).toBe(20);
-    expect(modifierPx(24)).toBe(11);
+    expect(modifierPx(24)).toBe(10);
     expect(modifierPxRange(48)).toEqual({ min: 15, max: 24 });
     expect(modifierPxRange(24)).toEqual({ min: 8, max: 12 });
     // 24px on a 48px icon (1.2×) becomes the 12px cap on a 24px icon.
@@ -131,8 +131,9 @@ describe('size-linked modifier size', () => {
   it('draws the badge at the size the slider shows', () => {
     const add = byName.get('add')!;
     const base = sources.regular.bell;
-    // 11px on a 24px icon is 1.1× the 10px authored badge.
+    const authored = composeSvg(base, add, 'top-left', 'regular');
+    expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(24, autoModifierPx(24)))).toBe(authored);
+    expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(48, autoModifierPx(48)))).toBe(authored);
     expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(24, 11))).toContain('scale(1.1');
-    expect(composeSvg(base, add, 'top-left', 'regular', modifierScaleFor(48, 20))).toBe(composeSvg(base, add, 'top-left', 'regular'));
   });
 });

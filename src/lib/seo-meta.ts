@@ -36,7 +36,7 @@ export const facts = {
 };
 
 /** Pages with one fixed URL. */
-export type StaticPageId = 'home' | 'docs' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma' | 'ai-agents'
+export type StaticPageId = 'home' | 'docs' | 'changelog' | 'pricing' | 'brands' | 'not-found' | 'react' | 'vue' | 'figma' | 'ai-agents'
   | 'style-regular' | 'style-filled' | 'style-duocolor' | 'style-duotone';
 export type PageId = StaticPageId | 'icon' | 'category';
 
@@ -55,7 +55,7 @@ export interface PageMeta {
 }
 
 const PATHS: Record<StaticPageId, string> = {
-  home: '/', docs: '/docs', pricing: '/pricing', brands: '/brands', 'not-found': '/404',
+  home: '/', docs: '/docs', changelog: '/changelog', pricing: '/pricing', brands: '/brands', 'not-found': '/404',
   react: FRAMEWORK_PATHS.react, vue: FRAMEWORK_PATHS.vue, figma: FRAMEWORK_PATHS.figma,
   'ai-agents': '/ai-agents',
   'style-regular': STYLE_PATHS.regular, 'style-filled': STYLE_PATHS.filled,
@@ -64,6 +64,7 @@ const PATHS: Record<StaticPageId, string> = {
 const META_KEYS = {
   home: ['meta.home.title', 'meta.home.description'],
   docs: ['meta.docs.title', 'meta.docs.description'],
+  changelog: ['meta.changelog.title', 'meta.changelog.description'],
   pricing: ['meta.pricing.title', 'meta.pricing.description'],
   brands: ['meta.brands.title', 'meta.brands.description'],
   'not-found': ['meta.notFound.title', 'meta.notFound.description'],
