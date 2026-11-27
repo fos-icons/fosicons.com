@@ -1,4 +1,6 @@
+import { describeIconChangelog, type IconChangelogEntry } from '../lib/icon-changelog';
 import { LIBRARY_URL } from '../lib/links';
+import generated from './changelog-icons.json';
 
 /** Keep a Changelog change types. Each highlight is one kind, shown with its marker. */
 export type ChangeKind = 'added' | 'changed' | 'removed' | 'fixed';
@@ -22,7 +24,9 @@ interface ChangelogEntry {
 }
 
 // Add new entries at the top. IDs are permanent links to individual updates.
-export const changelog: readonly ChangelogEntry[] = [
+// Icon additions and removals are recorded automatically by `pnpm run sync`
+// (changelog-icons.json) and merged in by date below.
+const written: readonly ChangelogEntry[] = [
   {
     id: 'november-20-27-2026',
     startDate: '2026-11-20',
@@ -54,3 +58,18 @@ export const changelog: readonly ChangelogEntry[] = [
     source: `${LIBRARY_URL}/compare/37c716c334616c1975e7d2cb11309dfcdc3e54b6...bbc932551308aa90d58c17379ef867fa90b51d58`,
   },
 ];
+
+const sourceUrl = (from: string | null, to: string | null) => (from && to && from !== to
+  ? `${LIBRARY_URL}/compare/${from}...${to}`
+  : to ? `${LIBRARY_URL}/commit/${to}` : LIBRARY_URL);
+
+const fromSync: readonly ChangelogEntry[] = (generated as IconChangelogEntry[]).map((entry) => ({
+  id: entry.id,
+  date: entry.date,
+  ...describeIconChangelog(entry),
+  source: sourceUrl(entry.from, entry.to),
+}));
+
+/** Every update, newest first. */
+export const changelog: readonly ChangelogEntry[] = [...fromSync, ...written]
+  .sort((a, b) => b.date.localeCompare(a.date));
