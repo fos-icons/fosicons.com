@@ -50,6 +50,11 @@ function isLegacyServiceRole(key: string | undefined): key is string {
   }
 }
 
+/** Says why billing is off, so a misconfiguration shows in the server logs. */
+function logOff(reason: string) {
+  console.warn(`Billing is off: ${reason}`);
+}
+
 /**
  * The sandbox never runs on Vercel production, and live billing runs only
  * there, so preview deployments and local servers can't take real payments.
@@ -58,6 +63,12 @@ export function readBillingConfig(env: NodeJS.ProcessEnv): BillingConfig {
   const mode = parseBillingMode(env.BILLING_MODE, env.BILLING_SANDBOX_ENABLED);
   const production = env.VERCEL_ENV === 'production';
   if (!mode || production !== (mode === 'live')) {
+    // Only log when someone tried to turn billing on, so an unconfigured site stays quiet.
+    if (env.BILLING_MODE) {
+      logOff(!mode ? 'BILLING_MODE is not exactly "sandbox" or "live"'
+        : mode === 'live' ? 'live billing runs only where VERCEL_ENV is "production"'
+        : 'sandbox billing never runs where VERCEL_ENV is "production"');
+    }
     throw new BillingError(503, 'billing_disabled');
   }
   const live = mode === 'live';
@@ -66,10 +77,20 @@ export function readBillingConfig(env: NodeJS.ProcessEnv): BillingConfig {
   const accessToken = env.POLAR_ACCESS_TOKEN;
   const webhookSecret = env.POLAR_WEBHOOK_SECRET;
   const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
-  const ids = [env.POLAR_PRO_PRODUCT_ID, env.POLAR_PRO_DISCOUNT_ID, env.POLAR_ADVANCED_PRODUCT_ID, env.POLAR_ADVANCED_DISCOUNT_ID];
-  if (!site || !supabase || !isLegacyServiceRole(serviceRoleKey) ||
-      !accessToken?.startsWith('polar_oat_') || !webhookSecret || webhookSecret.length < 16 ||
-      !ids.every(isUuid) || new Set(ids).size !== ids.length) {
+  const idNames = ['POLAR_PRO_PRODUCT_ID', 'POLAR_PRO_DISCOUNT_ID', 'POLAR_ADVANCED_PRODUCT_ID', 'POLAR_ADVANCED_DISCOUNT_ID'] as const;
+  const ids = idNames.map(name => env[name]);
+  // Names only, never values, so the log is safe to read and share.
+  const failed = [
+    !site && `BILLING_SITE_URL (an ${live ? 'https' : 'http(s)'} origin with no path)`,
+    !supabase && 'SUPABASE_URL (an https origin with no path)',
+    !isLegacyServiceRole(serviceRoleKey) && 'SUPABASE_SERVICE_ROLE_KEY (the legacy service_role JWT)',
+    !accessToken?.startsWith('polar_oat_') && 'POLAR_ACCESS_TOKEN (starts with polar_oat_)',
+    (!webhookSecret || webhookSecret.length < 16) && 'POLAR_WEBHOOK_SECRET',
+    ...idNames.filter((_, i) => !isUuid(ids[i])).map(name => `${name} (a Polar ID)`),
+    ids.every(isUuid) && new Set(ids).size !== ids.length && 'the four POLAR_*_ID values must all differ',
+  ].filter((reason): reason is string => Boolean(reason));
+  if (!site || !supabase || !accessToken || !webhookSecret || !serviceRoleKey || failed.length) {
+    logOff(`check ${failed.join('; ')}. Look for stray spaces, quotes or line breaks.`);
     throw new BillingError(503, 'billing_misconfigured');
   }
   const [proProduct, proDiscount, advancedProduct, advancedDiscount] = ids as string[];

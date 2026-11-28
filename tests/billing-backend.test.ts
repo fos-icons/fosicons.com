@@ -190,6 +190,28 @@ describe('billing mode', () => {
     ] as const) expect(() => readBillingConfig(settings), JSON.stringify(settings)).toThrow(error);
   });
 
+  it('logs which settings are wrong by name, never their values', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const bad = { ...liveEnv, POLAR_ACCESS_TOKEN: ' polar_oat_secret-value', POLAR_PRO_PRODUCT_ID: `${PRO} ` };
+      expect(() => readBillingConfig(bad)).toThrow('billing_misconfigured');
+      const message = warn.mock.calls.flat().join(' ');
+      expect(message).toContain('POLAR_ACCESS_TOKEN');
+      expect(message).toContain('POLAR_PRO_PRODUCT_ID');
+      expect(message).not.toContain('POLAR_ADVANCED_PRODUCT_ID');
+      expect(message).not.toContain('secret-value');
+      expect(message).not.toContain(PRO);
+      warn.mockClear();
+      expect(() => readBillingConfig({ ...liveEnv, BILLING_MODE: 'live ' })).toThrow('billing_disabled');
+      expect(warn.mock.calls.flat().join(' ')).toContain('BILLING_MODE is not exactly');
+      warn.mockClear();
+      expect(() => readBillingConfig({ ...liveEnv, VERCEL_ENV: undefined })).toThrow('billing_disabled');
+      expect(warn.mock.calls.flat().join(' ')).toContain('VERCEL_ENV');
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('hands out only polar.sh pages in live mode', async () => {
     const live = readBillingConfig(liveEnv);
     const store = { ensureRow: vi.fn(), claimCheckout: async () => true, setCheckout: vi.fn() } as unknown as BillingStore;
