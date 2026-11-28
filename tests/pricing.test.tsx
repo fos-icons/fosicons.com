@@ -34,7 +34,7 @@ it('shows the annual launch plans without offering checkout', () => {
     expect(paid.queryByRole('link')).toBeNull();
     expect(paid.queryByRole('button')).toBeNull();
   }
-  expect(screen.queryByRole('heading', { name: 'Test Stripe checkout' })).toBeNull();
+  expect(screen.queryByRole('heading', { name: 'Test Polar checkout' })).toBeNull();
 });
 
 it('compares styles, exports, modifiers, and integrations by tier', () => {

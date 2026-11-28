@@ -16,7 +16,7 @@ export const billingEnabled = billingMode !== null;
 export interface Subscription {
   /** The plan of the account's current or most recent subscription; `free` when there is none. */
   plan: Plan;
-  /** The Stripe subscription status, or `null` when there has never been one. */
+  /** The Polar subscription status, or `null` when there has never been one. */
   status: string | null;
 }
 

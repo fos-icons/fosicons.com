@@ -1,5 +1,5 @@
 /**
- * Where billing runs. `sandbox` uses Stripe test mode and never runs on Vercel
+ * Where billing runs. `sandbox` uses the Polar sandbox and never runs on Vercel
  * production; `live` takes real payments and runs only there.
  */
 export type BillingMode = 'sandbox' | 'live';

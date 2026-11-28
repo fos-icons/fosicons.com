@@ -24,7 +24,7 @@ export const FEATURE_PLAN = {
 
 export type Feature = keyof typeof FEATURE_PLAN;
 
-/** Stripe subscription statuses that grant a paid plan. */
+/** Polar subscription statuses that grant a paid plan. */
 const ENTITLED_STATUSES = new Set(['active', 'trialing']);
 
 /**

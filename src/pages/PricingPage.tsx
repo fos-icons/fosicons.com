@@ -112,7 +112,7 @@ export default function PricingPage() {
   const [available, setAvailable] = useState<boolean | null>(billingMode ? null : false);
   const [chosen, setChosen] = useState<PaidPlan | null>(null);
   const [search] = useSearchParams();
-  /** Back from Stripe (`?billing=success` or `cancel`). */
+  /** Back from Polar (`?billing=success` or `cancel`). */
   const returned = search.has('billing');
   useEffect(() => {
     if (!billingMode) return;

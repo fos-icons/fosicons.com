@@ -1,17 +1,14 @@
 import { useState } from 'react';
 import type { MessageKey } from '../i18n';
+import { isPolarHostedUrl } from './billing-hosts';
 import type { PaidPlan } from './billing-plans';
+import { billingMode } from './plan';
 
 type Operation = 'checkout' | 'portal';
 
-const HOSTED_ORIGIN: Record<Operation, string> = {
-  checkout: 'https://checkout.stripe.com',
-  portal: 'https://billing.stripe.com',
-};
-
 /**
- * Starts Stripe Checkout for a plan, or opens the billing portal, and sends
- * the browser there. Only Stripe's own hosted pages are accepted as targets.
+ * Starts Polar checkout for a plan, or opens Polar's customer portal, and
+ * sends the browser there. Only Polar's own hosted pages are accepted.
  */
 export function useHostedBilling(token: string | null | undefined) {
   const [pending, setPending] = useState<Operation | null>(null);
@@ -33,9 +30,8 @@ export function useHostedBilling(token: string | null | undefined) {
       }
       if (!response.ok) throw new Error('Unable to start hosted session');
       const { url } = await response.json();
-      const target = new URL(url);
-      if (target.origin !== HOSTED_ORIGIN[operation] || target.username || target.password) throw new Error('Unexpected hosted URL');
-      window.location.assign(target.href);
+      if (!billingMode || typeof url !== 'string' || !isPolarHostedUrl(billingMode, url)) throw new Error('Unexpected hosted URL');
+      window.location.assign(new URL(url).href);
     } catch {
       setError(operation === 'checkout' ? 'billing.checkoutError' : 'billing.portalError');
     } finally {

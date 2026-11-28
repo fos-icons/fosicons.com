@@ -23,8 +23,8 @@ function billingApi(status: object, anonymous = 401) {
   const api = vi.fn(async (url: string, init?: RequestInit) => {
     const signed = new Headers(init?.headers).has('Authorization');
     if (url === '/api/billing/status') return signed ? Response.json(status) : new Response(null, { status: anonymous });
-    if (url === '/api/billing/checkout') return Response.json({ url: 'https://checkout.stripe.com/c/pay/cs_live_fixture' });
-    if (url === '/api/billing/portal') return Response.json({ url: 'https://billing.stripe.com/p/session' });
+    if (url === '/api/billing/checkout') return Response.json({ url: 'https://polar.sh/checkout/polar_c_fixture' });
+    if (url === '/api/billing/portal') return Response.json({ url: 'https://polar.sh/fos-icons/portal?customer_session_token=fixture' });
     return new Response(null, { status: 404 });
   });
   vi.stubGlobal('fetch', api);
@@ -106,9 +106,9 @@ it('shows the sandbox notice after a plan is chosen and requires an existing tes
 
   const getPro = card('Pro').getByRole('button', { name: 'Get Pro' });
   await waitFor(() => expect((getPro as HTMLButtonElement).disabled).toBe(false));
-  expect(screen.queryByRole('heading', { name: 'Test Stripe checkout' })).toBeNull();
+  expect(screen.queryByRole('heading', { name: 'Test Polar checkout' })).toBeNull();
   await user.click(getPro);
-  expect(await screen.findByRole('heading', { name: 'Test Stripe checkout' })).toBeTruthy();
+  expect(await screen.findByRole('heading', { name: 'Test Polar checkout' })).toBeTruthy();
   expect(screen.getByText(/No money moves/)).toBeTruthy();
   await user.type(await screen.findByLabelText('Email address'), 'tester@example.test');
   await user.click(screen.getByRole('button', { name: 'Send sign-in code' }));
