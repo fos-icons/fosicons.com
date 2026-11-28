@@ -191,6 +191,9 @@ export async function webhook(
   } catch (error) {
     // A correctly signed event this API version doesn't know is not ours to handle.
     if (error instanceof webhooks.PolarWebhookUnknownTypeError) return;
+    // Say why without logging the body, headers or secret.
+    const reason = error instanceof webhooks.PolarWebhookVerificationError ? 'signature' : 'payload';
+    console.warn(`Billing webhook rejected (${reason}):`, error instanceof Error ? error.message.slice(0, 200) : 'unknown error');
     throw new BillingError(400, 'invalid_webhook');
   }
   if (!event.type.startsWith('subscription.')) return;
