@@ -106,7 +106,7 @@ function mcpEndpoint(): Plugin {
 }
 
 function billingEndpoint(mode: string): Plugin {
-  const env = { ...loadEnv(mode, process.cwd(), ['BILLING_', 'STRIPE_', 'SUPABASE_']), ...process.env };
+  const env = { ...loadEnv(mode, process.cwd(), ['BILLING_', 'POLAR_', 'SUPABASE_']), ...process.env };
   return {
     name: 'fos-billing-sandbox',
     apply: 'serve',

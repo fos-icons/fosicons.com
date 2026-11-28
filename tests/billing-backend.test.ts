@@ -1,53 +1,83 @@
+import { createHmac } from 'node:crypto';
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http';
 import { once } from 'node:events';
 import { PassThrough, Readable } from 'node:stream';
-import Stripe from 'stripe';
+import type { models } from '@polar-sh/sdk/2026-10';
 import { describe, expect, it, vi } from 'vitest';
 import { createBillingHandler } from '../api/billing/[action]';
 import { readBillingConfig } from '../server/billing/config';
-import type { BillingStore } from '../server/billing/store';
-import { checkout, projectSubscriptions, validateOffer, webhook, type BillingStripe } from '../server/billing/stripe';
+import { checkout, checkoutParams, portal, projectSubscriptions, validateOffer, webhook, type BillingPolar } from '../server/billing/polar';
+import type { BillingRow, BillingStore } from '../server/billing/store';
+
+const uuid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`;
+const PRO = uuid(1);
+const PRO_DISCOUNT = uuid(2);
+const ADVANCED = uuid(3);
+const ADVANCED_DISCOUNT = uuid(4);
+const owner = uuid(10);
+const customerId = uuid(11);
+const secret = `whsec_${Buffer.from('a-test-webhook-signing-secret').toString('base64')}`;
 
 const env = {
-  BILLING_SANDBOX_ENABLED: 'true',
+  BILLING_MODE: 'sandbox',
   BILLING_SITE_URL: 'http://localhost:5173',
-  STRIPE_SECRET_KEY: 'sk_test_fixture',
-  STRIPE_WEBHOOK_SECRET: 'whsec_fixture',
-  STRIPE_PRO_PRICE_ID: 'price_pro',
-  STRIPE_ADVANCED_PRICE_ID: 'price_advanced',
-  STRIPE_PRO_COUPON_ID: 'coupon_pro',
-  STRIPE_ADVANCED_COUPON_ID: 'coupon_advanced',
+  POLAR_ACCESS_TOKEN: 'polar_oat_fixture',
+  POLAR_WEBHOOK_SECRET: secret,
+  POLAR_PRO_PRODUCT_ID: PRO,
+  POLAR_PRO_DISCOUNT_ID: PRO_DISCOUNT,
+  POLAR_ADVANCED_PRODUCT_ID: ADVANCED,
+  POLAR_ADVANCED_DISCOUNT_ID: ADVANCED_DISCOUNT,
   SUPABASE_URL: 'https://test.example',
   SUPABASE_SERVICE_ROLE_KEY: `fixture.${Buffer.from(JSON.stringify({ role: 'service_role' })).toString('base64url')}.fixture`,
 };
 const runtime = readBillingConfig(env);
-const owner = 'a-user';
-const customer = 'cus_fixture';
 const auth = 'Bearer header.payload.signature';
 const origin = runtime.site.origin;
-const asStripe = (service: Partial<Record<keyof BillingStripe, unknown>>) => service as BillingStripe;
-const rowFixture = (customerId: string | null = customer): NonNullable<Awaited<ReturnType<BillingStore['byUser']>>> => ({
-  user_id: owner, customer_id: customerId, customer_key: 'customer-key', customer_started_at: new Date().toISOString(),
-  checkout_id: null, checkout_plan: null, checkout_started_at: null, checkout_session_id: null,
+const asPolar = (service: Partial<Record<keyof BillingPolar, unknown>>) => service as BillingPolar;
+const rowFixture = (customer: string | null = customerId): BillingRow => ({
+  user_id: owner, customer_id: customer, checkout_plan: null, checkout_started_at: null, checkout_id: null,
   plan: 'free', status: null, subscription_id: null, projection_revision: 0, projected_at: null,
 });
-const price = (id = 'price_pro', amount = 6900) => ({
-  id, livemode: false, active: true, product: { id: 'prod_pro', active: true, livemode: false },
-  type: 'recurring', unit_amount: amount, currency: 'usd', billing_scheme: 'per_unit',
-  recurring: { interval: 'year', interval_count: 1, usage_type: 'licensed' },
-}) as Stripe.Price;
-const coupon = () => ({
-  id: 'coupon_pro', livemode: false, valid: true, duration: 'once', currency: 'usd',
-  percent_off: null, amount_off: 2000, applies_to: { products: ['prod_pro'] },
-}) as Stripe.Coupon;
-const sub = (status: Stripe.Subscription['status'], itemPrice = price(), quantity = 1) => ({
-  id: `sub_${status}`, status, customer, livemode: false, created: 1,
-  items: { has_more: false, data: [{ price: itemPrice, quantity }] },
-}) as Stripe.Subscription;
+
+const product = (id = PRO, amount = 6900) => ({
+  id, is_archived: false, is_recurring: true, recurring_interval: 'year', recurring_interval_count: 1, trial_interval: null,
+  prices: [{ id: uuid(20), amount_type: 'fixed', price_amount: amount, price_currency: 'usd', is_archived: false }],
+}) as unknown as models.Product;
+const discount = (id = PRO_DISCOUNT, productId = PRO, amount = 2000) => ({
+  id, type: 'fixed', duration: 'once', amount, currency: 'usd', code: null, starts_at: null, ends_at: null,
+  max_redemptions: null, redemptions_count: 0, products: [{ id: productId }],
+}) as unknown as models.Discount;
+const sub = (status: string, productId = PRO, extra: Partial<models.Subscription> = {}) => ({
+  id: uuid(30 + status.length), status, product_id: productId, customer_id: customerId,
+  recurring_interval: 'year', recurring_interval_count: 1, paused_at: null, created_at: '2026-11-01T00:00:00Z',
+  customer: { id: customerId, external_id: owner }, ...extra,
+}) as unknown as models.Subscription;
+const page = <T>(items: T[]) => ({ items, pagination: { total_count: items.length, max_page: 1 } });
+const openCheckout = (plan: 'pro' | 'advanced' = 'pro', extra: Partial<models.Checkout> = {}) => ({
+  id: uuid(40), status: 'open', expires_at: new Date(Date.now() + 3_600_000).toISOString(),
+  url: 'https://sandbox.polar.sh/checkout/polar_c_fixture', external_customer_id: owner, metadata: { fos_plan: plan },
+  product_id: plan === 'pro' ? PRO : ADVANCED, discount_id: plan === 'pro' ? PRO_DISCOUNT : ADVANCED_DISCOUNT,
+  allow_discount_codes: false, currency: 'usd',
+  amount: plan === 'pro' ? 6900 : 12900, discount_amount: plan === 'pro' ? 2000 : 3000, net_amount: plan === 'pro' ? 4900 : 9900,
+  ...extra,
+}) as unknown as models.Checkout;
+
+/** Signs a body the way Polar does (Standard Webhooks). */
+function signed(body: string, key = secret) {
+  const id = 'msg_fixture';
+  const timestamp = String(Math.floor(Date.now() / 1000));
+  const signature = createHmac('sha256', Buffer.from(key.slice('whsec_'.length), 'base64'))
+    .update(`${id}.${timestamp}.${body}`).digest('base64');
+  return { 'webhook-id': id, 'webhook-timestamp': timestamp, 'webhook-signature': `v1,${signature}` };
+}
+const event = (externalId: string | null = owner, type = 'subscription.updated') => JSON.stringify({
+  type, timestamp: new Date().toISOString(),
+  data: { ...sub('active'), customer: { id: customerId, external_id: externalId } },
+});
 
 function replyThrough(
   handler: ReturnType<typeof createBillingHandler>, action: string, method: string,
-  headers: IncomingMessage['headers'] = {}, raw: Buffer | Buffer[] = Buffer.alloc(0), settings = env,
+  headers: IncomingMessage['headers'] = {}, raw: Buffer | Buffer[] = Buffer.alloc(0), settings: NodeJS.ProcessEnv = env,
 ) {
   const req = Object.assign(Readable.from(Array.isArray(raw) ? raw : [raw]), {
     method, url: `/api/billing/${action}`, headers,
@@ -67,25 +97,26 @@ function replyThrough(
 }
 
 describe('sandbox HTTP boundary', () => {
-  it('rejects disabled/production mode and non-test secrets before accessing providers', async () => {
+  it('rejects disabled/production mode and bad settings before accessing providers', async () => {
     const store = vi.fn();
-    const stripe = vi.fn();
-    const handle = createBillingHandler({ store, stripe });
-    const production = { ...env, VERCEL_ENV: 'production' };
-    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, production))
+    const polar = vi.fn();
+    const handle = createBillingHandler({ store, polar });
+    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, VERCEL_ENV: 'production' }))
       .toMatchObject({ code: 503, body: { error: 'billing_disabled' } });
-    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, STRIPE_SECRET_KEY: 'sk_live_fixture' }))
+    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, POLAR_ACCESS_TOKEN: 'sk_test_fixture' }))
       .toMatchObject({ code: 503, body: { error: 'billing_misconfigured' } });
-    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, BILLING_SANDBOX_ENABLED: 'TRUE' }))
+    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, POLAR_PRO_DISCOUNT_ID: PRO }))
+      .toMatchObject({ code: 503, body: { error: 'billing_misconfigured' } });
+    expect(await replyThrough(handle, 'status', 'GET', {}, undefined, { ...env, BILLING_MODE: 'SANDBOX' }))
       .toMatchObject({ code: 503, body: { error: 'billing_disabled' } });
     expect(store).not.toHaveBeenCalled();
-    expect(stripe).not.toHaveBeenCalled();
+    expect(polar).not.toHaveBeenCalled();
   });
 
   it('looks up only the verified user and treats a return URL as informational', async () => {
     const verifyUser = vi.fn().mockResolvedValue(owner);
     const byUser = vi.fn().mockResolvedValue(null);
-    const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, stripe: vi.fn() });
+    const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, polar: vi.fn() });
     expect(await replyThrough(handle, 'status?billing=success&user_id=other', 'GET', { authorization: auth }))
       .toEqual({ code: 200, headers: { 'Cache-Control': 'no-store', 'Content-Type': 'application/json; charset=utf-8' },
         body: { plan: 'free', status: null, entitlement: 'free' } });
@@ -100,210 +131,170 @@ describe('sandbox HTTP boundary', () => {
     const verifyUser = vi.fn().mockResolvedValue(owner);
     const byUser = vi.fn().mockResolvedValueOnce({ ...rowFixture(), plan: 'advanced', status: 'active' })
       .mockResolvedValueOnce({ ...rowFixture(), plan: 'pro', status: 'past_due' });
-    const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, stripe: vi.fn() });
+    const handle = createBillingHandler({ store: () => ({ verifyUser, byUser }) as unknown as BillingStore, polar: vi.fn() });
     expect(await replyThrough(handle, 'status', 'GET', { authorization: auth }))
       .toMatchObject({ code: 200, body: { plan: 'advanced', status: 'active', entitlement: 'advanced' } });
     expect(await replyThrough(handle, 'status', 'GET', { authorization: auth }))
       .toMatchObject({ code: 200, body: { plan: 'pro', status: 'past_due', entitlement: 'free' } });
   });
 
-  it('rejects foreign origins and a body that tries to select a Stripe object', async () => {
+  it('rejects foreign origins and a body that tries to select a Polar object', async () => {
     const verifyUser = vi.fn().mockResolvedValue(owner);
-    const stripe = vi.fn();
-    const handle = createBillingHandler({ store: () => ({ verifyUser }) as unknown as BillingStore, stripe });
+    const polar = vi.fn();
+    const handle = createBillingHandler({ store: () => ({ verifyUser }) as unknown as BillingStore, polar });
     const headers = { authorization: auth, 'content-type': 'application/json', origin };
     expect(await replyThrough(handle, 'checkout', 'POST', { ...headers, origin: 'https://example.org' }))
       .toMatchObject({ code: 403, body: { error: 'invalid_origin' } });
     expect(verifyUser).not.toHaveBeenCalled();
-    expect(await replyThrough(handle, 'checkout', 'POST', headers, Buffer.from('{"plan":"pro","price":"price_bad"}')))
+    expect(await replyThrough(handle, 'checkout', 'POST', headers, Buffer.from(`{"plan":"pro","product":"${ADVANCED}"}`)))
       .toMatchObject({ code: 400, body: { error: 'invalid_plan' } });
     expect(await replyThrough(handle, 'checkout', 'POST', headers, [Buffer.alloc(800), Buffer.alloc(300)]))
       .toMatchObject({ code: 413, body: { error: 'body_too_large' } });
-    expect(stripe).not.toHaveBeenCalled();
+    expect(polar).not.toHaveBeenCalled();
   });
 
-  it('uses only the mapped user customer for the portal and checks the returned session', async () => {
-    const create = vi.fn().mockResolvedValue({ livemode: false, customer, url: 'https://billing.stripe.com/p/test' });
-    const stripe = asStripe({ billingPortal: { sessions: { create } } });
+  it('opens the portal only for the signed-in user and checks the returned session', async () => {
+    const session = { customer_id: customerId, customer: { external_id: owner }, customer_portal_url: 'https://sandbox.polar.sh/fos/portal?customer_session_token=x' };
+    const create = vi.fn().mockResolvedValue(session);
+    const polar = asPolar({ customerSessions: { create } });
     const byUser = vi.fn().mockResolvedValue(rowFixture());
-    const handle = createBillingHandler({ store: () => ({ verifyUser: async () => owner, byUser }) as unknown as BillingStore, stripe: () => stripe });
-    const req = () => replyThrough(handle, 'portal?customer=cus_other', 'POST', { authorization: auth }, Buffer.from('{"customer":"cus_other"}'));
-    expect(await req()).toMatchObject({ code: 200, body: { url: 'https://billing.stripe.com/p/test' } });
-    expect(create).toHaveBeenCalledExactlyOnceWith({ customer, return_url: `${origin}/pricing` });
-    create.mockResolvedValue({ livemode: true, customer, url: 'https://billing.stripe.com/p/test' });
+    const handle = createBillingHandler({ store: () => ({ verifyUser: async () => owner, byUser }) as unknown as BillingStore, polar: () => polar });
+    const req = () => replyThrough(handle, 'portal?customer=other', 'POST', { authorization: auth }, Buffer.from('{"customer":"other"}'));
+    expect(await req()).toMatchObject({ code: 200, body: { url: session.customer_portal_url } });
+    expect(create).toHaveBeenCalledExactlyOnceWith({ external_customer_id: owner, return_url: `${origin}/pricing` });
+    create.mockResolvedValue({ ...session, customer_portal_url: 'https://polar.sh/fos/portal' });
     expect(await req()).toMatchObject({ code: 503, body: { error: 'billing_misconfigured' } });
-    byUser.mockResolvedValue(null);
+    create.mockRejectedValue(Object.assign(new Error('not found'), { statusCode: 404 }));
+    expect(await req()).toMatchObject({ code: 404, body: { error: 'no_billing_customer' } });
+    byUser.mockResolvedValue(rowFixture(null));
     expect(await req()).toMatchObject({ code: 404, body: { error: 'no_billing_customer' } });
   });
 });
 
 describe('billing mode', () => {
-  const liveEnv = {
-    ...env, BILLING_SANDBOX_ENABLED: undefined, BILLING_MODE: 'live', VERCEL_ENV: 'production',
-    BILLING_SITE_URL: 'https://fosicons.com', STRIPE_SECRET_KEY: 'sk_live_fixture',
-  };
+  const liveEnv = { ...env, BILLING_MODE: 'live', VERCEL_ENV: 'production', BILLING_SITE_URL: 'https://fosicons.com' };
 
-  it('runs the sandbox only off production and live billing only on production, each with its own key', () => {
-    expect(readBillingConfig({ ...env, BILLING_SANDBOX_ENABLED: undefined, BILLING_MODE: 'sandbox' }))
-      .toMatchObject({ mode: 'sandbox', live: false });
-    expect(readBillingConfig(liveEnv)).toMatchObject({ mode: 'live', live: true });
+  it('runs the sandbox only off production and live billing only on production, against matching Polar servers', () => {
+    expect(runtime).toMatchObject({ mode: 'sandbox', live: false, server: 'sandbox' });
+    expect(readBillingConfig({ ...env, BILLING_MODE: undefined, BILLING_SANDBOX_ENABLED: 'true' })).toMatchObject({ mode: 'sandbox' });
+    expect(readBillingConfig(liveEnv)).toMatchObject({ mode: 'live', live: true, server: 'production' });
     for (const [settings, error] of [
       [{ ...liveEnv, VERCEL_ENV: 'preview' }, 'billing_disabled'],
       [{ ...liveEnv, VERCEL_ENV: undefined }, 'billing_disabled'],
-      [{ ...env, BILLING_MODE: 'sandbox', VERCEL_ENV: 'production' }, 'billing_disabled'],
+      [{ ...env, VERCEL_ENV: 'production' }, 'billing_disabled'],
       [{ ...liveEnv, BILLING_MODE: 'LIVE' }, 'billing_disabled'],
-      [{ ...liveEnv, STRIPE_SECRET_KEY: 'sk_test_fixture' }, 'billing_misconfigured'],
       [{ ...liveEnv, BILLING_SITE_URL: 'http://localhost:5173' }, 'billing_misconfigured'],
       [{ ...liveEnv, BILLING_SITE_URL: 'http://fosicons.com' }, 'billing_misconfigured'],
+      [{ ...liveEnv, POLAR_WEBHOOK_SECRET: '' }, 'billing_misconfigured'],
+      [{ ...liveEnv, POLAR_ADVANCED_PRODUCT_ID: 'prod_advanced' }, 'billing_misconfigured'],
     ] as const) expect(() => readBillingConfig(settings), JSON.stringify(settings)).toThrow(error);
   });
 
-  it('accepts only live Stripe objects in live mode', async () => {
+  it('hands out only polar.sh pages in live mode', async () => {
     const live = readBillingConfig(liveEnv);
-    const livePrice = { ...price(), livemode: true, product: { id: 'prod_pro', active: true, livemode: true } } as Stripe.Price;
-    const liveCoupon = { ...coupon(), livemode: true } as Stripe.Coupon;
-    expect(() => validateOffer(livePrice, liveCoupon, live.plans.pro, true)).not.toThrow();
-    expect(() => validateOffer(price(), coupon(), live.plans.pro, true)).toThrow('billing_misconfigured');
-    expect(projectSubscriptions(live, [{ ...sub('active', livePrice), livemode: true } as Stripe.Subscription]))
-      .toMatchObject({ plan: 'pro', status: 'active' });
-    expect(() => projectSubscriptions(live, [sub('active')])).toThrow('billing_misconfigured');
-
-    const create = vi.fn().mockResolvedValue({ livemode: false, customer, url: 'https://billing.stripe.com/p/test' });
-    const store = { byUser: async () => rowFixture() } as unknown as BillingStore;
-    const { portal } = await import('../server/billing/stripe');
-    await expect(portal(live, store, asStripe({ billingPortal: { sessions: { create } } }), owner))
-      .rejects.toThrow('billing_misconfigured');
-  });
-
-  it('accepts live webhook events and rejects test events in live mode', async () => {
-    const live = readBillingConfig(liveEnv);
-    const instance = new Stripe(env.STRIPE_SECRET_KEY);
-    const byCustomer = vi.fn().mockResolvedValue(null);
-    const db = { byCustomer } as unknown as BillingStore;
-    const stripe = asStripe({ webhooks: instance.webhooks });
-    const event = (livemode: boolean) => JSON.stringify({ id: 'evt_fixture', livemode, type: 'customer.subscription.updated',
-      data: { object: { object: 'subscription', livemode, customer, status: 'active' } } });
-    const sign = (text: string) => instance.webhooks.generateTestHeaderString({ payload: text, secret: env.STRIPE_WEBHOOK_SECRET });
-    const testEvent = event(false);
-    await expect(webhook(live, db, stripe, Buffer.from(testEvent), sign(testEvent))).rejects.toThrow('invalid_webhook');
-    expect(byCustomer).not.toHaveBeenCalled();
-    const liveEvent = event(true);
-    await webhook(live, db, stripe, Buffer.from(liveEvent), sign(liveEvent));
-    expect(byCustomer).toHaveBeenCalledExactlyOnceWith(customer);
+    const store = { ensureRow: vi.fn(), claimCheckout: async () => true, setCheckout: vi.fn() } as unknown as BillingStore;
+    const polar = (url: string) => asPolar({
+      subscriptions: { list: async () => page([]) },
+      checkouts: { list: async () => page([]), create: async () => openCheckout('pro', { url }) },
+      products: { get: async () => product() }, discounts: { get: async () => discount() },
+    });
+    await expect(checkout(live, store, polar('https://sandbox.polar.sh/checkout/x'), owner, 'pro')).rejects.toThrow('billing_misconfigured');
+    expect(await checkout(live, store, polar('https://polar.sh/checkout/x'), owner, 'pro')).toEqual({ url: 'https://polar.sh/checkout/x' });
   });
 });
 
-describe('sandbox Stripe Checkout', () => {
-  it('requires the exact annual price and the matching fixed product coupon', () => {
+describe('sandbox Polar checkout', () => {
+  it('requires the yearly renewal price and the matching one-time fixed discount', () => {
     const offer = runtime.plans.pro;
-    expect(() => validateOffer(price(), coupon(), offer, false)).not.toThrow();
+    expect(() => validateOffer(product(), discount(), offer)).not.toThrow();
+    const price = product().prices[0];
     for (const bad of [
-      { ...price(), active: false }, { ...price(), livemode: true }, { ...price(), billing_scheme: 'tiered' },
-      { ...price(), currency: 'eur' }, { ...price(), unit_amount: 4900 },
-      { ...price(), recurring: { ...price().recurring!, interval: 'month' } },
-      { ...price(), recurring: { ...price().recurring!, usage_type: 'metered' } },
-    ]) expect(() => validateOffer(bad, coupon(), offer, false)).toThrow('billing_misconfigured');
+      { ...product(), is_archived: true }, { ...product(), recurring_interval: 'month' },
+      { ...product(), trial_interval: 'day' }, { ...product(), id: ADVANCED },
+      { ...product(), prices: [{ ...price, price_amount: 4900 }] },
+      { ...product(), prices: [{ ...price, price_currency: 'eur' }] },
+      { ...product(), prices: [{ ...price, amount_type: 'custom' }] },
+      { ...product(), prices: [price, { ...price, id: uuid(21) }] },
+    ]) expect(() => validateOffer(bad as models.Product, discount(), offer)).toThrow('billing_misconfigured');
     for (const bad of [
-      { ...coupon(), livemode: true }, { ...coupon(), valid: false }, { ...coupon(), amount_off: 3000 },
-      { ...coupon(), percent_off: 10 }, { ...coupon(), duration: 'forever' },
-      { ...coupon(), applies_to: { products: ['prod_other'] } },
-    ]) expect(() => validateOffer(price(), bad, offer, false)).toThrow('billing_misconfigured');
+      { ...discount(), amount: 3000 }, { ...discount(), type: 'percentage' }, { ...discount(), duration: 'forever' },
+      { ...discount(), code: 'LAUNCH' }, { ...discount(), currency: 'eur' },
+      { ...discount(), products: [{ id: ADVANCED }] }, { ...discount(), products: [{ id: PRO }, { id: ADVANCED }] },
+      { ...discount(), ends_at: '2020-01-01T00:00:00Z' }, { ...discount(), max_redemptions: 1, redemptions_count: 1 },
+    ]) expect(() => validateOffer(product(), bad as models.Discount, offer)).toThrow('billing_misconfigured');
   });
 
-  it('serializes competing checkout plans and reuses the owned open Session', async () => {
-    let row = rowFixture();
+  it('creates one checkout for the signed-in user with the discount applied, and reuses it', async () => {
+    let lease = false;
     const store = {
-      byUser: async () => ({ ...row }),
-      reserveCheckout: vi.fn(async (_id, _customer, plan) => {
-        if (row.checkout_id) return null;
-        row = { ...row, checkout_id: 'one-attempt', checkout_plan: plan, checkout_started_at: new Date().toISOString() };
-        return { ...row };
-      }),
-      setSession: async (_id, _attempt, id) => (row = { ...row, checkout_session_id: id }),
-    } satisfies Partial<BillingStore>;
-    let session: Partial<Stripe.Checkout.Session> | undefined;
-    let release!: () => void;
-    let createStarted!: () => void;
-    const ready = new Promise<void>(resolve => { createStarted = resolve; });
-    const wait = new Promise<void>(resolve => { release = resolve; });
-    const create = vi.fn(async (params: Stripe.Checkout.SessionCreateParams) => {
-      createStarted();
-      await wait;
-      session = { id: 'cs_test_fixture', customer, livemode: false, mode: 'subscription', status: 'open',
-        amount_subtotal: 6900, amount_total: 4900, currency: 'usd',
-        metadata: Object.fromEntries(Object.entries(params.metadata ?? {}).map(([key, value]) => [key, String(value)])),
-        adaptive_pricing: { enabled: false }, payment_method_types: ['card'], url: 'https://checkout.stripe.com/c/pay/cs_test_fixture' };
-      return session;
+      ensureRow: vi.fn(),
+      claimCheckout: vi.fn(async () => (lease ? false : (lease = true))),
+      setCheckout: vi.fn(),
+    } as unknown as BillingStore;
+    let created: models.Checkout | undefined;
+    const create = vi.fn(async (params: models.CheckoutCreate) => (created = openCheckout(params.metadata?.fos_plan as 'pro')));
+    const polar = asPolar({
+      subscriptions: { list: async () => page([]) },
+      checkouts: { list: async () => page(created ? [created] : []), create },
+      products: { get: async () => product() }, discounts: { get: async () => discount() },
     });
-    const stripe = asStripe({
-      prices: { retrieve: async () => price() },
-      coupons: { retrieve: async () => coupon() },
-      subscriptions: { list: async () => ({ data: [], has_more: false }) },
-      checkout: { sessions: { create, list: async () => ({ data: [], has_more: false }), retrieve: async () => session } },
+    expect(await checkout(runtime, store, polar, owner, 'pro')).toEqual({ url: 'https://sandbox.polar.sh/checkout/polar_c_fixture' });
+    expect(await checkout(runtime, store, polar, owner, 'pro')).toEqual({ url: 'https://sandbox.polar.sh/checkout/polar_c_fixture' });
+    await expect(checkout(runtime, store, polar, owner, 'advanced')).rejects.toThrow('checkout_in_progress');
+    expect(create).toHaveBeenCalledExactlyOnceWith({
+      products: [PRO], discount_id: PRO_DISCOUNT, allow_discount_codes: false, allow_trial: false, currency: 'usd',
+      external_customer_id: owner, metadata: { fos_plan: 'pro' },
+      success_url: `${origin}/pricing?billing=success`, return_url: `${origin}/pricing?billing=cancel`,
     });
-    const db = store as unknown as BillingStore;
-    const pending = checkout(runtime, db, stripe, owner, 'pro');
-    await ready;
-    await expect(checkout(runtime, db, stripe, owner, 'advanced')).rejects.toThrow('checkout_in_progress');
-    release();
-    expect(await pending).toEqual({ url: session?.url });
-    expect(await checkout(runtime, db, stripe, owner, 'pro')).toEqual({ url: session?.url });
-    expect(create).toHaveBeenCalledExactlyOnceWith(expect.objectContaining({
-      customer, mode: 'subscription', line_items: [{ price: 'price_pro', quantity: 1 }], currency: 'usd',
-      discounts: [{ coupon: 'coupon_pro' }], allowed_payment_method_types: ['card'],
-      adaptive_pricing: { enabled: false }, automatic_tax: { enabled: false },
-      custom_text: { submit: { message: expect.stringMatching(/US\$49.*US\$69/) } },
-      success_url: `${origin}/pricing?billing=success`, cancel_url: `${origin}/pricing?billing=cancel`,
-    }), { idempotencyKey: 'fos-sandbox-checkout-one-attempt' });
+    expect(store.setCheckout).toHaveBeenCalledExactlyOnceWith(owner, uuid(40));
   });
 
-  it('blocks an unfinished provider subscription and fails closed on an old unsaved attempt', async () => {
-    const row = { ...rowFixture(), checkout_id: 'old-attempt', checkout_plan: 'pro' as const,
-      checkout_started_at: new Date(Date.now() - 13 * 3_600_000).toISOString() };
-    const create = vi.fn();
-    const list = vi.fn().mockResolvedValue({ data: [sub('incomplete')], has_more: false });
-    const store = { byUser: async () => row } as unknown as BillingStore;
-    const stripe = asStripe({
-      prices: { retrieve: async () => price() }, coupons: { retrieve: async () => coupon() },
-      subscriptions: { list },
-      checkout: { sessions: { create, list: async () => ({ data: [], has_more: false }) } },
+  it('refuses a second subscription, a held lease, and a checkout that charges the wrong amount', async () => {
+    const create = vi.fn().mockResolvedValue(openCheckout('pro', { net_amount: 6900, discount_amount: 0 }));
+    const list = vi.fn().mockResolvedValue(page([sub('incomplete')]));
+    const claimCheckout = vi.fn().mockResolvedValue(false);
+    const store = { ensureRow: vi.fn(), claimCheckout, setCheckout: vi.fn() } as unknown as BillingStore;
+    const polar = asPolar({
+      subscriptions: { list }, checkouts: { list: async () => page([]), create },
+      products: { get: async () => product() }, discounts: { get: async () => discount() },
     });
-    await expect(checkout(runtime, store, stripe, owner, 'pro')).rejects.toThrow('subscription_exists');
-    list.mockResolvedValue({ data: [], has_more: false });
-    await expect(checkout(runtime, store, stripe, owner, 'pro')).rejects.toThrow('checkout_in_progress');
+    await expect(checkout(runtime, store, polar, owner, 'pro')).rejects.toThrow('subscription_exists');
+    list.mockResolvedValue(page([sub('canceled')]));
+    await expect(checkout(runtime, store, polar, owner, 'pro')).rejects.toThrow('checkout_in_progress');
     expect(create).not.toHaveBeenCalled();
+    claimCheckout.mockResolvedValue(true);
+    await expect(checkout(runtime, store, polar, owner, 'pro')).rejects.toThrow('billing_misconfigured');
+    expect(store.setCheckout).not.toHaveBeenCalled();
+  });
+
+  it('sends the advertised prices to Polar', () => {
+    expect(checkoutParams(runtime, owner, 'advanced')).toMatchObject({ products: [ADVANCED], discount_id: ADVANCED_DISCOUNT });
   });
 });
 
 describe('sandbox webhook projection', () => {
-  const instance = new Stripe(env.STRIPE_SECRET_KEY);
-  const payload = (livemode = false, eventCustomer = customer) =>
-    JSON.stringify({ id: 'evt_fixture', livemode, type: 'customer.subscription.updated',
-      data: { object: { object: 'subscription', livemode, customer: eventCustomer, status: 'active' } } }, null, 2);
-  const sign = (text: string) => instance.webhooks.generateTestHeaderString({ payload: text, secret: env.STRIPE_WEBHOOK_SECRET });
+  const idle = () => asPolar({ subscriptions: { list: async () => page([]) } });
 
-  it('verifies the raw bytes, rejects live events, and ignores unowned customer IDs', async () => {
-    const byCustomer = vi.fn().mockResolvedValue(null);
-    const handle = createBillingHandler({
-      store: () => ({ byCustomer }) as unknown as BillingStore,
-      stripe: () => asStripe({ webhooks: instance.webhooks }),
-    });
-    const send = (text: string, signature: string) => replyThrough(handle, 'webhook', 'POST', { 'stripe-signature': signature },
+  it('verifies the raw bytes and ignores customers this site did not create', async () => {
+    const byUser = vi.fn().mockResolvedValue(null);
+    const handle = createBillingHandler({ store: () => ({ byUser }) as unknown as BillingStore, polar: idle });
+    const send = (text: string, headers: IncomingMessage['headers']) => replyThrough(handle, 'webhook', 'POST', headers,
       [Buffer.from(text.slice(0, 12)), Buffer.from(text.slice(12))]);
-    const testBody = payload(false, 'cus_unmapped');
-    expect(await send(`${testBody} `, sign(testBody))).toMatchObject({ code: 400, body: { error: 'invalid_webhook' } });
-    const liveBody = payload(true);
-    expect(await send(liveBody, sign(liveBody))).toMatchObject({ code: 400, body: { error: 'invalid_webhook' } });
-    expect(byCustomer).not.toHaveBeenCalled();
-    expect(await send(testBody, sign(testBody))).toMatchObject({ code: 200, body: { received: true } });
-    expect(byCustomer).toHaveBeenCalledExactlyOnceWith('cus_unmapped');
+    const body = event();
+    expect(await send(`${body} `, signed(body))).toMatchObject({ code: 400, body: { error: 'invalid_webhook' } });
+    expect(await send(body, signed(body, `whsec_${Buffer.from('another-secret-entirely').toString('base64')}`)))
+      .toMatchObject({ code: 400, body: { error: 'invalid_webhook' } });
+    expect(await send(body, {})).toMatchObject({ code: 400, body: { error: 'invalid_webhook' } });
+    expect(byUser).not.toHaveBeenCalled();
+    const foreign = event('someone-else');
+    expect(await send(foreign, signed(foreign))).toMatchObject({ code: 200, body: { received: true } });
+    expect(byUser).not.toHaveBeenCalled();
+    expect(await send(body, signed(body))).toMatchObject({ code: 200, body: { received: true } });
+    expect(byUser).toHaveBeenCalledExactlyOnceWith(owner);
   });
 
   it('reads an IncomingMessage even after Vercel-style helpers buffer and replay its body', async () => {
-    const handle = createBillingHandler({
-      store: () => ({ byCustomer: async () => null }) as unknown as BillingStore,
-      stripe: () => asStripe({ webhooks: instance.webhooks }),
-    });
+    const handle = createBillingHandler({ store: () => ({ byUser: async () => null }) as unknown as BillingStore, polar: idle });
     const server = createServer(async (req, res) => {
       if (req.url?.includes('?replay')) {
         const chunks: Buffer[] = [];
@@ -311,8 +302,8 @@ describe('sandbox webhook projection', () => {
         const replay = new PassThrough();
         const originalOn = req.on.bind(req);
         req.read = replay.read.bind(replay);
-        req.on = req.addListener = ((event: string, callback: (...args: unknown[]) => void) =>
-          event === 'data' || event === 'end' ? replay.on(event, callback) : originalOn(event, callback)) as typeof req.on;
+        req.on = req.addListener = ((name: string, callback: (...args: unknown[]) => void) =>
+          name === 'data' || name === 'end' ? replay.on(name, callback) : originalOn(name, callback)) as typeof req.on;
         Object.defineProperty(req, 'body', { get: () => { throw new Error('Parsed body must not be read'); } });
         replay.end(Buffer.concat(chunks));
       }
@@ -322,10 +313,10 @@ describe('sandbox webhook projection', () => {
       await once(server, 'listening');
       const address = server.address();
       if (!address || typeof address === 'string') throw new Error('Expected TCP listener');
-      const body = `${payload(false, 'cus_unmapped')}\n`;
+      const body = `${event()}\n`;
       for (const query of ['', '?replay']) {
         const response = await fetch(`http://127.0.0.1:${address.port}/api/billing/webhook${query}`, {
-          method: 'POST', headers: { 'content-type': 'application/json', 'stripe-signature': sign(body) }, body,
+          method: 'POST', headers: { 'content-type': 'application/json', ...signed(body) }, body,
         });
         expect(response.status).toBe(200);
         expect(await response.json()).toEqual({ received: true });
@@ -335,21 +326,22 @@ describe('sandbox webhook projection', () => {
     }
   });
 
-  it('projects only an eligible quantity-one paid plan', () => {
+  it('projects only an active yearly subscription to a configured product', () => {
     expect(projectSubscriptions(runtime, [sub('past_due')])).toMatchObject({ plan: 'free', status: 'past_due' });
-    expect(projectSubscriptions(runtime, [sub('active', price(), 2)])).toMatchObject({ plan: 'free', status: 'active' });
-    expect(projectSubscriptions(runtime, [sub('active', price('price_unmapped'))])).toMatchObject({ plan: 'free', status: 'active' });
-    expect(projectSubscriptions(runtime, [sub('active'), sub('trialing', price('price_advanced', 12900))]))
-      .toMatchObject({ plan: 'advanced', status: 'trialing' });
+    expect(projectSubscriptions(runtime, [sub('active', uuid(99))])).toMatchObject({ plan: 'free', status: 'active' });
+    expect(projectSubscriptions(runtime, [sub('active', PRO, { recurring_interval: 'month' })])).toMatchObject({ plan: 'free' });
+    expect(projectSubscriptions(runtime, [sub('active', PRO, { paused_at: '2026-11-01T00:00:00Z' })])).toMatchObject({ plan: 'free' });
+    expect(projectSubscriptions(runtime, [sub('active'), sub('trialing', ADVANCED)])).toMatchObject({ plan: 'advanced', status: 'trialing' });
+    expect(projectSubscriptions(runtime, [])).toEqual({ plan: 'free', status: null, subscription_id: null });
   });
 
   it('makes replays and older notifications reconcile current state rather than overwrite newer data', async () => {
-    let row = rowFixture();
+    let row = rowFixture(null);
     const db = {
-      byCustomer: async () => ({ ...row }),
-      project: vi.fn<BillingStore['project']>(async (_user, _customer, revision, projection) => {
+      byUser: async () => ({ ...row }),
+      project: vi.fn<BillingStore['project']>(async (_user, revision, customer, projection) => {
         if (revision !== row.projection_revision) return false;
-        row = { ...row, ...projection, projection_revision: revision + 1 };
+        row = { ...row, ...projection, customer_id: customer, projection_revision: revision + 1 };
         return true;
       }),
     } as unknown as BillingStore;
@@ -359,19 +351,33 @@ describe('sandbox webhook projection', () => {
     const list = vi.fn().mockImplementationOnce(() => new Promise(resolve => {
       release = resolve;
       firstListStarted();
-    })).mockResolvedValue({ data: [sub('canceled')], has_more: false });
-    const stripe = asStripe({ webhooks: instance.webhooks, subscriptions: { list } });
-    const signed = payload();
-    const signature = sign(signed);
-    const notify = () => webhook(runtime, db, stripe, Buffer.from(signed), signature);
+    })).mockResolvedValue(page([sub('canceled')]));
+    const polar = asPolar({ subscriptions: { list } });
+    const body = event();
+    const notify = () => webhook(runtime, db, polar, Buffer.from(body), signed(body));
     const older = notify();
     await firstList;
     await notify();
-    release({ data: [sub('active')], has_more: false });
+    release(page([sub('active')]));
     await older;
     await notify();
-    expect(row).toMatchObject({ plan: 'free', status: 'canceled', projection_revision: 3 });
+    expect(row).toMatchObject({ plan: 'free', status: 'canceled', customer_id: customerId, projection_revision: 3 });
     expect(list).toHaveBeenCalledTimes(4);
-    expect(db.project).toHaveBeenCalledWith(owner, customer, 0, expect.objectContaining({ plan: 'pro' }));
+    expect(list).toHaveBeenCalledWith({ external_customer_id: owner, limit: 100 });
+    expect(db.project).toHaveBeenCalledWith(owner, 0, customerId, expect.objectContaining({ plan: 'pro' }));
+  });
+
+  it('ignores signed events that are not about subscriptions', async () => {
+    const byUser = vi.fn();
+    const body = event(owner, 'checkout.updated');
+    await webhook(runtime, { byUser } as unknown as BillingStore, idle(), Buffer.from(body), signed(body));
+    expect(byUser).not.toHaveBeenCalled();
+  });
+});
+
+describe('portal', () => {
+  it('requires a Polar customer recorded from a webhook', async () => {
+    const store = { byUser: async () => rowFixture(null) } as unknown as BillingStore;
+    await expect(portal(runtime, store, asPolar({}), owner)).rejects.toThrow('no_billing_customer');
   });
 });

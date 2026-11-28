@@ -42,87 +42,91 @@ pnpm run dev          # http://localhost:5173
 `sync:check` and `pnpm run check` look for the library at `../fos-icons`
 by default. Override with `--source <path>` or `FOS_ICONS_SOURCE`.
 
-### Billing (Stripe)
+### Billing (Polar)
 
 Pro is **$49 USD for the first year, then $69 USD/year**. Advanced is **$99 USD
-for the first year, then $129 USD/year**. In Stripe, create the two standard
-USD annual Prices ($69 and $129) and apply a product-restricted, fixed-value
-coupon **once** ($20 off Pro and $30 off Advanced). Do not set up a separate
-$49 or $99 recurring Price: it would renew at the introductory rate.
+for the first year, then $129 USD/year**. Payments go through
+[Polar](https://polar.sh), which sells the plans as merchant of record and
+handles sales tax and VAT.
+
+In Polar, create two **yearly recurring** products with one fixed USD price
+each: **$69** (Pro) and **$129** (Advanced), with no trial. Then create two
+**fixed, once** discounts with no code: **$20 off Pro only** and **$30 off
+Advanced only**. Do not create $49 or $99 products: they would renew at the
+introductory rate. The server checks every one of these values before each
+checkout and refuses to sell if anything differs.
 
 `BILLING_MODE` (server) and `VITE_BILLING_MODE` (browser) choose where billing
 runs. Leave both unset to keep billing off.
 
-| Mode | Runs on | Stripe | Sign-in |
+| Mode | Runs on | Polar | Sign-in |
 | --- | --- | --- | --- |
-| `sandbox` | Local and preview, never Vercel production | Test keys and test-mode objects only | Existing Supabase users only |
-| `live` | Vercel production only | Live keys and live-mode objects only | Anyone can sign up with an email code |
+| `sandbox` | Local and preview, never Vercel production | sandbox.polar.sh, sandbox token | Existing Supabase users only |
+| `live` | Vercel production only | polar.sh, production token | Anyone can sign up with an email code |
 
 The server refuses any other combination, so a preview deployment can't take
 real payments and production can't run the sandbox. When the server refuses,
 the Pricing page keeps showing "Coming soon". The older
 `BILLING_SANDBOX_ENABLED=true` flags still mean `sandbox`.
 
+Checkout links the Polar customer to the Supabase user with
+`external_customer_id`, so a payment always unlocks the account that started it.
+
 #### Sandbox (local testing)
 
-1. Use a dedicated Supabase project for this sandbox. Apply the SQL migration
-   under `supabase/migrations/`, enable email sign-in, create a test user, and
-   configure the passwordless email template to include `{{ .Token }}` instead
-   of a magic link. Configure SMTP if email is not delivered for the test
-   address.
-2. Create the Prices and coupons in a Stripe sandbox, not live mode. Enable
-   the sandbox Customer Portal for invoice history, card updates, and
-   cancellation at the end of the paid period. Leave plan switching off.
-3. Copy `.env.billing.example` to `.env.local` and set the values for the
-   sandbox project. The `VITE_` variables are public; never put the Stripe API
-   key, webhook signing secret, or Supabase service-role key in them.
-   Use the Supabase legacy `service_role` JWT for `SUPABASE_SERVICE_ROLE_KEY`.
+1. Use a dedicated Supabase project for this sandbox. Apply the SQL migrations
+   under `supabase/migrations/` (Polar uses `billing_customers`), enable email
+   sign-in, create a test user, and configure the passwordless email template
+   to include `{{ .Token }}` instead of a magic link. Configure SMTP if email is
+   not delivered for the test address.
+2. On [sandbox.polar.sh](https://sandbox.polar.sh), create the organization,
+   the two products and the two discounts above. Under Settings, create an
+   organization access token that can read products, discounts and
+   subscriptions, create checkouts, and create customer sessions.
+3. Add a webhook endpoint that reaches `/api/billing/webhook` on your dev
+   server, through the Polar CLI or a tunnel, for the `subscription.*`
+   events: created, updated, active, canceled, uncanceled, revoked, paused,
+   resumed, past_due.
+4. Copy `.env.billing.example` to `.env.local` and set the values for the
+   sandbox. The `VITE_` variables are public; never put the Polar token,
+   webhook secret, or Supabase service-role key in them. Use the Supabase
+   legacy `service_role` JWT for `SUPABASE_SERVICE_ROLE_KEY`.
    `BILLING_SITE_URL` must match the origin you open in the browser. Set both
    modes to `sandbox`.
-4. In the Stripe CLI, select the sandbox and run:
-
-   ```sh
-   stripe listen --events customer.subscription.created,customer.subscription.updated,customer.subscription.deleted,customer.subscription.paused,customer.subscription.resumed --forward-to localhost:5173/api/billing/webhook
-   ```
-
-   Put its signing secret into `.env.local`, then run `pnpm run dev`. On
-   `/pricing`, choose a plan, sign in as the test user and pay with a
-   [Stripe test card](https://docs.stripe.com/testing#cards). The page re-reads
-   the subscription after you return; the return URL alone does not grant
-   access.
+5. Run `pnpm run dev`. On `/pricing`, choose a plan, sign in as the test user
+   and pay with a sandbox test card. The page re-reads the subscription after
+   you return; the return URL alone does not grant access.
 
 #### Going live
 
 Do these first:
 
-- Activate the live Stripe account and confirm the selling entity and payout
-  account.
-- Decide on tax (Checkout runs with `automatic_tax` off) and on what happens
-  when a renewal payment fails.
+- Complete Polar's account review and set up payouts.
+- Decide what happens when a renewal payment fails.
 - Publish terms, a refund policy, and privacy wording that covers billing.
 - Make sure the paid plans don't promise features that aren't available yet.
 
 Then:
 
-1. Create a **separate production Supabase project**. Apply the migration,
+1. Create a **separate production Supabase project**. Apply the migrations,
    enable email sign-in with the `{{ .Token }}` template, configure SMTP, and
    consider turning on Supabase CAPTCHA, since anyone can request a code.
-2. In Stripe **live mode**, create the Prices, coupons, and Customer Portal
-   (plan switching off). Add a webhook endpoint at
-   `https://fosicons.com/api/billing/webhook` for the five
-   `customer.subscription.*` events above.
+2. On **polar.sh**, create the same products, discounts and access token. Add
+   a webhook endpoint at `https://fosicons.com/api/billing/webhook` for the
+   `subscription.*` events above. In the customer portal settings, leave plan
+   switching off.
 3. In Vercel, set these for the **Production** environment only:
    - `BILLING_MODE=live` and `VITE_BILLING_MODE=live`;
    - `BILLING_SITE_URL=https://fosicons.com`;
-   - the live Stripe values from `.env.billing.example`;
+   - the production Polar values from `.env.billing.example`;
    - the production Supabase values.
 
-   Keep the Stripe secret key, webhook secret and service-role key as
-   server-only variables.
+   Keep the Polar token, webhook secret and service-role key as server-only
+   variables.
 4. Redeploy. The `VITE_` values are built into the page, so changing them
    always needs a redeploy.
 5. Buy a plan yourself with a real card, check that the plan unlocks, then
-   refund and cancel it in the Stripe Dashboard.
+   refund and cancel it in the Polar dashboard.
 
 Plan checks run in the browser (see `src/lib/entitlements.ts`): they're a
 convenience, not access control, because the artwork is public.
@@ -218,7 +222,7 @@ In the [Vercel Firewall](https://vercel.com/docs/vercel-firewall/vercel-waf/rate
 - **Pricing** (`/pricing`): Free, Pro ($49 USD first year, then $69 USD/year),
   and Advanced ($99 USD first year, then $129 USD/year).
   Plan highlights and a grouped comparison cover icon styles, customization, exports, modifiers, and planned AI integrations.
-  Where billing is on (see [Billing](#billing-stripe)), the paid cards start Stripe Checkout and the
+  Where billing is on (see [Billing](#billing-polar)), the paid cards start Polar checkout and the
   site unlocks features by plan; elsewhere they show "Coming soon".
 - **Code samples**: docs, icon-page, and inspector examples share a light stone
   surface in light mode and warm charcoal in dark mode, with syntax colors (highlight.js core with

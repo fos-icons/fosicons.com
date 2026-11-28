@@ -1,7 +1,7 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import { BillingError, readBillingConfig, type BillingConfig } from '../../server/billing/config.js';
 import { createBillingStore, type BillingStore } from '../../server/billing/store.js';
-import { checkout, createBillingStripe, portal, readPlan, webhook, type BillingStripe } from '../../server/billing/stripe.js';
+import { checkout, createBillingPolar, portal, readPlan, readWebhookHeaders, webhook, type BillingPolar } from '../../server/billing/polar.js';
 import { entitledPlan } from '../../src/lib/entitlements.js';
 
 export const config = { api: { bodyParser: false } };
@@ -66,7 +66,7 @@ function bearer(req: IncomingMessage) {
 
 type BillingDependencies = {
   store: (config: BillingConfig) => BillingStore;
-  stripe: (config: BillingConfig) => BillingStripe;
+  polar: (config: BillingConfig) => BillingPolar;
 };
 
 export function createBillingHandler(deps: BillingDependencies) {
@@ -78,10 +78,9 @@ export function createBillingHandler(deps: BillingDependencies) {
     try {
       const runtime = readBillingConfig(env);
       if (action === 'webhook') {
-        const signature = req.headers['stripe-signature'];
-        if (typeof signature !== 'string' || !signature) throw new BillingError(400, 'invalid_webhook');
+        const headers = readWebhookHeaders(req.headers);
         const body = await rawBody(req, MAX_WEBHOOK_BYTES);
-        await webhook(runtime, deps.store(runtime), deps.stripe(runtime), body, signature);
+        await webhook(runtime, deps.store(runtime), deps.polar(runtime), body, headers);
         return reply(res, 200, { received: true });
       }
 
@@ -96,16 +95,16 @@ export function createBillingHandler(deps: BillingDependencies) {
         // `entitlement` is the plan whose features this status unlocks.
         return reply(res, 200, { ...status, entitlement: entitledPlan(status) });
       }
-      if (action === 'portal') return reply(res, 200, await portal(runtime, store, deps.stripe(runtime), userId));
+      if (action === 'portal') return reply(res, 200, await portal(runtime, store, deps.polar(runtime), userId));
       const mediaType = req.headers['content-type']?.split(';')[0].trim().toLowerCase();
       if (mediaType !== 'application/json') throw new BillingError(415, 'unsupported_media_type');
       const plan = readPlan(parseJson(await rawBody(req, MAX_CHECKOUT_BYTES)));
-      return reply(res, 200, await checkout(runtime, store, deps.stripe(runtime), userId, plan));
+      return reply(res, 200, await checkout(runtime, store, deps.polar(runtime), userId, plan));
     } catch (error) {
       if (error instanceof BillingError) return reply(res, error.status, { error: error.code });
       // SDK failures may contain credentials, request data or provider URLs.
-      if (error && typeof error === 'object' && 'code' in error && error.code === 'idempotency_key_in_use') {
-        return reply(res, 409, { error: 'checkout_in_progress' });
+      if (action === 'portal' && error && typeof error === 'object' && 'statusCode' in error && error.statusCode === 404) {
+        return reply(res, 404, { error: 'no_billing_customer' });
       }
       console.error('Billing provider request failed', action);
       return reply(res, 502, { error: 'billing_unavailable' });
@@ -114,5 +113,5 @@ export function createBillingHandler(deps: BillingDependencies) {
 }
 
 /** Node entry point shared by Vercel and the Vite middleware. */
-export const handleBilling = createBillingHandler({ store: createBillingStore, stripe: createBillingStripe });
+export const handleBilling = createBillingHandler({ store: createBillingStore, polar: createBillingPolar });
 export default handleBilling;
