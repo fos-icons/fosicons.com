@@ -143,6 +143,9 @@ export default defineConfig(({ mode, isSsrBuild }) => ({
     chunkSizeWarningLimit: 700,
     rollupOptions: isSsrBuild ? {} : { output: { manualChunks: stableChunk } },
   },
+  // Let a tunnel forward Polar's sandbox webhooks to the dev server. Vite otherwise
+  // rejects requests for hostnames it doesn't know. Dev server only.
+  server: { allowedHosts: ['.trycloudflare.com', '.ngrok-free.app', '.ngrok.app'] },
   // Large data (the catalog) ships as JSON.parse('…'), which browsers parse faster than object literals.
   json: { stringify: true },
   test: {

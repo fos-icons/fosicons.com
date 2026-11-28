@@ -84,7 +84,9 @@ Checkout links the Polar customer to the Supabase user with
    organization access token that can read products, discounts and
    subscriptions, create checkouts, and create customer sessions.
 3. Add a webhook endpoint that reaches `/api/billing/webhook` on your dev
-   server, through the Polar CLI or a tunnel, for the `subscription.*`
+   server (the port `pnpm run dev` prints), through the Polar CLI or a
+   tunnel such as `cloudflared tunnel --url http://localhost:5173` (the dev
+   server accepts `trycloudflare.com` and `ngrok` hostnames), for the `subscription.*`
    events: created, updated, active, canceled, uncanceled, revoked, paused,
    resumed, past_due.
 4. Copy `.env.billing.example` to `.env.local` and set the values for the
@@ -112,17 +114,19 @@ Then:
    enable email sign-in with the `{{ .Token }}` template, configure SMTP, and
    consider turning on Supabase CAPTCHA, since anyone can request a code.
 2. On **polar.sh**, create the same products, discounts and access token. Add
-   a webhook endpoint at `https://fosicons.com/api/billing/webhook` for the
+   a webhook endpoint at `https://www.fosicons.com/api/billing/webhook` for the
    `subscription.*` events above. In the customer portal settings, leave plan
    switching off.
 3. In Vercel, set these for the **Production** environment only:
    - `BILLING_MODE=live` and `VITE_BILLING_MODE=live`;
-   - `BILLING_SITE_URL=https://fosicons.com`;
+   - `BILLING_SITE_URL=https://www.fosicons.com`;
    - the production Polar values from `.env.billing.example`;
    - the production Supabase values.
 
    Keep the Polar token, webhook secret and service-role key as server-only
-   variables.
+   variables. Use the `www` address in both places: `fosicons.com`
+   redirects to it with a 308, and Polar doesn't follow redirects, so a
+   webhook sent to the bare domain is dropped.
 4. Redeploy. The `VITE_` values are built into the page, so changing them
    always needs a redeploy.
 5. Buy a plan yourself with a real card, check that the plan unlocks, then
