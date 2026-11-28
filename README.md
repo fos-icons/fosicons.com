@@ -85,7 +85,8 @@ Checkout links the Polar customer to the Supabase user with
    subscriptions, create checkouts, and create customer sessions.
 3. Add a webhook endpoint that reaches `/api/billing/webhook` on your dev
    server (the port `pnpm run dev` prints), through the Polar CLI or a
-   tunnel, for the `subscription.*`
+   tunnel such as `cloudflared tunnel --url http://localhost:5173` (the dev
+   server accepts `trycloudflare.com` and `ngrok` hostnames), for the `subscription.*`
    events: created, updated, active, canceled, uncanceled, revoked, paused,
    resumed, past_due.
 4. Copy `.env.billing.example` to `.env.local` and set the values for the
